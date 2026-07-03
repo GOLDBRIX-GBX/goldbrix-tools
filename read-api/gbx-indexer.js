@@ -11,7 +11,7 @@ const Database = require('better-sqlite3');
 const GBX_DATADIR = '/root/.bitcoin';          // datadir nod GoldBrix (reziduu pre-existent; OPSEC rename = FAZA 7)
 const RPC_HOST = '127.0.0.1';
 const RPC_PORT = 8342;                          // GoldBrix RPC [VERIFICAT]
-const DB_PATH  = '/root/goldbrix-one/server/gbx-index.db';
+const DB_PATH  = process.env.GBX_INDEX_DB || './gbx-index.db';
 const POLL_MS  = 1000;
 const COOKIE   = path.join(GBX_DATADIR, '.cookie');
 

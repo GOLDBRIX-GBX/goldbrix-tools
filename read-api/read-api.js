@@ -486,7 +486,7 @@ const server = http.createServer(async (req, res) => {
       {
         const __gbxAnnouncementPath = new URL(req.url, `http://${req.headers.host || 'localhost'}`).pathname;
         if (req.method === 'GET' && (__gbxAnnouncementPath === '/api/announcement' || __gbxAnnouncementPath === '/announcement')) {
-          const announcementFile = '/root/goldbrix-one/server/announcement.json';
+          const announcementFile = process.env.GBX_ANNOUNCEMENT_FILE || './announcement.json';
           let payload = {
             ok: true,
             enabled: true,

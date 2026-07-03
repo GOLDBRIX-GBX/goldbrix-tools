@@ -1,6 +1,6 @@
 'use strict';
 const Database = require('better-sqlite3');
-const DB_PATH = '/root/goldbrix-one/server/gbx-index.db';
+const DB_PATH = process.env.GBX_INDEX_DB || './gbx-index.db';
 let _db = null;
 function db(){ if(!_db){ _db = new Database(DB_PATH, {readonly:true, fileMustExist:true}); } return _db; }
 function tipHeight(){ try { const r = db().prepare('SELECT MAX(height) h FROM blocks').get(); return r ? r.h : null; } catch(_){ return null; } }
