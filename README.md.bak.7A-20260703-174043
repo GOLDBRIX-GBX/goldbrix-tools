@@ -9,7 +9,7 @@ Operator tooling for the GoldBrix (GBX) network. Everything here is keyless or n
 | `node-info/` | Health endpoint served by every node: height, best hash, and the SHA-256 of the binary actually running. |
 | `docs/MINING.md` | How to mine GBX, step by step, from zero. |
 
-Core node source: [goldbrix-core](https://github.com/GOLDBRIX-GBX/goldbrix-core) · Run a node: [guide](https://goldbrix.app/run-node) · Verified release binaries: [downloads](https://goldbrix.app/downloads/SHA256SUMS-v30-gbx-7.txt)
+Core node source: [goldbrix-core](https://github.com/GOLDBRIX-GBX/goldbrix-core) · Run a node: [guide](https://goldbrix.app/run-node) · Verified release binaries: [downloads](https://goldbrix.app/downloads/)
 
 ## Run the pool against your own node
 

@@ -30,7 +30,7 @@ Search your address in the [explorer](https://explorer.goldbrix.app) or open you
 
 ## 5. Trust nothing, verify everything
 
-- Node binaries are **reproducible** (Guix builds). SHA-256 sums: [downloads](https://goldbrix.app/downloads/SHA256SUMS-v30-gbx-7.txt)
+- Node binaries are **reproducible** (Guix builds). SHA-256 sums: [downloads](https://goldbrix.app/downloads/)
 - Every node exposes `/gbx-node-info` with the SHA-256 of the binary it is actually running.
 - Run the [watchtower](../watchtower/watchtower.py) to record it all yourself.
 
