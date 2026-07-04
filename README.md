@@ -23,3 +23,7 @@ Requires Node.js >= 18 and a synced goldbrix-core node with RPC cookie auth. No 
 ## License
 
 MIT
+
+## Release anchors
+
+Every release is anchored on-chain (OP_RETURN). Spec + verification: [docs/RELEASE-ANCHOR.md](docs/RELEASE-ANCHOR.md). Publish tool: `anchor-release.js`.
