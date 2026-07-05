@@ -14,11 +14,14 @@ GBX:R:<tag>:<sha256-hex>
 - `<sha256-hex>` — SHA-256 of the `SHA256SUMS-<tag>.txt` release asset (64 hex chars)
 - Total: 80 bytes, standard OP_RETURN
 
+> Note: OP_RETURN budget is 80B, so tags >9 chars are anchored short-form (e.g. `v30-gbx-10` → `gbx-10`). The full tag is always in the `SHA256SUMS-<full-tag>.txt` asset.
+
 ## Anchors
 
 | Tag | SHA-256 of SHA256SUMS | TX |
 |-----|----------------------|-----|
 | v30-gbx-7 | 00cf8408f0c1fb728ae38d701c73e30fc2b04cf66487e102a8f6011e35a542c4 | 738d7434a4e46cfc67c8f4c47ff55aaa596ef592f99409c23c8e3b446df419f6 |
+| v30-gbx-10 (anchored as `gbx-10`) | 278586e1571861d4f2f4c38fb9cd05fe8213d432084fcb571021db7568e527e4 | 72374fa90764de31295bad482ae335d6a5e9b3099872556cd199afbedd95dfc2 |
 
 ## Verify (any node, no permission needed)
 
