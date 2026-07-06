@@ -15,6 +15,17 @@ const LOG_DIR = process.env.GBX_POOL_LOG_DIR || '/root/goldbrix-pool/logs';
 const BLOCKS_LOG = LOG_DIR + '/blocks_found.jsonl';
 const POOL_TAG = '/GBX-P1P/';
 const EN1_SIZE = 4, EN2_SIZE = 4;
+const SHARE_MIN_DIFF = Number(process.env.GBX_SHARE_MIN_DIFF || 0.0001);
+const VARDIFF_TARGET_S = Number(process.env.GBX_VARDIFF_TARGET_S || 8);
+const VARDIFF_RETARGET_S = Number(process.env.GBX_VARDIFF_RETARGET_S || 45);
+function targetFromDiff(netTargetBuf, netDiff, shareDiff){
+  if (shareDiff >= netDiff) return Buffer.from(netTargetBuf);
+  const r = netDiff / shareDiff;
+  const bits = BigInt('0x'+netTargetBuf.toString('hex'));
+  const scaled = bits * BigInt(Math.round(r*1e6)) / 1000000n;
+  let h = scaled.toString(16); if (h.length>64) h='f'.repeat(64);
+  return Buffer.from(h.padStart(64,'0'),'hex');
+}
 
 // ---------- RPC over HTTP (cookie auth) ----------
 function rpc(method, params) {
@@ -123,6 +134,8 @@ const jobs = new Map();           // jobId -> {gbt, branch, targetBuf}
 let currentJobId = null;
 const clients = new Set();
 const stats = { jobs_served: 0, shares_ok: 0, shares_rej: 0, started: Math.floor(Date.now() / 1000) };
+stats.rej_reasons = {};
+function tallyRej(r){ stats.rej_reasons[r]=(stats.rej_reasons[r]||0)+1; }
 try { fs.mkdirSync(LOG_DIR, { recursive: true }); } catch {}
 function blocksFoundCount() {
   try { return fs.readFileSync(BLOCKS_LOG, 'utf8').split('\n').filter(Boolean).length; } catch { return 0; }
@@ -134,10 +147,15 @@ async function newTemplate(reason) {
   const jobId = jobCounter.toString(16);
   const branch = merkleBranch((gbt.transactions || []).map(t => t.txid || t.hash));
   const targetBuf = Buffer.from(gbt.target, 'hex');
+  const prevJob = jobs.get(currentJobId);
+  const clean = !prevJob || prevJob.gbt.previousblockhash !== gbt.previousblockhash;
   jobs.set(jobId, { gbt, branch, targetBuf });
-  while (jobs.size > 6) jobs.delete(jobs.keys().next().value);
+  // 7.5 stale-window: keep jobs for current + previous height (last + second-to-last)
+  for (const [jid, j] of jobs) if (j.gbt.height < gbt.height - 1) jobs.delete(jid);
+  while (jobs.size > 12) jobs.delete(jobs.keys().next().value);
   currentJobId = jobId;
-  for (const c of clients) if (c._gbx.authorized) notifyClient(c, jobId, true);
+  lastPrev = gbt.previousblockhash; lastTplTs = Date.now();
+  for (const c of clients) if (c._gbx.authorized) notifyClient(c, jobId, clean);
   console.log(`job ${jobId} height=${gbt.height} txs=${(gbt.transactions || []).length} reason=${reason}`);
   return jobId;
 }
@@ -148,8 +166,11 @@ function notifyClient(socket, jobId, clean) {
   const st = socket._gbx;
   if (!st.cb) st.cb = {};
   if (!st.cb[jobId]) st.cb[jobId] = buildCoinbaseParts(job.gbt, st.payoutScript);
+  for (const k of Object.keys(st.cb)) if (!jobs.has(k)) delete st.cb[k];
   if (!st.diffSent) {
-    send(socket, { id: null, method: 'mining.set_difficulty', params: [diffFromTarget(job.gbt.target)] });
+    const _nd = diffFromTarget(job.gbt.target);
+    if (st.shareDiff > _nd) st.shareDiff = _nd;
+    send(socket, { id: null, method: 'mining.set_difficulty', params: [st.shareDiff] });
     st.diffSent = true;
   }
   send(socket, {
@@ -168,11 +189,11 @@ async function handleSubmit(socket, msg, params) {
   const st = socket._gbx;
   const [, jobId, en2, ntime, nonce] = params.map(p => String(p || '').toLowerCase());
   const job = jobs.get(jobId);
-  if (!job) { stats.shares_rej++; return reply(socket, msg.id ?? null, false, [21, 'JOB_NOT_FOUND_OR_STALE', null]); }
+  if (!job) { tallyRej('STALE'); stats.shares_rej++; return reply(socket, msg.id ?? null, false, [21, 'JOB_NOT_FOUND_OR_STALE', null]); }
   if (!/^[0-9a-f]{8}$/.test(en2) || !/^[0-9a-f]{8}$/.test(ntime) || !/^[0-9a-f]{8}$/.test(nonce))
-    { stats.shares_rej++; return reply(socket, msg.id ?? null, false, [20, 'MALFORMED_PARAMS', null]); }
+    { tallyRej('MALFORMED'); stats.shares_rej++; return reply(socket, msg.id ?? null, false, [20, 'MALFORMED_PARAMS', null]); }
   const parts = st.cb && st.cb[jobId];
-  if (!parts) { stats.shares_rej++; return reply(socket, msg.id ?? null, false, [21, 'NO_COINBASE_FOR_JOB', null]); }
+  if (!parts) { tallyRej('NO_CB'); stats.shares_rej++; return reply(socket, msg.id ?? null, false, [21, 'NO_COINBASE_FOR_JOB', null]); }
 
   const coinbaseHex = parts.coinb1 + st.extranonce1 + en2 + parts.coinb2;
   const cbHash = sha256d(Buffer.from(coinbaseHex, 'hex'));
@@ -186,9 +207,24 @@ async function handleSubmit(socket, msg, params) {
     Buffer.from(nonce, 'hex').reverse()
   ]);
   const hashBE = Buffer.from(sha256d(header)).reverse();
-  if (Buffer.compare(hashBE, job.targetBuf) > 0) {
-    stats.shares_rej++;
+  const _netDiff = diffFromTarget(job.gbt.target);
+  const shareTarget = targetFromDiff(job.targetBuf, _netDiff, st.shareDiff);
+  if (Buffer.compare(hashBE, shareTarget) > 0) {
+    tallyRej('LOWDIFF'); stats.shares_rej++;
     return reply(socket, msg.id ?? null, false, [23, 'LOW_DIFFICULTY_SHARE', null]);
+  }
+  st.sharesSince++;
+  const _now = Date.now();
+  if (_now - st.lastRetarget >= VARDIFF_RETARGET_S*1000) {
+    const elapsed=(_now-st.lastRetarget)/1000, rate=st.sharesSince/elapsed, tRate=1/VARDIFF_TARGET_S;
+    if (rate>0){ let nd=st.shareDiff*(rate/tRate); nd=Math.max(SHARE_MIN_DIFF,Math.min(nd,_netDiff));
+      if (Math.abs(nd-st.shareDiff)/st.shareDiff>0.2){ st.shareDiff=nd; send(socket,{id:null,method:'mining.set_difficulty',params:[nd]}); } }
+    st.lastRetarget=_now; st.sharesSince=0;
+  }
+  // block only if hash meets NETWORK target
+  if (Buffer.compare(hashBE, job.targetBuf) > 0) {
+    stats.shares_ok++;
+    return reply(socket, msg.id ?? null, true, null);
   }
   // block candidate → assemble full block (witness coinbase) + submit
   const txs = job.gbt.transactions || [];
@@ -198,9 +234,9 @@ async function handleSubmit(socket, msg, params) {
     + txs.map(t => t.data).join('');
   let res;
   try { res = await rpc('submitblock', [blockHex]); }
-  catch (e) { stats.shares_rej++; return reply(socket, msg.id ?? null, false, [20, 'SUBMIT_ERROR:' + e.message.slice(0, 80), null]); }
+  catch (e) { tallyRej('SUBMIT_ERR'); stats.shares_rej++; return reply(socket, msg.id ?? null, false, [20, 'SUBMIT_ERROR:' + e.message.slice(0, 80), null]); }
   if (res !== null && res !== undefined && res !== '') {
-    stats.shares_rej++;
+    tallyRej('SUBMIT_REJ:'+String(res).slice(0,20)); stats.shares_rej++;
     return reply(socket, msg.id ?? null, false, [20, 'REJECTED:' + String(res), null]);
   }
   stats.shares_ok++;
@@ -225,7 +261,8 @@ function parseWorkerLogin(login) {
 const server = net.createServer((socket) => {
   socket.setEncoding('utf8');
   socket._gbx = { subscribed: false, authorized: false, payout: '', worker: '',
-    extranonce1: crypto.randomBytes(EN1_SIZE).toString('hex'), diffSent: false, cb: {} };
+    extranonce1: crypto.randomBytes(EN1_SIZE).toString('hex'), diffSent: false, cb: {},
+    shareDiff: SHARE_MIN_DIFF, lastRetarget: Date.now(), sharesSince: 0 };
   clients.add(socket);
   let buffer = '';
   socket.on('data', async (chunk) => {
@@ -258,6 +295,7 @@ const server = net.createServer((socket) => {
           socket._gbx.payout = parsed.payout;
           socket._gbx.worker = parsed.worker;
           socket._gbx.payoutScript = info.scriptPubKey;
+          try { const pw=String(params[1]||''); const m=pw.match(/d=([\d.]+)/); if(m){const dv=parseFloat(m[1]); if(dv>0) socket._gbx.shareDiff=Math.max(SHARE_MIN_DIFF,dv);} } catch {}
           reply(socket, msg.id ?? null, true, null);
           if (currentJobId) notifyClient(socket, currentJobId, true);
           continue;
@@ -285,9 +323,11 @@ setInterval(async () => {
   try {
     const best = await rpc('getbestblockhash', []);
     const now = Date.now();
-    if (best !== lastPrev || now - lastTplTs > 30000) {
-      lastPrev = best; lastTplTs = now;
-      await newTemplate(best !== lastPrev ? 'new-block' : 'refresh');
+    const changed = best !== lastPrev;
+    if (changed || now - lastTplTs > 30000) {
+      const cur = jobs.get(currentJobId);
+      if (changed && cur && cur.gbt.previousblockhash === best) { lastPrev = best; lastTplTs = now; }
+      else { lastPrev = best; lastTplTs = now; await newTemplate(changed ? 'new-block' : 'refresh'); }
     }
   } catch (e) { console.error('poll:', e.message); }
 }, 500);
@@ -305,6 +345,7 @@ http.createServer(async (req, res) => {
     height, best_hash: best,
     miners_connected: [...clients].filter(c => c._gbx && c._gbx.authorized).length,
     jobs_served: stats.jobs_served, shares_ok: stats.shares_ok, shares_rej: stats.shares_rej,
+    rej_reasons: stats.rej_reasons,
     blocks_found: blocksFoundCount(),
     uptime_s: Math.floor(Date.now() / 1000) - stats.started, ts: Math.floor(Date.now() / 1000)
   });
