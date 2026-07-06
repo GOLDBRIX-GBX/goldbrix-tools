@@ -1,7 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { exec } = require('child_process');
+const { execFile } = require('child_process');
 const gbxIndex = require('./gbx-index-read.js');
 
 const HOST = '0.0.0.0';
@@ -13,17 +13,22 @@ const RPC_PORT = process.env.GBX_RPC_PORT || '8332';
 const DATADIR = process.env.GBX_DATADIR || '/root/goldbrix_mainnet/node2';
 
 // V4.9 UTXO OPT — cache + skip gettxout for mature
+
+// === GBX RCE-GUARD: validare stricta input PUBLIC inainte de orice CLI ===
+function _assertHex(x, name){ if(typeof x!=='string' || !/^[0-9a-fA-F]+$/.test(x) || x.length>200000) throw new Error('invalid '+name); return x; }
+function _assertAddr(x){ if(typeof x!=='string' || !/^(bn1|bc1)[0-9a-z]{6,90}$/.test(x)) throw new Error('invalid address'); return x; }
+function _assertTxid(x){ if(typeof x!=='string' || !/^[0-9a-fA-F]{64}$/.test(x)) throw new Error('invalid txid'); return x; }
+function _assertInt(x){ const n=Number(x); if(!Number.isInteger(n)||n<0||n>1e9) throw new Error('invalid height'); return String(n); }
+
 const UTXO_CACHE = new Map();
 const UTXO_CACHE_TTL = 60 * 1000; // GBX — 60s: scan adresa curata=0.1s (sigur). Adresa mining ramane protejata de cache. Fix real=indexer (sesiune autonomie)
 
-function _runCliOnce(args) {
+function _runCliOnce(argv) {
+  // argv = ARRAY de argumente (fara shell). Imun la shell-injection.
   return new Promise((resolve, reject) => {
-    const cmd = `${CLI} -rpcconnect=${RPC_CONNECT} -rpcport=${RPC_PORT} -datadir=${DATADIR} ${args}`;
-    exec(cmd, { maxBuffer: 512 * 1024 * 1024 }, (error, stdout, stderr) => {
-      if (error) {
-        reject(new Error((stderr || error.message).trim()));
-        return;
-      }
+    const base = [`-rpcconnect=${RPC_CONNECT}`, `-rpcport=${RPC_PORT}`, `-datadir=${DATADIR}`];
+    execFile(CLI, base.concat(argv), { maxBuffer: 512 * 1024 * 1024 }, (error, stdout, stderr) => {
+      if (error) { reject(new Error((stderr || error.message).trim())); return; }
       resolve(stdout.trim());
     });
   });
@@ -33,7 +38,7 @@ function _runCliOnce(args) {
 async function runCli(args) {
   let lastErr=null;
   for (let attempt=0; attempt<8; attempt++) {
-    try { return await _runCliOnce(args); }
+    try { return await _runCliOnce(Array.isArray(args) ? args : [args]); }
     catch (e) {
       const m=(e && e.message) || String(e);
       lastErr=e;
@@ -52,11 +57,11 @@ let _scanChain = Promise.resolve();
 async function _doScan(descJson) {
   for (let attempt = 0; attempt < 12; attempt++) {
     try {
-      return await runCli(`scantxoutset start '${descJson}'`);
+      return await runCli(['scantxoutset','start',descJson]);
     } catch (e) {
       const msg = (e && e.message) || '';
       if (!/Scan already in progress|code: ?-8/i.test(msg)) throw e;
-      if (attempt === 8) { try { await runCli('scantxoutset abort'); } catch (_) {} }
+      if (attempt === 8) { try { await runCli(['scantxoutset','abort']); } catch (_) {} }
       await new Promise(r => setTimeout(r, 500));
     }
   }
@@ -103,7 +108,7 @@ function readBody(req) {
 let _utxoSetCache = { ts: 0, data: null };
 async function getUtxoSet() {
   if (_utxoSetCache.data && Date.now() - _utxoSetCache.ts < 120000) return _utxoSetCache.data;
-  const info = JSON.parse(await runCli('gettxoutsetinfo'));
+  const info = JSON.parse(await runCli(['gettxoutsetinfo']));
   _utxoSetCache = { ts: Date.now(), data: { txouts: info.txouts ?? null, circulating_gbx: Number(info.total_amount ?? 0) } };
   return _utxoSetCache.data;
 }
@@ -113,8 +118,8 @@ let _lastStatus = null;
 
 async function getStatus() {
   try {
-    const blockchain = JSON.parse(await runCli('getblockchaininfo'));
-    const peers = Number(await runCli('getconnectioncount'));
+    const blockchain = JSON.parse(await runCli(['getblockchaininfo']));
+    const peers = Number(await runCli(['getconnectioncount']));
     let utxo = { txouts: null, circulating_gbx: null };
     try { utxo = await getUtxoSet(); } catch (e) { console.warn('[utxoset]', e.message); }
 
@@ -146,7 +151,7 @@ async function getStatus() {
 }
 
 async function validateAddress(address) {
-  const raw = await runCli(`validateaddress "${address}"`);
+  const raw = await runCli(["validateaddress",_assertAddr(address)]);
   const info = JSON.parse(raw);
 
   if (!info.isvalid) throw new Error('Address is not valid');
@@ -167,7 +172,7 @@ async function scanAddress(address) {
   if (c && Date.now() - c.ts < UTXO_CACHE_TTL) {
     return { info, scan: c.data };
   }
-  const scanRaw = await runScanSerialized(`["raw(${info.scriptPubKey})"]`);
+  const scanRaw = await runScanSerialized(`["raw(${_assertHex(info.scriptPubKey,"scriptPubKey")})"]`);
   const scan = JSON.parse(scanRaw);
   UTXO_CACHE.set(ck, { ts: Date.now(), data: scan });
   return { info, scan };
@@ -209,13 +214,13 @@ async function getMempoolSpentOutpoints() {
 }
 let _mpRefreshing = false;
 async function _mpRefresh() {
-  const raw = await runCli('getrawmempool true');
+  const raw = await runCli(['getrawmempool','true']);
   const mp = JSON.parse(raw || '{}');
   const spent = new Set();
 
   for (const txid of Object.keys(mp)) {
     try {
-      const tx = JSON.parse(await runCli(`getrawtransaction "${txid}" true`));
+      const tx = JSON.parse(await runCli(["getrawtransaction",_assertTxid(txid),"true"]));
       const vin = Array.isArray(tx.vin) ? tx.vin : [];
       for (const input of vin) {
         if (input && input.txid && Number.isInteger(input.vout)) {
@@ -314,8 +319,8 @@ async function _getAddressSummaryUncached(address) {
 async function getTxVerboseAtHeight(txid, height) {
   const h = Number(height || 0);
   if (!(h > 0)) return null;
-  const blockhash = await runCli(`getblockhash ${h}`);
-  return JSON.parse(await runCli(`getrawtransaction "${txid}" true "${blockhash}"`));
+  const blockhash = await runCli(["getblockhash",_assertInt(h)]);
+  return JSON.parse(await runCli(["getrawtransaction",_assertTxid(txid),"true",_assertHex(blockhash,"blockhash")]));
 }
 
 async function getAddressTxs(address) {
@@ -324,7 +329,7 @@ async function getAddressTxs(address) {
   // GBX — limita dura: pe adrese cu zeci de mii de UTXO (mining) evita 200k+ RPC (hang).
   // Sorteaza desc dupa height (cele mai recente) + max 50.
   unspents = unspents.slice().sort(function(a,b){ return Number(b.height||0) - Number(a.height||0); }).slice(0, 50);
-  const tip = Number(await runCli('getblockcount'));
+  const tip = Number(await runCli(['getblockcount']));
 
   const items = [];
   for (const u of unspents) {
@@ -361,7 +366,7 @@ async function broadcastRawTx(rawtx) {
     throw new Error('Missing rawtx');
   }
 
-  const txid = await runCli(`sendrawtransaction "${rawtx}"`);
+  const txid = await runCli(["sendrawtransaction",_assertHex(rawtx,"rawtx")]);
   return {
     ok: true,
     txid,
@@ -390,8 +395,8 @@ const server = http.createServer(async (req, res) => {
     const blockMatch = url.pathname.match(/^\/api\/block\/(\d+)$/);
     if (req.method === 'GET' && blockMatch) {
       const h = Number(blockMatch[1]);
-      const hash = (await runCli(`getblockhash ${h}`)).trim();
-      const header = JSON.parse(await runCli(`getblockheader "${hash}"`));
+      const hash = (await runCli(["getblockhash",_assertInt(h)])).trim();
+      const header = JSON.parse(await runCli(["getblockheader",_assertHex(hash,"blockhash")]));
       return sendJson(res, 200, {
         height: header.height,
         hash: header.hash,
@@ -436,7 +441,7 @@ const server = http.createServer(async (req, res) => {
         }
         try {
           const ixU = gbxIndex.scanLikeIndex(address);
-          const scan = ixU ? ixU : JSON.parse(await runScanSerialized(`[{"desc":"addr(${address})"}]`));
+          const scan = ixU ? ixU : JSON.parse(await runScanSerialized(`[{"desc":"addr(${_assertAddr(address)})"}]`));
           let rawUnspents = scan.unspents || [];
           const totalCount = rawUnspents.length;
           // GBX — daca limit cerut: sorteaza desc dupa amount + ia primele N (BUY/SELL rapid pe adrese cu multe UTXO)
@@ -455,7 +460,7 @@ const server = http.createServer(async (req, res) => {
             }
             let coinbase = false;
             try {
-              const txoutRaw = await runCli(`gettxout ${u.txid} ${u.vout}`);
+              const txoutRaw = await runCli(["gettxout",_assertTxid(u.txid),_assertInt(u.vout)]);
               const txout = JSON.parse(txoutRaw || 'null');
               coinbase = !!(txout && txout.coinbase);
             } catch (_) { /* default coinbase=false */ }
