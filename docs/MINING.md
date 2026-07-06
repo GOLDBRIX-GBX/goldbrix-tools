@@ -14,7 +14,9 @@ Any stratum-compatible SHA-256d miner works. Example with cpuminer:
 ./cpuminer -a sha256d -o stratum+tcp://goldbrix.app:3333 -u bn1YOURADDRESS.worker1 -p x
 ```
 
-Login format: `bn1address.workername` (worker name is anything you like). Password is ignored.
+Login format: `bn1address.workername` (worker name is anything you like).
+
+**Difficulty (vardiff):** the pool auto-adjusts share difficulty per connection (target ~1 share/8s, retarget ~45s), so remote miners are no longer rejected. You may optionally set a starting difficulty via the password field: `-p d=1000` (any positive number). Leave it as `-p x` to let vardiff pick automatically.
 
 ## 3. What happens when you find a block
 
