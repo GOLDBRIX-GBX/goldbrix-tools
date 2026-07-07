@@ -380,8 +380,8 @@ def scan_and_claim_gbx(st,fund,ctx):
         DEST=gcli("getnewaddress","","bech32",wallet=WALLET); DSPK=bytes.fromhex(gclij("getaddressinfo",DEST,wallet=WALLET)["scriptPubKey"])
         sh=bip143(le,sw["gbx_vout"],SCRIPT,sw["gbx_val"],0xffffffff,DSPK,oval,0)
         wit=[sgn(skLP,sh), s, b'\x01', SCRIPT]
-        ctx=gcli("sendrawtransaction",ser_tx(le,sw["gbx_vout"],0xffffffff,DSPK,oval,wit,0)); gmine(1,fund)
-        sw["status"]="completed"; sw["gbx_claim_tx"]=ctx
+        _claim_txid=gcli("sendrawtransaction",ser_tx(le,sw["gbx_vout"],0xffffffff,DSPK,oval,wit,0)); gmine(1,fund)
+        sw["status"]="completed"; sw["gbx_claim_tx"]=_claim_txid
         print(f"  [CLAIM GBX] {sid[:14]} preimage din EVM -> inventar GBX revendicat")
     save_state(st)
 
