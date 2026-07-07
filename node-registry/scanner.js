@@ -37,7 +37,10 @@ function decode(hexasm){ // scriptPubKey.asm: "OP_RETURN <hex>"
 const VALID = /^https:\/\/[a-z0-9.-]+(:\d+)?(\/[a-zA-Z0-9._\/-]*)?$/;
 (async()=>{
   const st = load();
-  if (!st.scanned_height) st.scanned_height = START_HEIGHT;
+  if (!st.scanned_height) {
+    // First run, no state: only the liveness window matters — older announces are expired anyway.
+    st.scanned_height = START_HEIGHT || Math.max(0, (await rpc('getblockcount')) - WINDOW);
+  }
   log('start from', st.scanned_height, 'window', WINDOW);
   for(;;){
     try{
