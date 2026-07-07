@@ -75,6 +75,7 @@ Requires=goldbrixd.service
 [Service]
 User=gbx
 Environment=GBX_CLI=/usr/local/bin/goldbrix-cli GBX_RPC_PORT=8332 GBX_DATADIR=${DATADIR} PORT=8088
+Environment=GBX_NODEREG_STATE=${TOOLSDIR}/node-registry/node-registry.json
 WorkingDirectory=${TOOLSDIR}/read-api
 ExecStart=/usr/bin/node read-api.js
 Restart=always
@@ -98,7 +99,23 @@ RestartSec=10
 WantedBy=multi-user.target
 UNIT
 systemctl daemon-reload
-systemctl enable --now goldbrixd gbx-read-api gbx-indexer
+cat > /etc/systemd/system/gbx-node-registry.service << UNIT
+[Unit]
+Description=GBX Node Registry Scanner (on-chain GBX:NODE discovery)
+After=goldbrixd.service
+Requires=goldbrixd.service
+[Service]
+Environment=GBX_DATADIR=${DATADIR}
+Environment=GBX_NODEREG_STATE=${TOOLSDIR}/node-registry/node-registry.json
+WorkingDirectory=${TOOLSDIR}/node-registry
+ExecStart=/usr/bin/node scanner.js
+Restart=always
+RestartSec=5
+[Install]
+WantedBy=multi-user.target
+UNIT
+
+systemctl enable --now goldbrixd gbx-read-api gbx-indexer gbx-node-registry
 
 echo "[6/6] done"
 echo "Sync from genesis starts now (headers via fixed seeds baked in the binary — no central server needed)."
