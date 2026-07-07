@@ -1,0 +1,65 @@
+{
+ "_comment": "Registru multi-chain UNIC (build-once). Daemon/gateway itereaza lanturile enabled:true. Adaugare lant = intrare aici + deploy HTLC + enabled:true. ZERO cod nou. Solana = model separat (nu EVM).",
+ "chains": {
+  "base": {
+   "enabled": true,
+   "chainId": 8453,
+   "USDC": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+   "HTLC": "0x8e351c32dfb27aa22334a20dcf7262f54f78e0c0",
+   "lp_evm": "FILL_YOUR_OWN",
+   "from_block": 47597111,
+   "rpcs": [
+    "https://mainnet.base.org",
+    "https://base-rpc.publicnode.com",
+    "https://base-mainnet.public.blastapi.io",
+    "https://base.drpc.org",
+    "https://base-pokt.nodies.app"
+   ],
+   "HTLC_v1_legacy": "0xdb59336c948856281FA1A9626843d80663bDb0f4",
+   "HTLC_gasless": true,
+   "htlc_deployed_at": "2026-06-29T05:33:20Z"
+  },
+  "arbitrum": {
+   "enabled": true,
+   "chainId": 42161,
+   "USDC": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+   "HTLC": "0xa43813d90adb98a5c400113ce2cc29d43d4ab867",
+   "lp_evm": "FILL_YOUR_OWN",
+   "from_block": 478511702,
+   "rpcs": [
+    "https://arb1.arbitrum.io/rpc",
+    "https://arbitrum-one-rpc.publicnode.com",
+    "https://arbitrum.public-rpc.com",
+    "https://arbitrum.drpc.org",
+    "https://arb-pokt.nodies.app"
+   ],
+   "HTLC_gasless": true,
+   "htlc_deployed_at": "2026-06-29T08:00:00Z"
+  },
+  "bnb": {
+   "enabled": false,
+   "chainId": 56,
+   "USDC": "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
+   "HTLC": "",
+   "lp_evm": "FILL_YOUR_OWN",
+   "from_block": 0,
+   "rpcs": [
+    "https://bsc-dataseed.bnbchain.org",
+    "https://bsc-rpc.publicnode.com"
+   ]
+  },
+  "solana": {
+   "enabled": true,
+   "program": "AAbKiRpmY5jYfC37DuQ9aTsWnNqxZXLe4fvyGSb3YS1F",
+   "rpc": "https://api.mainnet-beta.solana.com",
+   "idl": "/root/gbx-solana-htlc/htlc/target/idl/htlc.json",
+   "lp_sol": "FILL_YOUR_OWN",
+   "lp_ata": "FILL_YOUR_OWN",
+   "USDC": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+   "t2_blocks": 600,
+   "t2_sol": 7200,
+   "_note": "model separat de EVM (Anchor/Rust). enabled:false pana la smoke-test end-to-end.",
+   "kind": "solana"
+  }
+ }
+}

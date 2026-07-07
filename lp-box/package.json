@@ -1,0 +1,12 @@
+{
+  "name": "gbx-lp-box",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.30.1",
+    "@solana/web3.js": "^1.95.4",
+    "@solana/spl-token": "^0.4.14"
+  }
+}
