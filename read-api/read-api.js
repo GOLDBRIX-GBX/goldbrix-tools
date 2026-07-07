@@ -388,6 +388,15 @@ const server = http.createServer(async (req, res) => {
 
     const url = new URL(req.url, `http://${req.headers.host}`);
 
+    if (req.method === 'GET' && url.pathname === '/api/node-registry') {
+      // GBX on-chain node registry (GBX:NODE: OP_RETURN). Read-only, keyless.
+      try {
+        const regPath = process.env.GBX_NODEREG_STATE || '/root/goldbrix-tools/node-registry/node-registry.json';
+        const reg = JSON.parse(fs.readFileSync(regPath,'utf8'));
+        res.writeHead(200, {'Content-Type':'application/json'});
+        return res.end(JSON.stringify({updated_height: reg.scanned_height, nodes: reg.nodes}));
+      } catch(e){ res.writeHead(200,{'Content-Type':'application/json'}); return res.end('{"updated_height":0,"nodes":{}}'); }
+    }
     if (req.method === 'GET' && url.pathname === '/api/status') {
       return sendJson(res, 200, await getStatus());
     }

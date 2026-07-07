@@ -1,2 +1,3 @@
 *.bak*
 read-api/node_modules/
+node-registry/node-registry.json
