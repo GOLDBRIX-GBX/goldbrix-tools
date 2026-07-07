@@ -236,7 +236,7 @@ class H(BaseHTTPRequestHandler):
                 allu=[]
                 _used_scan=False
                 try:
-                    _qo=json.dumps({"minimumSumAmount":(target+1) if target>0 else 999999999,"maximumCount":200});
+                    _qo=json.dumps({"minimumSumAmount":(target+1) if target>0 else 999999999,"maximumCount":1400});
                     lu=subprocess.run(GCLI+["-rpcwallet=user_scan","listunspent","1","9999999",json.dumps([addr]),"true",_qo],capture_output=True,text=True,timeout=30)
                     if lu.returncode==0 and lu.stdout.strip():
                         _rows=json.loads(lu.stdout)
@@ -279,7 +279,10 @@ class H(BaseHTTPRequestHandler):
                         uns.append({"txid":u["txid"],"vout":u["vout"],"amount":u["amount"],"spendable":True,"scriptPubKey":_spk})
                         acc+=float(u["amount"])
                         if tgt>0 and acc>=tgt+0.001: break
-                return self._s(200,{"unspents":uns,"total":round(sum(float(u["amount"]) for u in uns),8)})
+                _tot=round(sum(float(u["amount"]) for u in uns),8)
+                _resp={"unspents":uns,"total":_tot}
+                if tgt>0 and _tot<tgt: _resp["target_unmet"]=True; _resp["max_per_tx"]=_tot
+                return self._s(200,_resp)
             except Exception as e:
                 return self._s(200,{"unspents":[],"error":str(e)})
         if self.path.startswith('/sell-guard/'):

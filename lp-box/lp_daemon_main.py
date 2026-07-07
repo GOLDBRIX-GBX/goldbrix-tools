@@ -303,7 +303,6 @@ def run_once():
             _c=chain_ctx(_cn)
             scan_and_lock_gbx(st,fund,_c); scan_and_claim_usdc(st,_c); scan_and_lock_usdc(st,fund,_c); scan_and_claim_gbx(st,fund,_c)
         except Exception as _e:
-            import traceback; traceback.print_exc()
             print(f"  [CHAIN {_cn} RESILIENT] {str(_e)[:100]} -> sar peste lant, continui")
     try:
         scan_and_refund_gbx(st,fund)
