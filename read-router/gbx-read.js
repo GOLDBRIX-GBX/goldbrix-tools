@@ -27,6 +27,20 @@
       }).catch(function(){});
   });
 
+  // On-chain discovery (IDEE C): node registry from GBX:NODE: OP_RETURN via any known node.
+  // Zero web server needed once >=1 node is reachable. Failure = silent.
+  window.GBX_NODES.slice(0,2).forEach(function(base){
+    fetch(base.replace(/\/+$/,'')+'/node-registry', {cache:'no-store'})
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(j){
+        if(!j || !j.nodes) return;
+        Object.keys(j.nodes).forEach(function(n){
+          if(n.indexOf('https://')===0 && window.GBX_NODES.indexOf(n)===-1)
+            window.GBX_NODES.push(n);
+        });
+      }).catch(function(){});
+  });
+
   // Node scoring: self-healing at the edge. fails-successes; >=3 -> demote to tail.
   var SCORE = {};
   function _fail(n){ SCORE[n]=(SCORE[n]||0)+1; }
