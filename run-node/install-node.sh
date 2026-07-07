@@ -16,7 +16,7 @@ TOOLSDIR="/opt/goldbrix-tools"
 [ "$(id -u)" -eq 0 ] || { echo "run as root"; exit 1; }
 ARCH="$(uname -m)"; [ "$ARCH" = "x86_64" ] || { echo "x86_64 only (got $ARCH)"; exit 1; }
 FREE_GB=$(df --output=avail -BG "$(dirname "$DATADIR")" | tail -1 | tr -dc '0-9')
-[ "$FREE_GB" -ge 900 ] || { echo "need >=900GB free (full non-pruned chain), have ${FREE_GB}GB"; exit 1; }
+[ "$FREE_GB" -ge 40 ] || { echo "need >=40GB free (chain ~6GB now, grows over time), have ${FREE_GB}GB"; exit 1; }
 
 echo "[1/6] dependencies"
 apt-get update -qq
