@@ -303,6 +303,7 @@ def run_once():
             _c=chain_ctx(_cn)
             scan_and_lock_gbx(st,fund,_c); scan_and_claim_usdc(st,_c); scan_and_lock_usdc(st,fund,_c); scan_and_claim_gbx(st,fund,_c)
         except Exception as _e:
+            import traceback; traceback.print_exc()
             print(f"  [CHAIN {_cn} RESILIENT] {str(_e)[:100]} -> sar peste lant, continui")
     try:
         scan_and_refund_gbx(st,fund)
@@ -342,6 +343,7 @@ def scan_and_lock_usdc(st,fund,ctx):
     for hl,intent in intents.items():
         if intent.get("direction")!="sell": continue
         if intent.get("chain")=="solana": continue  # sell:solana = ramura lp_solana, nu EVM
+        if intent.get("chain","base")!=ctx["name"]: continue  # lock ONLY on the intent's chain (fix double-lock)
         if "gbx_txid" not in intent or "gbx_vout" not in intent: continue
         sid="sell:"+ctx["name"]+":"+hl
         if sid in st["swaps"]: continue
