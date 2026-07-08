@@ -44,6 +44,7 @@ txindex=1
 prune=0
 listen=1
 dbcache=1024
+fallbackfee=0.0001
 CONF
 mkdir -p "$DATADIR/index"
 chown -R gbx:gbx "$DATADIR"
