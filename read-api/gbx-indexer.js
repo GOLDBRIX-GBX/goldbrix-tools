@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS utxos (
   txid TEXT NOT NULL, vout INTEGER NOT NULL,
   address TEXT NOT NULL, sats INTEGER NOT NULL,
   height INTEGER NOT NULL, spent_height INTEGER,
+  spk TEXT, coinbase INTEGER DEFAULT 0,
   PRIMARY KEY (txid, vout));
 CREATE INDEX IF NOT EXISTS idx_addr_uns ON utxos(address) WHERE spent_height IS NULL;
 CREATE INDEX IF NOT EXISTS idx_h ON utxos(height);
