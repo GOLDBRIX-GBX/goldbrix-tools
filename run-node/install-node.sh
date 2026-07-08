@@ -45,6 +45,7 @@ prune=0
 listen=1
 dbcache=1024
 CONF
+mkdir -p "$DATADIR/index"
 chown -R gbx:gbx "$DATADIR"
 
 echo "[4/6] read-api + indexer from goldbrix-tools"
@@ -90,7 +91,7 @@ After=goldbrixd.service
 Requires=goldbrixd.service
 [Service]
 User=gbx
-Environment=GBX_CLI=/usr/local/bin/goldbrix-cli GBX_RPC_PORT=8332 GBX_DATADIR=${DATADIR}
+Environment=GBX_CLI=/usr/local/bin/goldbrix-cli GBX_RPC_PORT=8332 GBX_DATADIR=${DATADIR} GBX_INDEX_DB=${DATADIR}/index/gbx-index.db
 WorkingDirectory=${TOOLSDIR}/read-api
 ExecStart=/usr/bin/node gbx-indexer.js
 Restart=always
