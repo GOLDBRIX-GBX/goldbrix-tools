@@ -384,12 +384,14 @@ def scan_and_lock_usdc(st,fund,ctx):
         if intent.get("direction")!="sell": continue
         if intent.get("chain")=="solana": continue  # sell:solana = ramura lp_solana, nu EVM
         if not intent.get("chain"):
+            sid="sell:nochain:"+hl  # scope fix: sid construit explicit AICI (bug s33: citit inainte de atribuirea de la finalul buclei)
             if sid not in st["swaps"]:
                 st["swaps"][sid]={"direction":"sell","hashlock":hl,"status":"rejected_missing_chain"}; save_state(st)
                 refund_sell_guard(intent_refund_key(intent),intent.get("gbx_val"))
                 print(f"  [GUARD SELL] REJECT {hl[:14]} intent fara chain (fail-loud, nu ghicesc lantul)")
             continue
         if intent.get("chain")!=ctx["name"]: continue  # lock ONLY on the intent's chain (fix double-lock)
+        sid="sell:"+ctx["name"]+":"+hl  # scope fix: sid definit INAINTE de orice citire (LP-15 il folosea nedefinit)
         _sw=st["swaps"].get(sid)
         if _sw and str(_sw.get("status","")).startswith(("rejected","completed","refunded","archived")):
             # LP-15: swap terminal -> intent zombie; il sterg din intents.json ca sa nu fie reluat la nesfarsit
