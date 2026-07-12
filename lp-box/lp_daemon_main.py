@@ -56,7 +56,9 @@ def gcli(*a,wallet=None):
     c=list(GCLI)+([f"-rpcwallet={wallet}"] if wallet else [])+[_enc(x) for x in a]
     # REZILIENT: nodul poate fi temporar in "Loading" (-28) la restart/reindex -> asteapta + reincearca
     for _attempt in range(40):   # B-fix: acopera restart nod ~90s real + margine = ~160s
-        r=subprocess.run(c,capture_output=True,text=True)
+        try: r=subprocess.run(c,capture_output=True,text=True,timeout=90)
+        except subprocess.TimeoutExpired:
+            print(f"  [WAIT] gcli {a[0]}: TIMEOUT 90s, retry {_attempt+1}/40"); continue
         if r.returncode==0: return r.stdout.strip()
         err=r.stderr.strip()
         # erori tranzitorii: nod in loading / inca porneste -> retry
@@ -69,7 +71,8 @@ def gclij(*a,wallet=None):
     o=gcli(*a,wallet=wallet); return json.loads(o) if o else None
 def gtry(*a,wallet=None):
     c=list(GCLI)+([f"-rpcwallet={wallet}"] if wallet else [])+[_enc(x) for x in a]
-    return subprocess.run(c,capture_output=True,text=True).returncode==0
+    try: return subprocess.run(c,capture_output=True,text=True,timeout=90).returncode==0
+    except subprocess.TimeoutExpired: return False
 def evmcli(ctx=None,**d):
     if ctx is not None:
         d.update(rpc=ctx["rpcs"][0],rpcs=ctx["rpcs"],chainId=ctx["chainId"])
@@ -77,7 +80,7 @@ def evmcli(ctx=None,**d):
     else:
         d.update(rpc=RPC,rpcs=RPCS,chainId=CHAIN)
         if "fromBlock" not in d: d["fromBlock"]=FROM_BLOCK
-    r=subprocess.run(["node",E["EVM_CLI"],json.dumps(d)],capture_output=True,text=True)
+    r=subprocess.run(["node",E["EVM_CLI"],json.dumps(d)],capture_output=True,text=True,timeout=120)
     if r.returncode!=0: raise RuntimeError("evmcli rc: "+r.stderr.strip())
     o=json.loads(r.stdout.strip())
     if o.get("error"): raise RuntimeError("evmcli: "+o["error"])
@@ -133,7 +136,16 @@ def ensure_setup(st):
     if gheight()<110: gmine(110-gheight(),fund)
     if not st.get("lp_gbx_sk"): sk,_=gen_key(); st["lp_gbx_sk"]=sk.to_string().hex()
     return fund
+def _fund_height(txid,fallback_h):
+    # sursa de adevar on-chain: blocul fund-tx din confirmations (imun la lock_h corupt de restart)
+    try:
+        tx=gclij("getrawtransaction",txid,True)
+        c=tx.get("confirmations",0)
+        if c>0: return gheight()-c+1
+    except Exception: pass
+    return fallback_h
 def find_preimage(txid,vout,from_h):
+    from_h=min(from_h,_fund_height(txid,from_h))
     for h in range(from_h,gheight()+1):
         blk=gclij("getblock",gcli("getblockhash",h),2)
         for tx in blk["tx"]:
@@ -145,6 +157,7 @@ def find_preimage(txid,vout,from_h):
 def spent_via_refund(txid,vout,from_h):
     # output cheltuit pe calea de REFUND (timelock, fara preimage) = legitim, NU furt.
     # In HTLC-ul nostru: claim are witness[1] non-empty (preimage). refund are witness[1] gol.
+    from_h=min(from_h,_fund_height(txid,from_h))
     for h in range(from_h,gheight()+1):
         blk=gclij("getblock",gcli("getblockhash",h),2)
         for tx in blk["tx"]:
@@ -226,7 +239,9 @@ def scan_and_claim_usdc(st,ctx):
             rtx=spent_via_refund(sw["gbx_txid"],sw["gbx_vout"],sw["lock_h"])
             if rtx is not None:
                 sw["status"]="refunded_on_timelock"; sw["refund_tx"]=rtx; print(f"  [REFUND] {sid[:14]} output refundat pe timelock (legitim, user si-a luat GBX inapoi)"); continue
-            sw["status"]="ANOMALY_spent_no_preimage"; st["halt"]=True; print(f"  [HALT] {sid[:14]} output disparut REAL fara preimage NICI refund"); continue
+            sw["_unres"]=sw.get("_unres",0)+1
+            if sw["_unres"]<3: print(f"  [UNRESOLVED] {sid[:14]} spender negasit inca (retry {sw['_unres']}/3)"); continue
+            sw["status"]="ANOMALY_spent_no_preimage"; st["halt"]=True; print(f"  [HALT] {sid[:14]} output disparut REAL fara preimage NICI refund (3 scanari)"); continue
         if sha256(s).hex()!=sw["hashlock"][2:]: sw["status"]="ANOMALY_bad_preimage"; st["halt"]=True; print(f"  [HALT] {sid[:14]} preimage gresit"); continue
         o=evmcli(ctx=ctx,cmd="claim",pk=LP_PK_EVM,htlc=ctx["htlc"],id=sw.get("evm_id",sid.split(":",1)[-1]),preimage="0x"+s.hex())
         sw["status"]="completed" if o.get("status")=="0x1" else "evm_claim_failed"

@@ -70,8 +70,11 @@ def sol_scan_and_claim_usdc(st, cfg, deps):
             if rtx is not None:
                 sw["status"] = "refunded_on_timelock"; sw["refund_tx"] = rtx
                 print(f"  [SOL REFUND-L1] {sid[:14]} user si-a luat GBX inapoi pe timelock"); continue
+            sw["_unres"] = sw.get("_unres",0)+1
+            if sw["_unres"] < 3:
+                print(f"  [SOL UNRESOLVED] {sid[:14]} spender negasit inca (retry {sw['_unres']}/3)"); continue
             sw["status"] = "ANOMALY_spent_no_preimage"; st["halt"] = True
-            print(f"  [SOL HALT] {sid[:14]} GBX disparut fara preimage NICI refund"); continue
+            print(f"  [SOL HALT] {sid[:14]} GBX disparut fara preimage NICI refund (3 scanari)"); continue
         hl_clean = sw["hashlock"][2:] if sw["hashlock"].startswith("0x") else sw["hashlock"]
         if hashlib.sha256(s).hexdigest() != hl_clean:
             sw["status"] = "ANOMALY_bad_preimage"; st["halt"] = True

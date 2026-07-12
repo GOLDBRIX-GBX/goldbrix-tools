@@ -51,6 +51,7 @@ def lp_info():
 # chokepoint UNIC pret/fee — sursa unica lp_pricing.py (acelasi modul ca daemon-ul)
 import os; sys.path.insert(0,os.path.dirname(os.path.abspath(__file__)))
 from lp_pricing import quote as _quote
+from lp_pricing import quote_sell
 import socketserver as _ss
 try:
     _ss.TCPServer.allow_reuse_address = True
@@ -158,7 +159,7 @@ class H(BaseHTTPRequestHandler):
                 if amt<=0 or amt>2000000: return self._s(400,{'error':'amount_out_of_range'})
             except: return self._s(400,{'error':'bad_amount'})
             sol=load(CHAINS_F,{}).get('chains',{}).get('solana',{})
-            arg=json.dumps({'cmd':'prepare-lock','program':sol.get('program'),'rpc':sol.get('rpc'),
+            arg=json.dumps({'cmd':'prepare-lock','idl':sol.get('idl'),'program':sol.get('program'),'rpc':sol.get('rpc'),
                 'commitment':'confirmed','lp_secret':_sol_secret(),'user_pubkey':body['user_pubkey'],
                 'mint':sol.get('USDC'),'swap_id':body['swap_id'],'hashlock':body['hashlock'],
                 'amount':str(amt),'timelock':str(int(_t.time())+int(body.get('timelock_secs',3600)))})
@@ -173,7 +174,7 @@ class H(BaseHTTPRequestHandler):
             need=('user_pubkey','swap_id','preimage')
             if not all(body.get(k) for k in need): return self._s(400,{'error':'missing','need':list(need)})
             sol=load(CHAINS_F,{}).get('chains',{}).get('solana',{})
-            arg=json.dumps({'cmd':'prepare-claim','program':sol.get('program'),'rpc':sol.get('rpc'),
+            arg=json.dumps({'cmd':'prepare-claim','idl':sol.get('idl'),'program':sol.get('program'),'rpc':sol.get('rpc'),
                 'commitment':'confirmed','lp_secret':_sol_secret(),'user_pubkey':body['user_pubkey'],
                 'mint':sol.get('USDC'),'swap_id':body['swap_id'],'preimage':body['preimage']})
             r=subprocess.run(['node',SOL_CLI,arg],capture_output=True,text=True,timeout=40)
@@ -185,7 +186,7 @@ class H(BaseHTTPRequestHandler):
             body=self._body()
             if not (body.get('tx_signed_b64') and body.get('swap_id')): return self._s(400,{'error':'missing'})
             sol=load(CHAINS_F,{}).get('chains',{}).get('solana',{})
-            arg=json.dumps({'cmd':'submit-claim','program':sol.get('program'),'rpc':sol.get('rpc'),
+            arg=json.dumps({'cmd':'submit-claim','idl':sol.get('idl'),'program':sol.get('program'),'rpc':sol.get('rpc'),
                 'commitment':'confirmed','tx_signed_b64':body['tx_signed_b64'],'swap_id':body['swap_id']})
             r=subprocess.run(['node',SOL_CLI,arg],capture_output=True,text=True,timeout=60)
             try: o=json.loads(r.stdout.strip())
@@ -198,7 +199,7 @@ class H(BaseHTTPRequestHandler):
             need=('tx_signed_b64','swap_id','hashlock','pkU','gbx_amount')
             if not all(body.get(k) for k in need): return self._s(400,{'error':'missing','need':list(need)})
             sol=load(CHAINS_F,{}).get('chains',{}).get('solana',{})
-            arg=json.dumps({'cmd':'submit-lock','program':sol.get('program'),'rpc':sol.get('rpc'),
+            arg=json.dumps({'cmd':'submit-lock','idl':sol.get('idl'),'program':sol.get('program'),'rpc':sol.get('rpc'),
                 'commitment':'confirmed','tx_signed_b64':body['tx_signed_b64'],'swap_id':body['swap_id']})
             r=subprocess.run(['node',SOL_CLI,arg],capture_output=True,text=True,timeout=90)
             try: o=json.loads(r.stdout.strip())
@@ -213,7 +214,8 @@ class H(BaseHTTPRequestHandler):
         if self.path=='/broadcast':
             body=self._body(); raw=body.get('rawtx')
             if not raw: return self._s(400,{'error':'missing_rawtx'})
-            r=subprocess.run(GCLI+['sendrawtransaction',raw],capture_output=True,text=True)
+            # LP-13: rawtx prin STDIN (nu argv) — argv are limita kernel ARG_MAX; tx mari (>128KB hex) crapau
+            r=subprocess.run(GCLI+['-stdin','sendrawtransaction'],input=raw+'\n',capture_output=True,text=True,timeout=60)
             if r.returncode==0 and r.stdout.strip(): return self._s(200,{'txid':r.stdout.strip()})
             return self._s(400,{'error':(r.stderr or 'broadcast_failed').strip()})
         return self._s(404,{'error':'not_found'})
@@ -298,7 +300,12 @@ class H(BaseHTTPRequestHandler):
             except Exception as e:
                 return self._s(200,{"height":0,"error":str(e)})
         if self.path.startswith('/quote'):
-            qs=parse_qs(urlparse(self.path).query); usd=float((qs.get('usd') or ['0'])[0])
+            qs=parse_qs(urlparse(self.path).query)
+            _g=qs.get('gbx')
+            if _g:
+                _q=quote_sell(float(_g[0])); _q['breaker']=_breaker_active()
+                return self._s(200,_q)
+            usd=float((qs.get('usd') or ['0'])[0])
             _q=quote(usd); _q['breaker']=_breaker_active()
             return self._s(200,_q)
         if self.path.startswith('/swap/'):

@@ -91,12 +91,16 @@ def quote(usd):
     if c.get("price_source")=="amm":
         _dy=_amm_buy_out(usd)
         if _dy is not None:
+            floor=float(c.get("price_usd",0.10))
+            eff_price=(usd/_dy) if _dy>0 else floor
+            # LP-14: FLOOR pe buy — LP nu vinde GBX sub pretul-podea; la floor, gbx_out se limiteaza corespunzator
+            if eff_price<floor:
+                eff_price=floor; _dy=usd/floor
             net=_dy*(1-(sp+bn)/10000.0)
             frac,gbx_res,cap_gbx=_cap_info(c)
             capped=bool(cap_gbx>0 and net>cap_gbx)
-            eff_price=round(usd/_dy,6) if _dy>0 else round(price,6)
-            return {"usd_in":usd,"price_usd":eff_price,"spread_bps":sp,"burn_bps":bn,"gbx_out":round(net,8),
-                    "cap_gbx":round(cap_gbx,8),"capped":capped,"max_usd_in":None,"amm":True}
+            return {"usd_in":usd,"price_usd":round(eff_price,6),"spread_bps":sp,"burn_bps":bn,"gbx_out":round(net,8),
+                    "cap_gbx":round(cap_gbx,8),"capped":capped,"max_usd_in":None,"amm":True,"floor_usd":floor,"at_floor":bool(eff_price<=floor)}
     gross=(usd/price) if price>0 else 0.0; net=gross*(1-(sp+bn)/10000.0)
     frac,gbx_res,cap_gbx=_cap_info(c)
     capped=False; max_usd_in=None
@@ -110,12 +114,17 @@ def quote_sell(gbx):
     if c.get("price_source")=="amm":
         _dx=_amm_sell_out(gbx)
         if _dx is not None:
+            floor=float(c.get("price_usd",0.10))
+            eff_price=(_dx/gbx) if gbx>0 else floor
+            # LP-14: sub floor LP-ul NU coteaza sell (plata la floor dintr-o rezerva sub-floor ar goli LP-ul; refuz onest)
+            if eff_price<floor:
+                return {"gbx_in":gbx,"price_usd":round(eff_price,6),"spread_bps":sp,"burn_bps":bn,"usd_out":0.0,
+                        "cap_gbx":0.0,"capped":True,"max_gbx_in":0.0,"amm":True,"floor_usd":floor,"below_floor":True}
             usd=_dx*(1-(sp+bn)/10000.0)
             frac,gbx_res,cap_gbx=_cap_info(c)
             capped=bool(cap_gbx>0 and gbx>cap_gbx)
-            eff_price=round(_dx/gbx,6) if gbx>0 else round(price,6)
-            return {"gbx_in":gbx,"price_usd":eff_price,"spread_bps":sp,"burn_bps":bn,"usd_out":round(usd,6),
-                    "cap_gbx":round(cap_gbx,8),"capped":capped,"max_gbx_in":(round(cap_gbx,8) if cap_gbx>0 else None),"amm":True}
+            return {"gbx_in":gbx,"price_usd":round(eff_price,6),"spread_bps":sp,"burn_bps":bn,"usd_out":round(usd,6),
+                    "cap_gbx":round(cap_gbx,8),"capped":capped,"max_gbx_in":(round(cap_gbx,8) if cap_gbx>0 else None),"amm":True,"floor_usd":floor}
     usd=gbx*price*(1-(sp+bn)/10000.0)
     frac,gbx_res,cap_gbx=_cap_info(c)
     capped = bool(cap_gbx>0 and gbx>cap_gbx)   # vinde mai mult GBX decat cap-ul

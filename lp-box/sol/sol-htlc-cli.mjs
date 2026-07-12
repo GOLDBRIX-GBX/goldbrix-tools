@@ -170,8 +170,16 @@ try {
     await conn.confirmTransaction(sig, COMMITMENT);
     const swapId = Buffer.from(a.swap_id.replace(/^0x/, ""), "hex");
     const { vaultPda } = pdas(swapId);
-    const vaultBal = await splBal(vaultPda.toBase58());
-    out = { status: (vaultBal !== "0/none" && vaultBal !== "0") ? "0x1" : "0x0", sig, vault: vaultBal };
+    // verdict robust: tx confirmata cu err=null = succes; vault-ul se citeste cu retry (race RPC)
+    let vaultBal = "0/none";
+    for (let i = 0; i < 10; i++) {
+      vaultBal = await splBal(vaultPda.toBase58());
+      if (vaultBal !== "0/none" && vaultBal !== "0") break;
+      await new Promise(r => setTimeout(r, 1500));
+    }
+    const st = await conn.getSignatureStatuses([sig]).catch(() => null);
+    const txErr = st && st.value && st.value[0] ? st.value[0].err : "unknown";
+    out = { status: (txErr === null) ? "0x1" : "0x0", sig, vault: vaultBal, txErr };
   }
 
   else if (a.cmd === "lock-sell") {
