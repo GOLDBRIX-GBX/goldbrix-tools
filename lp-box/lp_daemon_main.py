@@ -130,6 +130,22 @@ def load_state():
 def save_state(st): json.dump(st,open(STATE_F,"w"),indent=1)
 def load_intents():
     return json.load(open(INTENTS_F)) if os.path.exists(INTENTS_F) else {}
+def refund_sell_guard(pk,val_sats):
+    # restituie volumul consumat de _sell_guard la /intent cand daemonul respinge (reject nu e vanzare)
+    try:
+        sgf=E.get("SELL_GUARD_F")
+        if not sgf or not pk: return
+        sg=json.load(open(sgf)) if os.path.exists(sgf) else {}
+        e=sg.get(pk)
+        if not e: return
+        e['vol']=max(0,int(e.get('vol',0))-int(val_sats or 0))
+        e['last']=0   # reject-ul nu porneste cooldown: userul poate reincerca imediat cu pret corect
+        sg[pk]=e; json.dump(sg,open(sgf,'w'))
+        print(f"  [GUARD] cap restituit pentru {str(pk)[:12]} ({int(val_sats or 0)/1e8} GBX)")
+    except Exception as _e:
+        print(f"  [GUARD] restituire esuata: {_e}")
+def intent_refund_key(intent):
+    return intent.get("refund_pubkey") or intent.get("sol_user_pubkey")
 def ensure_setup(st):
     gtry("createwallet",WALLET); gtry("loadwallet",WALLET)
     fund=gcli("getnewaddress","","bech32",wallet=WALLET)
@@ -357,7 +373,21 @@ def scan_and_lock_usdc(st,fund,ctx):
     for hl,intent in intents.items():
         if intent.get("direction")!="sell": continue
         if intent.get("chain")=="solana": continue  # sell:solana = ramura lp_solana, nu EVM
-        if intent.get("chain","base")!=ctx["name"]: continue  # lock ONLY on the intent's chain (fix double-lock)
+        if not intent.get("chain"):
+            if sid not in st["swaps"]:
+                st["swaps"][sid]={"direction":"sell","hashlock":hl,"status":"rejected_missing_chain"}; save_state(st)
+                refund_sell_guard(intent_refund_key(intent),intent.get("gbx_val"))
+                print(f"  [GUARD SELL] REJECT {hl[:14]} intent fara chain (fail-loud, nu ghicesc lantul)")
+            continue
+        if intent.get("chain")!=ctx["name"]: continue  # lock ONLY on the intent's chain (fix double-lock)
+        _sw=st["swaps"].get(sid)
+        if _sw and str(_sw.get("status","")).startswith(("rejected","completed","refunded","archived")):
+            # LP-15: swap terminal -> intent zombie; il sterg din intents.json ca sa nu fie reluat la nesfarsit
+            try:
+                _all=load_intents()
+                if hl in _all: del _all[hl]; json.dump(_all,open(INTENTS_F,'w')); print(f"  [LP-15] intent zombie curatat {hl[:14]} (swap {_sw.get('status')})")
+            except Exception as _e: print(f"  [LP-15] curatare esuata {hl[:14]}: {_e}")
+            continue
         if "gbx_txid" not in intent or "gbx_vout" not in intent: continue
         sid="sell:"+ctx["name"]+":"+hl
         if sid in st["swaps"]: continue
@@ -374,6 +404,7 @@ def scan_and_lock_usdc(st,fund,ctx):
         max_usd=quote_sell(gbx_val/1e8)["usd_out"]; req_usdc=int(intent["usdc_amount"])
         if req_usdc > int(max_usd*1e6*1.01):
             st["swaps"][sid]={"direction":"sell","hashlock":hl,"status":"rejected_price"}
+            refund_sell_guard(intent_refund_key(intent),intent.get("gbx_val"))
             print(f"  [GUARD SELL] REJECT {hl[:14]} req_usdc={req_usdc} > max={int(max_usd*1e6)} -> NU blochez USDC"); continue
         evmcli(ctx=ctx,cmd="approve",pk=LP_PK_EVM,token=ctx["usdc"],spender=ctx["htlc"],amount=str(req_usdc))
         T2=int(time.time())+int(intent.get("t2_evm",3600))
@@ -388,7 +419,20 @@ def scan_and_claim_gbx(st,fund,ctx):
         if sw.get("chain","base")!=ctx["name"]: continue
         if claimed is None: claimed={c["id"].lower():c["preimage"] for c in evmcli(ctx=ctx,cmd="claimed",htlc=ctx["htlc"]).get("claimed",[])}
         lid=(sw.get("usdc_lock_id") or "").lower()
-        if lid not in claimed: continue
+        if lid not in claimed:
+            # LP-6: userul NU a revendicat si T2 a expirat -> refund USDC la LP (banii LP-ului; GBX-ul userului ramane refundabil de USER pe L1)
+            _t2=int(sw.get("T2_evm") or 0)
+            if _t2 and int(time.time())>_t2+120:
+                try:
+                    o=evmcli(ctx=ctx,cmd="refund",pk=LP_PK_EVM,htlc=ctx["htlc"],id=sw.get("usdc_lock_id"))
+                    if o.get("status")=="0x1":
+                        sw["status"]="refunded_by_lp"; sw["usdc_refund_tx"]=o.get("hash")
+                        print(f"  [LP-6 REFUND] {sid[:14]} T2 expirat, user nerevendicat -> USDC inapoi la LP tx={str(o.get('hash'))[:14]}")
+                    else:
+                        print(f"  [LP-6] {sid[:14]} refund status={o.get('status')} — reincerc la ciclul urmator")
+                except Exception as _e:
+                    print(f"  [LP-6] {sid[:14]} refund esuat: {str(_e)[:120]} — reincerc la ciclul urmator")
+            continue
         s=bytes.fromhex(claimed[lid][2:])
         if sha256(s).hex()!=sw["hashlock"][2:]: sw["status"]="ANOMALY_bad_preimage_sell"; st["halt"]=True; print(f"  [HALT] {sid[:14]} preimage sell gresit"); continue
         skLP=sk_from_hex(st["lp_gbx_sk"]); SCRIPT=bytes.fromhex(sw["script"])
