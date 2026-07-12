@@ -316,7 +316,15 @@ class H(BaseHTTPRequestHandler):
             try:
                 r=subprocess.run([E["GCLI_BIN"],"-datadir="+E["GBX_DATADIR"],'gettxout',txid,str(int(vout))],capture_output=True,text=True,timeout=30)
                 unspent=bool(r.returncode==0 and r.stdout.strip())
-                return self._s(200,{'txid':txid,'vout':int(vout),'spent':(not unspent)})
+                out={'txid':txid,'vout':int(vout),'spent':(not unspent)}
+                if unspent:
+                    try:
+                        d=json.loads(r.stdout)
+                        out['value_sat']=int(round(float(d.get('value',0))*1e8))
+                        out['spk']=(d.get('scriptPubKey') or {}).get('hex')
+                        out['confirmations']=d.get('confirmations')
+                    except Exception: pass
+                return self._s(200,out)
             except Exception as e:
                 return self._s(200,{'txid':txid,'vout':int(vout),'spent':None,'error':str(e)})
         if self.path.startswith('/swap/'):

@@ -39,6 +39,26 @@ window.GBX_LP_FETCH = async function(C, pathq){
 window.GBX_LP_ENSURE = async function(C){
   try{ await (await window.GBX_LP_FETCH(C,'/quote?usd=1')).json(); }catch(e){}
 };
+// LP-SWAP-STATUS: statusul unui swap vechi traieste DOAR pe LP-ul care l-a procesat.
+// Intreaba TOATE LP-urile din federatie; intoarce primul raspuns TERMINAL (rejected*/refunded*/expired/completed).
+// "pending" de la un LP care nu cunoaste hashlock-ul NU e dovada de viata.
+window.GBX_LP_SWAP_STATUS = async function(hl){
+  var TERM=function(st){ st=String(st||''); return st.indexOf('rejected')===0 || st.indexOf('refunded')===0 || st==='expired' || st==='completed' || st==='archived'; };
+  var bases=[];
+  try{ var d=await (await fetch('/lps.json',{cache:'no-store'})).json(); bases=(d.lps||[]).map(function(x){return x.base_url;}); }catch(_e){}
+  var best=null;
+  for(var i=0;i<bases.length;i++){
+    try{
+      var c=new AbortController(); var t=setTimeout(function(){c.abort();},6000);
+      var r=await fetch(bases[i]+'/swap/'+hl,{cache:'no-store',signal:c.signal}); clearTimeout(t);
+      if(!r.ok) continue;
+      var sw=await r.json();
+      if(sw && TERM(sw.status)) return sw;
+      if(sw && sw.status && !best) best=sw;
+    }catch(_e){}
+  }
+  return best; // null = niciun LP nu a raspuns
+};
 // LP-ROUTER: reads /lps.json, health-checks /lp-info, picks first healthy LP per chain.
 // Fail-safe: on ANY error keeps the defaults above. founder-lp = ordinary entry.
 window.GBX_LP_ROUTE = (async function(){
@@ -708,11 +728,18 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
       if(p.dir==='sell'){
         // IZOLARE PER-WALLET: cardul apare doar pe wallet-ul care a initiat sell-ul
         try{ const _aw=activeWallet(); if(p.owner && _aw){ const _ev=await window.GoldbrixMultichain.deriveEVM(_aw.mnemonic); if(_ev && _ev.address && _ev.address.toLowerCase()!==p.owner){ continue; } } }catch(_e){}
-        // ORFANE: pending mai vechi de 48h fara lock la niciun LP -> curata automat
-        try{ if(p.ts && (Date.now()-p.ts)>172800000){ const _sw=await (await GBX_LP_FETCH(C,'/swap/'+(p.hashlock||'').toLowerCase())).json(); if(!_sw || _sw.status==='pending'){ localStorage.removeItem(k); continue; } } }catch(_e){}
+        // ORFANE: pending mai vechi de 48h -> curata DOAR daca niciun LP nu-l cunoaste SI GBX-ul nu e blocat on-chain.
+        // LEGEA: cat timp exista UTXO viu (bani reali), pendingul NU se sterge NICIODATA (contine datele de refund).
+        try{ if(p.ts && (Date.now()-p.ts)>172800000){
+          const _sw=await GBX_LP_SWAP_STATUS((p.hashlock||'').toLowerCase());
+          if(!_sw || _sw.status==='pending'){
+            let _live=false;
+            if(p.gbx_txid){ try{ const u=await (await GBX_LP_FETCH(C,'/utxo-status?txid='+p.gbx_txid+'&vout='+(p.gbx_vout||0))).json(); if(u && u.spent===false) _live=true; }catch(_e){ _live=true; } }
+            if(!_live){ localStorage.removeItem(k); continue; }
+          } } }catch(_e){}
         // VERIFICA daca sell-ul s-a finalizat deja (USDC revendicat) -> sterge pending, nu afisa "Revendica"
         let _sdone=false;
-        try{ const sw=await (await GBX_LP_FETCH(C,'/swap/'+(p.hashlock||'').toLowerCase())).json(); if(sw && (sw.status==='completed'||sw.status==='claimed'||sw.status==='settled')) _sdone=true; }catch(_e){}
+        try{ const sw=await GBX_LP_SWAP_STATUS((p.hashlock||'').toLowerCase()); if(sw && (sw.status==='completed'||sw.status==='claimed'||sw.status==='settled')) _sdone=true; }catch(_e){}
         // SOLANA: gateway-ul nu stie statusul on-chain -> confirma prin history completed cu acelasi sig/hashlock
         if(!_sdone && (p.chain==='solana' || p.claimChain==='solana')){
           try{
@@ -728,8 +755,9 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
         // Conditii: pendingul are datele HTLC (script+t1, fix s33) SI swap-ul la LP e rejected/inexistent/expirat
         if(p.gbx_txid && p.script && p.t1){
           let _rej=false;
-          try{ const sw=await (await GBX_LP_FETCH(C,'/swap/'+(p.hashlock||'').toLowerCase())).json();
-               if(!sw || !sw.status || String(sw.status).startsWith('rejected') || sw.status==='refunded_by_lp' || sw.status==='expired') _rej=true; }catch(_e){ _rej=true; }
+          try{ const sw=await GBX_LP_SWAP_STATUS((p.hashlock||'').toLowerCase());
+               if(!sw || !sw.status || String(sw.status).startsWith('rejected') || String(sw.status).startsWith('refunded') || sw.status==='expired') _rej=true;
+               if(sw && sw.script && !p.script){ p.script=sw.script; p.gbx_val=p.gbx_val||sw.gbx_val; try{ localStorage.setItem(k, JSON.stringify(p)); }catch(_e){} } }catch(_e){ _rej=true; }
           if(_rej){
             // TRIERE ON-CHAIN: UTXO cheltuit deja (refundat/claimed) -> cardul dispare
             let _spent=false;
@@ -745,7 +773,7 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
                 const w=activeWallet(); if(!w){ location.href='/v3/unlock.html'; return; }
                 const PC=(p.chain && GBX_CHAINS[p.chain]) ? GBX_CHAINS[p.chain] : C;
                 await GBX_LP_ENSURE(PC); const client=window.GoldbrixModB.makeInAppClient({ crypto:window.GoldbrixCrypto, multichain:window.GoldbrixMultichain, GoldbrixEVM:window.GoldbrixEVM, gatewayBase:PC.gateway, evmRpc:PC.evmRpc, chainId:PC.chainId, htlcAddr:PC.htlc, usdcAddr:PC.usdc, lpEvmAddr:PC.lpEvm, fetchUtxos:window.GoldbrixCrypto.fetchUtxos });
-                const r=await client.refundGbxForSell({ mnemonic:w.mnemonic, gbxTxid:p.gbx_txid, gbxVout:p.gbx_vout||0, gbxVal8:p.gbx_val, scriptHex:p.script, t1:p.t1 });
+                const r=await client.refundGbxForSell({ mnemonic:w.mnemonic, hashlock:p.hashlock, gbxTxid:p.gbx_txid, gbxVout:p.gbx_vout||0, gbxVal8:p.gbx_val, scriptHex:p.script, t1:p.t1 });
                 localStorage.removeItem(k); box.innerHTML='<div style="color:#2e7d32">'+RT('rgdone').replace('{g}',String(r.gbx))+' '+(r&&r.txid?('('+r.txid.slice(0,12)+'…)'):'')+'</div>';
               }catch(e){
                 btn.disabled=false; btn.textContent=RT('rgbtn');

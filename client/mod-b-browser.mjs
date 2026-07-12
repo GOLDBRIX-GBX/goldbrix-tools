@@ -116,9 +116,29 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
     let sc = scriptHex ? unhex(String(scriptHex).replace(/^0x/,'')) : null;
     let T1 = Number(t1||0);
     if(!sc || !T1){
-      // pending vechi fara script/t1: reconstruim determinist. H din pending, lpGbxPub din /lp-info,
-      // T1 cautat in fereastra [h_fund+100000-30, +30] pana sha256(script)==witness program-ul UTXO-ului
-      throw new Error('REFUND_NEEDS_SCRIPT'); // ramura veche se trateaza in UI (reconstructie) — pas separat
+      // RECONSTRUCTIE DETERMINISTA (pendinguri vechi fara script/t1):
+      // H din arguments.hashlock, lpGbxPub din /lp-info, T1 iterat in [h_fund+100000±30]
+      // pana sha256(buildHtlcScript(H,lpGbxPub,pkU,T1)) == witness program-ul REAL al UTXO-ului. Zero ghicit.
+      const hl=(arguments[0]&&arguments[0].hashlock)||'';
+      if(!hl) throw new Error('REFUND_NEEDS_SCRIPT');
+      const H=unhex(String(hl).replace(/^0x/,''));
+      if(H.length!==32) throw new Error('REFUND_NEEDS_SCRIPT');
+      const us=await (await fetch(gatewayBase+'/utxo-status?txid='+gbxTxid+'&vout='+Number(gbxVout))).json();
+      if(us.spent!==false || !us.spk || !us.confirmations) throw new Error('REFUND_UTXO_GONE');
+      const wantSpk=String(us.spk).toLowerCase();
+      if(!wantSpk.startsWith('0020')) throw new Error('REFUND_NEEDS_SCRIPT');
+      const hNow=(await (await fetch(gatewayBase+'/height')).json()).height||0;
+      if(!hNow) throw new Error('REFUND_NEEDS_SCRIPT');
+      const hFund=hNow-Number(us.confirmations)+1;
+      const li=await (await fetch(gatewayBase+'/lp-info')).json();
+      const lpPub=unhex(String(li.lp_gbx_pubkey||'').replace(/^0x/,''));
+      if(lpPub.length!==33) throw new Error('REFUND_NEEDS_SCRIPT');
+      for(let t=hFund+100000-30; t<=hFund+100000+30 && !sc; t++){
+        const cand=buildHtlcScript(H, lpPub, pkU, t);
+        if(hex(p2wshSpk(cand)).toLowerCase()===wantSpk){ sc=cand; T1=t; }
+      }
+      if(!sc) throw new Error('REFUND_NEEDS_SCRIPT');
+      if(!gbxVal8) gbxVal8=us.value_sat;
     }
     // gard: T1 trebuie sa fi trecut (nLockTime pe height)
     let _h=0; try{ _h=(await (await fetch(gatewayBase+'/height')).json()).height||0; }catch(_e){}
