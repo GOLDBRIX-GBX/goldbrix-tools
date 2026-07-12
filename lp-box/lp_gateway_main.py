@@ -308,6 +308,17 @@ class H(BaseHTTPRequestHandler):
             usd=float((qs.get('usd') or ['0'])[0])
             _q=quote(usd); _q['breaker']=_breaker_active()
             return self._s(200,_q)
+        if self.path.startswith('/utxo-status'):
+            # read-only: e UTXO-ul cheltuit? (triere carduri recovery in client)
+            qs=parse_qs(urlparse(self.path).query)
+            txid=(qs.get('txid') or [''])[0]; vout=(qs.get('vout') or ['0'])[0]
+            if not txid or len(txid)!=64: return self._s(400,{'error':'bad_txid'})
+            try:
+                r=subprocess.run([E["GCLI_BIN"],"-datadir="+E["GBX_DATADIR"],'gettxout',txid,str(int(vout))],capture_output=True,text=True,timeout=30)
+                unspent=bool(r.returncode==0 and r.stdout.strip())
+                return self._s(200,{'txid':txid,'vout':int(vout),'spent':(not unspent)})
+            except Exception as e:
+                return self._s(200,{'txid':txid,'vout':int(vout),'spent':None,'error':str(e)})
         if self.path.startswith('/swap/'):
             hl=self.path.split('/swap/',1)[1].lower(); st=load(STATE_F,{'swaps':{}})
             sw=next((v for v in st.get('swaps',{}).values() if v.get('hashlock','').lower()==hl), None)

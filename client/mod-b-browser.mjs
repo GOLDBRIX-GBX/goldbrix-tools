@@ -4,7 +4,7 @@ import { signReceiveAuth } from "/sign3009.mjs";
 import { secp256k1, keccak_256 } from '/vendor/evm-secp.mjs';
 import { sha256, ripemd160 } from '/vendor/gbx-h160.mjs';
 import { makeEVMHTLC } from './evm-htlc.mjs';
-import { buildHtlcScript, p2wshSpk, p2wpkhAddress, p2wpkhSpkFromPub, buildFundTx, hex, buildClaimTx, unhex } from './gbx-htlc.mjs';
+import { buildHtlcScript, p2wshSpk, p2wpkhAddress, p2wpkhSpkFromPub, buildFundTx, hex, buildClaimTx, buildRefundTx, unhex } from './gbx-htlc.mjs';
 function p2wpkhSpk2(pub){ const h=ripemd160(sha256(pub)); const o=new Uint8Array(22); o[0]=0; o[1]=0x14; o.set(h,2); return o; }
 const LOCKED_SIG='Locked(bytes32,address,address,address,uint256,bytes32,uint256)';
 export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, evmRpc, chainId, chainName, htlcAddr, usdcAddr, lpEvmAddr, fetchUtxos, t1Blocks }){
@@ -107,7 +107,27 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
     const change=sum-fundValue-fee, outs=[{spk:htlcSpk,value8:fundValue}];
     if(change>546) outs.push({spk:p2wpkhSpkFromPub(pkU),value8:change});
     const tx=buildFundTx({utxos:ins,userPubkey:pkU,outputs:outs,nLockTime:0},(d)=>secp256k1.sign(d,skU).toDERRawBytes());
-    return { gbx_txid:await gbxBroadcast(hex(tx)), gbx_vout:0, script:hex(script), gbx_val:fundValue, refund_pubkey:hex(pkU) };
+    return { gbx_txid:await gbxBroadcast(hex(tx)), gbx_vout:0, script:hex(script), gbx_val:fundValue, refund_pubkey:hex(pkU), t1:T1 };
+  }
+  async function refundGbxForSell({ mnemonic, gbxTxid, gbxVout, gbxVal8, scriptHex, t1 }){
+    // Refund L1 pe ramura timelock (dupa T1): userul isi ia GBX-ul inapoi din HTLC-ul de sell abandonat/respins
+    const gk=await crypto.deriveKeypairFromMnemonic(mnemonic);
+    const skU=Uint8Array.from(gk.privateKey), pkU=Uint8Array.from(gk.publicKey);
+    let sc = scriptHex ? unhex(String(scriptHex).replace(/^0x/,'')) : null;
+    let T1 = Number(t1||0);
+    if(!sc || !T1){
+      // pending vechi fara script/t1: reconstruim determinist. H din pending, lpGbxPub din /lp-info,
+      // T1 cautat in fereastra [h_fund+100000-30, +30] pana sha256(script)==witness program-ul UTXO-ului
+      throw new Error('REFUND_NEEDS_SCRIPT'); // ramura veche se trateaza in UI (reconstructie) — pas separat
+    }
+    // gard: T1 trebuie sa fi trecut (nLockTime pe height)
+    let _h=0; try{ _h=(await (await fetch(gatewayBase+'/height')).json()).height||0; }catch(_e){}
+    if(_h>0 && _h<T1) throw new Error('REFUND_NOT_YET:'+(T1-_h));
+    const fee=10000, outV=Number(gbxVal8)-fee;
+    if(!(outV>546)) throw new Error('REFUND_DUST');
+    const txhex=hex(buildRefundTx({ prevTxid:gbxTxid, vout:Number(gbxVout), inValue8:Number(gbxVal8), htlcScript:sc, outScriptPubKey:p2wpkhSpk2(pkU), outValue8:outV, T2:T1 }, (d)=>secp256k1.sign(d,skU).toDERRawBytes()));
+    const txid=await gbxBroadcast(txhex);
+    return { txid, gbx: outV/1e8 };
   }
   async function claimGbxForBuy({ mnemonic, hashlock, secret, minGbx8, onStatus, pollMs=1500, maxPolls=120 }){
     // Claim GBX L1 dupa lock USDC (folosit de BUY Solana; mecanism identic buyGbx post-lock)
@@ -129,6 +149,6 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
     onStatus&&onStatus('gbx_claimed',{txid});
     return { txid };
   }
-  return { buyGbxInApp, sellGbxInApp, refundUsdc, claimUsdcForSell, lockGbxForSell, claimGbxForBuy };
+  return { buyGbxInApp, sellGbxInApp, refundUsdc, claimUsdcForSell, lockGbxForSell, claimGbxForBuy, refundGbxForSell };
 }
 if(typeof window!=='undefined') window.GoldbrixModB={ makeInAppClient };

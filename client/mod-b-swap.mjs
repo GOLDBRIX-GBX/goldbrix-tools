@@ -72,7 +72,7 @@ export async function sellGbx(ctx){
   onStatus && onStatus('prepared', { hashlock: Hhex });
   const lock = await gbx.lockGbx({ H, lpGbxPub, pkU, T1: timelockT1Gbx, gbxAmount });
   onStatus && onStatus('gbx_locked', { gbx_txid: lock.gbx_txid });
-  try{ if(typeof localStorage!=='undefined') localStorage.setItem('gbx_pending_'+Hhex, JSON.stringify({dir:'sell',chain:(typeof ctx!=='undefined'&&ctx&&ctx.chain)||'',owner:(userEvmAddr||'').toLowerCase(),hashlock:Hhex,secret:hex(s),userEvmAddr,usdcAmount:String(usdcAmount),gbx_txid:lock.gbx_txid,gbx_vout:lock.gbx_vout,ts:Date.now()})); }catch(_e){}
+  try{ if(typeof localStorage!=='undefined') localStorage.setItem('gbx_pending_'+Hhex, JSON.stringify({dir:'sell',chain:(typeof ctx!=='undefined'&&ctx&&ctx.chain)||'',owner:(userEvmAddr||'').toLowerCase(),hashlock:Hhex,secret:hex(s),userEvmAddr,usdcAmount:String(usdcAmount),gbx_txid:lock.gbx_txid,gbx_vout:lock.gbx_vout,script:lock.script,gbx_val:lock.gbx_val,t1:lock.t1,ts:Date.now()})); }catch(_e){}
   await submitIntent({ hashlock: Hhex, direction:'sell', chain: (ctx.chain||''), refund_pubkey: hex(pkU), evm_receiver: userEvmAddr, usdc_amount: usdcAmount, gbx_txid: lock.gbx_txid, gbx_vout: lock.gbx_vout, gbx_script: lock.script, gbx_val: lock.gbx_val, t2_evm: t2EvmSeconds });
   let usdcLock=null;
   for(let i=0;i<maxPolls;i++){ usdcLock = await evm.findLock({ hashlock: Hhex, receiver: userEvmAddr }); if(usdcLock) break; await _sleep(pollMs); }
