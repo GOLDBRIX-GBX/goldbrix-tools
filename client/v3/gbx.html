@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="prefetch" href="/v3/wallet.html"><link rel="prefetch" href="/v3/trade.html"><link rel="prefetch" href="/v3/launch.html"><link rel="prefetch" href="/v3/burns.html"><link rel="prefetch" href="/v3/settings.html"><link rel="prefetch" href="/v3/favorites.html"><link rel="prefetch" href="/v3/leaderboard.html"><link rel="prefetch" href="/v3/style.css"><link rel="dns-prefetch" href="https://goldbrix.app">
+<link rel="preconnect" href="https://goldbrix.app" crossorigin>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>GBX · Native Token — GoldBrix</title>
+<link rel="icon" type="image/png" sizes="192x192" href="/assets/mark/g-mark-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/goldbrix-brand-180.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#F5CC75">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+:root {
+  --bg: #1c1610;
+  --card: #2a2218;
+  --border: #3a3025;
+  --gold: #F5CC75;
+  --gold-2: #E0B560;
+  --green: #4EE08C;
+  --red: #FF7A6B;
+  --text: #FFFFFF;
+  --text-dim: #FFE099;
+  --text-dimmer: #7A6B52;
+}
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', -apple-system, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+body { padding-bottom: 110px; }
+
+/* HEADER */
+.g-hdr {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(0,0,0,0.95);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px;
+  display: flex; align-items: center; gap: 12px;
+}
+.g-back, .g-close {
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gold); font-size: 18px;
+  cursor: pointer; background: transparent; border: none;
+}
+.g-title {
+  flex: 1;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; font-weight: 700;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--gold);
+}
+.g-badge-native {
+  background: linear-gradient(135deg, var(--gold), var(--gold-2));
+  color: #eee; padding: 2px 8px;
+  border-radius: 6px; font-size: 9px;
+  font-weight: 800; letter-spacing: 0.1em;
+}
+
+/* COIN HEADER CARD */
+.gbx-coin {
+  display: flex; gap: 14px;
+  padding: 18px 16px;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+.gbx-logo {
+  width: 64px; height: 64px;
+  border-radius: 16px;
+  border: 2px solid var(--gold);
+  background: url('/assets/brand/goldbrix-brand-180.png') center/cover;
+  flex-shrink: 0;
+  box-shadow: 0 0 24px rgba(245, 204, 117, 0.3);
+}
+.gbx-info { flex: 1; min-width: 0; }
+.gbx-name {
+  font-size: 20px; font-weight: 800;
+  color: var(--text); margin-bottom: 4px;
+}
+.gbx-ticker {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--gold);
+  letter-spacing: 0.1em; text-transform: uppercase;
+}
+.gbx-status {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(29, 185, 84, 0.1);
+  border: 1px solid rgba(29, 185, 84, 0.3);
+  color: var(--green);
+  padding: 3px 8px; border-radius: 6px;
+  font-size: 10px; font-weight: 600;
+  margin-top: 6px;
+}
+.gbx-status .pulse {
+  width: 6px; height: 6px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.3); }
+}
+
+/* PRICE SECTION */
+.gbx-price-section {
+  padding: 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.gbx-price-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--text-dim);
+  letter-spacing: 0.15em; text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.gbx-price-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 36px; font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+.gbx-price-change {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; font-weight: 700;
+  color: var(--green);
+}
+.gbx-price-source {
+  font-size: 10px; color: var(--text-dim);
+  margin-top: 8px;
+}
+
+/* TIME FILTERS */
+/* CHART */
+.gbx-chart-wrap {
+  background: var(--bg);
+  position: relative;
+  border-bottom: 1px solid var(--border);
+}
+#gbxChart {
+  width: 100%;
+  height: 280px;
+  display: block;
+}
+.gbx-chart-loading {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; letter-spacing: 0.1em;
+  background: var(--bg);
+  z-index: 10;
+}
+
+/* STATS GRID */
+.gbx-stats {
+  padding: 16px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.gbx-stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+}
+.gbx-stat-card.featured {
+  background: linear-gradient(135deg, rgba(245, 204, 117, 0.08), rgba(201, 168, 76, 0.02));
+  border-color: rgba(245, 204, 117, 0.3);
+}
+.gbx-stat-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--text-dim);
+  letter-spacing: 0.15em; text-transform: uppercase;
+  margin-bottom: 8px;
+  display: flex; align-items: center; gap: 4px;
+}
+.gbx-stat-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px; font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.gbx-stat-sub {
+  font-size: 10px; color: var(--text-dim);
+  margin-top: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.gbx-stat-value.gold { color: var(--gold); }
+.gbx-stat-value.green { color: var(--green); }
+.gbx-stat-value.red { color: var(--red); }
+
+/* MINING PROGRESS */
+.gbx-mining {
+  margin: 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(245, 204, 117, 0.05), rgba(0,0,0,0));
+  border: 1px solid rgba(245, 204, 117, 0.2);
+  border-radius: 14px;
+}
+.gbx-mining-header {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-bottom: 12px;
+}
+.gbx-mining-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--gold);
+  letter-spacing: 0.15em; text-transform: uppercase;
+  font-weight: 700;
+}
+.gbx-mining-pct {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; color: var(--gold);
+  font-weight: 800;
+}
+.gbx-mining-bar {
+  height: 10px;
+  background: var(--card);
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  border: 1px solid var(--border);
+}
+.gbx-mining-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold-2), var(--gold));
+  border-radius: 5px;
+  transition: width 1s ease;
+  box-shadow: 0 0 12px rgba(245, 204, 117, 0.5);
+}
+.gbx-mining-detail {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+  display: flex; justify-content: space-between;
+}
+.gbx-mining-detail span { color: var(--text); }
+
+/* BURN TRACKER */
+.gbx-burn {
+  margin: 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(255, 59, 59, 0.05), rgba(0,0,0,0));
+  border: 1px solid rgba(255, 59, 59, 0.2);
+  border-radius: 14px;
+}
+.gbx-burn-header {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-bottom: 10px;
+}
+.gbx-burn-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--red);
+  letter-spacing: 0.15em; text-transform: uppercase;
+  font-weight: 700;
+  display: flex; align-items: center; gap: 6px;
+}
+.gbx-burn-live {
+  font-size: 9px;
+  background: var(--red);
+  color: #FFF;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.gbx-burn-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 22px; font-weight: 800;
+  color: var(--red);
+  margin-bottom: 4px;
+}
+.gbx-burn-usd {
+  font-size: 11px; color: var(--text-dim);
+  margin-bottom: 10px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.gbx-burn-link {
+  font-size: 11px; color: var(--gold);
+  text-decoration: none;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.05em;
+}
+
+/* CTA BUTTONS */
+.gbx-cta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 16px;
+  padding-bottom: 20px;
+}
+.gbx-btn {
+  padding: 16px 12px;
+  border-radius: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: none; cursor: pointer;
+  transition: all 0.2s;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 4px;
+}
+.gbx-btn:active { transform: scale(0.96); }
+.gbx-btn-buy {
+  background: linear-gradient(135deg, var(--green), #15a047);
+  color: #eee;
+  box-shadow: 0 0 24px rgba(29, 185, 84, 0.3);
+}
+.gbx-btn-icon { font-size: 18px; }
+
+/* TOAST */
+.gbx-toast {
+  position: fixed; bottom: 130px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--card);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  z-index: 1000;
+  animation: toastIn 0.3s ease;
+}
+@keyframes toastIn {
+  from { opacity: 0; transform: translate(-50%, 20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* RTL */
+html[dir="rtl"] .gbx-coin { direction: rtl; }
+html[dir="rtl"] .gbx-burn-header,
+html[dir="rtl"] .gbx-mining-header { direction: rtl; }
+
+/* V4.9 — Visible placeholders (added 2026-05-27) */
+input::placeholder, textarea::placeholder,
+input::-webkit-input-placeholder, textarea::-webkit-input-placeholder,
+input::-moz-placeholder, textarea::-moz-placeholder {
+  color: #eee !important;
+  opacity: 1 !important;
+}
+
+
+/* === Butoane GBX in stil WALLET (action-btn) === */
+.gbx-actions { display:flex; gap:10px; margin:16px 0; }
+.gbx-action {
+  flex:1; display:flex; flex-direction:column; align-items:center; gap:6px;
+  padding:14px 4px; background:var(--bg-card,#211a10);
+  border:1px solid var(--border,#3a3025); border-radius:14px;
+  transition:all .15s; cursor:pointer; text-align:center; text-decoration:none;
+}
+.gbx-action:active { transform:scale(0.96); }
+.gbx-action:hover { border-color:var(--gold-deep,#b8860b); background:var(--bg-elevated,#2a2218); }
+.gbx-action__icon {
+  width:36px; height:36px; border-radius:10px;
+  display:flex; align-items:center; justify-content:center; font-size:18px;
+}
+.gbx-action--buy .gbx-action__icon { background:rgba(78,224,140,0.12); color:#4ee08c; }
+.gbx-action--sell .gbx-action__icon { background:rgba(255,122,107,0.12); color:#ff7a6b; }
+.gbx-action__label {
+  font-family:'JetBrains Mono',monospace; font-size:9px;
+  font-weight:700; letter-spacing:0.08em;
+  color:var(--text-secondary,#9a8c6f); text-transform:uppercase; line-height:1.1;
+}
+</style>
+    <script src="/gbx-update-check.js" defer></script>
+    <script src="/gbx-native-bridge.js" defer></script>
+      <script src="/i18n.js?v=103" defer></script>
+<link rel="stylesheet" href="/lib/price-chart.css">
+<script src="/lib/lightweight-charts.standalone.production.js" defer></script>
+<script src="/lib/price-chart.js?v=103" defer></script>
+  <script src="/promo-banner.js?v=103" defer></script>
+<style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
+<script src="/v3/nav-i18n.js?v=103" defer></script>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="g-hdr">
+  <button class="g-back" onclick="goBack()">←</button>
+  <div class="g-title">
+    <span data-i18n="page.title">GBX · NATIVE</span>
+    <span class="g-badge-native" data-i18n="page.badge">PoW</span>
+  </div>
+  <button class="g-close" onclick="goBack()">✕</button>
+</div>
+
+<!-- COIN HEADER -->
+<div class="gbx-coin">
+  <div class="gbx-logo"></div>
+  <div class="gbx-info">
+    <div class="gbx-name">GoldBrix</div>
+    <div class="gbx-ticker">$GBX · NATIVE TOKEN</div>
+    <div class="gbx-status">
+      <span class="pulse"></span>
+      <span data-i18n="status.mining">MINING LIVE</span>
+    </div>
+  </div>
+</div>
+
+<!-- PRICE -->
+<div class="gbx-price-section">
+  <div class="gbx-price-label" data-i18n="price.label">Price USD</div>
+  <div class="gbx-price-value" id="gbxPrice">$0.1000</div>
+  <div class="gbx-price-change" id="gbxChange">↑ +0.00% 24h</div>
+  <div class="gbx-price-source" data-i18n="price.source">via Onramp Bridge · USDC ↔ GBX</div>
+</div>
+
+<!-- GBX CHART (componenta unica PriceChart — toate functiile, 5 limbi) -->
+<div class="t-tf-bar" id="tfBar">
+  <button class="t-tf-btn active" data-tf="1m" onclick="setInterval2('1m')">1m</button>
+  <button class="t-tf-btn" data-tf="5m" onclick="setInterval2('5m')">5m</button>
+  <button class="t-tf-btn" data-tf="15m" onclick="setInterval2('15m')">15m</button>
+  <button class="t-tf-btn" data-tf="1h" onclick="setInterval2('1h')">1h</button>
+  <button class="t-tf-btn" data-tf="4h" onclick="setInterval2('4h')">4h</button>
+  <button class="t-tf-btn" data-tf="1d" onclick="setInterval2('1d')">D</button>
+  <div class="t-tf-spacer"></div>
+  <div class="t-tf-divider"></div>
+  <button id="iconChartType" class="t-tf-icon" onclick="toggleChartType()" title="Chart type">📊</button>
+  <button id="iconMA" class="t-tf-icon" onclick="toggleMA()" title="MA lines">⚙</button>
+</div>
+<div class="t-ma-bar">
+  <div class="t-ma-item ma20">MA(7): <span class="t-ma-value" id="maVal7">--</span></div>
+  <div class="t-ma-item ma50">MA(14): <span class="t-ma-value" id="maVal14">--</span></div>
+  <div class="t-ma-item ma100">MA(28): <span class="t-ma-value" id="maVal28">--</span></div>
+  <div class="t-ma-item" style="color:#fff;font-size:11px;margin-left:8px;">⏱ <span class="t-ma-value" id="candleCountdown">--:--</span></div>
+</div>
+<div class="t-chart-wrap"><div class="t-chart" id="gbxChartContainer"></div></div>
+
+<!-- CTA GBX sub chart: BUY (USDC Phantom/Solflare/MetaMask) + SELL -->
+<div class="gbx-actions">
+  <a class="gbx-action gbx-action--buy" href="/v3/swap.html">
+    <div class="gbx-action__icon">↑</div>
+    <div class="gbx-action__label" data-i18n="cta.buy">BUY GBX</div>
+  </a>
+  <a class="gbx-action gbx-action--sell" href="/v3/swap.html?dir=sell">
+    <div class="gbx-action__icon">↓</div>
+    <div class="gbx-action__label" data-i18n="cta.sell">SELL GBX</div>
+  </a>
+</div>
+
+<!-- TIME FRAMES -->
+
+
+<!-- CHART -->
+<div class="gbx-activity-section" style="background:#2a2218;border:1px solid #3a3025;border-radius:14px;padding:16px;margin-bottom:14px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.1em;color:#F5CC75;">
+      📊 <span data-i18n="activity.title">ACTIVITY 24H</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <div style="width:6px;height:6px;background:#4EE08C;border-radius:50%;animation:pulse-live 1.6s ease-in-out infinite;"></div>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#eee;font-weight:700;letter-spacing:0.1em;" data-t="liveLabel">LIVE</span>
+    </div>
+  </div>
+  
+  <!-- 3 Activity Cards -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
+    
+    <!-- VOLUME 24H -->
+    <div style="background:#1c1610;border:1px solid #3a3025;border-radius:10px;padding:12px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#FFE099;letter-spacing:0.08em;margin-bottom:4px;">💰 VOL 24H</div>
+      <div id="actVol24h" style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800;color:#F5CC75;letter-spacing:-0.5px;">--</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#fff;margin-top:2px;" data-i18n="activity.bridge">Bridge + Trades</div>
+    </div>
+    
+    <!-- BURNS 24H -->
+    <div style="background:#1c1610;border:1px solid #3a3025;border-radius:10px;padding:12px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#FFE099;letter-spacing:0.08em;margin-bottom:4px;">🔥 BURNS 24H</div>
+      <div id="actBurns24h" style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800;color:#eee;letter-spacing:-0.5px;">--</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#fff;margin-top:2px;" data-i18n="activity.fees">From fees</div>
+    </div>
+    
+    <!-- TXNS 24H -->
+    <div style="background:#1c1610;border:1px solid #3a3025;border-radius:10px;padding:12px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#FFE099;letter-spacing:0.08em;margin-bottom:4px;">🔄 TXNS 24H</div>
+      <div id="actTxns24h" style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800;color:#eee;letter-spacing:-0.5px;">--</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#fff;margin-top:2px;" data-i18n="activity.onchain">On-chain</div>
+    </div>
+    
+  </div>
+  
+  <!-- Disclaimer ONEST -->
+  <div style="background:rgba(245,204,117,0.06);border:1px solid rgba(245,204,117,0.2);border-radius:8px;padding:10px;display:flex;align-items:flex-start;gap:8px;">
+    <span style="font-size:11px;">ℹ️</span>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#fff;line-height:1.5;">
+      <strong style="color:#F5CC75;" data-i18n="activity.note_title">PRE-LISTING REFERENCE</strong>
+      <br>
+      <span data-i18n="activity.note_text">Price $0.10 stable peg until Phase 2 AMM · Real price discovery starts with DEX listing.</span>
+    </div>
+  </div>
+</div>
+
+<style>
+@keyframes pulse-live {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.2); }
+}
+</style>
+
+<!-- MINING PROGRESS -->
+<div class="gbx-mining">
+  <div class="gbx-mining-header">
+    <div class="gbx-mining-title">⛏️ <span data-i18n="mining.title">Mining Progress</span></div>
+    <div class="gbx-mining-pct" id="miningPct">4.64%</div>
+  </div>
+  <div class="gbx-mining-bar">
+    <div class="gbx-mining-fill" id="miningFill" style="width:4.64%;"></div>
+  </div>
+  <div class="gbx-mining-detail">
+    <span><span data-i18n="mining.mined">Mined</span>: <span id="miningSupply">974,300</span> GBX</span>
+    <span><span data-i18n="mining.max">Max</span>: 15,000,000</span>
+  </div>
+</div>
+
+<!-- STATS GRID -->
+<div class="gbx-stats">
+  <div class="gbx-stat-card">
+    <div class="gbx-stat-label">⚡ <span data-i18n="stats.hashrate">Hashrate</span></div>
+    <div class="gbx-stat-value" id="statHashrate">--</div>
+    <div class="gbx-stat-sub" id="statHashrateSub">PoW SHA-256</div>
+  </div>
+  <div class="gbx-stat-card">
+    <div class="gbx-stat-label">📦 <span data-i18n="stats.block">Block Height</span></div>
+    <div class="gbx-stat-value" id="statBlock">--</div>
+    <div class="gbx-stat-sub" id="statBlockSub" data-i18n="stats.confirming">Confirming...</div>
+  </div>
+  <div class="gbx-stat-card featured">
+    <div class="gbx-stat-label">💰 <span data-i18n="stats.marketcap">Market Cap</span></div>
+    <div class="gbx-stat-value gold" id="statMcap">--</div>
+    <div class="gbx-stat-sub" id="statMcapSub">@ $0.10/GBX</div>
+  </div>
+  <div class="gbx-stat-card">
+    <div class="gbx-stat-label">🎯 <span data-i18n="stats.fdv">FDV (15M cap)</span></div>
+    <div class="gbx-stat-value" id="statFdv">--</div>
+    <div class="gbx-stat-sub" data-i18n="stats.fdvSub">Fully diluted</div>
+  </div>
+  <div class="gbx-stat-card">
+    <div class="gbx-stat-label">📊 <span data-i18n="stats.vol24">24h Volume</span></div>
+    <div class="gbx-stat-value" id="statVol">--</div>
+    <div class="gbx-stat-sub" data-i18n="stats.bridgeVol">Bridge USDC</div>
+  </div>
+  <div class="gbx-stat-card">
+    <div class="gbx-stat-label">🔄 <span data-i18n="stats.txns">24h Txns</span></div>
+    <div class="gbx-stat-value" id="statTxns">--</div>
+    <div class="gbx-stat-sub" data-i18n="stats.onchain">On-chain</div>
+  </div>
+</div>
+
+<!-- BURN TRACKER -->
+<div class="gbx-burn">
+  <div class="gbx-burn-header">
+    <div class="gbx-burn-title">🔥 <span data-i18n="burn.title">Total Burned</span></div>
+    <div class="gbx-burn-live" data-t="liveLabel">LIVE</div>
+  </div>
+  <div class="gbx-burn-value" id="burnTotal">-- GBX</div>
+  <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#eee;letter-spacing:0.05em;margin-bottom:2px;text-transform:uppercase;" data-i18n="burn.real_subtitle">🔥 Real on-chain</div>
+  <div class="gbx-burn-usd" id="burnUsd">$-- USD value</div>
+  <div class="gbx-burn-breakdown" id="burnBreakdown" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#FFE099;margin:6px 0 10px 0;line-height:1.5;">
+    <div style="margin-bottom:4px;">📊 <span data-i18n="burn.pending_label">Trade fees logged</span>: <span id="burnVirtual" style="color:#ddd;">0</span> GBX</div>
+    <div style="color:#fff;font-size:9px;" data-i18n="burn.phase2_note">→ Will become real burns in Phase 2 AMM</div>
+  </div>
+  <a href="/v3/burns.html" class="gbx-burn-link" data-i18n="burn.link">VIEW BURN TRACKER →</a>
+</div>
+
+
+<script>
+// ═══════════════════════════════════════════
+// I18N
+// ═══════════════════════════════════════════
+const __VROOT_gbx = window.__SPA_BOX || document;
+const LANG_gbx = (function() {
+  try { return localStorage.getItem('gbx_lang') || localStorage.getItem('goldbrix_lang') || 'en'; } catch(e) { return 'en'; }
+})();
+
+const I18N_gbx = {
+  en: {
+    'page.title': 'GBX · NATIVE',
+    'activity.title': 'ACTIVITY 24H',
+    'activity.bridge': 'Bridge + Trades',
+    'activity.fees': 'Real on-chain',
+    'activity.onchain': 'On-chain',
+    'activity.note_title': 'PRE-LISTING REFERENCE',
+    'activity.note_text': 'Price $0.10 stable peg until Phase 2 AMM · Phase 1.5 LIVE: dev_buy + graduations are REAL on-chain burns · Real price discovery starts with DEX listing.', 'page.badge': 'PoW',
+    'status.mining': 'MINING LIVE',
+    'price.label': 'Price USD', 'price.source': 'via Onramp Bridge · USDC ↔ GBX',
+    'chart.loading': 'LOADING CHART...',
+    'mining.title': 'Mining Progress', 'mining.mined': 'Mined', 'mining.max': 'Max',
+    'stats.hashrate': 'Hashrate', 'stats.block': 'Block Height',
+    'stats.marketcap': 'Market Cap', 'stats.fdv': 'FDV (15M cap)', 'stats.fdvSub': 'Fully diluted',
+    'stats.vol24': '24h Volume', 'stats.bridgeVol': 'Bridge USDC',
+    'stats.txns': '24h Txns', 'stats.onchain': 'On-chain',
+    'stats.confirming': 'Confirming...',
+    'burn.title': 'Total Burned', 'burn.link': 'VIEW BURN TRACKER →', 'burn.real_subtitle': '🔥 Real on-chain', 'burn.pending_label': 'Trade fees logged', 'burn.phase2_note': '→ Will become real burns in Phase 2 AMM',
+    'cta.mine': 'Mine GBX', 'cta.buy': 'Buy GBX', 'cta.sell': 'Sell GBX'
+  },
+  ro: {
+    'page.title': 'GBX · NATIV',
+    'activity.title': 'ACTIVITATE 24H',
+    'activity.bridge': 'Bridge + Trade-uri',
+    'activity.fees': 'Real on-chain',
+    'activity.onchain': 'On-chain',
+    'activity.note_title': 'REFERINȚĂ PRE-LISTARE',
+    'activity.note_text': 'Preț $0.10 stabil până la Faza 2 AMM · Faza 1.5 LIVE: dev_buy + graduații sunt arderi REALE on-chain · Descoperirea reală a prețului începe cu listare DEX.', 'page.badge': 'PoW',
+    'status.mining': 'MINING LIVE',
+    'price.label': 'Preț USD', 'price.source': 'via Onramp Bridge · USDC ↔ GBX',
+    'chart.loading': 'SE ÎNCARCĂ GRAFIC...',
+    'mining.title': 'Progres Mining', 'mining.mined': 'Minat', 'mining.max': 'Max',
+    'stats.hashrate': 'Hashrate', 'stats.block': 'Înălțime Bloc',
+    'stats.marketcap': 'Cap. Piață', 'stats.fdv': 'FDV (cap 15M)', 'stats.fdvSub': 'Complet diluat',
+    'stats.vol24': 'Volum 24h', 'stats.bridgeVol': 'Bridge USDC',
+    'stats.txns': 'Txns 24h', 'stats.onchain': 'On-chain',
+    'stats.confirming': 'Se confirmă...',
+    'burn.title': 'Total Ars', 'burn.link': 'VEZI BURN TRACKER →', 'burn.real_subtitle': '🔥 Real on-chain', 'burn.pending_label': 'Taxe trade înregistrate', 'burn.phase2_note': '→ Devin arderi reale în Faza 2 AMM',
+    'cta.mine': 'Minează GBX', 'cta.buy': 'Cumpără GBX', 'cta.sell': 'Vinde GBX'
+  },
+  de: {
+    'page.title': 'GBX · NATIV',
+    'activity.title': 'AKTIVITÄT 24H',
+    'activity.bridge': 'Bridge + Trades',
+    'activity.fees': 'Echt on-chain',
+    'activity.onchain': 'On-chain',
+    'activity.note_title': 'VOR-LISTING REFERENZ',
+    'activity.note_text': 'Preis $0.10 stabil bis Phase 2 AMM · Phase 1.5 LIVE: dev_buy + Graduierungen sind ECHTE On-Chain-Burns · Echte Preisfindung beginnt mit DEX-Listing.', 'page.badge': 'PoW',
+    'status.mining': 'MINING LIVE',
+    'price.label': 'Preis USD', 'price.source': 'via Onramp Bridge · USDC ↔ GBX',
+    'chart.loading': 'LADE CHART...',
+    'mining.title': 'Mining Fortschritt', 'mining.mined': 'Gemined', 'mining.max': 'Max',
+    'stats.hashrate': 'Hashrate', 'stats.block': 'Block Höhe',
+    'stats.marketcap': 'Marktkap.', 'stats.fdv': 'FDV (15M cap)', 'stats.fdvSub': 'Voll verwässert',
+    'stats.vol24': '24h Volumen', 'stats.bridgeVol': 'Bridge USDC',
+    'stats.txns': '24h Txns', 'stats.onchain': 'On-chain',
+    'stats.confirming': 'Bestätige...',
+    'burn.title': 'Gesamt Verbrannt', 'burn.link': 'BURN TRACKER →', 'burn.real_subtitle': '🔥 Echt on-chain', 'burn.pending_label': 'Handelsgebühren protokolliert', 'burn.phase2_note': '→ Werden echte Burns in Phase 2 AMM',
+    'cta.mine': 'GBX Minen', 'cta.buy': 'GBX Kaufen', 'cta.sell': 'GBX Verkaufen'
+  },
+  zh: {
+    'page.title': 'GBX · 原生',
+    'activity.title': '24小时活动',
+    'activity.bridge': '桥接+交易',
+    'activity.fees': '链上真实',
+    'activity.onchain': '链上',
+    'activity.note_title': '预上市参考',
+    'activity.note_text': '价格 $0.10 稳定锚定，直到第二阶段 AMM · 阶段1.5 LIVE: dev_buy + 毕业是真实链上销毁 · 真正的价格发现从 DEX 上市开始。', 'page.badge': 'PoW',
+    'status.mining': '挖矿进行中',
+    'price.label': '价格 USD', 'price.source': '通过 Onramp 桥 · USDC ↔ GBX',
+    'chart.loading': '加载图表...',
+    'mining.title': '挖矿进度', 'mining.mined': '已挖', 'mining.max': '最大',
+    'stats.hashrate': '算力', 'stats.block': '区块高度',
+    'stats.marketcap': '市值', 'stats.fdv': 'FDV (1500万上限)', 'stats.fdvSub': '完全稀释',
+    'stats.vol24': '24小时交易量', 'stats.bridgeVol': '桥 USDC',
+    'stats.txns': '24小时交易', 'stats.onchain': '链上',
+    'stats.confirming': '确认中...',
+    'burn.title': '总销毁', 'burn.link': '查看销毁追踪 →', 'burn.real_subtitle': '🔥 链上真实', 'burn.pending_label': '已记录交易费', 'burn.phase2_note': '→ 在阶段2 AMM将成为真实销毁',
+    'cta.mine': '挖矿 GBX', 'cta.buy': '购买 GBX', 'cta.sell': '卖出 GBX'
+  },
+  ar: {
+    'page.title': 'GBX · أصلي',
+    'activity.title': 'النشاط 24 ساعة',
+    'activity.bridge': 'الجسر + التداولات',
+    'activity.fees': 'حقيقي على السلسلة',
+    'activity.onchain': 'على السلسلة',
+    'activity.note_title': 'مرجع ما قبل الإدراج',
+    'activity.note_text': 'السعر 0.10 دولار مستقر حتى المرحلة 2 AMM · المرحلة 1.5 LIVE: dev_buy + التخرج هي حروق حقيقية على السلسلة · يبدأ اكتشاف السعر الحقيقي مع إدراج DEX.', 'page.badge': 'PoW',
+    'status.mining': 'التعدين مباشر',
+    'price.label': 'السعر USD', 'price.source': 'عبر جسر Onramp · USDC ↔ GBX',
+    'chart.loading': 'تحميل الرسم البياني...',
+    'mining.title': 'تقدم التعدين', 'mining.mined': 'تم تعدينه', 'mining.max': 'الحد الأقصى',
+    'stats.hashrate': 'معدل التجزئة', 'stats.block': 'ارتفاع الكتلة',
+    'stats.marketcap': 'القيمة السوقية', 'stats.fdv': 'FDV (15M cap)', 'stats.fdvSub': 'مخفف بالكامل',
+    'stats.vol24': 'حجم 24 ساعة', 'stats.bridgeVol': 'جسر USDC',
+    'stats.txns': 'معاملات 24 ساعة', 'stats.onchain': 'على السلسلة',
+    'stats.confirming': 'يؤكد...',
+    'burn.title': 'إجمالي المحروق', 'burn.link': 'عرض متعقب الحرق →', 'burn.real_subtitle': '🔥 حقيقي على السلسلة', 'burn.pending_label': 'رسوم التداول المسجلة', 'burn.phase2_note': '→ ستصبح حروق حقيقية في المرحلة 2 AMM',
+    'cta.mine': 'تعدين GBX', 'cta.buy': 'شراء GBX', 'cta.sell': 'بيع GBX'
+  }
+};
+
+function t_gbx(key) {
+  const lang = LANG_gbx;
+  const dict = I18N_gbx[lang] || I18N_gbx.en;
+  return dict[key] || I18N_gbx.en[key] || key;
+}
+
+function applyI18n_gbx() {
+  if (LANG_gbx === 'ar') {
+    document.documentElement.setAttribute('dir', 'rtl');
+    document.documentElement.setAttribute('lang', 'ar');
+  }
+  __VROOT_gbx.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    el.textContent = t_gbx(key);
+  });
+}
+
+// ═══════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════
+const API_GBX = 'https://goldbrix.app';  // GoldBrix chain
+const API_BRIDGE = 'https://goldbrix.app'; // Onramp + Launchpad
+let GBX_PRICE_USD = 0.10; // V7.0 live
+
+// ═══════════════════════════════════════════
+// FORMATTING
+// ═══════════════════════════════════════════
+function fmt(n) {
+  if (n == null || isNaN(n)) return '--';
+  if (n >= 1e9) return (n/1e9).toFixed(2) + 'B';
+  if (n >= 1e6) return (n/1e6).toFixed(2) + 'M';
+  if (n >= 1e3) return (n/1e3).toFixed(2) + 'K';
+  if (n >= 1) return n.toFixed(2);
+  return n.toFixed(4);
+}
+function fmtUsd(n) { return n == null ? '$--' : '$' + fmt(n); }
+function fmtNum(n) { return n == null ? '--' : n.toLocaleString(); }
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+function goBack() {
+  if (document.referrer && document.referrer.includes(location.host)) {
+    history.back();
+  } else {
+    window.location.href = '/wallet';
+  }
+}
+
+// ═══════════════════════════════════════════
+// LOAD GBX STATS
+// ═══════════════════════════════════════════
+async function loadGbxStats() {
+  // ═══ ALL LIVE DATA FROM /launchpad/gbx/stats ═══
+  try {
+    const r = await fetch(API_BRIDGE + '/launchpad/gbx/stats');
+    if (r.ok) {
+      const d = await r.json();
+      
+      // Block height
+      const block = d.blocks || 0;
+      document.getElementById('statBlock').textContent = '#' + fmtNum(block);
+      const statBlockSub = document.getElementById('statBlockSub');
+      if (statBlockSub) statBlockSub.textContent = block > 0 ? 'Mainnet LIVE' : 'Confirming...';
+      
+      // Supply mined (real from chain)
+      const supply = d.supply_mined_gbx || 0;
+      document.getElementById('miningSupply').textContent = fmtNum(supply);
+      
+      // Mining progress with REAL 15M cap
+      const maxSupply = d.max_supply_gbx || 15000000;
+      const pct = (supply / maxSupply) * 100;
+      document.getElementById('miningPct').textContent = pct.toFixed(2) + '%';
+      document.getElementById('miningFill').style.width = pct.toFixed(2) + '%';
+      
+      // Hashrate (KH/s or MH/s based on size)
+      const hps = d.networkhashps || 0;
+      let hashStr;
+      if (hps > 1e9) hashStr = (hps/1e9).toFixed(2) + ' GH/s';
+      else if (hps > 1e6) hashStr = (hps/1e6).toFixed(2) + ' MH/s';
+      else if (hps > 1e3) hashStr = (hps/1e3).toFixed(1) + ' KH/s';
+      else hashStr = hps.toFixed(0) + ' H/s';
+      document.getElementById('statHashrate').textContent = hashStr;
+      
+      // Price (live from bridge reference)
+      const price = d.price_usd || 0.10; GBX_PRICE_USD = price;
+      document.getElementById('gbxPrice').textContent = '$' + price.toFixed(4);
+      
+      // Market Cap (real calculated)
+      document.getElementById('statMcap').textContent = fmtUsd(d.market_cap_usd || 0);
+      
+      // FDV (real calculated with 15M)
+      const fdvUsd = d.fdv_usd || 0;
+      let fdvStr;
+      if (fdvUsd >= 1e6) fdvStr = '$' + (fdvUsd/1e6).toFixed(2) + 'M';
+      else if (fdvUsd >= 1e3) fdvStr = '$' + (fdvUsd/1e3).toFixed(1) + 'K';
+      else fdvStr = '$' + fdvUsd.toFixed(0);
+      document.getElementById('statFdv').textContent = fdvStr;
+      
+      // 24H Volume (real from trades)
+      document.getElementById('statVol').textContent = fmtUsd(d.volume_24h_usd || 0);
+      
+      // ═══ ALSO update Activity Cards ═══
+      const actVol = document.getElementById('actVol24h');
+      if (actVol) {
+        const vol = d.volume_24h_usd || 0;
+        actVol.textContent = vol >= 1e6 ? '$' + (vol/1e6).toFixed(2) + 'M' : 
+                              vol >= 1e3 ? '$' + (vol/1e3).toFixed(1) + 'K' :
+                              '$' + vol.toFixed(0);
+      }
+      const actTxns = document.getElementById('actTxns24h');
+      if (actTxns) actTxns.textContent = fmtNum(d.txns_24h || 0);
+      
+      // 24H Transactions (real)
+      document.getElementById('statTxns').textContent = fmtNum(d.txns_24h || 0);
+      
+      // Last update indicator (optional)
+      console.log('[GBX] Stats updated:', new Date().toLocaleTimeString());
+    }
+  } catch(e) {
+    console.warn('[gbx] stats fetch failed:', e);
+  }
+  
+  // ═══ BURNS FROM /launchpad/burns/total ═══
+  try {
+    const r = await fetch(API_BRIDGE + '/launchpad/burns/total');
+    if (r.ok) {
+      const b = await r.json();
+      const burned = parseFloat(b.total_burned_gbx || 0);
+      const events = b.events_count || 0;
+      const burned24h = parseFloat(b.burned_24h || 0);
+      
+      // ═══ HONEST DISPLAY: REAL on-chain burns as headline ═══
+      const realBurns = parseFloat(b.real_burns_gbx || 0);
+      const virtualTotal = Math.max(0, burned - realBurns);
+      // Show REAL as the headline number (this is the TRUTH)
+      document.getElementById('burnTotal').textContent = fmt(realBurns) + ' GBX';
+      const elVirtual = document.getElementById('burnVirtual');
+      if (elVirtual) elVirtual.textContent = fmt(virtualTotal);
+      
+      // ═══ Also update Activity Burns 24H ═══
+      const actBurns = document.getElementById('actBurns24h');
+      if (actBurns) {
+        const realAmount = parseFloat(b.real_burns_gbx || 0);
+        actBurns.textContent = realAmount > 0 ? fmt(realAmount) + ' GBX' : '0 GBX';
+      }
+      document.getElementById('burnUsd').textContent = fmtUsd(parseFloat(b.real_burns_gbx || 0) * GBX_PRICE_USD) + ' USD value';
+    }
+  } catch(e) {
+    document.getElementById('burnTotal').textContent = '0 GBX';
+    document.getElementById('burnUsd').textContent = '$0 USD value';
+  }
+}
+
+// ═══════════════════════════════════════════
+// CHART — Real-ish candlestick from price stability
+// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+(async function init() {
+  applyI18n_gbx();
+  await loadGbxStats();
+    
+  // Refresh every 30s
+  setInterval(loadGbxStats, 15000);
+
+  // V7.2 — GBX chart prin componenta UNICA PriceChart (aceeasi ca memecoin)
+  (function _startChart(){
+    if (!window.PriceChart) { setTimeout(_startChart, 200); return; }
+    PriceChart.init({
+      candlesUrl: function(){ return API_BRIDGE + '/launchpad/gbx/candles'; },
+      usdMultiplier: function(){ return 1; },
+      defaultChartType: 'candles', storageKey: 'gbx_chart_native',
+      fitContent: true,
+      displayDecimals: 6, precision: 6, minMove: 0.000001, showVolume: false,
+      container: 'gbxChartContainer',
+      els: { ma7:'maVal7', ma14:'maVal14', ma28:'maVal28', countdown:'candleCountdown', iconType:'iconChartType', iconMA:'iconMA' }
+    });
+  })();
+
+  // SPA re-entry hook: loader calls gbxRefresh_<route> on every show
+  window.gbxRefresh_gbx = function(){
+    try{ applyI18n_gbx(); }catch(e){}
+    try{ loadGbxStats(); }catch(e){}
+    try{ if(window.PriceChart) PriceChart.init({
+      candlesUrl: function(){ return API_BRIDGE + '/launchpad/gbx/candles'; },
+      usdMultiplier: function(){ return 1; },
+      defaultChartType: 'candles', storageKey: 'gbx_chart_native',
+      fitContent: true,
+      displayDecimals: 6, precision: 6, minMove: 0.000001, showVolume: false,
+      container: 'gbxChartContainer',
+      els: { ma7:'maVal7', ma14:'maVal14', ma28:'maVal28', countdown:'candleCountdown', iconType:'iconChartType', iconMA:'iconMA' }
+    }); }catch(e){}
+  };
+
+  // Redraw chart on resize
+  window.addEventListener('resize', () => {
+      });
+})();
+</script>
+
+
+<style>
+  .v3-bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #2a2218; border-top: 1px solid #3a3025; padding: 6px 0 calc(6px + env(safe-area-inset-bottom)); display: flex; z-index: 100; }
+  .v3-nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px; text-decoration: none; color: #FFE099; font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700; letter-spacing: 0.1em; opacity: 0.7; }
+  .v3-nav-item.active { opacity: 1; color: #F5CC75; }
+  .v3-nav-emoji { font-size: 18px; line-height: 1; }
+  body { padding-bottom: 70px !important; }
+</style>
+
+
+<script src="/v3/pwa.js?v=103" defer></script>
+
+<nav class="v3-final-nav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:999;">
+  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
+  <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
+  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
+  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
+  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
+  <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#F5CC75;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:1;"><span style="font-size:18px;">⚙</span><span data-t="navSettings">SETTINGS</span></a>
+</nav>
+<style>body { padding-bottom: 76px !important; }</style>
+
+  <script src="/v3/gbx-autolock.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="prefetch" href="/v3/wallet.html"><link rel="prefetch" href="/v3/trade.html"><link rel="prefetch" href="/v3/launch.html"><link rel="prefetch" href="/v3/burns.html"><link rel="prefetch" href="/v3/settings.html"><link rel="prefetch" href="/v3/favorites.html"><link rel="prefetch" href="/v3/leaderboard.html"><link rel="prefetch" href="/v3/style.css"><link rel="dns-prefetch" href="https://goldbrix.app">
+<link rel="preconnect" href="https://goldbrix.app" crossorigin>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1c1610">
+<title>GoldBrix · Welcome</title>
+<link rel="icon" href="/assets/coin/gbx-coin-32.png">
+<link rel="apple-touch-icon" href="/assets/coin/gbx-coin-128.png">
+<link rel="stylesheet" href="/v3/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  .welcome-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 8px;
+    margin-top: 24px;
+  }
+  .lang-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 28px;
+    padding: 10px 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--text-secondary);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--r-full);
+    transition: all var(--t-fast);
+  }
+  .lang-link:hover { color: var(--gold); border-color: var(--gold-deep); }
+  .live-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    margin-right: 6px;
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s infinite;
+  }
+
+/* V4.9 — Visible placeholders (added 2026-05-27) */
+input::placeholder, textarea::placeholder,
+input::-webkit-input-placeholder, textarea::-webkit-input-placeholder,
+input::-moz-placeholder, textarea::-moz-placeholder {
+  color: #eee !important;
+  opacity: 1 !important;
+}
+
+</style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#F5CC75">
+    <script src="/gbx-update-check.js" defer></script>
+    <script src="/gbx-native-bridge.js" defer></script>
+      <script src="/i18n.js?v=103" defer></script>
+<style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
+</head>
+<body>
+<div class="v3-app">
+
+  <!-- PWA BANNER -->
+  <div class="v3-pwa-banner" id="pwaBanner">
+    <div class="v3-pwa-banner__icon">
+      <img src="/assets/coin/gbx-coin-32.png" alt="">
+    </div>
+    <div class="v3-pwa-banner__text">
+      <div class="v3-pwa-banner__title" id="pwaBannerTitle">Install GoldBrix App</div>
+      <div class="v3-pwa-banner__sub" id="pwaBannerSub">Faster · Offline · Native feel</div>
+    </div>
+    <button class="v3-pwa-banner__install" id="pwaInstallBtn" onclick="pwaInstall()">INSTALL</button>
+    <button class="v3-pwa-banner__close" onclick="pwaDismiss()">×</button>
+  </div>
+
+  <div class="v3-container v3-fade-in" style="display:flex; flex-direction:column; align-items:center; min-height:calc(100vh - 60px); justify-content:space-between; padding-top:40px; padding-bottom:24px;">
+
+    <!-- HERO -->
+    <div style="text-align:center; flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+      <img src="/assets/coin/gbx-coin-128.png" alt="GoldBrix" class="v3-hero__logo">
+      <div class="v3-hero__title">GOLDBRIX</div>
+      <div class="v3-hero__subtitle" id="subtitleLabel" data-i18n="powNative">PROOF OF WORK · NATIVE WALLET</div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="welcome-actions" style="width:100%;">
+      <button class="v3-btn v3-btn--primary v3-btn--lg v3-btn--block" onclick="goCreate()">
+        <span id="createLabel" data-i18n="createWallet">Create New Wallet</span>
+      </button>
+      <button class="v3-btn v3-btn--secondary v3-btn--lg v3-btn--block" onclick="goImport()">
+        <span id="importLabel" data-i18n="importWallet">Import Existing Wallet</span>
+      </button>
+
+      <a class="lang-link" href="/v3/language.html" id="langLink">
+        🌍 <span id="changeLangLabel">Change Language</span>
+      </a>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="v3-footer" style="margin-top:32px;">
+      <div id="custodyLabel" data-i18n="selfCustody">SELF-CUSTODY · YOUR KEYS · YOUR COINS</div>
+      <div style="margin-top:6px;"><span class="live-dot"></span>GOLDBRIX CHAIN · LIVE</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const T = {
+  en: { subtitle: 'PROOF OF WORK · NATIVE WALLET', create: 'Create New Wallet', importB: 'Import Existing Wallet', changeLang: 'Change Language', custody: 'SELF-CUSTODY · YOUR KEYS · YOUR COINS', pwaTitle: 'Install GoldBrix App', pwaSub: 'Faster · Offline · Native feel', pwaInstall: 'INSTALL' },
+  ro: { subtitle: 'PROOF OF WORK · PORTOFEL NATIV', create: 'Creează Portofel Nou', importB: 'Importă Portofel Existent', changeLang: 'Schimbă Limba', custody: 'SELF-CUSTODY · CHEILE TALE · MONEDELE TALE', pwaTitle: 'Instalează GoldBrix App', pwaSub: 'Mai rapid · Offline · Aplicație nativă', pwaInstall: 'INSTALEAZĂ' },
+  de: { subtitle: 'PROOF OF WORK · NATIVE WALLET', create: 'Neue Wallet Erstellen', importB: 'Bestehende Wallet Importieren', changeLang: 'Sprache Ändern', custody: 'SELF-CUSTODY · DEINE KEYS · DEINE COINS', pwaTitle: 'GoldBrix App installieren', pwaSub: 'Schneller · Offline · Native', pwaInstall: 'INSTALLIEREN' },
+  zh: { subtitle: '工作量证明 · 原生钱包', create: '创建新钱包', importB: '导入现有钱包', changeLang: '更改语言', custody: '自我托管 · 您的密钥 · 您的代币', pwaTitle: '安装 GoldBrix 应用', pwaSub: '更快 · 离线 · 原生体验', pwaInstall: '安装' },
+  ar: { subtitle: 'إثبات العمل · محفظة أصلية', create: 'إنشاء محفظة جديدة', importB: 'استيراد محفظة موجودة', changeLang: 'تغيير اللغة', custody: 'الحفظ الذاتي · مفاتيحك · عملاتك', pwaTitle: 'تثبيت تطبيق GoldBrix', pwaSub: 'أسرع · بدون اتصال · أصلي', pwaInstall: 'تثبيت' }
+};
+
+let currentLang = localStorage.getItem('gbx_lang') || 'en';
+
+function applyLang(lang) {
+  currentLang = lang;
+  const t = T[lang] || T.en;
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.getElementById('subtitleLabel').textContent = t.subtitle;
+  document.getElementById('createLabel').textContent = t.create;
+  document.getElementById('importLabel').textContent = t.importB;
+  document.getElementById('changeLangLabel').textContent = t.changeLang;
+  document.getElementById('custodyLabel').textContent = t.custody;
+  document.getElementById('pwaBannerTitle').textContent = t.pwaTitle;
+  document.getElementById('pwaBannerSub').textContent = t.pwaSub;
+  document.getElementById('pwaInstallBtn').textContent = t.pwaInstall;
+  localStorage.setItem('gbx_lang', lang);
+}
+
+function goCreate() {
+  window.location.href = '/v3/create-wallet.html';
+}
+function goImport() {
+  window.location.href = '/v3/import-wallet.html';
+}
+
+// ═══ PWA ═══
+let deferredPrompt = null;
+function isPwaInstalled() {
+  if (window.matchMedia('(display-mode: standalone)').matches) return true;
+  if (window.navigator.standalone === true) return true;
+  const dismissed = parseInt(localStorage.getItem('gbx_pwa_dismissed_at') || '0');
+  if (dismissed && (Date.now() - dismissed) < 7 * 24 * 60 * 60 * 1000) return true;
+  return false;
+}
+function showPwaBanner() {
+  if (isPwaInstalled()) return;
+  const b = document.getElementById('pwaBanner');
+  if (b) b.classList.add('show');
+}
+function pwaDismiss() {
+  const b = document.getElementById('pwaBanner');
+  if (b) b.classList.remove('show');
+  localStorage.setItem('gbx_pwa_dismissed_at', String(Date.now()));
+}
+async function pwaInstall() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const c = await deferredPrompt.userChoice;
+    if (c.outcome === 'accepted') {
+      localStorage.setItem('gbx_pwa_installed', 'true');
+      document.getElementById('pwaBanner').classList.remove('show');
+    }
+    deferredPrompt = null;
+  } else {
+    const ua = navigator.userAgent.toLowerCase();
+    if (/iphone|ipad|ipod/.test(ua)) alert('iOS: Share → Add to Home Screen');
+    else alert('Open menu → Install / Add to Home Screen');
+  }
+}
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; showPwaBanner(); });
+window.addEventListener('appinstalled', () => {
+  localStorage.setItem('gbx_pwa_installed', 'true');
+  const b = document.getElementById('pwaBanner');
+  if (b) b.classList.remove('show');
+});
+setTimeout(() => {
+  if (!isPwaInstalled()) {
+    const ua = navigator.userAgent.toLowerCase();
+    if (deferredPrompt || /iphone|ipad|ipod|android/.test(ua)) showPwaBanner();
+  }
+}, 1500);
+
+applyLang(currentLang);
+</script>
+<script src="/v3/pwa.js?v=103" defer></script>
+
+
+
+</body>
+</html>

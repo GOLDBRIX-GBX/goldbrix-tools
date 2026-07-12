@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GoldBrix · Receive</title>
+<link rel="stylesheet" href="/v3/style.css">
+<script src="/v3/gbx-session.js?v=103"></script>
+<script src="/qrcode.min.js"></script>
+<script type="module" src="/multichain-utils.js?v=103"></script>
+<style>
+  body { background:#13100b; color:#f3ead7; font-family:'JetBrains Mono',ui-monospace,monospace; margin:0; }
+  .lock-overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:#13100b; z-index:50; }
+  .loader { width:34px; height:34px; border:3px solid #3a3025; border-top-color:#f5cc75; border-radius:50%; animation:spin 0.8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .wrap { max-width:480px; margin:0 auto; padding:14px 16px calc(24px + env(safe-area-inset-bottom)); }
+  .back-btn { display:inline-block; color:#f5cc75; text-decoration:none; font-size:14px; margin:6px 0 14px; }
+  .hero-title { font-size:22px; font-weight:800; color:#f5cc75; }
+  .hero-sub { font-size:12px; letter-spacing:1px; color:#9c8f76; margin-top:2px; text-transform:uppercase; }
+  .mc-card { background:#1d1810; border:1px solid #3a3025; border-radius:16px; padding:18px 16px; margin-top:16px; }
+  .mc-card--gbx { border-color:#6b5618; background:#1f1809; }
+  .mc-head { display:flex; align-items:center; gap:8px; font-size:15px; font-weight:800; }
+  .mc-chip { width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800; }
+  .mc-chip--gbx { background:rgba(245,204,117,0.18); color:#f5cc75; }
+  .mc-chip--evm { background:rgba(98,126,234,0.16); color:#8aa0f5; }
+  .mc-chip--sol { background:rgba(20,241,149,0.14); color:#22e39a; }
+  .mc-qr { display:flex; justify-content:center; background:#fff; border-radius:12px; padding:12px; margin:14px auto 0; width:max-content; }
+  .mc-addr { word-break:break-all; font-size:12.5px; line-height:1.5; background:rgba(0,0,0,0.35); border-radius:10px; padding:10px 12px; margin-top:12px; color:#e9dec6; }
+  .mc-note { font-size:11.5px; color:#9c8f76; margin-top:8px; }
+  .mc-copy { width:100%; margin-top:12px; background:#f5cc75; color:#1c1610; border:none; border-radius:12px; padding:12px; font-weight:800; font-size:14px; font-family:inherit; cursor:pointer; }
+  .mc-copy:active { transform:scale(0.98); }
+  .warn { background:rgba(255,122,107,0.08); border:1px solid rgba(255,122,107,0.3); border-radius:12px; padding:12px 14px; margin-top:18px; font-size:12px; color:#ffb3a8; }
+  .warn b { color:#ff7a6b; }
+  .ftr { text-align:center; color:#6a5f4c; font-size:10.5px; letter-spacing:1px; margin-top:22px; }
+  [dir="rtl"] .mc-head { flex-direction:row-reverse; }
+</style>
+</head>
+<body>
+<div class="lock-overlay" id="lockOverlay"><div class="loader"></div></div>
+<div class="wrap" id="app" style="display:none;">
+  <a class="back-btn" href="/v3/wallet.html">← <span id="backLabel">Wallet</span></a>
+  <div class="hero-title" id="heroTitle">Receive</div>
+  <div class="hero-sub" id="heroSub">ALL YOUR ADDRESSES</div>
+
+  <div class="mc-card mc-card--gbx">
+    <div class="mc-head"><span class="mc-chip mc-chip--gbx">◆</span> <span id="gbxLabel">GoldBrix (GBX + Memecoins)</span></div>
+    <div class="mc-qr"><div id="qrGbx"></div></div>
+    <div class="mc-addr" id="gbxAddr">…</div>
+    <div class="mc-note" id="gbxNote">Receives GBX + all GoldBrix memecoins</div>
+    <button class="mc-copy" id="copyGbx" onclick="copyAddr('gbx')">📋 <span>Copy</span></button>
+  </div>
+
+  <div class="mc-card">
+    <div class="mc-head"><span class="mc-chip mc-chip--evm">⟠</span> <span id="evmLabel">Ethereum / EVM</span></div>
+    <div class="mc-qr"><div id="qrEvm"></div></div>
+    <div class="mc-addr" id="evmAddr">…</div>
+    <div class="mc-note" id="evmNote">USDC on Base · Arbitrum · BSC · Ethereum</div>
+    <button class="mc-copy" id="copyEvm" onclick="copyAddr('evm')">📋 <span>Copy</span></button>
+  </div>
+
+  <div class="mc-card">
+    <div class="mc-head"><span class="mc-chip mc-chip--sol">◎</span> <span id="solLabel">Solana</span></div>
+    <div class="mc-qr"><div id="qrSol"></div></div>
+    <div class="mc-addr" id="solAddr">…</div>
+    <div class="mc-note" id="solNote">USDC on Solana</div>
+    <button class="mc-copy" id="copySol" onclick="copyAddr('sol')">📋 <span>Copy</span></button>
+  </div>
+
+  <div class="warn"><b id="warnTitle">IMPORTANT</b> · <span id="warnBody">Each address receives ONLY what it says. GBX/memecoins → GoldBrix card. USDC → EVM/Solana. Wrong network = permanent loss.</span></div>
+  <div class="ftr">v3 · GOLDBRIX · MULTI-CHAIN</div>
+</div>
+
+<script>
+const T = {
+  en: { back:'Wallet', title:'Receive', sub:'ALL YOUR ADDRESSES', gbx:'GoldBrix (GBX + Memecoins)', gbxNote:'Receives GBX + all GoldBrix memecoins', evm:'Ethereum / EVM', evmNote:'USDC on Base · Arbitrum · BSC · Ethereum', sol:'Solana', solNote:'USDC on Solana', copy:'Copy', copied:'✓ Copied!', warnTitle:'IMPORTANT', warnBody:'Each address receives ONLY what it says. GBX/memecoins → GoldBrix card. USDC → EVM/Solana. Wrong network = permanent loss.' },
+  ro: { back:'Portofel', title:'Primește', sub:'TOATE ADRESELE TALE', gbx:'GoldBrix (GBX + Memecoins)', gbxNote:'Primește GBX + toate memecoins GoldBrix', evm:'Ethereum / EVM', evmNote:'USDC pe Base · Arbitrum · BSC · Ethereum', sol:'Solana', solNote:'USDC pe Solana', copy:'Copiază', copied:'✓ Copiat!', warnTitle:'IMPORTANT', warnBody:'Fiecare adresă primește DOAR ce scrie. GBX/memecoins → cardul GoldBrix. USDC → EVM/Solana. Rețea greșită = pierdere permanentă.' },
+  de: { back:'Wallet', title:'Empfangen', sub:'ALLE DEINE ADRESSEN', gbx:'GoldBrix (GBX + Memecoins)', gbxNote:'Empfängt GBX + alle GoldBrix-Memecoins', evm:'Ethereum / EVM', evmNote:'USDC auf Base · Arbitrum · BSC · Ethereum', sol:'Solana', solNote:'USDC auf Solana', copy:'Kopieren', copied:'✓ Kopiert!', warnTitle:'WICHTIG', warnBody:'Jede Adresse empfängt NUR das Angegebene. GBX/Memecoins → GoldBrix-Karte. USDC → EVM/Solana. Falsches Netzwerk = dauerhafter Verlust.' },
+  zh: { back:'钱包', title:'接收', sub:'您的所有地址', gbx:'GoldBrix (GBX + 模因币)', gbxNote:'接收 GBX + 所有 GoldBrix 模因币', evm:'以太坊 / EVM', evmNote:'USDC 在 Base · Arbitrum · BSC · 以太坊', sol:'Solana', solNote:'USDC 在 Solana', copy:'复制', copied:'✓ 已复制!', warnTitle:'重要', warnBody:'每个地址仅接收所示资产。GBX/模因币 → GoldBrix 卡。USDC → EVM/Solana。网络错误 = 永久损失。' },
+  ar: { back:'محفظة', title:'استقبال', sub:'جميع عناوينك', gbx:'GoldBrix (GBX + ميمكوينز)', gbxNote:'يستقبل GBX + جميع عملات GoldBrix الميمية', evm:'Ethereum / EVM', evmNote:'USDC على Base · Arbitrum · BSC · Ethereum', sol:'Solana', solNote:'USDC على Solana', copy:'نسخ', copied:'✓ تم النسخ!', warnTitle:'هام', warnBody:'كل عنوان يستقبل فقط ما هو مذكور. GBX/الميمكوينز → بطاقة GoldBrix. USDC → EVM/Solana. شبكة خاطئة = خسارة دائمة.' }
+};
+let currentLang = localStorage.getItem('gbx_lang') || 'en';
+function t(k){ return (T[currentLang] && T[currentLang][k]) || T.en[k] || k; }
+const addrs = { gbx:'', evm:'', sol:'' };
+
+function applyLang(){
+  const tt = T[currentLang] || T.en;
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+  document.getElementById('backLabel').textContent = tt.back;
+  document.getElementById('heroTitle').textContent = tt.title;
+  document.getElementById('heroSub').textContent = tt.sub;
+  document.getElementById('gbxLabel').textContent = tt.gbx;
+  document.getElementById('gbxNote').textContent = tt.gbxNote;
+  document.getElementById('evmLabel').textContent = tt.evm;
+  document.getElementById('evmNote').textContent = tt.evmNote;
+  document.getElementById('solLabel').textContent = tt.sol;
+  document.getElementById('solNote').textContent = tt.solNote;
+  document.getElementById('warnTitle').textContent = tt.warnTitle;
+  document.getElementById('warnBody').textContent = tt.warnBody;
+  document.querySelector('#copyGbx span').textContent = tt.copy;
+  document.querySelector('#copyEvm span').textContent = tt.copy;
+  document.querySelector('#copySol span').textContent = tt.copy;
+}
+function getActive(){
+  // SESSION SINGLE SOURCE: self-healing. 'retry' = sesiune nepropagata -> NU redirect, init reincearca.
+  var st = (window.GBXSession && GBXSession.status) ? GBXSession.status() : 'none';
+  if (st === 'retry') return null;
+  if (st === 'none' || st === 'expired'){ if(window.GBXSession) GBXSession.clear(); location.href='/v3/unlock.html'; return null; }
+  var w = GBXSession.activeWallet();
+  if(!w || !w.address || !w.mnemonic){ location.href='/v3/unlock.html'; return null; }
+  return w;
+}
+function renderQR(id, text){
+  const c = document.getElementById(id); c.innerHTML='';
+  if(typeof QRCode === 'undefined') return;
+  new QRCode(c, { text, width:200, height:200, colorDark:'#13100b', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.M });
+}
+function copyAddr(kind){
+  const addr = addrs[kind];
+  const map = { gbx:'#copyGbx span', evm:'#copyEvm span', sol:'#copySol span' };
+  const btn = document.querySelector(map[kind]);
+  navigator.clipboard.writeText(addr).then(()=>{ const o = btn.textContent; btn.textContent = t('copied'); setTimeout(()=>{ btn.textContent = o; }, 1500); });
+}
+window.gbxRefresh_receive = async function(){
+  applyLang();
+  var _root = document.querySelector('.spa-viewbox[data-route="receive"]') || document;
+  const w = getActive(); if(!w) return;
+  addrs.gbx = w.address;
+  document.getElementById('gbxAddr').textContent = addrs.gbx;
+  renderQR('qrGbx', addrs.gbx);
+  let tries=0;
+  while(!(window.GoldbrixMultichain && window.GoldbrixMultichain.deriveEVM) && tries<80){ await new Promise(r=>setTimeout(r,100)); tries++; }
+  if(!(window.GoldbrixMultichain && window.GoldbrixMultichain.deriveEVM)){
+    _root.querySelector('#lockOverlay').innerHTML = '<div style="color:#ff7a6b;padding:20px;text-align:center;">Crypto module load failed</div>'; return;
+  }
+  try{
+    const evm = await window.GoldbrixMultichain.deriveEVM(w.mnemonic);
+    const sol = await window.GoldbrixMultichain.deriveSOL(w.mnemonic);
+    addrs.evm = evm.address; addrs.sol = sol.address;
+    document.getElementById('evmAddr').textContent = addrs.evm;
+    document.getElementById('solAddr').textContent = addrs.sol;
+    renderQR('qrEvm', addrs.evm); renderQR('qrSol', addrs.sol);
+    _root.querySelector('#lockOverlay').style.display='none';
+    _root.querySelector('#app').style.display='block';
+  }catch(e){ _root.querySelector('#lockOverlay').innerHTML = '<div style="color:#ff7a6b;padding:20px;text-align:center;">'+(e.message||e)+'</div>'; }
+};
+window.gbxRefresh_receive();
+</script>
+</body>
+</html>

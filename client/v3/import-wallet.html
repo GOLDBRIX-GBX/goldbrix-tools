@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="prefetch" href="/v3/wallet.html"><link rel="prefetch" href="/v3/trade.html"><link rel="prefetch" href="/v3/launch.html"><link rel="prefetch" href="/v3/burns.html"><link rel="prefetch" href="/v3/settings.html"><link rel="prefetch" href="/v3/favorites.html"><link rel="prefetch" href="/v3/leaderboard.html"><link rel="prefetch" href="/v3/style.css"><link rel="dns-prefetch" href="https://goldbrix.app">
+<link rel="preconnect" href="https://goldbrix.app" crossorigin>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1c1610">
+<title>GoldBrix · Import Wallet</title>
+<link rel="icon" href="/assets/coin/gbx-coin-32.png">
+<link rel="stylesheet" href="/v3/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  .seed-textarea {
+    width: 100%;
+    min-height: 110px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 14px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--gold);
+    resize: vertical;
+    transition: border var(--t-fast);
+    line-height: 1.6;
+  }
+  .seed-textarea:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-glow); }
+  .pwd-wrap { position: relative; }
+  .pwd-eye { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: transparent; color: var(--text-muted); font-size: 18px; padding: 4px; }
+  .pwd-eye:hover { color: var(--gold); }
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: 0.1em; color: var(--text-secondary);
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    border-radius: var(--r-full); transition: all var(--t-fast); margin-bottom: 16px;
+  }
+  .back-btn:hover { color: var(--gold); border-color: var(--gold-deep); }
+  .word-count {
+    text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--text-muted); margin-top: 6px;
+  }
+  .word-count.ok { color: var(--green); }
+  .loader { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; margin: 0 auto 12px; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .crypto-loading { text-align: center; padding: 40px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .step { display: none; }
+  .step.active { display: block; animation: fadeIn 0.4s; }
+
+/* V4.9 — Visible placeholders (added 2026-05-27) */
+input::placeholder, textarea::placeholder,
+input::-webkit-input-placeholder, textarea::-webkit-input-placeholder,
+input::-moz-placeholder, textarea::-moz-placeholder {
+  color: #eee !important;
+  opacity: 1 !important;
+}
+
+</style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#F5CC75">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/goldbrix-brand-180.png">
+    <script src="/gbx-update-check.js" defer></script>
+    <script src="/gbx-native-bridge.js" defer></script>
+      <script src="/v3/gbx-session.js?v=103"></script>
+      <script src="/i18n.js?v=103" defer></script>
+<style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
+</head>
+<body>
+<div class="v3-app">
+  <div class="v3-container v3-fade-in">
+
+    <a class="back-btn" href="/v3/welcome.html">← <span id="backLabel">Back</span></a>
+
+    <div class="crypto-loading" id="cryptoLoading">
+      <div class="loader"></div>
+      <div id="loadingLabel">Loading crypto library...</div>
+    </div>
+
+    <div class="step" id="step-main">
+      <div class="v3-text-center" style="padding: 16px 0 24px;">
+        <img src="/assets/coin/gbx-coin-128.png" style="width: 72px; height: 72px; filter: drop-shadow(0 0 24px var(--gold-glow-strong));">
+        <h2 style="margin-top: 16px; font-size: 22px; font-weight: 800; color: var(--gold);" id="importTitle" data-i18n="importTitle">Import Wallet</h2>
+        <p style="margin-top: 6px; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.15em; color: var(--text-secondary);" id="importSub">ENTER YOUR 12 WORD SEED PHRASE</p>
+      </div>
+
+      <div id="importExplainer" style="background:rgba(245,204,117,.05);border:1px solid #3a3020;border-radius:12px;padding:13px 14px;margin-bottom:18px;font-size:12px;line-height:1.65;color:var(--text-secondary);">
+        <span id="expBody"></span>
+        <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:11px;">
+          <span style="font-size:11px;background:#221a11;border:1px solid #2e2619;border-radius:999px;padding:5px 10px;">🦊 MetaMask</span>
+          <span style="font-size:11px;background:#221a11;border:1px solid #2e2619;border-radius:999px;padding:5px 10px;">👻 Phantom</span>
+          <span style="font-size:11px;background:#221a11;border:1px solid #2e2619;border-radius:999px;padding:5px 10px;">🛡️ Trust</span>
+          <span style="font-size:11px;background:#221a11;border:1px solid #2e2619;border-radius:999px;padding:5px 10px;">🔷 GoldBrix</span>
+        </div>
+      </div>
+      <label style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-secondary); letter-spacing: 0.12em; text-transform: uppercase;" id="seedLabel">Seed Phrase (12 words separated by spaces)</label>
+      <textarea class="seed-textarea v3-mt-sm" id="importSeed" placeholder="word1 word2 word3 ... word12" autocomplete="off" autocapitalize="off" spellcheck="false" oninput="updateCount()"></textarea>
+      <div class="word-count" id="wordCount">0 / 12</div>
+
+      <label style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-secondary); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 20px; display: block;" id="pwdLabel" data-i18n="setPassword">Set Password</label>
+      <div class="pwd-wrap v3-mt-sm">
+        <input type="password" class="v3-input" id="importPwd1" placeholder="Password (8+ chars)" data-i18n-placeholder="passwordPh" autocomplete="new-password">
+        <button class="pwd-eye" onclick="togglePwd('importPwd1', this)">👁</button>
+      </div>
+      <div class="pwd-wrap v3-mt-sm">
+        <input type="password" class="v3-input" id="importPwd2" placeholder="Confirm password" data-i18n-placeholder="confirmPasswordPh" autocomplete="new-password">
+        <button class="pwd-eye" onclick="togglePwd('importPwd2', this)">👁</button>
+      </div>
+
+      <button class="v3-btn v3-btn--primary v3-btn--lg v3-btn--block v3-mt-lg" onclick="doImport()">
+        <span id="importBtn" data-i18n="importTitle">Import Wallet</span>
+      </button>
+    </div>
+
+    <div class="step" id="step-done">
+      <div class="v3-text-center" style="padding: 40px 0;">
+        <div class="loader"></div>
+        <h2 style="margin-top: 16px; font-size: 22px; font-weight: 800; color: var(--gold);" id="doneTitle">Importing...</h2>
+        <p style="margin-top: 8px; color: var(--text-secondary); font-size: 13px;" id="doneSub">Deriving address & encrypting</p>
+      </div>
+    </div>
+    <div class="step" id="step-result">
+      <div class="v3-text-center" style="padding: 16px 0;">
+        <div style="width:54px;height:54px;border-radius:50%;background:rgba(52,211,153,.14);color:#34d399;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 10px;">✓</div>
+        <h2 style="font-size:22px;font-weight:800;color:var(--gold);" id="resTitle">Portofel importat</h2>
+        <p style="margin-top:6px;font-size:12px;color:var(--text-secondary);" id="resSub">Adresele tale pe fiecare rețea</p>
+      </div>
+      <div id="resGbx"></div>
+      <div id="resEvm"></div>
+      <div id="resSol"></div>
+      <div id="resMatch" style="text-align:center;font-size:11.5px;color:#34d399;margin-top:14px;"></div>
+      <button class="v3-btn v3-btn--primary v3-btn--lg v3-btn--block v3-mt-lg" onclick="window.location.href='/v3/wallet.html'"><span id="resBtn">Deschide portofelul</span></button>
+    </div>
+
+    <div class="v3-footer">v3.0 · PHASE 1.5 LIVE · SELF-CUSTODY</div>
+  </div>
+</div>
+
+<script type="module" src="/crypto-utils-v2.js?v=103"></script>
+<script type="module" src="/multichain-utils.js?v=103"></script>
+
+<script>
+const T = {
+  en: { back: 'Back', loading: 'Loading crypto library...', importTitle: 'Import Wallet', importSub: 'ENTER 12 OR 24 WORDS (MetaMask / Phantom / GoldBrix)', seedLabel: 'Recovery Phrase (12 or 24 words, space-separated)', pwdLabel: 'Set Password', importBtn: 'Import Wallet', doneTitle: 'Importing...', doneSub: 'Deriving address & encrypting', pwdShort: 'Password must be 8+ characters', pwdMismatch: 'Passwords do not match', seedCount: 'Enter 12 or 24 words', invalidSeed: 'Invalid seed phrase. Check spelling.', wrongPwdAdd: 'Password does not match your existing wallet', walletExists: 'This wallet is already imported' },
+  ro: { back: 'Înapoi', loading: 'Se încarcă...', importTitle: 'Importă Portofel', importSub: 'INTRODU 12 SAU 24 CUVINTE (MetaMask / Phantom / GoldBrix)', seedLabel: 'Frază de recuperare (12 sau 24 cuvinte)', pwdLabel: 'Setează Parola', importBtn: 'Importă Portofelul', doneTitle: 'Se importă...', doneSub: 'Derivare adresă & criptare', pwdShort: 'Parola trebuie să aibă 8+ caractere', pwdMismatch: 'Parolele nu se potrivesc', seedCount: 'Introdu 12 sau 24 cuvinte', invalidSeed: 'Seed phrase invalid. Verifică ortografia.', wrongPwdAdd: 'Parola nu se potrivește cu portofelul existent', walletExists: 'Acest portofel este deja importat' },
+  de: { back: 'Zurück', loading: 'Wird geladen...', importTitle: 'Wallet Importieren', importSub: 'GIB 12 ODER 24 WÖRTER EIN (MetaMask / Phantom / GoldBrix)', seedLabel: 'Wiederherstellungsphrase (12 oder 24 Wörter)', pwdLabel: 'Passwort festlegen', importBtn: 'Wallet importieren', doneTitle: 'Wird importiert...', doneSub: 'Adresse ableiten & verschlüsseln', pwdShort: 'Passwort 8+ Zeichen', pwdMismatch: 'Passwörter stimmen nicht überein', seedCount: '12 oder 24 Wörter eingeben', invalidSeed: 'Ungültige Seed-Phrase.', wrongPwdAdd: 'Passwort stimmt nicht mit bestehender Wallet überein', walletExists: 'Diese Wallet ist bereits importiert' },
+  zh: { back: '返回', loading: '加载中...', importTitle: '导入钱包', importSub: '输入 12 或 24 个单词 (MetaMask / Phantom / GoldBrix)', seedLabel: '恢复短语（12 或 24 个单词）', pwdLabel: '设置密码', importBtn: '导入钱包', doneTitle: '导入中...', doneSub: '派生地址并加密', pwdShort: '密码至少 8 个字符', pwdMismatch: '密码不匹配', seedCount: '请输入 12 或 24 个单词', invalidSeed: '种子短语无效。', wrongPwdAdd: '密码与现有钱包不匹配', walletExists: '此钱包已导入' },
+  ar: { back: 'رجوع', loading: 'جاري التحميل...', importTitle: 'استيراد محفظة', importSub: 'أدخل 12 أو 24 كلمة (MetaMask / Phantom / GoldBrix)', seedLabel: 'عبارة الاسترداد (12 أو 24 كلمة)', pwdLabel: 'تعيين كلمة المرور', importBtn: 'استيراد المحفظة', doneTitle: 'جاري الاستيراد...', doneSub: 'اشتقاق العنوان والتشفير', pwdShort: 'كلمة المرور 8+ أحرف', pwdMismatch: 'كلمات المرور غير متطابقة', seedCount: 'أدخل 12 أو 24 كلمة', invalidSeed: 'عبارة بذور غير صالحة.', wrongPwdAdd: 'كلمة المرور لا تطابق المحفظة الحالية', walletExists: 'هذه المحفظة مستوردة بالفعل' }
+};
+
+let currentLang = localStorage.getItem('gbx_lang') || 'en';
+function t(k) { return (T[currentLang] && T[currentLang][k]) || T.en[k] || k; }
+
+function applyLang() {
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+  ['backLabel', 'loadingLabel', 'importTitle', 'importSub', 'seedLabel', 'pwdLabel', 'importBtn', 'doneTitle', 'doneSub'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      const map = { backLabel: 'back', loadingLabel: 'loading', importTitle: 'importTitle', importSub: 'importSub', seedLabel: 'seedLabel', pwdLabel: 'pwdLabel', importBtn: 'importBtn', doneTitle: 'doneTitle', doneSub: 'doneSub' };
+      el.textContent = t(map[id]);
+    }
+  });
+}
+
+async function showImportResult(gbxAddr, mnemonic){
+  var L=(localStorage.getItem('gbx_lang')||'en');
+  var R={
+    en:{title:'Wallet imported',sub:'Your addresses on each network',match:'✓ Same addresses as MetaMask / Phantom',btn:'Open wallet',gbx:'GoldBrix',evm:'Ethereum & EVM',sol:'Solana'},
+    ro:{title:'Portofel importat',sub:'Adresele tale pe fiecare rețea',match:'✓ Aceleași adrese ca MetaMask / Phantom',btn:'Deschide portofelul',gbx:'GoldBrix',evm:'Ethereum & EVM',sol:'Solana'},
+    de:{title:'Wallet importiert',sub:'Deine Adressen pro Netzwerk',match:'✓ Gleiche Adressen wie MetaMask / Phantom',btn:'Wallet öffnen',gbx:'GoldBrix',evm:'Ethereum & EVM',sol:'Solana'},
+    zh:{title:'钱包已导入',sub:'您在每个网络的地址',match:'✓ 与 MetaMask / Phantom 相同的地址',btn:'打开钱包',gbx:'GoldBrix',evm:'Ethereum 和 EVM',sol:'Solana'},
+    ar:{title:'تم استيراد المحفظة',sub:'عناوينك على كل شبكة',match:'✓ نفس العناوين كما في MetaMask / Phantom',btn:'افتح المحفظة',gbx:'GoldBrix',evm:'Ethereum و EVM',sol:'Solana'}
+  };
+  var t=R[L]||R.en;
+  function row(name,addr){return '<div style="display:flex;align-items:center;gap:11px;background:#1a1510;border:1px solid #2e2619;border-radius:14px;padding:13px 14px;margin-top:10px;"><div style="flex:1;min-width:0;"><div style="font-size:13.5px;font-weight:800;color:var(--gold);">'+name+'</div><div style="font-size:11px;color:var(--text-secondary);margin-top:3px;word-break:break-all;">'+addr+'</div></div></div>';}
+  document.getElementById('resTitle').textContent=t.title;
+  document.getElementById('resSub').textContent=t.sub;
+  document.getElementById('resBtn').textContent=t.btn;
+  document.getElementById('resGbx').innerHTML=row(t.gbx,gbxAddr);
+  document.getElementById('resEvm').innerHTML=row(t.evm,'…');
+  document.getElementById('resSol').innerHTML=row(t.sol,'…');
+  showStep('step-result');
+  try{
+    var tries=0;
+    while(!(window.GoldbrixMultichain && window.GoldbrixMultichain.deriveEVM) && tries<80){ await new Promise(function(r){setTimeout(r,100);}); tries++; }
+    if(window.GoldbrixMultichain && window.GoldbrixMultichain.deriveEVM){
+      var evm=await window.GoldbrixMultichain.deriveEVM(mnemonic);
+      var sol=await window.GoldbrixMultichain.deriveSOL(mnemonic);
+      document.getElementById('resEvm').innerHTML=row(t.evm,evm.address);
+      document.getElementById('resSol').innerHTML=row(t.sol,sol.address);
+      document.getElementById('resMatch').textContent=t.match;
+    }
+  }catch(e){}
+}
+
+function showStep(id) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function togglePwd(id, btn) {
+  const inp = document.getElementById(id);
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+  else { inp.type = 'password'; btn.textContent = '👁'; }
+}
+
+function updateCount() {
+  const txt = document.getElementById('importSeed').value.trim();
+  const words = txt.split(/\s+/).filter(w => w.length);
+  const el = document.getElementById('wordCount');
+  el.textContent = words.length + (words.length === 24 ? ' / 24' : ' / 12');
+  el.classList.toggle('ok', words.length === 12 || words.length === 24);
+}
+
+async function waitForCrypto(maxMs = 8000) {
+  const start = Date.now();
+  while (!window.GoldbrixCrypto) {
+    if (Date.now() - start > maxMs) throw new Error('Crypto timeout');
+    await new Promise(r => setTimeout(r, 100));
+  }
+}
+
+async function doImport() {
+  const seedTxt = document.getElementById('importSeed').value.trim().toLowerCase();
+  const words = seedTxt.split(/\s+/).filter(w => w.length);
+  const p1 = document.getElementById('importPwd1').value;
+  const p2 = document.getElementById('importPwd2').value;
+
+  if (words.length !== 12 && words.length !== 24) { alert(t('seedCount')); return; }
+  if (p1.length < 8) { alert(t('pwdShort')); return; }
+  if (p1 !== p2) { alert(t('pwdMismatch')); return; }
+
+  showStep('step-done');
+
+  try {
+    const c = window.GoldbrixCrypto;
+    const mnemonic = words.join(' ');
+    const wallet = await c.deriveKeypairFromMnemonic(mnemonic);
+    if (!wallet || !wallet.address) throw new Error(t('invalidSeed'));
+
+    const walletId = 'w_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+    // MULTI-WALLET SUPPORT: detect add mode (SPA-safe: query poate fi in hash, NU in search)
+    const existingRaw = localStorage.getItem('goldbrix_state_v3');
+    // 1) citeste mode din search SAU din hash (SPA pune query-ul in hash)
+    let _modeAdd = false;
+    try {
+      const fromSearch = new URLSearchParams(window.location.search).get('mode');
+      let fromHash = null;
+      const h = window.location.hash || '';
+      const qi = h.indexOf('?');
+      if (qi >= 0) fromHash = new URLSearchParams(h.slice(qi+1)).get('mode');
+      _modeAdd = (fromSearch === 'add') || (fromHash === 'add');
+    } catch(_e){}
+    // 2) AUTO-DETECT (siguranta): daca exista deja un cont valid (wallets+salt+pwdHash),
+    //    intra automat in append mode — NU mai depinde de flag-ul URL (regula: nu pierde wallet-uri)
+    let _hasAccount = false;
+    try {
+      const _st = existingRaw ? JSON.parse(existingRaw) : null;
+      _hasAccount = !!(_st && _st.wallets && _st.wallets.length && _st.salt && _st.pwdHash);
+    } catch(_e){}
+    const addMode = _modeAdd || _hasAccount;
+
+    let state;
+    if (addMode && existingRaw) {
+      // APPEND mode: validate password, check duplicates, append
+      state = JSON.parse(existingRaw);
+      const verifyHash = await c.hashPassword(p1, state.salt);
+      if (verifyHash !== state.pwdHash) {
+        alert(t('wrongPwdAdd'));
+        showStep('step-main');
+        return;
+      }
+      if (state.wallets.find(w => w.address === wallet.address)) {
+        alert(t('walletExists'));
+        showStep('step-main');
+        return;
+      }
+      const newEnc = await c.encryptString(mnemonic, p1, state.salt);
+      state.encryptedMnemonics[walletId] = newEnc;
+      state.wallets.push({
+        id: walletId,
+        address: wallet.address,
+        publicKey: wallet.publicKey || null,
+        name: 'Imported Wallet ' + (state.wallets.length + 1)
+      });
+      state.activeWalletId = walletId;
+    } else {
+      // FIRST-TIME mode
+      const salt = c.generateSalt();
+      const encMnemonic = await c.encryptString(mnemonic, p1, salt);
+      const pwdHash = await c.hashPassword(p1, salt);
+      state = {
+        isOnboarded: true,
+        salt: salt,
+        pwdHash: pwdHash,
+        encryptedMnemonics: { [walletId]: encMnemonic },
+        wallets: [{ id: walletId, address: wallet.address, publicKey: wallet.publicKey || null, name: 'Imported Wallet' }],
+        activeWalletId: walletId,
+        coins: []
+      };
+    }
+
+    localStorage.setItem('goldbrix_state_v3', JSON.stringify(state));
+    localStorage.setItem('gbx_disclaimer_agreed', 'true');
+
+    
+    
+      // SESSION SINGLE SOURCE: sesiune din state + mnemonic curent (primul import SI add-mode).
+      try {
+        const mById = {}; mById[walletId] = mnemonic;
+        if (addMode) {
+          const prev = GBXSession.get();
+          if (prev && prev.wallets) { prev.wallets.forEach(function(w){ if (w.mnemonic) mById[w.id] = w.mnemonic; }); }
+        }
+        GBXSession.create(state.wallets, walletId, mById);
+      } catch(e) {}
+
+    showImportResult(wallet.address, mnemonic);
+  } catch (e) {
+    alert((e && e.message) || t('invalidSeed'));
+    showStep('step-main');
+  }
+}
+
+(async () => {
+  applyLang();
+  try {
+    await waitForCrypto();
+    document.getElementById('cryptoLoading').style.display = 'none';
+    showStep('step-main');
+  } catch (e) {
+    document.getElementById('cryptoLoading').innerHTML = '<div style="color: var(--red);">❌ Crypto library failed. Refresh.</div>';
+  }
+})();
+</script>
+<script src="/v3/pwa.js?v=103" defer></script>
+
+
+
+  <script src="/v3/gbx-autolock.js" defer></script>
+<script>
+(function(){
+  var L=(localStorage.getItem('gbx_lang')||'en');
+  var E={
+    en:'One phrase opens the <b>same</b> wallet on <b>GoldBrix</b>, <b>Ethereum / Base / Arbitrum / BNB</b> (like MetaMask) and <b>Solana</b> (like Phantom). Same phrase = <b>same addresses</b>.',
+    ro:'O singură frază îți deschide <b>același</b> portofel pe <b>GoldBrix</b>, <b>Ethereum / Base / Arbitrum / BNB</b> (ca MetaMask) și <b>Solana</b> (ca Phantom). Aceeași frază = <b>aceleași adrese</b>.',
+    de:'Eine Phrase öffnet dieselbe Wallet auf <b>GoldBrix</b>, <b>Ethereum / Base / Arbitrum / BNB</b> (wie MetaMask) und <b>Solana</b> (wie Phantom). Gleiche Phrase = <b>gleiche Adressen</b>.',
+    zh:'一个助记词在 <b>GoldBrix</b>、<b>Ethereum / Base / Arbitrum / BNB</b>（如 MetaMask）和 <b>Solana</b>（如 Phantom）打开同一个钱包。相同助记词 = <b>相同地址</b>。',
+    ar:'عبارة واحدة تفتح نفس المحفظة على <b>GoldBrix</b> و<b>Ethereum / Base / Arbitrum / BNB</b> (مثل MetaMask) و<b>Solana</b> (مثل Phantom). نفس العبارة = <b>نفس العناوين</b>.'
+  };
+  function setExp(){var el=document.getElementById('expBody'); if(el) el.innerHTML=E[L]||E.en;}
+  if(document.readyState!=='loading') setExp(); else document.addEventListener('DOMContentLoaded', setExp);
+})();
+</script>
+</body>
+</html>

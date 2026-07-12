@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="prefetch" href="/v3/wallet.html"><link rel="prefetch" href="/v3/trade.html"><link rel="prefetch" href="/v3/launch.html"><link rel="prefetch" href="/v3/burns.html"><link rel="prefetch" href="/v3/settings.html"><link rel="prefetch" href="/v3/favorites.html"><link rel="prefetch" href="/v3/leaderboard.html"><link rel="prefetch" href="/v3/style.css"><link rel="dns-prefetch" href="https://goldbrix.app">
+<link rel="preconnect" href="https://goldbrix.app" crossorigin>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0a">
+<title>GoldBrix · Disclaimer</title>
+<link rel="icon" href="/assets/coin/gbx-coin-32.png">
+<link rel="apple-touch-icon" href="/assets/brand/goldbrix-brand-180.png">
+<link rel="stylesheet" href="/v3/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  .lang-switcher {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin: 16px 0 24px;
+    flex-wrap: wrap;
+  }
+  .lang-pill {
+    padding: 8px 14px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--r-full);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+    transition: all var(--t-fast);
+  }
+  .lang-pill:hover { border-color: var(--gold); color: var(--gold); }
+  .lang-pill.active { background: var(--gold); color: #000; border-color: var(--gold); }
+  .accept-btn {
+    width: 100%;
+    margin-top: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    padding: 18px;
+  }
+  .disclaimer-hero {
+    text-align: center;
+    padding: 24px 0 16px;
+  }
+  .disclaimer-hero img {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 12px;
+    filter: drop-shadow(0 0 20px var(--gold-glow));
+  }
+  .disclaimer-hero__title {
+    font-family: 'Inter', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: var(--gold);
+  }
+  .disclaimer-hero__sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.2em;
+    margin-top: 6px;
+  }
+  [dir="rtl"] .v3-card__title { text-align: right; }
+  [dir="rtl"] .v3-check-row { flex-direction: row-reverse; }
+
+/* V4.9 — Visible placeholders (added 2026-05-27) */
+input::placeholder, textarea::placeholder,
+input::-webkit-input-placeholder, textarea::-webkit-input-placeholder,
+input::-moz-placeholder, textarea::-moz-placeholder {
+  color: #eee !important;
+  opacity: 1 !important;
+}
+
+</style>
+    <script src="/gbx-update-check.js" defer></script>
+    <script src="/gbx-native-bridge.js" defer></script>
+      <script src="/i18n.js?v=103" defer></script>
+<style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
+</head>
+<body>
+<div class="v3-app">
+
+  <!-- PWA INSTALL BANNER (auto-hidden if app already installed) -->
+  <div class="v3-pwa-banner" id="pwaBanner">
+    <div class="v3-pwa-banner__icon">
+      <img src="/assets/coin/gbx-coin-32.png" alt="" style="width:32px;height:32px;border-radius:8px;">
+    </div>
+    <div class="v3-pwa-banner__text">
+      <div class="v3-pwa-banner__title" id="pwaBannerTitle">Install GoldBrix App</div>
+      <div class="v3-pwa-banner__sub" id="pwaBannerSub">Faster · Offline · Native feel</div>
+    </div>
+    <button class="v3-pwa-banner__install" id="pwaInstallBtn" onclick="pwaInstall()">INSTALL</button>
+    <button class="v3-pwa-banner__close" onclick="pwaDismiss()" aria-label="Dismiss">×</button>
+  </div>
+
+  <div class="v3-container v3-fade-in">
+
+    <!-- HERO -->
+    <div class="disclaimer-hero">
+      <img src="/assets/coin/gbx-coin-128.png" alt="GoldBrix">
+      <div class="disclaimer-hero__title">GOLDBRIX</div>
+      <div class="disclaimer-hero__sub" id="protocolLabel">DECENTRALIZED PROTOCOL</div>
+    </div>
+
+    <!-- LANG SWITCHER -->
+    <div class="lang-switcher" id="langSwitcher">
+      <button class="lang-pill active" data-lang="en">🇬🇧 EN</button>
+      <button class="lang-pill" data-lang="ro">🇷🇴 RO</button>
+      <button class="lang-pill" data-lang="de">🇩🇪 DE</button>
+      <button class="lang-pill" data-lang="zh">🇨🇳 ZH</button>
+      <button class="lang-pill" data-lang="ar">🇸🇦 AR</button>
+    </div>
+
+    <!-- DYNAMIC CONTENT -->
+    <div id="content"></div>
+
+    <!-- CHECKBOXES -->
+    <div class="v3-card" style="margin-top:16px;">
+      <label class="v3-check-row">
+        <input type="checkbox" id="chk1" onchange="updateBtn()">
+        <span class="v3-check-row__label" id="chk1Label">I understand that GoldBrix has no team and no one can help me recover anything.</span>
+      </label>
+      <label class="v3-check-row">
+        <input type="checkbox" id="chk2" onchange="updateBtn()">
+        <span class="v3-check-row__label" id="chk2Label">I accept full responsibility for my actions, transactions, losses, and decisions.</span>
+      </label>
+      <label class="v3-check-row">
+        <input type="checkbox" id="chk3" onchange="updateBtn()">
+        <span class="v3-check-row__label" id="chk3Label">I am over 18 years old (or the age of majority in my jurisdiction).</span>
+      </label>
+    </div>
+
+    <!-- ACCEPT BUTTON -->
+    <button class="v3-btn v3-btn--primary accept-btn" id="acceptBtn" disabled onclick="accept()">
+      <span id="acceptLabel">I AGREE & ENTER</span>
+    </button>
+
+    <!-- FOOTER -->
+    <div class="v3-footer">
+      v3.0 · 2026 · 🔥 PHASE 1.5 LIVE · NO TEAM · NO ADMIN
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ═══ TRANSLATIONS — 5 limbi ═══
+const T = {
+  en: {
+    protocol: 'DECENTRALIZED PROTOCOL',
+    sections: [
+      { icon: '⚠', title: 'NO TEAM · NO OWNER · NO SUPPORT', color: 'gold',
+        body: 'GoldBrix operates as a fully autonomous and decentralized protocol. There is no team, admin, support, or customer service. The protocol is fully decentralized — no one can help you with anything.' },
+      { icon: '🏦', title: 'GBX TOKEN', color: 'gold',
+        body: 'No premine. No founder allocation. Pure PoW emission. GBX can only be obtained through:<br>• Proof-of-Work mining<br>• Market trading' },
+      { icon: '🚫', title: 'NO RECOVERY POSSIBLE', color: 'red',
+        body: 'If you lose your seed phrase or password, your funds are <strong style="color:#eee;">LOST FOREVER</strong>. Nobody — including future developers — can recover access.' },
+      { icon: '📉', title: 'EXTREME FINANCIAL RISK', color: 'red',
+        body: 'Crypto and memecoins are extremely volatile. You can lose 100% of your investment. Memecoins can go to zero. Bonding curves have no minimum price floor.' },
+      { icon: '⚖️', title: 'NOT FINANCIAL ADVICE · NO GUARANTEES', color: 'gold',
+        body: 'Nothing here is investment, financial, legal, or tax advice. You are solely responsible for complying with crypto regulations in your country.' }
+    ],
+    chk1: 'I understand that GoldBrix has no team and no one can help me recover anything.',
+    chk2: 'I accept full responsibility for my actions, transactions, losses, and decisions.',
+    chk3: 'I am over 18 years old (or the age of majority in my jurisdiction).',
+    accept: 'I AGREE & ENTER'
+  },
+  ro: {
+    protocol: 'PROTOCOL DESCENTRALIZAT',
+    sections: [
+      { icon: '⚠', title: 'FĂRĂ ECHIPĂ · FĂRĂ PROPRIETAR · FĂRĂ SUPPORT', color: 'gold',
+        body: 'GoldBrix funcționează ca un protocol autonom și descentralizat. Nu există echipă, admin, support sau serviciu client. Protocolul este pe deplin decentralizat — nimeni nu te poate ajuta cu nimic.' },
+      { icon: '🏦', title: 'TOKEN GBX', color: 'gold',
+        body: 'Fără premine. Fără alocare fondatori. Emisie pură PoW. GBX se obține doar prin:<br>• Minare Proof-of-Work<br>• Tranzacționare pe piață' },
+      { icon: '🚫', title: 'NICIO RECUPERARE POSIBILĂ', color: 'red',
+        body: 'Dacă pierzi seed phrase-ul sau parola, fondurile tale sunt <strong style="color:#eee;">PIERDUTE PE VECI</strong>. Nimeni — inclusiv dezvoltatori viitori — nu poate recupera accesul.' },
+      { icon: '📉', title: 'RISC FINANCIAR EXTREM', color: 'red',
+        body: 'Crypto și memecoins sunt extrem de volatile. Poți pierde 100% din investiție. Memecoins-urile pot ajunge la zero. Bonding curves nu au limită minimă de preț.' },
+      { icon: '⚖️', title: 'NU ESTE SFAT · FĂRĂ GARANȚII', color: 'gold',
+        body: 'Nimic aici nu este sfat de investiție, financiar, legal sau fiscal. Ești singurul responsabil pentru respectarea legilor crypto din țara ta.' }
+    ],
+    chk1: 'Înțeleg că GoldBrix nu are echipă și nimeni nu mă poate ajuta să recuperez nimic.',
+    chk2: 'Accept responsabilitatea totală pentru acțiunile, tranzacțiile, pierderile și deciziile mele.',
+    chk3: 'Am peste 18 ani (sau vârsta majoratului în jurisdicția mea).',
+    accept: 'SUNT DE ACORD & INTRU'
+  },
+  de: {
+    protocol: 'DEZENTRALES PROTOKOLL',
+    sections: [
+      { icon: '⚠', title: 'KEIN TEAM · KEIN BESITZER · KEIN SUPPORT', color: 'gold',
+        body: 'GoldBrix funktioniert als vollständig autonomes und dezentrales Protokoll. Es gibt kein Team, keinen Admin, keinen Support und keinen Kundenservice. Niemand kann dir helfen.' },
+      { icon: '🏦', title: 'GBX TOKEN', color: 'gold',
+        body: 'Kein Premine. Keine Gründer-Allokation. Reine PoW-Emission. GBX kann nur erhalten werden durch:<br>• Proof-of-Work Mining<br>• Markt-Handel' },
+      { icon: '🚫', title: 'KEINE WIEDERHERSTELLUNG MÖGLICH', color: 'red',
+        body: 'Wenn du deine Seed-Phrase oder dein Passwort verlierst, sind deine Gelder <strong style="color:#eee;">FÜR IMMER VERLOREN</strong>. Niemand — auch zukünftige Entwickler nicht — kann den Zugriff wiederherstellen.' },
+      { icon: '📉', title: 'EXTREMES FINANZIELLES RISIKO', color: 'red',
+        body: 'Krypto und Memecoins sind extrem volatil. Du kannst 100% deiner Investition verlieren. Memecoins können auf null fallen. Bonding Curves haben keine Mindestpreisgrenze.' },
+      { icon: '⚖️', title: 'KEINE FINANZBERATUNG · KEINE GARANTIEN', color: 'gold',
+        body: 'Nichts hier ist Anlage-, Finanz-, Rechts- oder Steuerberatung. Du bist allein verantwortlich für die Einhaltung der Krypto-Vorschriften in deinem Land.' }
+    ],
+    chk1: 'Ich verstehe, dass GoldBrix kein Team hat und niemand mir helfen kann, etwas wiederherzustellen.',
+    chk2: 'Ich übernehme die volle Verantwortung für meine Handlungen, Transaktionen, Verluste und Entscheidungen.',
+    chk3: 'Ich bin über 18 Jahre alt (oder das Mindestalter in meiner Gerichtsbarkeit).',
+    accept: 'ICH STIMME ZU & BETRETE'
+  },
+  zh: {
+    protocol: '去中心化协议',
+    sections: [
+      { icon: '⚠', title: '无团队 · 无所有者 · 无支持', color: 'gold',
+        body: 'GoldBrix 作为完全自主和去中心化的协议运行。没有团队、管理员、支持或客户服务。协议完全去中心化 — 没有人能帮你。' },
+      { icon: '🏦', title: 'GBX 代币', color: 'gold',
+        body: '无预挖。无创始人分配。纯 PoW 发行。GBX 只能通过以下方式获得：<br>• 工作量证明挖矿<br>• 市场交易' },
+      { icon: '🚫', title: '无法恢复', color: 'red',
+        body: '如果您丢失种子短语或密码，您的资金<strong style="color:#eee;">将永远丢失</strong>。没有人 — 包括未来的开发者 — 可以恢复访问权限。' },
+      { icon: '📉', title: '极端财务风险', color: 'red',
+        body: '加密货币和模因币极不稳定。您可能损失 100% 的投资。模因币可能归零。绑定曲线没有最低价格下限。' },
+      { icon: '⚖️', title: '非财务建议 · 无保证', color: 'gold',
+        body: '此处没有任何投资、财务、法律或税务建议。您独自负责遵守您所在国家的加密法规。' }
+    ],
+    chk1: '我理解 GoldBrix 没有团队，没有人能帮我恢复任何东西。',
+    chk2: '我对自己的行为、交易、损失和决定承担全部责任。',
+    chk3: '我已年满 18 岁（或我所在司法管辖区的法定年龄）。',
+    accept: '我同意并进入'
+  },
+  ar: {
+    protocol: 'بروتوكول لامركزي',
+    sections: [
+      { icon: '⚠', title: 'بدون فريق · بدون مالك · بدون دعم', color: 'gold',
+        body: 'يعمل GoldBrix كبروتوكول مستقل ولامركزي بالكامل. لا يوجد فريق أو مسؤول أو دعم أو خدمة عملاء. البروتوكول لامركزي بالكامل — لا أحد يستطيع مساعدتك.' },
+      { icon: '🏦', title: 'رمز GBX', color: 'gold',
+        body: 'بدون تعدين مسبق. بدون تخصيص للمؤسسين. إصدار PoW خالص. يمكن الحصول على GBX فقط من خلال:<br>• تعدين إثبات العمل<br>• التداول في السوق' },
+      { icon: '🚫', title: 'لا استرداد ممكن', color: 'red',
+        body: 'إذا فقدت عبارة البذور أو كلمة المرور، فإن أموالك <strong style="color:#eee;">ضائعة إلى الأبد</strong>. لا أحد — بما في ذلك المطورين المستقبليين — يمكنه استعادة الوصول.' },
+      { icon: '📉', title: 'مخاطر مالية شديدة', color: 'red',
+        body: 'العملات المشفرة والميمكوينز شديدة التقلب. يمكنك خسارة 100٪ من استثمارك. يمكن أن تصل الميمكوينز إلى الصفر. منحنيات الترابط ليس لها حد أدنى للسعر.' },
+      { icon: '⚖️', title: 'ليست نصيحة مالية · بدون ضمانات', color: 'gold',
+        body: 'لا شيء هنا هو نصيحة استثمارية أو مالية أو قانونية أو ضريبية. أنت المسؤول الوحيد عن الامتثال للوائح العملات المشفرة في بلدك.' }
+    ],
+    chk1: 'أفهم أن GoldBrix ليس لديه فريق ولا يمكن لأحد مساعدتي في استرداد أي شيء.',
+    chk2: 'أقبل المسؤولية الكاملة عن أفعالي ومعاملاتي وخسائري وقراراتي.',
+    chk3: 'عمري يزيد عن 18 عاما (أو سن الرشد في ولايتي القضائية).',
+    accept: 'أوافق وأدخل'
+  }
+};
+
+let currentLang = localStorage.getItem('gbx_lang') || 'en';
+
+function renderLang(lang) {
+  currentLang = lang;
+  const t = T[lang];
+
+  // Set HTML dir + lang
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+
+  // Hero protocol label
+  document.getElementById('protocolLabel').textContent = t.protocol;
+
+  // Content sections
+  const html = t.sections.map(s => {
+    const titleClass = s.color === 'red' ? 'v3-card__title v3-card__title--red' : 'v3-card__title';
+    const cardClass = s.color === 'red' ? 'v3-card v3-card--warning' : 'v3-card';
+    return '<div class="' + cardClass + ' v3-slide-up">' +
+           '<div class="' + titleClass + '">' + s.icon + ' ' + s.title + '</div>' +
+           '<div class="v3-card__body">' + s.body + '</div>' +
+           '</div>';
+  }).join('');
+  document.getElementById('content').innerHTML = html;
+
+  // Checkboxes
+  document.getElementById('chk1Label').textContent = t.chk1;
+  document.getElementById('chk2Label').textContent = t.chk2;
+  document.getElementById('chk3Label').textContent = t.chk3;
+  document.getElementById('acceptLabel').textContent = t.accept;
+
+  // Active pill
+  document.querySelectorAll('.lang-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.lang === lang);
+  });
+
+  // Save
+  localStorage.setItem('gbx_lang', lang);
+}
+
+function updateBtn() {
+  const c1 = document.getElementById('chk1').checked;
+  const c2 = document.getElementById('chk2').checked;
+  const c3 = document.getElementById('chk3').checked;
+  document.getElementById('acceptBtn').disabled = !(c1 && c2 && c3);
+}
+
+function accept() {
+  localStorage.setItem('gbx_disclaimer_agreed', 'true');
+  localStorage.setItem('gbx_disclaimer_agreed_at', String(Date.now()));
+  localStorage.setItem('gbx_lang', currentLang);
+  window.location.href = '/v3/welcome.html';
+}
+
+// Init
+document.querySelectorAll('.lang-pill').forEach(p => {
+  p.addEventListener('click', () => renderLang(p.dataset.lang));
+});
+
+renderLang(currentLang);
+
+// ═══ PWA Install Detection ═══
+let deferredPrompt = null;
+
+// Translations for PWA banner
+const PWA_T = {
+  en: { title: 'Install GoldBrix App', sub: 'Faster · Offline · Native feel', install: 'INSTALL' },
+  ro: { title: 'Instalează GoldBrix App', sub: 'Mai rapid · Offline · Aplicație nativă', install: 'INSTALEAZĂ' },
+  de: { title: 'GoldBrix App installieren', sub: 'Schneller · Offline · Native', install: 'INSTALLIEREN' },
+  zh: { title: '安装 GoldBrix 应用', sub: '更快 · 离线 · 原生体验', install: '安装' },
+  ar: { title: 'تثبيت تطبيق GoldBrix', sub: 'أسرع · بدون اتصال · أصلي', install: 'تثبيت' }
+};
+
+function updatePwaBannerLang(lang) {
+  const t = PWA_T[lang] || PWA_T.en;
+  const title = document.getElementById('pwaBannerTitle');
+  const sub = document.getElementById('pwaBannerSub');
+  const btn = document.getElementById('pwaInstallBtn');
+  if (title) title.textContent = t.title;
+  if (sub) sub.textContent = t.sub;
+  if (btn) btn.textContent = t.install;
+}
+
+function isPwaInstalled() {
+  // 1) Display mode is standalone (already installed)
+  if (window.matchMedia('(display-mode: standalone)').matches) return true;
+  // 2) iOS Safari standalone flag
+  if (window.navigator.standalone === true) return true;
+  // 3) User dismissed recently (< 7 days)
+  const dismissed = parseInt(localStorage.getItem('gbx_pwa_dismissed_at') || '0');
+  if (dismissed && (Date.now() - dismissed) < 7 * 24 * 60 * 60 * 1000) return true;
+  return false;
+}
+
+function showPwaBanner() {
+  if (isPwaInstalled()) return;
+  const banner = document.getElementById('pwaBanner');
+  if (banner) {
+    banner.classList.add('show');
+    updatePwaBannerLang(currentLang);
+  }
+}
+
+function pwaDismiss() {
+  const banner = document.getElementById('pwaBanner');
+  if (banner) banner.classList.remove('show');
+  localStorage.setItem('gbx_pwa_dismissed_at', String(Date.now()));
+}
+
+async function pwaInstall() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const choice = await deferredPrompt.userChoice;
+    if (choice.outcome === 'accepted') {
+      localStorage.setItem('gbx_pwa_installed', 'true');
+      const banner = document.getElementById('pwaBanner');
+      if (banner) banner.classList.remove('show');
+    }
+    deferredPrompt = null;
+  } else {
+    // iOS / fallback: show instructions
+    const ua = navigator.userAgent.toLowerCase();
+    if (/iphone|ipad|ipod/.test(ua)) {
+      alert('iOS: Tap Share → Add to Home Screen');
+    } else {
+      alert('Open menu → Install / Add to Home Screen');
+    }
+  }
+}
+
+// Listen for beforeinstallprompt (Chrome/Edge/Android)
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  showPwaBanner();
+});
+
+// Listen for app installed
+window.addEventListener('appinstalled', () => {
+  localStorage.setItem('gbx_pwa_installed', 'true');
+  const banner = document.getElementById('pwaBanner');
+  if (banner) banner.classList.remove('show');
+});
+
+// Check on load (for iOS or after timeout)
+setTimeout(() => {
+  if (!isPwaInstalled() && !deferredPrompt) {
+    // Show banner anyway for iOS users (no beforeinstallprompt event there)
+    const ua = navigator.userAgent.toLowerCase();
+    if (/iphone|ipad|ipod/.test(ua) || /android/.test(ua)) {
+      showPwaBanner();
+    }
+  } else if (deferredPrompt) {
+    showPwaBanner();
+  }
+}, 1500);
+
+// Update PWA banner when language changes
+const origRenderLang = renderLang;
+renderLang = function(lang) {
+  origRenderLang(lang);
+  updatePwaBannerLang(lang);
+};
+
+</script>
+
+
+
+<script src="/v3/pwa.js?v=103"></script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>GoldBrix · Transparency</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/coin/gbx-coin-32.png">
+<link rel="stylesheet" href="/v3/style.css">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/goldbrix-brand-180.png">
+<script src="/gbx-update-check.js" defer></script>
+<script src="/gbx-native-bridge.js" defer></script>
+<script src="/i18n.js?v=103" defer></script>
+<script src="/v3/nav-i18n.js?v=103" defer></script>
+<script src="/v3/pwa.js?v=103" defer></script>
+<style>
+.tr-hero{padding:24px 16px;background:linear-gradient(135deg,rgba(245,204,117,0.16) 0%,rgba(78,224,140,0.08) 100%);border:2px solid #F5CC75;border-radius:var(--r-lg,16px);text-align:center;margin-bottom:14px}
+.tr-hlabel{font-family:'JetBrains Mono',monospace;font-size:11px;color:#FFE099;text-transform:uppercase;letter-spacing:0.15em;margin-bottom:10px}
+.tr-cov{font-family:'JetBrains Mono',monospace;font-size:46px;font-weight:800;color:#FFE099;line-height:1;text-shadow:0 0 20px rgba(245,204,117,0.5);margin-bottom:10px}
+.tr-badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;letter-spacing:0.08em;padding:5px 14px;border-radius:100px;margin-bottom:8px}
+.tr-badge.ok{background:rgba(78,224,140,0.15);color:#4EE08C;border:1px solid #4EE08C}
+.tr-badge.warn{background:rgba(255,122,107,0.15);color:#FF7A6B;border:1px solid #FF7A6B}
+.tr-hsub{font-family:'JetBrains Mono',monospace;font-size:11px;color:#fff;opacity:0.8}
+.tr-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+.tr-card{padding:14px;background:var(--bg-card,#161616);border-radius:var(--r-md,12px);border:1px solid var(--border,#2a2a2a)}
+.tr-clabel{font-family:'JetBrains Mono',monospace;font-size:9px;color:#FFE099;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:5px}
+.tr-cval{font-family:'JetBrains Mono',monospace;font-size:17px;color:#fff;font-weight:800}
+.tr-cval.gold{color:#F5CC75}.tr-cval.red{color:#FF9E8A}
+.tr-note{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#9aa6b2;line-height:1.5;padding:10px 12px;background:var(--bg-card,#161616);border-radius:var(--r-md,12px);border:1px solid var(--border,#2a2a2a);margin-bottom:14px}
+.tr-sec{font-family:'JetBrains Mono',monospace;font-size:11px;color:#FFE099;text-transform:uppercase;letter-spacing:0.1em;margin:16px 0 8px;padding:0 2px}
+.tr-verify{padding:14px;background:var(--bg-card,#161616);border-radius:var(--r-md,12px);border:1px solid var(--gold-deep,#8a6a1f);margin-bottom:12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#fff}
+.tr-link{display:block;margin-top:8px;color:#F5CC75;text-decoration:none;font-weight:700}
+.tr-meta{font-family:'JetBrains Mono',monospace;font-size:10px;color:#778;text-align:center;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="v3-app">
+  <div class="v3-topbar">
+    <button class="v3-back" onclick="history.back()">&lsaquo;</button>
+    <div class="v3-title" data-t="pageTitle">🛡️ TRANSPARENCY</div>
+    <button class="v3-back" onclick="window.location.href='/index.html'" style="font-size:22px;font-weight:300;color:#fff;width:36px;height:36px;border-radius:50%;border:2px solid #F0C060;background:rgba(240,192,96,0.1);display:flex;align-items:center;justify-content:center;padding:0;line-height:1;margin-left:auto;margin-right:4px;transform:translateY(-12px);" aria-label="Close">×</button>
+  </div>
+  <div class="v3-content">
+    <div class="tr-hero">
+      <div class="tr-hlabel" data-t="solvencyTitle">🛡️ LAUNCHPAD SOLVENCY</div>
+      <div class="tr-cov" id="coverage">—</div>
+      <div class="tr-badge" id="solventBadge" data-t="checking">CHECKING…</div>
+      <div class="tr-hsub" data-t="solvencySub">Reserves vs. obligations to memecoin holders</div>
+    </div>
+    <div class="tr-grid">
+      <div class="tr-card"><div class="tr-clabel" data-t="reserves">Reserves</div><div class="tr-cval gold" id="treasury">—</div></div>
+      <div class="tr-card"><div class="tr-clabel" data-t="owed">Owed to holders</div><div class="tr-cval" id="owed">—</div></div>
+      <div class="tr-card"><div class="tr-clabel" data-t="surplus">Surplus</div><div class="tr-cval gold" id="surplus">—</div></div>
+      <div class="tr-card"><div class="tr-clabel" data-t="memecoins">Memecoins</div><div class="tr-cval" id="coins">—</div></div>
+    </div>
+    <div class="tr-note" data-t="polNote">Liquidity is protocol-owned and locked by code — no withdraw function exists. It becomes keyless at handover.</div>
+    <div class="tr-sec" data-t="deflationTitle">🔥 DEFLATION</div>
+    <div class="tr-grid">
+      <div class="tr-card"><div class="tr-clabel" data-t="burnedForever">Burned forever</div><div class="tr-cval red" id="burnedTotal">—</div></div>
+      <div class="tr-card"><div class="tr-clabel" data-t="burns24h">Burned 24h</div><div class="tr-cval" id="burned24h">—</div></div>
+    </div>
+    <div class="tr-note" data-t="burnNote">100% of all fees are burned. No party profits from fees.</div>
+    <div class="tr-verify">
+      <div data-t="verifyTitle">🔎 Verify independently</div>
+      <a class="tr-link" href="/v3/explorer.html" data-t="verifyExplorer">Open block explorer →</a>
+    </div>
+    <div class="tr-meta"><span data-t="blockLbl">Block</span> <span id="blockHeight">—</span> · <span data-t="updatedLbl">Updated</span> <span id="updated">—</span></div>
+  </div>
+</div>
+<script>
+(function(){
+  var API='https://goldbrix.app';
+  function fmt(n){return Number(n).toLocaleString('en-US',{maximumFractionDigits:2});}
+  function load(){
+    fetch(API+'/v2/reserve-state').then(function(r){return r.json();}).then(function(d){
+      if(!d||!d.ok)return;var tt=window._TR_T||{};
+      document.getElementById('coverage').textContent=(d.coverage_ratio!=null?d.coverage_ratio.toFixed(2)+'×':'∞');
+      var b=document.getElementById('solventBadge');
+      b.textContent=d.solvent?(tt.solventYes||'PROVABLY SOLVENT'):(tt.solventNo||'UNDER REVIEW');
+      b.className='tr-badge '+(d.solvent?'ok':'warn');
+      document.getElementById('treasury').textContent=fmt(d.treasury_gbx)+' GBX';
+      document.getElementById('owed').textContent=fmt(d.total_owed_gbx)+' GBX';
+      document.getElementById('surplus').textContent=fmt(d.surplus_gbx)+' GBX';
+      document.getElementById('coins').textContent=d.coins+(d.graduated?' · '+d.graduated+' AMM':'');
+      document.getElementById('blockHeight').textContent=fmt(d.block_height);
+      document.getElementById('updated').textContent=new Date(d.ts*1000).toLocaleString();
+    }).catch(function(){});
+    fetch(API+'/v2/memecoin/burns/stats').then(function(r){return r.json();}).then(function(b){
+      if(!b||!b.ok)return;
+      document.getElementById('burnedTotal').textContent=fmt(b.all_time_gbx)+' GBX';
+      document.getElementById('burned24h').textContent=fmt(b.burns_24h_gbx)+' GBX';
+    }).catch(function(){});
+  }
+  load();setInterval(load,60000);
+})();
+</script>
+<script>
+var TR_T={
+ en:{pageTitle:'🛡️ TRANSPARENCY',solvencyTitle:'🛡️ LAUNCHPAD SOLVENCY',checking:'CHECKING…',solventYes:'PROVABLY SOLVENT',solventNo:'UNDER REVIEW',solvencySub:'Reserves vs. obligations to memecoin holders',reserves:'Reserves',owed:'Owed to holders',surplus:'Surplus',memecoins:'Memecoins',polNote:'Liquidity is protocol-owned and locked by code — no withdraw function exists. It becomes keyless at handover.',deflationTitle:'🔥 DEFLATION',burnedForever:'Burned forever',burns24h:'Burned 24h',burnNote:'100% of all fees are burned. No party profits from fees.',verifyTitle:'🔎 Verify independently',verifyExplorer:'Open block explorer →',blockLbl:'Block',updatedLbl:'Updated'},
+ ro:{pageTitle:'🛡️ TRANSPARENȚĂ',solvencyTitle:'🛡️ SOLVABILITATE LAUNCHPAD',checking:'SE VERIFICĂ…',solventYes:'SOLVABIL DEMONSTRABIL',solventNo:'ÎN VERIFICARE',solvencySub:'Rezerve vs. obligații către deținătorii de memecoin',reserves:'Rezerve',owed:'Datorat deținătorilor',surplus:'Surplus',memecoins:'Memecoins',polNote:'Lichiditatea e deținută de protocol și blocată prin cod — nu există funcție de retragere. Devine keyless la handover.',deflationTitle:'🔥 DEFLAȚIE',burnedForever:'Ars pentru totdeauna',burns24h:'Ars în 24h',burnNote:'100% din taxe se ard. Nimeni nu profită din taxe.',verifyTitle:'🔎 Verifică independent',verifyExplorer:'Deschide block explorer →',blockLbl:'Bloc',updatedLbl:'Actualizat'},
+ de:{pageTitle:'🛡️ TRANSPARENZ',solvencyTitle:'🛡️ LAUNCHPAD-SOLVENZ',checking:'PRÜFUNG…',solventYes:'NACHWEISLICH SOLVENT',solventNo:'IN PRÜFUNG',solvencySub:'Reserven vs. Verbindlichkeiten gegenüber Memecoin-Haltern',reserves:'Reserven',owed:'Schuld an Halter',surplus:'Überschuss',memecoins:'Memecoins',polNote:'Liquidität ist protokolleigen und per Code gesperrt — keine Abhebefunktion. Wird beim Handover keyless.',deflationTitle:'🔥 DEFLATION',burnedForever:'Für immer verbrannt',burns24h:'24h verbrannt',burnNote:'100% aller Gebühren werden verbrannt. Niemand profitiert davon.',verifyTitle:'🔎 Unabhängig prüfen',verifyExplorer:'Block-Explorer öffnen →',blockLbl:'Block',updatedLbl:'Aktualisiert'},
+ zh:{pageTitle:'🛡️ 透明度',solvencyTitle:'🛡️ 发射台偿付能力',checking:'检查中…',solventYes:'可证明有偿付能力',solventNo:'审核中',solvencySub:'储备 vs. 对 memecoin 持有者的义务',reserves:'储备',owed:'欠持有者',surplus:'盈余',memecoins:'Memecoins',polNote:'流动性归协议所有并由代码锁定——不存在提取功能。交接时将变为无密钥。',deflationTitle:'🔥 通缩',burnedForever:'永久销毁',burns24h:'24小时销毁',burnNote:'100% 的费用全部销毁，无人获利。',verifyTitle:'🔎 独立验证',verifyExplorer:'打开区块浏览器 →',blockLbl:'区块',updatedLbl:'更新于'},
+ ar:{pageTitle:'🛡️ الشفافية',solvencyTitle:'🛡️ ملاءة منصة الإطلاق',checking:'جارٍ الفحص…',solventYes:'ملاءة مثبتة',solventNo:'قيد المراجعة',solvencySub:'الاحتياطيات مقابل الالتزامات لحاملي الميمكوين',reserves:'الاحتياطيات',owed:'مستحق للحاملين',surplus:'الفائض',memecoins:'ميمكوين',polNote:'السيولة مملوكة للبروتوكول ومقفلة بالكود — لا توجد دالة سحب. تصبح بلا مفاتيح عند التسليم.',deflationTitle:'🔥 الانكماش',burnedForever:'محروق إلى الأبد',burns24h:'محروق 24 ساعة',burnNote:'تُحرق 100% من الرسوم. لا أحد يستفيد منها.',verifyTitle:'🔎 تحقق بشكل مستقل',verifyExplorer:'افتح مستكشف الكتل →',blockLbl:'الكتلة',updatedLbl:'محدّث'}
+};
+function applyTrLang(){
+  var lang=localStorage.getItem('gbx_lang')||localStorage.getItem('goldbrix_lang')||'en';
+  var t=TR_T[lang]||TR_T.en;window._TR_T=t;
+  document.documentElement.lang=lang;
+  document.documentElement.dir=(lang==='ar')?'rtl':'ltr';
+  document.querySelectorAll('[data-t]').forEach(function(el){var k=el.getAttribute('data-t');if(t[k])el.textContent=t[k];});
+}
+applyTrLang();
+window.addEventListener('storage',function(e){if(e.key&&e.key.indexOf('lang')>-1)applyTrLang();});
+</script>
+</body>
+</html>

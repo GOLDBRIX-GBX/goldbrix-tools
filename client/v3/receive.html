@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="prefetch" href="/v3/wallet.html"><link rel="prefetch" href="/v3/trade.html"><link rel="prefetch" href="/v3/launch.html"><link rel="prefetch" href="/v3/burns.html"><link rel="prefetch" href="/v3/settings.html"><link rel="prefetch" href="/v3/favorites.html"><link rel="prefetch" href="/v3/leaderboard.html"><link rel="prefetch" href="/v3/style.css"><link rel="dns-prefetch" href="https://goldbrix.app">
+<link rel="preconnect" href="https://goldbrix.app" crossorigin>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1c1610">
+<title>GoldBrix · Receive</title>
+<link rel="icon" href="/assets/coin/gbx-coin-32.png">
+<link rel="stylesheet" href="/v3/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="/qrcode.min.js"></script>
+<style>
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: 0.1em; color: var(--text-secondary);
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    border-radius: var(--r-full); transition: all var(--t-fast); margin: 12px 0 16px;
+  }
+  .back-btn:hover { color: var(--gold); border-color: var(--gold-deep); }
+
+  .recv-hero { text-align: center; padding: 16px 0 24px; }
+  .recv-hero__title {
+    font-family: 'Inter', sans-serif; font-size: 24px; font-weight: 800;
+    color: var(--gold); margin-bottom: 6px;
+  }
+  .recv-hero__sub {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: 0.15em; color: var(--text-secondary);
+  }
+
+  .qr-card {
+    background: #fff; border-radius: var(--r-lg); padding: 20px;
+    margin: 0 auto 20px; max-width: 280px;
+    box-shadow: var(--shadow-gold);
+  }
+  .qr-card canvas, .qr-card img { display: block; width: 100% !important; height: auto !important; }
+
+  .addr-display {
+    background: var(--bg-elevated); border: 1px solid var(--gold-deep);
+    border-radius: var(--r-md); padding: 14px;
+    font-family: 'JetBrains Mono', monospace; font-size: 13px;
+    color: var(--gold); word-break: break-all; line-height: 1.5;
+    text-align: center; margin-bottom: 16px;
+  }
+
+  .action-row { display: flex; gap: 10px; margin-bottom: 16px; }
+  .action-row .v3-btn { flex: 1; }
+
+  .warn-box {
+    background: rgba(255, 176, 85, 0.08); border: 1px solid rgba(255, 176, 85, 0.3);
+    border-radius: var(--r-md); padding: 14px; margin-top: 16px;
+  }
+  .warn-box__title {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--orange); letter-spacing: 0.12em; font-weight: 700;
+    margin-bottom: 6px; text-transform: uppercase;
+  }
+  .warn-box__body { font-size: 12.5px; color: var(--text-tertiary); line-height: 1.5; }
+
+  .toast {
+    position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+    background: var(--bg-card); border: 1px solid var(--gold);
+    border-radius: var(--r-md); padding: 10px 18px; font-size: 13px;
+    color: var(--gold); z-index: 1000; box-shadow: var(--shadow-lg);
+    animation: slideUp 250ms;
+    font-family: 'JetBrains Mono', monospace; letter-spacing: 0.08em;
+  }
+  @keyframes slideUp { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+  .lock-overlay { position: fixed; inset: 0; background: var(--bg-primary); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+  .loader { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+/* V4.9 — Visible placeholders (added 2026-05-27) */
+input::placeholder, textarea::placeholder,
+input::-webkit-input-placeholder, textarea::-webkit-input-placeholder,
+input::-moz-placeholder, textarea::-moz-placeholder {
+  color: #eee !important;
+  opacity: 1 !important;
+}
+
+</style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#F5CC75">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/goldbrix-brand-180.png">
+    <script src="/gbx-update-check.js" defer></script>
+    <script src="/gbx-native-bridge.js" defer></script>
+      <script src="/i18n.js?v=103" defer></script>
+  <script src="/promo-banner.js?v=103" defer></script>
+<style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
+<script src="/v3/nav-i18n.js?v=103" defer></script>
+</head>
+<body>
+
+<div class="lock-overlay" id="lockOverlay"><div class="loader"></div></div>
+
+<div class="v3-app" id="app" style="display:none;">
+  <div class="v3-container v3-fade-in">
+
+    <a class="back-btn" href="/v3/wallet.html">← <span id="backLabel" data-t="wallet">Wallet</span></a>
+
+    <div class="recv-hero">
+      <div class="recv-hero__title" id="recvTitle">Receive GBX</div>
+      <div class="recv-hero__sub" id="recvSub">SHARE THIS ADDRESS TO RECEIVE</div>
+    </div>
+
+    <div class="qr-card">
+      <div id="qrcode"></div>
+    </div>
+
+    <div class="addr-display" id="addrDisplay">loading...</div>
+
+    <div class="action-row">
+      <button class="v3-btn v3-btn--primary" onclick="copyAddr()">
+        📋 <span id="copyLabel">Copy</span>
+      </button>
+      <button class="v3-btn v3-btn--secondary" onclick="shareAddr()">
+        ↗ <span id="shareLabel">Share</span>
+      </button>
+    </div>
+
+    <div class="warn-box">
+      <div class="warn-box__title">⚠ <span id="warnTitle">IMPORTANT</span></div>
+      <div class="warn-box__body" id="warnBody">Only send GBX (GoldBrix native) to this address. Sending other coins will result in PERMANENT LOSS.</div>
+    </div>
+
+    <div class="v3-footer">v3.0 · PHASE 1.5 LIVE · GOLDBRIX CHAIN</div>
+  </div>
+</div>
+
+<script>
+const T = {
+  en: { back: 'Wallet', title: 'Receive GBX', sub: 'SHARE THIS ADDRESS TO RECEIVE', copy: 'Copy', share: 'Share', warnTitle: 'IMPORTANT', warnBody: 'Only send GBX (GoldBrix native) to this address. Sending other coins will result in PERMANENT LOSS.', copied: '✓ Copied!' },
+  ro: { back: 'Portofel', title: 'Primește GBX', sub: 'DISTRIBUIE ACEASTĂ ADRESĂ PENTRU A PRIMI', copy: 'Copiază', share: 'Distribuie', warnTitle: 'IMPORTANT', warnBody: 'Trimite doar GBX (GoldBrix nativ) la această adresă. Trimiterea altor monede va duce la PIERDERE PERMANENTĂ.', copied: '✓ Copiat!' },
+  de: { back: 'Wallet', title: 'GBX Empfangen', sub: 'TEILE DIESE ADRESSE ZUM EMPFANGEN', copy: 'Kopieren', share: 'Teilen', warnTitle: 'WICHTIG', warnBody: 'Sende nur GBX (GoldBrix nativ) an diese Adresse. Andere Coins führen zu PERMANENTEM VERLUST.', copied: '✓ Kopiert!' },
+  zh: { back: '钱包', title: '接收 GBX', sub: '分享此地址以接收', copy: '复制', share: '分享', warnTitle: '重要', warnBody: '只发送 GBX（GoldBrix 原生）到此地址。发送其他币种将导致永久损失。', copied: '✓ 已复制!' },
+  ar: { back: 'محفظة', title: 'استقبال GBX', sub: 'شارك هذا العنوان للاستلام', copy: 'نسخ', share: 'مشاركة', warnTitle: 'هام', warnBody: 'أرسل GBX فقط (GoldBrix الأصلي) إلى هذا العنوان. سيؤدي إرسال عملات أخرى إلى فقدان دائم.', copied: '✓ تم النسخ!' }
+};
+
+let currentLang = localStorage.getItem('gbx_lang') || 'en';
+let myAddress = null;
+
+function t(k) { return (T[currentLang] && T[currentLang][k]) || T.en[k] || k; }
+
+function applyLang() {
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+  document.getElementById('backLabel').textContent = t('back');
+  document.getElementById('recvTitle').textContent = t('title');
+  document.getElementById('recvSub').textContent = t('sub');
+  document.getElementById('copyLabel').textContent = t('copy');
+  document.getElementById('shareLabel').textContent = t('share');
+  document.getElementById('warnTitle').textContent = t('warnTitle');
+  document.getElementById('warnBody').textContent = t('warnBody');
+}
+
+function showToast(msg) {
+  const ex = document.querySelector('.toast');
+  if (ex) ex.remove();
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1800);
+}
+
+function copyAddr() {
+  if (!myAddress) return;
+  navigator.clipboard.writeText(myAddress).then(() => showToast(t('copied')));
+}
+
+async function shareAddr() {
+  if (!myAddress) return;
+  if (navigator.share) {
+    try { await navigator.share({ title: 'GoldBrix Address', text: myAddress }); } catch(e) {}
+  } else {
+    copyAddr();
+  }
+}
+
+function checkLock() {
+  const unlockedRaw = sessionStorage.getItem('gbx_unlocked_wallets');
+  if (!unlockedRaw) { window.location.href = '/v3/unlock.html'; return false; }
+  try {
+    const u = JSON.parse(unlockedRaw);
+    if (!u.unlocked_at || (Date.now() - u.unlocked_at) > 30*60*1000) {
+      sessionStorage.removeItem('gbx_unlocked_wallets');
+      window.location.href = '/v3/unlock.html'; return false;
+    }
+    const w = u.wallets.find(x => x.id === u.activeWalletId) || u.wallets[0];
+    if (!w || !w.address) { window.location.href = '/v3/unlock.html'; return false; }
+    myAddress = w.address;
+    return true;
+  } catch(e) { window.location.href = '/v3/unlock.html'; return false; }
+}
+
+function renderQR() {
+  const container = document.getElementById('qrcode');
+  container.innerHTML = '';
+  if (typeof QRCode === 'undefined') {
+    container.innerHTML = '<div style="text-align:center;color:#fff;padding:40px;">QR library not loaded</div>';
+    return;
+  }
+  new QRCode(container, {
+    text: myAddress,
+    width: 240, height: 240,
+    colorDark: '#1c1610', colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+}
+
+(function init() {
+  applyLang();
+  if (!checkLock()) return;
+  document.getElementById('lockOverlay').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('addrDisplay').textContent = myAddress;
+  renderQR();
+})();
+</script>
+<script src="/v3/pwa.js?v=103" defer></script>
+
+<nav class="v3-final-nav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:999;">
+  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
+  <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#F5CC75;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:1;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
+  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
+  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
+  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
+  <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">⚙</span><span data-t="navSettings">SETTINGS</span></a>
+</nav>
+<style>body { padding-bottom: 76px !important; }</style>
+
+  <script src="/v3/gbx-autolock.js" defer></script>
+</body>
+</html>

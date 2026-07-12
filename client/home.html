@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="prefetch" href="/v3/wallet.html"><link rel="prefetch" href="/v3/trade.html"><link rel="prefetch" href="/v3/launch.html"><link rel="prefetch" href="/v3/burns.html"><link rel="prefetch" href="/v3/settings.html"><link rel="prefetch" href="/v3/favorites.html"><link rel="prefetch" href="/v3/leaderboard.html"><link rel="prefetch" href="/v3/style.css"><link rel="dns-prefetch" href="https://goldbrix.app">
+<link rel="preconnect" href="https://goldbrix.app" crossorigin>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1c1610">
+<title>GoldBrix — Memecoin Launchpad</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/coin/gbx-coin-32.png">
+<link rel="icon" type="image/png" sizes="64x64" href="/assets/coin/gbx-coin-64.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/goldbrix-brand-192.png">
+<meta name="description" content="GoldBrix — autonomous L1 memecoin launchpad. Launch, trade and burn on mainnet. Every fee is burned, 100%. No owner, no admin key.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="GoldBrix">
+<meta property="og:title" content="GoldBrix — Autonomous Memecoin Launchpad">
+<meta property="og:description" content="Launch, trade and burn on an independent Proof-of-Work L1. Every fee burned, 100%. No company, no CEO.">
+<meta property="og:url" content="https://goldbrix.app/">
+<meta property="og:image" content="https://goldbrix.app/assets/brand/goldbrix-brand-512.png?v=103">
+<meta property="og:image:secure_url" content="https://goldbrix.app/assets/brand/goldbrix-brand-512.png?v=103">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta property="og:image:alt" content="GoldBrix logo">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="GoldBrix — Autonomous Memecoin Launchpad">
+<meta name="twitter:description" content="Launch, trade and burn on an independent L1. Every fee burned, 100%.">
+<meta name="twitter:image" content="https://goldbrix.app/assets/brand/goldbrix-brand-512.png?v=103">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { background: #1c1610; color: #fff; font-family: 'Inter', -apple-system, sans-serif; min-height: 100vh; padding-bottom: 80px; }
+
+  /* TICKER */
+  #liveTicker { background: linear-gradient(90deg,#3a1810,#FF7A6B,#3a1810); color: #FFE099; padding: 8px 12px; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; text-align: center; cursor: pointer; border-bottom: 1px solid #FF7A6B; }
+  #liveTicker:hover { filter: brightness(1.15); }
+  .dot { display: inline-block; width: 6px; height: 6px; background: #4EE08C; border-radius: 50%; margin-left: 8px; animation: pulse 2s ease-in-out infinite; box-shadow: 0 0 6px #4EE08C; vertical-align: middle; }
+  @keyframes pulse { 0%,100% { opacity: .4; transform: scale(.9);} 50% { opacity: 1; transform: scale(1.3);} }
+
+  /* HEADER */
+  .hdr { background: #1c1610; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #2a2218; }
+  .hdr-logo { display: flex; align-items: center; gap: 8px; }
+  .hdr-icon { width: 28px; height: 28px; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; } .hdr-icon img { width: 100%; height: 100%; object-fit: contain; }
+  .hdr-title { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 12px; letter-spacing: 0.08em; color: #F5CC75; }
+  .hdr-title small { color: #FFE099; font-weight: 500; font-size: 10px; margin-left: 4px; }
+  .hdr-block { background: #2a2218; border: 1px solid #3a3025; padding: 5px 10px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #F5CC75; font-weight: 700; }
+
+  /* KPI */
+  .section-wrap { padding: 12px 14px; }
+  .kpi-card { background: linear-gradient(135deg,#2a2218,#221a14); border: 1px solid #3a3025; border-radius: 16px; padding: 16px; }
+  .kpi-row1 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .kpi-item { text-align: center; }
+  .kpi-label { color: #FFE099; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 6px; font-family: 'JetBrains Mono', monospace; }
+  .kpi-value { color: #fff; font-size: 18px; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+  .kpi-value.gold { color: #F5CC75; text-shadow: 0 0 12px rgba(245,204,117,0.3); }
+  .kpi-value.fire { color: #eee; }
+  .kpi-row2 { padding-top: 12px; border-top: 1px solid #2a2218; display: flex; justify-content: space-between; font-size: 11px; font-family: 'JetBrains Mono', monospace; color: #FFFFFF; }
+  .kpi-row2 b { color: #F5CC75; font-weight: 700; }
+
+  /* CTAs */
+  .ctas-primary { padding: 0 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
+  .cta-p { background: linear-gradient(135deg,#F5CC75,#E0B560); color: #000; border: none; padding: 14px 8px; border-radius: 12px; font-weight: 800; font-size: 13px; cursor: pointer; box-shadow: 0 4px 12px rgba(245,204,117,0.2); }
+  .cta-p:active { transform: translateY(1px); }
+  .ctas-sec { padding: 0 14px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .cta-s { display:flex; flex-direction:column; align-items:center; gap:6px; background:#211a10; color:var(--text-secondary,#9a8c6f); border:1px solid #3a3025; padding:13px 4px; border-radius:14px; cursor:pointer; font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; transition:all .15s; }
+  .cta-s:hover { border-color:#b8860b; background:#2a2218; }
+  .cta-s:active { transform:scale(0.96); }
+  .cta-s__icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; }
+  .cta-s--buy .cta-s__icon { background:rgba(78,224,140,0.12); color:#4ee08c; }
+  .cta-s--sell .cta-s__icon { background:rgba(255,122,107,0.12); color:#ff7a6b; }
+  .cta-s--stats .cta-s__icon { background:rgba(245,204,117,0.12); color:#F5CC75; }
+
+  /* PROMOTE BANNER */
+  .promo { margin: 0 14px 14px; padding: 14px; background: linear-gradient(135deg, rgba(245,204,117,0.12), rgba(255,85,0,0.08)); border: 1px solid #4a3010; border-radius: 14px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: filter 0.15s; }
+  .promo:hover { filter: brightness(1.15); }
+  .promo-img { width: 48px; height: 48px; border-radius: 50%; overflow: hidden; background: rgba(245,204,117,0.2); flex: 0 0 48px; display: flex; align-items: center; justify-content: center; }
+  .promo-img img { width: 100%; height: 100%; object-fit: cover; }
+  .promo-body { flex: 1; min-width: 0; }
+  .promo-label { font-size: 9px; color: #F5CC75; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; font-family: 'JetBrains Mono', monospace; }
+  .promo-title { font-size: 15px; font-weight: 800; color: #fff; margin-top: 2px; }
+  .promo-sub { font-size: 11px; color: #FFFFFF; margin-top: 2px; }
+  .promo-cta { background: #F5CC75; color: #000; padding: 6px 10px; border-radius: 8px; font-size: 10px; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+
+  /* SECTION HEADERS */
+  .sec-title { font-size: 12px; font-weight: 800; color: #F5CC75; padding: 4px 14px 10px; text-transform: uppercase; letter-spacing: 1.5px; font-family: 'JetBrains Mono', monospace; display: flex; align-items: center; gap: 8px; }
+
+  /* NEW LAUNCHES CAROUSEL */
+  .new-launches { display: flex; gap: 10px; padding: 0 14px 16px; overflow-x: auto; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; }
+  .new-launches::-webkit-scrollbar { display: none; }
+  .nl-card { flex: 0 0 130px; background: #111; border: 1px solid #2a2218; border-radius: 12px; padding: 10px; cursor: pointer; scroll-snap-align: start; transition: border-color 0.15s; }
+  .nl-card:hover { border-color: #F5CC75; }
+  .nl-img { width: 100%; aspect-ratio: 1; border-radius: 10px; background: rgba(245,204,117,0.15); overflow: hidden; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; color: #F5CC75; font-weight: 800; font-size: 22px; }
+  .nl-img img { width: 100%; height: 100%; object-fit: cover; }
+  .nl-ticker { font-size: 13px; font-weight: 800; color: #fff; }
+  .nl-name { font-size: 10px; color: #FFE099; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .nl-meta { font-size: 9px; color: #eee; margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+
+  /* SEARCH */
+  .search-wrap { padding: 0 14px 10px; }
+  .search-input { width: 100%; background: #111; border: 1px solid #3a3025; color: #fff; padding: 11px 14px; border-radius: 10px; font-size: 13px; font-family: 'JetBrains Mono', monospace; }
+  .search-input:focus { outline: none; border-color: #F5CC75; }
+
+  /* FILTERS */
+  .filters { padding: 0 14px 12px; display: flex; flex-wrap: wrap; gap: 7px; }
+  .filters::-webkit-scrollbar { display: none; }
+  .filter { background: #2a2218; border: 1px solid #3a3025; color: #FFE099; padding: 8px 14px; border-radius: 18px; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; font-family: 'JetBrains Mono', monospace; }
+  .filter.active { background: #F5CC75; color: #000; border-color: #F5CC75; }
+  .filter--grad { background: rgba(78,224,140,0.14); border-color: rgba(78,224,140,0.5); color: #4EE08C; }
+  .filter--grad.active { background: #4EE08C; color: #000; border-color: #4EE08C; }
+
+  /* COIN LIST */
+  .coin-list { padding: 0 14px; }
+  .coin-row { background: #111; border: 1px solid #2a2218; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: border-color 0.15s; }
+  .coin-row:hover { border-color: #eee; }
+  .coin-img { width: 40px; height: 40px; border-radius: 50%; background: rgba(245,204,117,0.15); display: flex; align-items: center; justify-content: center; color: #F5CC75; font-weight: 800; font-size: 14px; flex: 0 0 40px; overflow: hidden; }
+  .coin-img img { width: 100%; height: 100%; object-fit: cover; }
+  .coin-main { flex: 1; min-width: 0; }
+  .coin-title { font-weight: 800; font-size: 14px; color: #fff; display: flex; align-items: center; gap: 6px; }
+  .coin-name { font-size: 11px; color: #FFE099; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .coin-meta { text-align: right; font-family: 'JetBrains Mono', monospace; }
+  .coin-price { font-weight: 800; font-size: 12px; color: #fff; }
+  .coin-stats { font-size: 10px; color: #FFE099; margin-top: 2px; }
+  .new-badge { background: #1DB954; color: #fff; padding: 1px 5px; border-radius: 4px; font-size: 8px; font-weight: 700; }
+
+  /* BUBBLE MAP */
+  .bubble-wrap { position: relative; height: 240px; margin: 0 14px 16px; background: radial-gradient(ellipse at center, #0d1a0d 0%, #1c1610 75%); border: 1px solid #2a2218; border-radius: 14px; overflow: hidden; }
+  .bubble { position: absolute; border-radius: 50%; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; overflow: hidden; border: 2px solid; }
+  .bubble:hover { transform: scale(1.1); z-index: 10; }
+  .bubble img { width: 100%; height: 100%; object-fit: cover; }
+  .bubble-label { position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%); font-size: 9px; color: #fff; font-weight: 700; font-family: 'JetBrains Mono', monospace; white-space: nowrap; text-shadow: 0 1px 3px #000; pointer-events: none; }
+
+  /* LOADING / EMPTY */
+  .loading, .empty { text-align: center; padding: 40px 20px; color: #fff; font-size: 12px; }
+
+  /* BOTTOM NAV */
+  .bnav { position: fixed; bottom: 0; left: 0; right: 0; height: 64px; background: #1c1610; border-top: 1px solid #2a2218; display: grid; grid-template-columns: repeat(5, 1fr); z-index: 999; padding-bottom: env(safe-area-inset-bottom, 0); }
+  .bnav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #FFE099; cursor: pointer; padding: 4px; }
+  .bnav-item:hover, .bnav-item.active { color: #F5CC75; }
+  .bnav-icon { font-size: 20px; line-height: 1; }
+  .bnav-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'JetBrains Mono', monospace; }
+</style>
+<script src="/lib/d3.v7.min.js" defer></script>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#F5CC75">
+
+<script id="gbx_onboarding_check_v1">
+(function() {
+  try {
+    // First-time visitor → MUST accept disclaimer
+    if (localStorage.getItem('gbx_disclaimer_agreed') !== 'true') {
+      window.location.replace('/v3/disclaimer.html');
+      return;
+    }
+    // Disclaimer accepted, but no wallet → optional show "Get Started" CTA (don't force)
+    // User can browse market map without wallet.
+  } catch(e) {}
+})();
+</script>
+    <script src="/gbx-update-check.js" defer></script>
+    <script src="/gbx-native-bridge.js" defer></script>
+    <script src="/gbx-chat-notify.js" defer></script>
+      <script src="/i18n.js?v=103" defer></script>
+  <script src="/promo-banner.js?v=103" defer></script>
+<style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
+</head>
+<body>
+<script id="wallet-gate">
+(function(){
+  try {
+    const state = localStorage.getItem('goldbrix_state_v3');
+    if (!state) {
+      window.location.replace('/v3/welcome.html');
+      return;
+    }
+    const s = JSON.parse(state);
+    if (!s.wallets || s.wallets.length === 0 || !s.salt || !s.pwdHash) {
+      window.location.replace('/v3/welcome.html');
+      return;
+    }
+    // Has wallet but not unlocked? Redirect to unlock
+    const unlocked = sessionStorage.getItem('gbx_unlocked_wallets');
+    if (!unlocked) {
+      window.location.replace('/v3/unlock.html');
+    }
+  } catch(e) {
+    window.location.replace('/v3/welcome.html');
+  }
+})();
+</script>
+
+
+
+
+
+<!-- TICKER -->
+<div id="liveTicker" onclick="window.location.href='/v3/leaderboard.html'">
+  <span id="lt-text">🔥 Loading live data...</span><span class="dot"></span>
+</div>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-logo">
+    <div class="hdr-icon"><img src="/assets/coin/gbx-coin-32.png" alt="GoldBrix" loading="eager"></div>
+    <div><div class="hdr-title">GOLDBRIX</div></div>
+  </div>
+  
+</div>
+
+<!-- KPI -->
+<div class="section-wrap">
+  <div class="kpi-card">
+    <div class="kpi-row1">
+      <div class="kpi-item"><div class="kpi-label"><span data-t="h_tvl">TVL</span></div><div class="kpi-value gold" id="kpi-tvl">$0</div></div>
+      <div class="kpi-item"><div class="kpi-label"><span data-t="h_vol24h">24h Vol</span></div><div class="kpi-value" id="kpi-vol">$0</div></div>
+      <div class="kpi-item"><div class="kpi-label"><span data-t="h_burned">Burned</span></div><div class="kpi-value fire" id="kpi-burned">0</div></div>
+    </div>
+    <div class="kpi-row2">
+      <span><b id="kpi-coins">0</b> live coins</span>
+      <span style="display:none;"><b id="kpi-peers">0</b> peers · <span id="kpi-sync">✓ synced</span></span>
+    </div>
+  </div>
+</div>
+
+<!-- CTAs PRIMARY -->
+<div class="ctas-primary">
+  <button class="cta-p" onclick="window.location.href='/v3/launch.html'">🚀 <span data-t="b_launchCoin">LAUNCH COIN</span></button>
+  <button class="cta-p" onclick="window.location.href='/v3/leaderboard.html'">🏆 <span data-t="b_leaderboard">LEADERBOARD</span></button>
+</div>
+
+<!-- CTAs SECONDARY -->
+<div class="ctas-sec">
+  <button class="cta-s cta-s--buy" onclick="window.location.href='/v3/swap.html'"><span class="cta-s__icon">↑</span><span data-t="b_buyGbx">BUY GBX</span></button>
+  <button class="cta-s cta-s--sell" onclick="window.location.href='/v3/swap.html?dir=sell'"><span class="cta-s__icon">↓</span><span data-t="b_sellGbx">SELL GBX</span></button>
+  <button class="cta-s cta-s--stats" onclick="window.location.href='/v3/leaderboard.html'"><span class="cta-s__icon">📊</span><span data-t="b_stats">STATS</span></button>
+</div>
+
+<!-- PROMOTE BANNER -->
+<div class="sec-title">🫧 <span data-t="h_liveMarket">LIVE MARKET MAP</span></div>
+<div class="bubble-wrap" id="bubbleWrap"><div class="loading">Loading bubbles...</div></div>
+<div class="sec-title">🆕 NEW <span data-t="h_newLaunches">NEW LAUNCHES</span></div>
+<div class="new-launches" id="newLaunches"><div class="loading">Loading...</div></div>
+<!-- ROAD TO GRADUATION — harta interactiva identica, dimensiune = % graduation -->
+<div class="sec-title" id="gradMapTitle" style="display:none;">🎓 <span id="gradMapTitleTxt">ROAD TO GRADUATION</span></div>
+<div class="bubble-wrap" id="gradBubbleWrap" style="display:none;"><div class="loading">...</div></div>
+<script>
+(function(){
+  var API='https://goldbrix.app'; var TARGET=80000;
+  var L=(localStorage.getItem('gbx_lang')||'en');
+  var GT={en:'ROAD TO GRADUATION',ro:'DRUM SPRE ABSOLVIRE',de:'WEG ZUR GRADUIERUNG',zh:'毕业之路',ar:'الطريق إلى التخرج'};
+  function renderGradBubbles(coins){
+    var wrap=document.getElementById('gradBubbleWrap'); if(!wrap||typeof d3==='undefined') return;
+    var cl=coins.filter(function(c){ return !c.graduated && (c.reserve_gbx||0)>0; });
+    cl.forEach(function(c){ c._pct=Math.min(100,(c.reserve_gbx||0)/TARGET*100); });
+    cl.sort(function(a,b){ return b._pct-a._pct; }); cl=cl.slice(0,18);
+    var maxPct=Math.max.apply(null, cl.map(function(c){ return c._pct||0.001; })); if(maxPct<=0)maxPct=1;
+    var W=wrap.clientWidth||350, H=240, rMin=18, rMax=42;
+    var nodes=cl.map(function(c){
+      var ratio=Math.sqrt((c._pct||0.001)/maxPct); var r=rMin+(rMax-rMin)*ratio;
+      var hot=c._pct>=90; var color=hot?'#4EE08C':'#F5CC75';
+      var fill=hot?'rgba(78,224,140,0.18)':'rgba(245,204,117,0.18)';
+      return { id:c.id, ticker:c.ticker, image_url:c.image_url, radius:r, color:color, fill:fill, pct:c._pct };
+    });
+    wrap.innerHTML='';
+    var svg=d3.select(wrap).append('svg').attr('width','100%').attr('height',H).style('display','block').style('user-select','none');
+    var dragState={dragging:false};
+    var g=svg.selectAll('g.gbn').data(nodes).enter().append('g').attr('class','gbn').style('cursor','grab');
+    g.append('circle').attr('r',function(d){return d.radius;}).attr('fill',function(d){return d.fill;}).attr('stroke',function(d){return d.color;}).attr('stroke-width',2).style('filter',function(d){return 'drop-shadow(0 0 8px '+d.color+'aa)';});
+    g.filter(function(d){return d.image_url;}).each(function(d){ var sel=d3.select(this); var cid='gclip-'+(d.id||Math.random().toString(36).slice(2)); sel.append('clipPath').attr('id',cid).append('circle').attr('r',d.radius); sel.append('image').attr('href',d.image_url).attr('x',-d.radius).attr('y',-d.radius).attr('width',d.radius*2).attr('height',d.radius*2).attr('preserveAspectRatio','xMidYMid slice').attr('clip-path','url(#'+cid+')').style('pointer-events','none'); });
+    g.append('rect').attr('x',function(d){return -d.radius;}).attr('y',function(d){return d.radius*0.18;}).attr('width',function(d){return d.radius*2;}).attr('height',function(d){return d.radius*0.82;}).attr('clip-path',function(d){return 'url(#gclip-'+(d.id||'')+')';}).attr('fill','rgba(0,0,0,0.55)').style('pointer-events','none');
+    g.append('text').text(function(d){return '$'+d.ticker;}).attr('text-anchor','middle').attr('dy','0.35em').style('font-size',function(d){return Math.max(9,d.radius*0.28)+'px';}).style('font-weight','800').style('fill','#fff').style('text-shadow','0 1px 3px #000').style('pointer-events','none');
+    g.append('text').text(function(d){return d.pct.toFixed(2)+'%';}).attr('text-anchor','middle').attr('dy',function(d){return d.radius*0.55+'px';}).style('font-size',function(d){return Math.max(7,d.radius*0.22)+'px';}).style('font-weight','700').style('fill',function(d){return d.color;}).style('text-shadow','0 1px 2px #000').style('pointer-events','none');
+    g.on('click',function(e,d){ if(!dragState.dragging) window.location.href='/v3/trade.html?coin='+d.id; });
+    if(window._gradSim) window._gradSim.stop();
+    window._gradSim=d3.forceSimulation(nodes)
+      .force('charge',d3.forceManyBody().strength(2))
+      .force('collide',d3.forceCollide(function(d){return d.radius+3;}).iterations(2))
+      .force('x',d3.forceX(W/2).strength(0.04)).force('y',d3.forceY(H/2).strength(0.06))
+      .alphaDecay(0.02)
+      .on('tick',function(){ g.attr('transform',function(d){ d.x=Math.max(d.radius,Math.min(W-d.radius,d.x)); d.y=Math.max(d.radius,Math.min(H-d.radius,d.y)); return 'translate('+d.x+','+d.y+')'; }); });
+    g.call(d3.drag()
+      .on('start',function(e,d){ dragState.dragging=false; if(!e.active)window._gradSim.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; })
+      .on('drag',function(e,d){ dragState.dragging=true; d.fx=e.x; d.fy=e.y; })
+      .on('end',function(e,d){ if(!e.active)window._gradSim.alphaTarget(0); d.fx=null; d.fy=null; setTimeout(function(){dragState.dragging=false;},100); }));
+  }
+  async function loadGradMap(){
+    try{
+      var r=await fetch(API+'/v2/memecoin/list?limit=500'); var d=await r.json(); var coins=(d.coins||d.list||[]);
+      var t=document.getElementById('gradMapTitle'), w=document.getElementById('gradBubbleWrap');
+      var cl=coins.filter(function(c){ return !c.graduated && (c.reserve_gbx||0)>0; });
+      if(!cl.length){ if(t)t.style.display='none'; if(w)w.style.display='none'; return; }
+      var txt=document.getElementById('gradMapTitleTxt'); if(txt) txt.textContent=GT[L]||GT.en;
+      if(t)t.style.display='block'; if(w)w.style.display='block'; renderGradBubbles(coins);
+    }catch(e){}
+  }
+  function startGrad(){ if(typeof d3==='undefined'){ setTimeout(startGrad,400); return; } loadGradMap(); setInterval(loadGradMap,60000); }
+  startGrad();
+})();
+</script>
+
+
+
+<!-- BURNS BANNER (top of stack) -->
+<div id="burnsBannerHome" class="promo" style="background:linear-gradient(135deg,rgba(255,100,68,0.15),rgba(200,40,20,0.08));border-color:#5a2418;" onclick="window.location.href='/v3/burns.html'">
+  <div class="promo-img" style="background:rgba(255,100,68,0.22);"><span style="font-size:22px;">🔥</span></div>
+  <div class="promo-body">
+    <div class="promo-label" style="color:#FF8866;"><span data-t="h_burnTitle">BURNED FOREVER</span></div>
+    <div class="promo-title" id="burnsHomeTotal">— GBX</div>
+    <div class="promo-sub" id="burnsHomeSub">—</div>
+  </div>
+  <div class="promo-cta" style="background:#FF6644;color:#fff;">🔥 →</div>
+</div>
+<!-- PROMOTE BANNER (static, always visible incl. APK) -->
+<div id="promoBanner" class="promo" data-rendered="1" onclick="openPromoteModal()">
+  <div class="promo-img"><span style="font-size:22px;">🚀</span></div>
+  <div class="promo-body">
+    <div class="promo-label"><span data-t="h_promoteTitle">PROMOTE YOUR COIN</span></div>
+    <div class="promo-title"><span data-t="h_promoteSub">Get featured on top</span></div>
+    <div class="promo-sub"><span data-t="h_promoteMeta">From $10 · 1h to 7 days</span></div>
+  </div>
+  <div class="promo-cta"><span data-t="h_promoteBtn">START</span> →</div>
+</div>
+<div id="chatBannerHome" class="promo" style="background:linear-gradient(135deg,rgba(34,170,200,0.18),rgba(20,100,150,0.08));border-color:#1c5a78;cursor:pointer;display:flex;align-items:center;gap:12px;" onclick="window.location.href='/v3/chat.html'">
+  <img src="/assets/coin/gbx-coin-48.png" alt="GBX" style="width:42px;height:42px;flex-shrink:0;filter:drop-shadow(0 2px 6px rgba(245,204,117,0.3));">
+  <div style="flex:1;min-width:0;">
+    <div style="font-size:14px;font-weight:800;color:#5cc8e8;margin-bottom:3px;line-height:1.2;"><span id="h_chatTitle">💬 COMMUNITY CHAT GOLDBRIX</span></div>
+    <div style="font-size:11px;color:#88b8d0;line-height:1.3;" id="h_chatSub">Talk to traders worldwide · auto-translated</div>
+  </div>
+  <div style="color:#5cc8e8;font-size:20px;opacity:0.7;">→</div>
+</div>
+<script>(function(){var L=localStorage.getItem('gbx_lang')||'en';var T={en:{t:'💬 COMMUNITY CHAT GOLDBRIX',s:'Talk to traders worldwide · auto-translated'},ro:{t:'💬 CHAT COMUNITATE GOLDBRIX',s:'Vorbește cu traderi din toată lumea · auto-tradus'},de:{t:'💬 COMMUNITY-CHAT GOLDBRIX',s:'Sprich mit Tradern weltweit · auto-übersetzt'},zh:{t:'💬 GOLDBRIX 社区聊天',s:'与全球交易者交谈 · 自动翻译'},ar:{t:'💬 دردشة مجتمع GOLDBRIX',s:'تحدث مع المتداولين حول العالم · ترجمة تلقائية'}};var x=T[L]||T.en;var a=document.getElementById('h_chatTitle');var b=document.getElementById('h_chatSub');if(a)a.textContent=x.t;if(b)b.textContent=x.s;})();</script>
+<!-- NEW LAUNCHES -->
+
+<!-- BUBBLE MAP (moved before search) -->
+<!-- GRADUATED (apare doar daca exista coins pe AMM) -->
+<div class="sec-title" id="gradSecTitle" style="display:none;">🎓 <span data-t="h_graduated">GRADUATED · ON AMM</span></div>
+<div class="new-launches" id="graduatedList" style="display:none;"></div>
+
+<!-- SEARCH + FILTERS -->
+<div class="search-wrap">
+  <input class="search-input" id="searchInput" type="text" placeholder="🔍 Search coins by name or ticker..." data-t-ph="searchPh" oninput="filterCoins()">
+</div>
+<div class="filters">
+  <button class="filter" data-sort="volume" data-t="filterHot">🔥 Hot</button>
+  <button class="filter" data-sort="created_at" data-t="filterNew">✨ New</button>
+  <button class="filter active" data-sort="reserve_gbx" data-t="filterMC">💎 Market Cap</button>
+  <button class="filter" data-sort="holders" data-t="filterHolders">👥 Holders</button>
+  <button class="filter filter--grad" data-sort="graduated" data-t="filterGrad">🎓 Graduate</button>
+</div>
+
+<!-- COIN LIST -->
+<div class="coin-list" id="coinList"><div class="loading" data-t="loadingCoins">Loading coins...</div></div>
+
+
+<script>
+(function() {
+  var API = 'https://goldbrix.app';
+  var GBX_USD = 0.10;
+  var allCoins = [];
+  var currentSort = 'reserve_gbx';
+  var tickerMode = 0;
+  var bubbleSim = null;
+
+  function fmt(n, d) { d = d!=null?d:2; return (n||0).toFixed(d); }
+  function fmtUSD(n) { if (n>=1e6) return '$'+(n/1e6).toFixed(2)+'M'; if (n>=1e3) return '$'+(n/1e3).toFixed(1)+'K'; if (n>=1) return '$'+n.toFixed(0); return '$'+(n||0).toFixed(2); }
+  function imgOrLetter(c, fallback) { return c.image_url ? '<img loading="lazy" src="'+c.image_url+'" alt="">' : (fallback || (c.ticker||'?').charAt(0)); }
+
+  // TICKER (alternate)
+  async function refreshTicker() {
+    try {
+      var r = await fetch(API + '/v2/memecoin/burns/stats');
+      var d = await r.json();
+      if (!d.ok) return;
+      var _bt=document.getElementById('burnsHomeTotal'), _bs=document.getElementById('burnsHomeSub');
+      if(_bt) _bt.textContent=fmt(d.all_time_gbx,0)+' GBX';
+      if(_bs){ var _L=(localStorage.getItem('gbx_lang')||'en'); var _td={en:'Today',ro:'Astăzi',de:'Heute',zh:'今日',ar:'اليوم'}[_L]||'Today'; _bs.textContent=d.all_time_count+' txs · '+_td+': '+fmt(d.burns_24h_gbx,2); }
+      var t = document.getElementById('lt-text');
+      if (tickerMode === 0) {
+        t.innerHTML = '🔥 <b style="color:#eee">'+fmt(d.all_time_gbx)+'</b> GBX burned forever · <b>'+d.all_time_count+'</b> txs · TODAY: <b style="color:#ffdd99">'+fmt(d.burns_24h_gbx,4)+'</b>';
+      } else if (allCoins.length > 0) {
+        var top = allCoins[0];
+        t.innerHTML = '📈 TRENDING: <b>$'+top.ticker+'</b> · liq <b>'+fmt(top.reserve_gbx,2)+'</b> GBX · '+(top.name||'').substring(0,20);
+      }
+      tickerMode = 1 - tickerMode;
+    } catch(e) {}
+  }
+
+  // CHAIN STATUS
+  async function refreshChain() {
+    try {
+      var r = await fetch(API + '/api/status');
+      var d = await r.json();
+      console.log('[CHAIN]', d);
+      var blockEl = document.getElementById('hdr-block');
+      var peersEl = document.getElementById('kpi-peers');
+      var syncEl = document.getElementById('kpi-sync');
+      if (d.best_block_height && blockEl) blockEl.textContent = '#'+(d.best_block_height/1000).toFixed(1)+'K';
+      if (d.peer_count != null && peersEl) peersEl.textContent = d.peer_count;
+      if (syncEl) syncEl.textContent = d.synced === false ? '⚠ syncing' : '✓ synced';
+    } catch(e) { console.error('[CHAIN ERR]', e); }
+  }
+
+  // KPI
+  async function refreshKpi() {
+    try{const _r=await fetch(API+'/onramp/gbx-price');const _d=await _r.json();if(_d&&_d.gbx_price_usd>0)GBX_USD=_d.gbx_price_usd;}catch(e){}
+    // GBX-PERF-LOCK Strat3 — KPI instant din cache, apoi refresh tacut
+    try {
+      var _k = JSON.parse(localStorage.getItem('gbx_cache_kpi') || 'null');
+      if (_k) {
+        if(_k.coins!=null) document.getElementById('kpi-coins').textContent = _k.coins;
+        if(_k.tvl!=null) document.getElementById('kpi-tvl').textContent = _k.tvl;
+        if(_k.burned!=null) document.getElementById('kpi-burned').textContent = _k.burned;
+        if(_k.vol!=null) document.getElementById('kpi-vol').textContent = _k.vol;
+      }
+    } catch(_) {}
+    try {
+      var [coinsR, burnsR] = await Promise.all([
+        fetch(API + '/v2/memecoin/list?limit=500'),
+        fetch(API + '/v2/memecoin/burns/stats')
+      ]);
+      var coinsD = await coinsR.json();
+      var burnsD = await burnsR.json();
+      if (coinsD.ok) {
+        allCoins = coinsD.coins || [];
+        document.getElementById('kpi-coins').textContent = allCoins.length;
+        var tvlGbx = allCoins.reduce(function(a,c){ return a+(c.reserve_gbx||0); }, 0);
+        document.getElementById('kpi-tvl').textContent = fmtUSD(tvlGbx * GBX_USD);
+      }
+      if (burnsD.ok) document.getElementById('kpi-burned').textContent = fmt(burnsD.all_time_gbx,0)+' GBX';
+      // 24h volume
+      var volR = await fetch(API + '/v2/memecoin/leaderboard/coins?metric=volume&period=24h&limit=100');
+      var volD = await volR.json();
+      if (volD.ok) {
+        var totalVol = volD.coins.reduce(function(a,c){ return a+(c.volume_gbx||0); }, 0);
+        document.getElementById('kpi-vol').textContent = fmtUSD(totalVol * GBX_USD);
+      }
+      // GBX-PERF-LOCK Strat3 — scrie KPI in cache pt render instant next load
+      try {
+        localStorage.setItem('gbx_cache_kpi', JSON.stringify({
+          coins: document.getElementById('kpi-coins').textContent,
+          tvl: document.getElementById('kpi-tvl').textContent,
+          burned: document.getElementById('kpi-burned').textContent,
+          vol: document.getElementById('kpi-vol').textContent
+        }));
+      } catch(_) {}
+    } catch(e) {}
+  }
+
+  // PROMOTE BANNER
+  async function refreshPromo() {
+    try {
+      var box = document.getElementById('promoBanner');
+      // V4.9 anti-flicker: render CTA once, never replace
+      if (box && box.dataset.rendered === '1') return;
+      if (box) box.dataset.rendered = '1';
+      var r = await fetch(API + '/launchpad/promote/active');
+      var d = await r.json();
+      if (false) {  /* V4.9: always show CTA — active coins go in top banner */
+        var p = d.active[0];
+        var coin = allCoins.find(function(c){ return c.id === p.coin_id; }) || {};
+        var mins = Math.floor((p.remaining_seconds||0)/60);
+        var img = coin.image_url ? '<img loading="lazy" src="'+coin.image_url+'" alt="">' : '<span style="color:#F5CC75;font-weight:800;font-size:18px;">'+(p.ticker||'?').charAt(0)+'</span>';
+        box.innerHTML = '<div class="promo" onclick="window.location.href=\'/v3/trade.html?coin='+p.coin_id+'\'">' +
+          '<div class="promo-img">'+img+'</div>' +
+          '<div class="promo-body">' +
+            '<div class="promo-label">⭐ PROMOTED · '+mins+'min left</div>' +
+            '<div class="promo-title">$'+p.ticker+' — '+(p.name||'').substring(0,20)+'</div>' +
+            '<div class="promo-sub">'+(p.tier_code||'')+' tier · paid $'+(p.paid_usd||0)+'</div>' +
+          '</div>' +
+          '<div class="promo-cta">VIEW →</div>' +
+        '</div>';
+        box.style.display = 'block';
+      } else {
+        box.innerHTML = '<div class="promo" onclick="openPromoteModal()">' +
+          '<div class="promo-img"><span style="font-size:22px;">🚀</span></div>' +
+          '<div class="promo-body">' +
+            '<div class="promo-label"><span data-t="h_promoteTitle">PROMOTE YOUR COIN</span></div>' +
+            '<div class="promo-title"><span data-t="h_promoteSub">Get featured on top</span></div>' +
+            '<div class="promo-sub"><span data-t="h_promoteMeta">From $10 · 1h to 7 days</span></div>' +
+          '</div>' +
+          '<div class="promo-cta"><span data-t="h_promoteBtn">START</span> →</div>' +
+        '</div>';
+        box.style.display = 'block';
+      }
+    } catch(e) {}
+  }
+
+  // GRADUATED (apare doar daca exista coins pe AMM) — social proof
+  function renderGraduated() {
+    var grads = (allCoins || []).filter(function(c){ return c.graduated; });
+    var title = document.getElementById('gradSecTitle');
+    var box = document.getElementById('graduatedList');
+    if (!title || !box) return;
+    if (!grads.length) { title.style.display='none'; box.style.display='none'; return; }
+    title.style.display=''; box.style.display='';
+    grads.sort(function(a,b){ return (b.market_cap_gbx||b.reserve_gbx||0) - (a.market_cap_gbx||a.reserve_gbx||0); });
+    box.innerHTML = grads.map(function(c){
+      var img = c.image_url ? '<img loading="lazy" src="'+c.image_url+'" alt="">' : (c.ticker||'?').charAt(0);
+      return '<div class="nl-card" onclick="window.location.href=\'/v3/trade.html?coin='+c.id+'\'">' +
+        '<div class="nl-img">'+img+'</div>' +
+        '<div class="nl-ticker">$'+c.ticker+' \uD83C\uDF93</div>' +
+        '<div class="nl-name">'+(c.name||'').substring(0,20)+'</div>' +
+        '<div class="nl-meta">AMM \u00b7 '+fmt(c.pool_gbx||c.reserve_gbx,0)+' GBX pool</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // NEW LAUNCHES
+  function renderNewLaunches() {
+    var box = document.getElementById('newLaunches');
+    console.log('[NL] render, allCoins:', allCoins.length);
+    if (!box) { console.error('[NL] container missing'); return; }
+    if (!allCoins.length) { box.innerHTML = '<div class="loading">No coins yet</div>'; return; }
+    var sorted = allCoins.slice().sort(function(a,b){ return (b.created_at||0) - (a.created_at||0); }).slice(0, 12);
+    box.innerHTML = sorted.map(function(c) {
+      var img = c.image_url ? '<img loading="lazy" src="'+c.image_url+'" alt="">' : (c.ticker||'?').charAt(0);
+      var ageHrs = (Date.now() - (c.created_at||0))/3600000;
+      var ageLbl = ageHrs < 1 ? Math.floor(ageHrs*60)+'min' : ageHrs < 24 ? Math.floor(ageHrs)+'h' : Math.floor(ageHrs/24)+'d';
+      return '<div class="nl-card" onclick="window.location.href=\'/v3/trade.html?coin='+c.id+'\'">' +
+        '<div class="nl-img">'+img+'</div>' +
+        '<div class="nl-ticker">$'+c.ticker+'</div>' +
+        '<div class="nl-name">'+(c.name||'').substring(0,20)+'</div>' +
+        '<div class="nl-meta">'+ageLbl+' ago · '+fmt(c.reserve_gbx,2)+' GBX</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // COIN LIST
+  async function refreshCoinList() {
+    var box = document.getElementById('coinList');
+    // GBX-PERF-LOCK Strat3 — render instant din cache (per sort), apoi refresh tacut
+    try {
+      var _cc = localStorage.getItem('gbx_cache_coinlist_' + currentSort);
+      if (_cc && box && !box.dataset.loaded) { box.innerHTML = _cc; }
+    } catch(_) {}
+    try {
+      // GRADUATED — filtrare locala reala (NU API sort). Onest: 0 = spune clar.
+      if (currentSort === 'graduated') {
+        var grads = (allCoins||[]).filter(function(c){ return c.graduated; });
+        if (!grads.length) {
+          box.innerHTML = '<div class="empty" style="text-align:center;padding:34px 18px;color:#8a8170;line-height:1.7;">\uD83C\uDF93<br>' + ((function(){var _l=localStorage.getItem('gbx_lang')||'en';var _m={en:'No coin has graduated yet. First at 80,000 GBX reserve!',ro:'Nicio monedă absolvită încă. Prima la 80.000 GBX rezervă!',de:'Noch keine Münze graduiert. Erste bei 80.000 GBX Reserve!',zh:'还没有币毕业。首个在80,000 GBX储备时毕业！',ar:'لا توجد عملة متخرجة بعد. الأولى عند 80,000 GBX احتياطي!'};return _m[_l]||_m.en;})()) + '</div>';
+          box.dataset.loaded='1';
+          return;
+        }
+        grads.sort(function(a,b){ return (b.market_cap_gbx||b.reserve_gbx||0) - (a.market_cap_gbx||a.reserve_gbx||0); });
+        box.innerHTML = grads.map(function(c) {
+          var img = c.image_url ? '<img loading="lazy" src="'+c.image_url+'" alt="">' : (c.ticker||'?').charAt(0);
+          var mcGbx = c.market_cap_gbx || (c.reserve_gbx||0) * 100;
+          return '<div class="coin-row" onclick="window.location.href=\'/v3/trade.html?coin='+c.id+'\'">' +
+            '<div class="coin-img">'+img+'</div>' +
+            '<div class="coin-main">' +
+              '<div class="coin-title">$'+c.ticker+' \uD83C\uDF93</div>' +
+              '<div class="coin-name">'+(c.name||'')+'</div>' +
+            '</div>' +
+            '<div class="coin-meta"><div class="coin-price">'+fmt(mcGbx,2)+' GBX</div><div class="coin-stats" style="color:#4EE08C;font-weight:800;">AMM</div></div>' +
+          '</div>';
+        }).join('');
+        box.dataset.loaded='1';
+        return;
+      }
+      var url;
+      if (currentSort === 'volume') url = API + '/v2/memecoin/leaderboard/coins?metric=volume&period=24h&limit=20';
+      else if (currentSort === 'holders') url = API + '/v2/memecoin/leaderboard/coins?metric=holders&limit=20';
+      else if (currentSort === 'reserve_gbx') url = API + '/v2/memecoin/list?sort=reserve_gbx&limit=20';
+      else url = API + '/v2/memecoin/list?sort=created_at&limit=20';
+      var r = await fetch(url);
+      var d = await r.json();
+      var coins = d.coins || [];
+      if (!coins.length) { box.innerHTML = '<div class="empty">No coins yet.</div>'; return; }
+      box.innerHTML = coins.map(function(c) {
+        var img = c.image_url ? '<img loading="lazy" src="'+c.image_url+'" alt="">' : (c.ticker||'?').charAt(0);
+        var ageHrs = (Date.now() - (c.created_at||0))/3600000;
+        var newBadge = (ageHrs < 24) ? ' <span class="new-badge">NEW</span>' : '';
+        var grad = c.graduated ? ' 🎓' : '';
+        var ch = c.change_24h;
+        var chHtml;
+        if (ch == null) chHtml = '<div class="coin-stats" style="color:#fff;">-- 24h</div>';
+        else if (ch > 0) chHtml = '<div class="coin-stats" style="color:#1DB954;font-weight:800;">↑ +'+ch.toFixed(2)+'%</div>';
+        else chHtml = '<div class="coin-stats" style="color:#FF3B3B;font-weight:800;">↓ '+ch.toFixed(2)+'%</div>';
+        var mcGbx = c.market_cap_gbx || (c.reserve_gbx||0) * 100;
+        var meta = '<div class="coin-price">'+fmt(mcGbx,2)+' GBX</div>'+chHtml;
+        return '<div class="coin-row" onclick="window.location.href=\'/v3/trade.html?coin='+c.id+'\'">' +
+          '<div class="coin-img">'+img+'</div>' +
+          '<div class="coin-main">' +
+            '<div class="coin-title">$'+c.ticker+grad+newBadge+'</div>' +
+            '<div class="coin-name">'+(c.name||'')+'</div>' +
+          '</div>' +
+          '<div class="coin-meta">'+meta+'</div>' +
+        '</div>';
+      }).join('');
+      try { localStorage.setItem('gbx_cache_coinlist_' + currentSort, box.innerHTML); box.dataset.loaded='1'; } catch(_) {}
+    } catch(e) { if(!box.dataset.loaded) box.innerHTML = '<div class="empty">Error: '+e.message+'</div>'; }
+  }
+
+  // BUBBLE MAP (D3 force simulation)
+  function renderBubbles() {
+    var wrap = document.getElementById('bubbleWrap');
+    if (!allCoins.length || typeof d3 === 'undefined') {
+      wrap.innerHTML = typeof d3 === 'undefined' ? '<div class="loading">D3 loading...</div>' : '<div class="loading">No data</div>';
+      return;
+    }
+    var sorted = allCoins.slice().sort(function(a,b){ return (b.reserve_gbx||0) - (a.reserve_gbx||0); });
+    var coins = sorted.slice(0, 18);
+
+    var W = wrap.clientWidth || 350;
+    var H = 240;
+    var maxRes = Math.max.apply(null, coins.map(function(c){ return c.reserve_gbx || 0.001; }));
+    if (maxRes <= 0) maxRes = 1;
+    var rMin = 18, rMax = 42;
+
+    var cache = window.__bubblePos || (window.__bubblePos = {});
+    var firstRender = Object.keys(cache).length === 0;
+    var nodes = coins.map(function(c) {
+      var ratio = Math.sqrt((c.reserve_gbx || 0.001) / maxRes);
+      var r = rMin + (rMax - rMin) * ratio;
+      var ch = c.change_24h;
+      var color = (ch != null && ch > 0) ? '#1DB954' : (ch != null && ch < 0) ? '#FF3B3B' : '#F5CC75';
+      var fill = (ch != null && ch > 0) ? 'rgba(29,185,84,0.18)' : (ch != null && ch < 0) ? 'rgba(255,59,59,0.18)' : 'rgba(245,204,117,0.18)';
+      var cp = cache[c.id];
+      return {
+        id: c.id, ticker: c.ticker, image_url: c.image_url,
+        radius: r, color: color, fill: fill, change: ch,
+        x: cp ? cp.x : (W/2 + (Math.random()-0.5)*30),
+        y: cp ? cp.y : (H/2 + (Math.random()-0.5)*30),
+        vx: cp ? cp.vx : 0, vy: cp ? cp.vy : 0
+      };
+    });
+
+    wrap.innerHTML = '';
+    var svg = d3.select(wrap).append('svg').attr('width', '100%').attr('height', H).style('display','block').style('user-select','none');
+
+    var dragState = { dragging: false };
+    var g = svg.selectAll('g.bn').data(nodes).enter().append('g').attr('class','bn').style('cursor','grab');
+
+    g.append('circle')
+      .attr('r', function(d){ return d.radius; })
+      .attr('fill', function(d){ return d.fill; })
+      .attr('stroke', function(d){ return d.color; })
+      .attr('stroke-width', 2)
+      .style('filter', function(d){ return 'drop-shadow(0 0 8px ' + d.color + 'aa)'; });
+
+    g.filter(function(d){ return d.image_url; }).each(function(d){
+      var sel = d3.select(this);
+      var cid = 'bclip-' + (d.id || Math.random().toString(36).slice(2));
+      sel.append('clipPath').attr('id', cid).append('circle').attr('r', d.radius);
+      sel.append('image')
+        .attr('href', d.image_url)
+        .attr('x', -d.radius).attr('y', -d.radius)
+        .attr('width', d.radius * 2).attr('height', d.radius * 2)
+        .attr('preserveAspectRatio','xMidYMid slice')
+        .attr('clip-path','url(#'+cid+')')
+        .style('pointer-events','none');
+    });
+
+    g.filter(function(d){ return d.image_url; }).append('rect')
+      .attr('x', function(d){ return -d.radius; })
+      .attr('y', function(d){ return d.radius*0.18; })
+      .attr('width', function(d){ return d.radius*2; })
+      .attr('height', function(d){ return d.radius*0.82; })
+      .attr('clip-path', function(d){ return 'url(#bclip-' + (d.id||'') + ')'; })
+      .attr('fill','rgba(0,0,0,0.55)').style('pointer-events','none');
+
+    g.append('text')
+      .text(function(d){ return '$' + d.ticker; })
+      .attr('class','b-text').attr('text-anchor','middle').attr('dy','0.35em')
+      .style('font-size', function(d){ return Math.max(9, d.radius * 0.28) + 'px'; })
+      .style('font-weight','800').style('fill','#fff')
+      .style('text-shadow','0 1px 3px #000').style('pointer-events','none');
+
+    g.filter(function(d){ return d.change != null; }).append('text')
+      .text(function(d){ return (d.change >= 0 ? '+' : '') + d.change.toFixed(1) + '%'; })
+      .attr('text-anchor','middle')
+      .attr('dy', function(d){ return d.radius * 0.55 + 'px'; })
+      .style('font-size', function(d){ return Math.max(7, d.radius * 0.22) + 'px'; })
+      .style('font-weight','700').style('fill', function(d){ return d.color; })
+      .style('text-shadow','0 1px 2px #000').style('pointer-events','none');
+
+    g.on('click', function(e, d) { if (!dragState.dragging) window.location.href = '/v3/trade.html?coin=' + d.id; });
+
+    if (bubbleSim) bubbleSim.stop();
+    bubbleSim = d3.forceSimulation(nodes)
+      .alpha(firstRender ? 1 : 0.12)
+      .force('charge', d3.forceManyBody().strength(2))
+      .force('collide', d3.forceCollide(function(d){ return d.radius + 3; }).iterations(2))
+      .force('x', d3.forceX(W/2).strength(0.04))
+      .force('y', d3.forceY(H/2).strength(0.06))
+      .alphaDecay(0.02)
+      .on('tick', function() {
+        g.attr('transform', function(d){
+          d.x = Math.max(d.radius, Math.min(W - d.radius, d.x));
+          d.y = Math.max(d.radius, Math.min(H - d.radius, d.y));
+          cache[d.id] = { x: d.x, y: d.y, vx: d.vx, vy: d.vy };
+          return 'translate(' + d.x + ',' + d.y + ')';
+        });
+      });
+
+    g.call(d3.drag()
+      .on('start', function(e, d) { dragState.dragging = false; if (!e.active) bubbleSim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+      .on('drag',  function(e, d) { dragState.dragging = true;  d.fx = e.x; d.fy = e.y; })
+      .on('end',   function(e, d) { if (!e.active) bubbleSim.alphaTarget(0); d.fx = null; d.fy = null; setTimeout(function(){ dragState.dragging = false; }, 100); })
+    );
+  }
+
+  // FILTER pills
+  document.querySelectorAll('.filter').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.filter').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      currentSort = btn.dataset.sort;
+      refreshCoinList();
+    });
+  });
+
+  // SEARCH
+  window.filterCoins = function() {
+    var q = document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('.coin-row').forEach(function(row) {
+      var text = row.textContent.toLowerCase();
+      row.style.display = text.includes(q) ? 'flex' : 'none';
+    });
+  };
+
+  // Init sequence
+  async function init() {
+    console.log('[INIT] starting');
+    try { await refreshKpi(); console.log('[INIT] KPI done, coins:', allCoins.length); } catch(e) { console.error('[KPI ERR]', e); }
+    try { await refreshChain(); console.log('[INIT] chain done'); } catch(e) { console.error('[CHAIN INIT ERR]', e); }
+    refreshTicker();
+    refreshPromo();
+    renderNewLaunches();
+    renderGraduated();
+    console.log('[INIT] launches rendered');
+    refreshCoinList();
+    setTimeout(function() {
+      console.log('[INIT] rendering bubbles, d3 type:', typeof d3);
+      renderBubbles();
+    }, 500);
+  }
+  init();
+
+  setInterval(refreshTicker, 20000);
+  setInterval(refreshChain, 60000);
+  setInterval(refreshKpi, 30000);
+  setInterval(refreshPromo, 30000);
+  setInterval(refreshCoinList, 30000);
+  window.__ptrRefresh = function(){ try { return Promise.allSettled([refreshTicker(),refreshChain(),refreshKpi(),refreshPromo(),refreshCoinList()]); } catch(e){ return Promise.resolve(); } };
+  setInterval(function(){ renderNewLaunches(); renderGraduated(); renderBubbles(); }, 30000);
+})();
+</script>
+<script src="/v3/pwa.js?v=103" defer></script>
+
+
+
+
+<nav class="v3-final-nav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:999;">
+  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#F5CC75;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:1;"><span style="font-size:18px;">🏠</span><span data-t="n_home">HOME</span></a>
+  <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">👤</span><span data-t="n_wallet">WALLET</span></a>
+  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">📊</span><span data-t="n_trade">TRADE</span></a>
+  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🚀</span><span data-t="n_launch">LAUNCH</span></a>
+  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🔥</span><span data-t="n_burns">BURNS</span></a>
+  <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">⚙</span><span data-t="n_settings">SETTINGS</span></a>
+</nav>
+<style>body { padding-bottom: 76px !important; }</style>
+
+<script>
+  // === Home Sparkline Injection (.coin-row, template-independent) ===
+  (function() {
+    function renderSpark(prices) {
+      if (!prices || prices.length < 2) return '<span style="color:#fff;font-size:10px;">—</span>';
+      const w = 60, h = 20;
+      const min = Math.min.apply(null, prices);
+      const max = Math.max.apply(null, prices);
+      const range = max - min || 1;
+      const step = w / (prices.length - 1);
+      const pts = prices.map((p, i) => (i * step).toFixed(1) + ',' + (h - ((p - min) / range) * h).toFixed(1)).join(' ');
+      const color = prices[prices.length - 1] >= prices[0] ? '#26a69a' : '#ef5350';
+      return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '"><polyline points="' + pts + '" fill="none" stroke="' + color + '" stroke-width="1.5"/></svg>';
+    }
+    async function attachSparklines() {
+      const rows = document.querySelectorAll('.coin-row');
+      const tasks = [];
+      rows.forEach(row => {
+        if (row.querySelector('.spark-inj')) return;
+        const onclick = row.getAttribute('onclick') || '';
+        const m = onclick.match(/coin=([^'"&]+)/);
+        if (!m) return;
+        const coinId = m[1];
+        if (coinId.length < 5) return;
+        const metaEl = row.querySelector('.coin-meta');
+        if (!metaEl) return;
+        const spark = document.createElement('div');
+        spark.className = 'spark-inj';
+        spark.style.cssText = 'min-width:60px;height:20px;margin:0 8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
+        spark.innerHTML = '<span style="color:#fff;font-size:10px;">…</span>';
+        metaEl.parentNode.insertBefore(spark, metaEl);
+        tasks.push((async () => {
+          try {
+            const r = await fetch('https://goldbrix.app/launchpad/coins/' + coinId + '/candles?interval=1h');
+            if (!r.ok) { spark.innerHTML = '<span style="color:#fff;font-size:10px;">—</span>'; return; }
+            const d = await r.json();
+            const candles = d.candles || (Array.isArray(d) ? d : []);
+            const prices = candles.slice(-24).map(c => c.close).filter(v => v != null && !isNaN(v));
+            spark.innerHTML = renderSpark(prices);
+          } catch(e) { spark.innerHTML = '<span style="color:#fff;font-size:10px;">—</span>'; }
+        })());
+      });
+      await Promise.allSettled(tasks);
+    }
+    setTimeout(attachSparklines, 1500);
+    setInterval(attachSparklines, 60000);
+  })();
+</script>
+<script>
+function _gbxActiveAddr(){
+  try{const u=JSON.parse(sessionStorage.getItem('gbx_unlocked_wallets')||'{}');
+  const w=(u.wallets||[]).find(x=>x.id===u.activeWalletId)||(u.wallets||[])[0];
+  return w?w.address:'';}catch(e){return '';}
+}
+</script>
+
+<!-- ═══ PROMOTE COIN MODAL (V4.9 restored) ═══ -->
+<div id="mPromote" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:99999;backdrop-filter:blur(8px);align-items:flex-start;justify-content:center;overflow-y:auto;padding:40px 16px;">
+  <div style="background:#0a0a0a;border:1px solid #1a1a1a;border-radius:16px;max-width:480px;width:100%;color:#fff;">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid #1a1a1a;">
+      <h2 style="margin:0;font-size:16px;color:#F0C060;" data-t="promo_title">🚀 Promote a Coin</h2>
+      <button onclick="closePromoteModal()" style="background:transparent;border:none;color:#fff;font-size:24px;cursor:pointer;">×</button>
+    </div>
+
+    <!-- Step 1: Select coin -->
+    <div id="promoStep1" style="padding:16px;">
+      <div style="font-size:10px;color:#bbb;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;" data-t="promo_step1">Step 1 of 3 · Select coin</div>
+      <input id="promoSearch" type="text" placeholder="🔍 Search ticker or name..." data-t-ph="promoSearchPh" data-tp="promo_search" oninput="filterPromoteCoins()" style="width:100%;padding:10px;background:#000;border:1px solid #333;color:#fff;border-radius:8px;font-size:13px;margin-bottom:12px;box-sizing:border-box;">
+      <div id="promoCoinCount" style="font-size:10px;color:#bbb;margin-bottom:8px;text-align:center;"></div>
+      <div id="promoCoinList" style="max-height:380px;overflow-y:auto;"></div>
+    </div>
+
+    <!-- Step 2: Select tier -->
+    <div id="promoStep2" style="display:none;padding:16px;">
+      <div style="font-size:10px;color:#bbb;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;" data-t="promo_step2">Step 2 of 3 · Choose duration</div>
+      <div style="background:#000;border:1px solid #1a1a1a;border-radius:10px;padding:10px;margin-bottom:12px;">
+        <div style="font-size:10px;color:#bbb;" data-t="promo_promoting">Promoting:</div>
+        <div style="color:#F0C060;font-weight:700;font-family:'JetBrains Mono',monospace;" id="promoSelectedTicker">--</div>
+        <div style="color:#bbb;font-size:11px;" id="promoSelectedName">--</div>
+      </div>
+      <div id="promoTierList"></div>
+      <button onclick="document.getElementById('promoStep2').style.display='none';document.getElementById('promoStep1').style.display='block';" style="width:100%;padding:10px;margin-top:8px;background:transparent;border:1px solid #333;color:#fff;border-radius:8px;cursor:pointer;" data-t="promo_back">← Back</button>
+    </div>
+
+    <!-- Step 3: Confirm + redirect to wallet -->
+    <div id="promoStep3" style="display:none;padding:16px;">
+      <div style="font-size:10px;color:#bbb;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;" data-t="promo_step3">Step 3 of 3 · Confirm payment</div>
+      <div style="background:#000;border:1px solid #1a1a1a;border-radius:12px;padding:14px;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #1a1a1a;margin-bottom:10px;">
+          <span style="color:#bbb;font-size:11px;" data-t="promo_coin">Coin</span>
+          <span id="promoPayCoin" style="color:#F0C060;font-weight:700;font-family:'JetBrains Mono',monospace;">--</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #1a1a1a;margin-bottom:10px;">
+          <span style="color:#bbb;font-size:11px;" data-t="promo_duration">Duration</span>
+          <span id="promoPayHours" style="color:#fff;font-weight:600;font-family:'JetBrains Mono',monospace;">--</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #1a1a1a;margin-bottom:10px;">
+          <span style="color:#bbb;font-size:11px;" data-t="promo_usd_value">USD Value</span>
+          <span id="promoPayUsd" style="color:#fff;font-weight:600;font-family:'JetBrains Mono',monospace;">--</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="color:#F0C060;font-size:12px;font-weight:700;" data-t="promo_total_burn">Total to Burn</span>
+          <span id="promoPayGbx" style="color:#F0C060;font-weight:700;font-size:18px;font-family:'JetBrains Mono',monospace;">--</span>
+        </div>
+      </div>
+      <div style="background:rgba(240,192,96,0.08);border:1px solid rgba(240,192,96,0.25);border-radius:10px;padding:10px;margin-bottom:12px;font-size:11px;color:#FFE099;line-height:1.5;">
+        🔥 100% real on-chain burn. Click below to open your wallet pre-filled with exact amount + address.
+      </div>
+      <button id="promoPayBtn" onclick="executePromotePayment()" style="width:100%;padding:14px;background:linear-gradient(135deg,#F0C060,#d4a040);color:#000;border:none;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;" data-t="promo_pay_btn">⚡ OPEN WALLET TO PAY</button>
+      <button onclick="document.getElementById('promoStep3').style.display='none';document.getElementById('promoStep2').style.display='block';" style="width:100%;padding:10px;margin-top:8px;background:transparent;border:1px solid #333;color:#fff;border-radius:8px;cursor:pointer;" data-t="promo_back">← Back</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══ PROMOTE MODAL FUNCTIONS (V4.9 restored) ═══
+window.allPromoteCoins = [];
+window.selectedPromoteCoin = null;
+window.pendingPromo = null;
+
+async function openPromoteModal() {
+  const modal = document.getElementById('mPromote');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  document.getElementById('promoStep1').style.display = 'block';
+  document.getElementById('promoStep2').style.display = 'none';
+  document.getElementById('promoStep3').style.display = 'none';
+  await loadPromoteCoinList();
+}
+
+function closePromoteModal() {
+  const modal = document.getElementById('mPromote');
+  if (modal) modal.style.display = 'none';
+  window.selectedPromoteCoin = null;
+  window.pendingPromo = null;
+}
+
+async function loadPromoteCoinList() {
+  const list = document.getElementById('promoCoinList');
+  list.innerHTML = '<div style="text-align:center;padding:20px;color:#bbb;font-size:12px;">' + ((window.t&&window.t('promo_loading'))||'Loading...') + '</div>';
+  try {
+    const r = await fetch('https://goldbrix.app/launchpad/coins');
+    const data = await r.json();
+    window.allPromoteCoins = (data.coins || []).filter(c => !c.graduated);
+    const inp = document.getElementById('promoSearch');
+    if (inp) inp.value = '';
+    filterPromoteCoins();
+  } catch(e) {
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:#ff6b6b;">' + ((window.t&&window.t('promo_failed'))||'Failed') + '</div>';
+  }
+}
+
+function filterPromoteCoins() {
+  const list = document.getElementById('promoCoinList');
+  const countEl = document.getElementById('promoCoinCount');
+  if (!list) return;
+  const search = (document.getElementById('promoSearch')?.value || '').toLowerCase().trim();
+  let coins = window.allPromoteCoins || [];
+  if (search) {
+    coins = coins.filter(c => (c.ticker||'').toLowerCase().includes(search) || (c.name||'').toLowerCase().includes(search));
+  }
+  if (countEl) countEl.textContent = coins.length + ' coin' + (coins.length !== 1 ? 's' : '');
+  if (coins.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:30px;color:#bbb;font-size:11px;">' + ((window.t&&window.t('promo_no_match'))||'No match') + '</div>';
+    return;
+  }
+  list.innerHTML = coins.slice(0, 50).map(c => `
+    <div onclick="selectPromoteCoin('${c.id}','${(c.ticker||'').replace(/'/g,'')}','${(c.name||'').replace(/'/g,'')}')" style="display:flex;align-items:center;gap:10px;padding:10px;background:#0a0a0a;border:1px solid #1a1a1a;border-radius:10px;margin-bottom:6px;cursor:pointer;">
+      <div style="width:36px;height:36px;border-radius:50%;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:14px;color:#F0C060;font-weight:700;overflow:hidden;flex:0 0 36px;"><img loading="lazy" src="${c.image_url||('https://goldbrix.app/launchpad/coin/'+c.id+'/image')}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.parentNode.textContent='${(c.ticker||'?')[0]}';"></div>
+      <div style="flex:1;min-width:0;">
+        <div style="color:#F0C060;font-weight:700;font-family:'JetBrains Mono',monospace;font-size:13px;">$${c.ticker||'?'}</div>
+        <div style="color:#fff;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.name||''}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function selectPromoteCoin(coinId, ticker, name) {
+  window.selectedPromoteCoin = { id: coinId, ticker, name };
+  document.getElementById('promoSelectedTicker').textContent = '$' + ticker;
+  document.getElementById('promoSelectedName').textContent = name;
+  document.getElementById('promoStep1').style.display = 'none';
+  document.getElementById('promoStep2').style.display = 'block';
+  loadPromoteTiers();
+}
+
+async function loadPromoteTiers() {
+  const list = document.getElementById('promoTierList');
+  list.innerHTML = '<div style="color:#bbb;text-align:center;padding:14px;">Loading...</div>';
+  try {
+    const r = await fetch('https://goldbrix.app/launchpad/promote/pricing');
+    const data = await r.json();
+    const T_ = (k,fb) => (window.t && window.t(k)) || fb; const meta = {'1h':{label:T_('promo_tier_1h','1 Hour'),tag:''},'6h':{label:T_('promo_tier_6h','6 Hours'),tag:''},'24h':{label:T_('promo_tier_24h','24 Hours'),tag:T_('promo_tag_popular','POPULAR ⭐')},'7d':{label:T_('promo_tier_7d','7 Days'),tag:T_('promo_tag_best','Best Value 💎')}};
+    list.innerHTML = data.tiers.map(t => {
+      const m = meta[t.code] || {};
+      const pop = t.code === '24h', best = t.code === '7d';
+      const bc = pop ? '#F0C060' : (best ? '#5cd68b' : '#1a1a1a');
+      return `<div onclick="selectPromoteTier('${t.code}')" style="background:#0a0a0a;border:1px solid ${bc};border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer;position:relative;">
+        ${m.tag ? `<div style="position:absolute;top:-9px;right:12px;background:${pop?'#F0C060':(best?'#5cd68b':'#666')};color:#000;font-size:9px;font-weight:700;padding:3px 10px;border-radius:10px;">${m.tag}</div>` : ''}
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div><div style="font-size:15px;font-weight:700;color:#fff;">${m.label}</div></div>
+          <div style="text-align:right;"><div style="font-size:22px;color:#F0C060;font-weight:700;font-family:'JetBrains Mono',monospace;">$${t.usd}</div><div style="font-size:9px;color:#bbb;font-family:'JetBrains Mono',monospace;margin-top:4px;">${t.gbx.toLocaleString()} GBX</div></div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    list.innerHTML = '<div style="color:#ff6b6b;text-align:center;padding:14px;">Failed</div>';
+  }
+}
+
+async function selectPromoteTier(tierCode) {
+  if (!window.selectedPromoteCoin) return;
+  // Get wallet from sessionStorage (v3 unlocked wallets)
+  let walletAddr = null;
+  try {
+    const unlocked = JSON.parse(sessionStorage.getItem('gbx_unlocked_wallets') || '{}');
+    const wallets = unlocked.wallets || [];
+    if (wallets.length > 0) walletAddr = wallets[0].address;
+  } catch(e) {}
+  if (!walletAddr) {
+    if (confirm((window.t&&window.t('promo_no_wallet'))||'Wallet not unlocked. Open Wallet now?')) {
+      window.location.href = '/v3/wallet.html';
+    }
+    return;
+  }
+  try {
+    const r = await fetch('https://goldbrix.app/launchpad/promote/init', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({coin_id: window.selectedPromoteCoin.id, paid_by: walletAddr, tier_code: tierCode})
+    });
+    const data = await r.json();
+    if (data.error) { alert('Error: ' + data.error); return; }
+    window.pendingPromo = data;
+    document.getElementById('promoPayCoin').textContent = '$' + window.selectedPromoteCoin.ticker;
+    document.getElementById('promoPayHours').textContent = data.duration_hours + 'h';
+    document.getElementById('promoPayUsd').textContent = '$' + data.usd_value;
+    document.getElementById('promoPayGbx').textContent = data.gbx_required.toLocaleString() + ' GBX';
+    document.getElementById('promoStep2').style.display = 'none';
+    document.getElementById('promoStep3').style.display = 'block';
+  } catch(e) { alert('Init failed: ' + e.message); }
+}
+
+function executePromotePayment() {
+  const promo = window.pendingPromo;
+  if (!promo) return;
+  // Save promo info for callback after send
+  localStorage.setItem('gbx_pending_promo', JSON.stringify({
+    promo_id: promo.promo_id,
+    ticker: window.selectedPromoteCoin.ticker,
+    timestamp: Date.now()
+  }));
+  // Redirect to send.html with prefilled values
+  const params = new URLSearchParams({
+    to: promo.send_gbx_to,
+    amount: promo.gbx_required,
+    memo: 'PROMO:' + promo.promo_id,
+    callback: 'promote_confirm'
+  });
+  window.location.href = '/v3/send.html?' + params.toString();
+}
+</script>
+
+
+<script>
+// === INDEX i18n — 5 limbi pentru search + filtre + loading ===
+(function(){
+  const INDEX_T = {
+    en: {
+      searchPh: '🔍 Search coins by name or ticker...',
+      promoSearchPh: '🔍 Search ticker or name...',
+      filterHot: '🔥 Hot', filterNew: '✨ New', filterMC: '💎 Market Cap', filterHolders: '👥 Holders', filterGrad: '🎓 Graduate', h_graduated: 'GRADUATED · ON AMM',
+      loadingCoins: 'Loading coins...'
+    },
+    ro: {
+      searchPh: '🔍 Caută coin după nume sau ticker...',
+      promoSearchPh: '🔍 Caută ticker sau nume...',
+      filterHot: '🔥 Populare', filterNew: '✨ Noi', filterMC: '💎 Cap. Piață', filterHolders: '👥 Deținători', filterGrad: '🎓 Absolvit', h_graduated: 'ABSOLVIT · PE AMM',
+      loadingCoins: 'Se încarcă...'
+    },
+    de: {
+      searchPh: '🔍 Coins nach Name oder Ticker suchen...',
+      promoSearchPh: '🔍 Nach Ticker oder Name suchen...',
+      filterHot: '🔥 Beliebt', filterNew: '✨ Neu', filterMC: '💎 Marktkap.', filterHolders: '👥 Halter', filterGrad: '🎓 Graduiert', h_graduated: 'GRADUIERT · AUF AMM',
+      loadingCoins: 'Coins werden geladen...'
+    },
+    zh: {
+      searchPh: '🔍 按名称或代码搜索代币...',
+      promoSearchPh: '🔍 按代码或名称搜索...',
+      filterHot: '🔥 热门', filterNew: '✨ 新币', filterMC: '💎 市值', filterHolders: '👥 持有者', filterGrad: '🎓 已毕业', h_graduated: '已毕业 · 在AMM',
+      loadingCoins: '加载中...'
+    },
+    ar: {
+      searchPh: '🔍 ابحث عن العملات بالاسم أو الرمز...',
+      promoSearchPh: '🔍 ابحث بالرمز أو الاسم...',
+      filterHot: '🔥 الشائعة', filterNew: '✨ جديد', filterMC: '💎 القيمة السوقية', filterHolders: '👥 الحاملين', filterGrad: '🎓 متخرج', h_graduated: 'متخرج · على AMM',
+      loadingCoins: 'جاري التحميل...'
+    }
+  };
+
+  function applyIndexLang() {
+    try {
+      const lang = localStorage.getItem('gbx_lang') || localStorage.getItem('goldbrix_lang') || 'en';
+      const t = INDEX_T[lang] || INDEX_T.en;
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+      // data-t (textContent)
+      document.querySelectorAll('[data-t]').forEach(el => {
+        const k = el.getAttribute('data-t');
+        if (t[k]) el.textContent = t[k];
+      });
+      // data-t-ph (placeholder)
+      document.querySelectorAll('[data-t-ph]').forEach(el => {
+        const k = el.getAttribute('data-t-ph');
+        if (t[k]) el.setAttribute('placeholder', t[k]);
+      });
+    } catch(e) { console.error('[index-i18n]', e); }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyIndexLang);
+  } else {
+    applyIndexLang();
+  }
+  window.addEventListener('storage', e => {
+    if (e.key && e.key.indexOf('lang') > -1) applyIndexLang();
+  });
+  // Same-tab lang change polling
+  let lastLang = localStorage.getItem('gbx_lang') || 'en';
+  setInterval(() => {
+    const cur = localStorage.getItem('gbx_lang') || 'en';
+    if (cur !== lastLang) { lastLang = cur; applyIndexLang(); }
+  }, 600);
+})();
+</script>
+
+<script>
+// V4.9 — auto-open promote modal from ?promote=TICKER
+(function gbxPromoteParam(){
+  try{
+    const pp=new URLSearchParams(location.search).get('promote');
+    if(!pp) return;
+    const tryOpen=function(){
+      if(typeof openPromoteModal==='function'){
+        openPromoteModal().then(function(){
+          if(pp!=='1'){ const inp=document.getElementById('promoSearch'); if(inp){ inp.value=pp; if(typeof filterPromoteCoins==='function') filterPromoteCoins(); } }
+        });
+      } else { setTimeout(tryOpen,300); }
+    };
+    setTimeout(tryOpen,600);
+  }catch(e){}
+})();
+</script>
+
+</body>
+</html>

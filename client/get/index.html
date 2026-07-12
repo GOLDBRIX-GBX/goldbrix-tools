@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>GoldBrix — Download</title>
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="/assets/coin/gbx-coin-64.png">
+<meta property="og:title" content="GoldBrix Wallet — Download">
+<meta property="og:description" content="Real chain. Real burn. Real fairness.">
+<meta property="og:image" content="/assets/coin/gbx-coin-512.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{--gold:#F0C060;--gold-soft:#FFE099;--green:#1DB954;--bg:#000;--card:#15130d;--card2:#1a1710;--line:#3a3025;--txt:#fff;--txt2:#9a8f7a}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-height:100vh;background-image:radial-gradient(circle at 20% 0%,rgba(240,192,96,0.10),transparent 45%),radial-gradient(circle at 90% 100%,rgba(240,192,96,0.05),transparent 40%);padding:0 0 40px}
+  .wrap{max-width:520px;margin:0 auto;padding:0 18px}
+  .hero{text-align:center;padding:38px 0 26px}
+  .hero img{width:88px;height:88px;border-radius:22px;box-shadow:0 0 40px rgba(240,192,96,0.35),0 8px 24px rgba(0,0,0,0.6);animation:float 4s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+  .hero h1{font-size:30px;font-weight:800;letter-spacing:-0.5px;margin-top:16px;background:linear-gradient(135deg,#fff 30%,var(--gold));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .hero .sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--txt2);letter-spacing:2px;margin-top:6px;text-transform:uppercase}
+  .tagline{color:var(--gold-soft);font-size:13px;margin-top:10px;font-style:italic;opacity:.85}
+  .card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:20px;padding:24px;margin-bottom:16px;box-shadow:0 8px 30px rgba(0,0,0,0.5)}
+  .badges{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .badge{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;padding:6px 12px;border-radius:20px;border:1px solid}
+  .badge.green{color:var(--green);border-color:rgba(29,185,84,0.4);background:rgba(29,185,84,0.08)}
+  .badge.gold{color:var(--gold);border-color:rgba(240,192,96,0.4);background:rgba(240,192,96,0.08)}
+  .badge.dim{color:var(--txt2);border-color:var(--line);background:rgba(255,255,255,0.02)}
+  .newver{font-size:18px;font-weight:800;margin-bottom:4px}
+  .gbx-back{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:12px;z-index:1000;display:inline-flex;align-items:center;gap:8px;padding:10px 16px;background:rgba(20,16,10,0.85);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:999px;color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none}
+  .gbx-back:active{background:rgba(40,32,20,0.9)}
+  .gbx-x{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:12px;z-index:1000;display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;background:rgba(20,16,10,0.85);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:50%;color:var(--gold);font-size:20px;font-weight:700;cursor:pointer;text-decoration:none;line-height:1}
+  .gbx-x:active{background:rgba(40,32,20,0.9)}
+  .btn-dl{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:18px;margin:18px 0 6px;border:none;border-radius:16px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;letter-spacing:1px;color:#1a1200;background:linear-gradient(135deg,var(--gold),#e0a840);box-shadow:0 6px 20px rgba(240,192,96,0.35);transition:transform .15s,box-shadow .15s;text-decoration:none}
+  .btn-dl:active{transform:scale(0.98)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
+  .grid .lbl{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--txt2);letter-spacing:1px;text-transform:uppercase}
+  .grid .val{font-size:16px;font-weight:700;margin-top:3px;font-family:'JetBrains Mono',monospace}
+  .sec-title{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;margin-bottom:14px}
+  .dl-link{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--line);text-decoration:none;color:var(--txt)}
+  .dl-link:last-child{border-bottom:none}
+  .dl-link .t{font-size:14px;font-weight:600}
+  .dl-link .p{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--txt2);margin-top:2px}
+  .dl-link .arr{color:var(--gold);font-size:18px}
+  .hash-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--txt2);letter-spacing:1px;text-transform:uppercase;margin:14px 0 6px}
+  .hash{background:#0a0805;border:1px solid var(--line);border-radius:10px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold-soft);word-break:break-all;line-height:1.6;cursor:pointer}
+  .hash:active{background:#0f0c07}
+  .note{background:rgba(240,192,96,0.06);border:1px solid rgba(240,192,96,0.25);border-radius:12px;padding:14px;margin-top:16px;font-size:13px;line-height:1.6;color:var(--gold-soft)}
+  .note b{color:var(--gold)}
+  .langbar{display:flex;gap:6px;justify-content:center;margin:6px 0 22px;flex-wrap:wrap}
+  .langbar button{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;padding:6px 12px;border-radius:8px;cursor:pointer;background:transparent;border:1px solid var(--line);color:var(--txt2);transition:.15s}
+  .langbar button.on{color:#1a1200;background:var(--gold);border-color:var(--gold)}
+  .foot{text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--txt2);margin-top:24px;letter-spacing:1px}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--gold);color:#1a1200;padding:12px 22px;border-radius:24px;font-weight:700;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:99}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+<a class="gbx-back" id="gbxBack">&larr; <span id="t_back">Back</span></a>
+<a class="gbx-x" id="gbxX">&times;</a>
+<div class="wrap">
+  <div class="hero">
+    <img src="/assets/coin/gbx-coin-512.png" alt="GoldBrix">
+    <h1>GoldBrix</h1>
+    <div class="sub" id="t_subtitle">NON-CUSTODIAL · MAINNET</div>
+    <div class="tagline">Real chain. Real burn. Real fairness.</div>
+  </div>
+  <div class="langbar" id="langbar"></div>
+  <div class="card">
+    <div class="badges">
+      <span class="badge green" id="t_signed">✓ Signed Release</span>
+      <span class="badge gold">Android · <span id="m_version">—</span></span>
+      <span class="badge dim">Build <span id="m_build">—</span></span>
+    </div>
+    <div class="newver" id="t_newver">🚀 New version available!</div>
+    <div style="color:var(--txt2);font-size:13px;font-family:'JetBrains Mono',monospace" id="m_changelog">—</div>
+    <a class="btn-dl" id="dlBtn" href="/downloads/android/latest.apk" download>📦 <span id="t_download">DOWNLOAD APK</span></a>
+    <div class="grid">
+      <div><div class="lbl" id="t_version">Version</div><div class="val" id="m_version2">—</div></div>
+      <div><div class="lbl" id="t_build">Build</div><div class="val" id="m_build2">—</div></div>
+      <div><div class="lbl" id="t_size">Size</div><div class="val" id="m_size">—</div></div>
+      <div><div class="lbl" id="t_date">Date</div><div class="val" id="m_date">—</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="sec-title">🔗 <span id="t_altlinks">Alternative Download Links</span></div>
+    <a class="dl-link" href="/downloads/android/latest.apk" download>
+      <div><div class="t" id="t_latest">Latest Version</div><div class="p">/downloads/android/latest.apk</div></div><span class="arr">↓</span>
+    </a>
+    <a class="dl-link" id="versionedLink" href="#" download>
+      <div><div class="t" id="t_versioned">Versioned File</div><div class="p" id="m_versioned_path">—</div></div><span class="arr">↓</span>
+    </a>
+  </div>
+  <div class="card">
+    <div class="sec-title">🛡️ <span id="t_verify">Verification</span></div>
+    <div class="hash-lbl">SHA-256</div>
+    <div class="hash" id="m_sha256" onclick="copyHash('m_sha256')">—</div>
+    <div class="hash-lbl">SHA-256 <span id="t_cert">(Signature Certificate)</span></div>
+    <div class="hash" id="m_cert" onclick="copyHash('m_cert')">34bf319c2f52709e32669588536a3911a9e90c991697ff4209a2bc63855b7085</div>
+    <div class="note" id="t_note"><b>Note:</b> This version updates your existing install without deleting wallet, seed or data — as long as the signature certificate stays unchanged (shown above).</div>
+  </div>
+  <div class="foot">GoldBrix · v<span id="m_version3">—</span> · <span id="m_build3">—</span></div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+var T={
+en:{subtitle:'NON-CUSTODIAL · MAINNET',signed:'✓ Signed Release',newver:'🚀 New version available!',download:'DOWNLOAD APK',version:'Version',build:'Build',size:'Size',date:'Date',altlinks:'Alternative Download Links',latest:'Latest Version',versioned:'Versioned File',verify:'Verification',cert:'(Signature Certificate)',copied:'✓ Copied!',note:'<b>Note:</b> This version updates your existing install without deleting wallet, seed or data — as long as the signature certificate stays unchanged (shown above).'},
+ro:{subtitle:'NON-CUSTODIAL · MAINNET',signed:'✓ Versiune Semnată',newver:'🚀 Versiune nouă disponibilă!',download:'DESCARCĂ APK',version:'Versiune',build:'Build',size:'Mărime',date:'Dată',altlinks:'Linkuri Alternative de Descărcare',latest:'Ultima Versiune',versioned:'Fișier Versionat',verify:'Verificare',cert:'(Certificat de Semnătură)',copied:'✓ Copiat!',note:'<b>Notă:</b> Această versiune actualizează instalarea existentă fără să șteargă portofelul, seed-ul sau datele — atâta timp cât certificatul de semnătură rămâne neschimbat (afișat mai sus).'},
+de:{subtitle:'NON-CUSTODIAL · MAINNET',signed:'✓ Signierte Version',newver:'🚀 Neue Version verfügbar!',download:'APK HERUNTERLADEN',version:'Version',build:'Build',size:'Größe',date:'Datum',altlinks:'Alternative Download-Links',latest:'Neueste Version',versioned:'Versionierte Datei',verify:'Verifikation',cert:'(Signatur-Zertifikat)',copied:'✓ Kopiert!',note:'<b>Hinweis:</b> Diese Version aktualisiert die vorhandene Installation, ohne Wallet, Seed oder Daten zu löschen — solange das Signaturzertifikat unverändert bleibt (oben angezeigt).'},
+zh:{subtitle:'非托管 · 主网',signed:'✓ 已签名版本',newver:'🚀 新版本可用！',download:'下载 APK',version:'版本',build:'构建',size:'大小',date:'日期',altlinks:'备用下载链接',latest:'最新版本',versioned:'版本文件',verify:'验证',cert:'(签名证书)',copied:'✓ 已复制！',note:'<b>注意：</b>只要签名证书保持不变（如上所示），此版本将更新您现有的安装，而不会删除钱包、助记词或数据。'},
+ar:{subtitle:'غير وصائي · الشبكة الرئيسية',signed:'✓ إصدار موقَّع',newver:'🚀 إصدار جديد متاح!',download:'تحميل APK',version:'الإصدار',build:'البناء',size:'الحجم',date:'التاريخ',altlinks:'روابط تحميل بديلة',latest:'أحدث إصدار',versioned:'ملف مُصدَّر',verify:'التحقق',cert:'(شهادة التوقيع)',copied:'✓ تم النسخ!',note:'<b>ملاحظة:</b> يقوم هذا الإصدار بتحديث التثبيت الحالي دون حذف المحفظة أو العبارة السرية أو البيانات — طالما بقيت شهادة التوقيع دون تغيير (المعروضة أعلاه).'}
+};
+var LANGS=[['en','EN'],['ro','RO'],['de','DE'],['zh','中文'],['ar','AR']];
+function curLang(){return localStorage.getItem('gbx_lang')||'en'}
+function applyLang(c){localStorage.setItem('gbx_lang',c);var t=T[c]||T.en;document.documentElement.lang=c;document.documentElement.dir=(c==='ar')?'rtl':'ltr';
+document.getElementById('t_subtitle').textContent=t.subtitle;document.getElementById('t_signed').textContent=t.signed;document.getElementById('t_newver').textContent=t.newver;document.getElementById('t_download').textContent=t.download;document.getElementById('t_version').textContent=t.version;document.getElementById('t_build').textContent=t.build;document.getElementById('t_size').textContent=t.size;document.getElementById('t_date').textContent=t.date;document.getElementById('t_altlinks').textContent=t.altlinks;document.getElementById('t_latest').textContent=t.latest;document.getElementById('t_versioned').textContent=t.versioned;document.getElementById('t_verify').textContent=t.verify;document.getElementById('t_cert').textContent=t.cert;document.getElementById('t_note').innerHTML=t.note;
+document.querySelectorAll('#langbar button').forEach(function(b){b.classList.toggle('on',b.dataset.l===c)});}
+(function(){var bar=document.getElementById('langbar');LANGS.forEach(function(L){var b=document.createElement('button');b.textContent=L[1];b.dataset.l=L[0];b.onclick=function(){applyLang(L[0])};bar.appendChild(b)});applyLang(curLang());})();
+function fmtSize(b){if(!b)return'—';return(b/1048576).toFixed(2)+' MB'}
+function fmtDate(i){if(!i)return'—';try{return new Date(i).toLocaleDateString()}catch(e){return(i.split('T')[0]||'—')}}
+(async function(){try{var r=await fetch('https://goldbrix.app/version.json?t='+Date.now(),{cache:'no-store'});var d=await r.json();var ver=d.version||'—',build=d.build||'—';
+document.getElementById('m_version').textContent='v'+ver;document.getElementById('m_version2').textContent=ver;document.getElementById('m_version3').textContent=ver;
+document.getElementById('m_build').textContent=build;document.getElementById('m_build2').textContent=build;document.getElementById('m_build3').textContent=build;
+document.getElementById('m_changelog').textContent=d.changelog||'';document.getElementById('m_date').textContent=fmtDate(d.releasedAt);document.getElementById('m_sha256').textContent=d.sha256||'—';
+document.getElementById('dlBtn').href='/downloads/android/latest.apk';
+// GBX — in WebView (APK) atributul download nu merge; deschide in browser extern
+(function(){
+  var ABS='https://goldbrix.app/downloads/android/latest.apk';
+  function openApk(e){
+    if(e){e.preventDefault();}
+    try{
+      var P=window.Capacitor&&window.Capacitor.Plugins;
+      if(P&&P.Browser){ P.Browser.open({url:ABS}); return false; }
+    }catch(_){}
+    window.open(ABS,'_system')||(window.location.href=ABS);
+    return false;
+  }
+  var ids=['dlBtn'];
+  ids.forEach(function(id){var el=document.getElementById(id);if(el)el.addEventListener('click',openApk);});
+  // si linkurile alternative (toate .apk)
+  document.querySelectorAll('a[href*="latest.apk"], a[href*=".apk"]').forEach(function(a){ a.addEventListener('click',openApk); });
+})();
+var vp='/downloads/android/goldbrix-'+ver+'-'+build+'.apk';document.getElementById('versionedLink').href=vp;document.getElementById('m_versioned_path').textContent=vp.replace('/downloads/android/','');
+try{var h=await fetch('/downloads/android/latest.apk',{method:'HEAD'});var len=h.headers.get('content-length');document.getElementById('m_size').textContent=fmtSize(len?parseInt(len):0)}catch(e){document.getElementById('m_size').textContent='~21 MB'}
+}catch(e){}})();
+function copyHash(id){var txt=document.getElementById(id).textContent;if(!txt||txt==='—')return;navigator.clipboard&&navigator.clipboard.writeText(txt);var t=document.getElementById('toast');t.textContent=(T[curLang()]||T.en).copied;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},1500)}
+
+// GBX — buton inapoi: history.back daca exista, altfel settings
+(function(){
+  function goBack(e){ if(e)e.preventDefault(); if(window.history.length>1){ window.history.back(); } else { window.location.href='/v3/settings.html'; } }
+  var b=document.getElementById('gbxBack');
+  if(b){ b.addEventListener('click',goBack); }
+  var x=document.getElementById('gbxX');
+  if(x){ x.addEventListener('click',goBack); }
+  // traducere label
+  var bl=document.getElementById('t_back');
+  if(bl){ var L=(localStorage.getItem('gbx_lang')||'en');
+    var T={en:'Back',ro:'Înapoi',de:'Zurück',zh:'返回',ar:'رجوع'};
+    bl.textContent=T[L]||'Back';
+  }
+})();
+</script>
+</body>
+</html>

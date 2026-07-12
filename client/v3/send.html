@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="prefetch" href="/v3/wallet.html"><link rel="prefetch" href="/v3/trade.html"><link rel="prefetch" href="/v3/launch.html"><link rel="prefetch" href="/v3/burns.html"><link rel="prefetch" href="/v3/settings.html"><link rel="prefetch" href="/v3/favorites.html"><link rel="prefetch" href="/v3/leaderboard.html"><link rel="prefetch" href="/v3/style.css"><link rel="dns-prefetch" href="https://goldbrix.app">
+<link rel="preconnect" href="https://goldbrix.app" crossorigin>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1c1610">
+<title>GoldBrix · Send</title>
+<script type="module">
+  try {
+    await import('/multichain-utils.js');
+    await import('/evm-tx.mjs');
+    const s = await import('/evm-send.mjs');
+    window.GoldbrixEVMSend = s; window.__evmSendReady = true;
+  } catch(e){ console.warn('[evm-send load]', e); window.__evmSendReady = false; }
+</script>
+<script src="/vendor/html5-qrcode.min.js?v=103"></script>
+<link rel="icon" href="/assets/coin/gbx-coin-32.png">
+<link rel="stylesheet" href="/v3/style.css">
+<script src="/gbx-modal.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: 0.1em; color: var(--text-secondary);
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    border-radius: var(--r-full); transition: all var(--t-fast); margin: 12px 0 16px;
+  }
+  .back-btn:hover { color: var(--gold); border-color: var(--gold-deep); }
+
+  .send-hero { text-align: center; padding: 8px 0 20px; }
+  .send-hero__title { font-family: 'Inter', sans-serif; font-size: 24px; font-weight: 800; color: var(--gold); margin-bottom: 6px; }
+  .send-hero__sub { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.15em; color: var(--text-secondary); }
+
+  .label { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-secondary); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; display: block; }
+
+  /* Token selector */
+  .token-select {
+    width: 100%; background: var(--bg-input);
+    border: 1px solid var(--border); border-radius: var(--r-md);
+    padding: 14px 16px; font-size: 14px; color: var(--text-primary);
+    font-family: 'Inter', sans-serif; cursor: pointer;
+    -webkit-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23F5CC75' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 16px center;
+    padding-right: 40px;
+  }
+  .token-select:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-glow); }
+
+  .balance-line {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--text-muted); margin-top: 6px;
+  }
+  .max-btn {
+    background: var(--bg-elevated); border: 1px solid var(--gold-deep);
+    color: var(--gold); padding: 4px 10px; border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 0.1em; cursor: pointer;
+  }
+  .max-btn:hover { background: var(--gold-glow); }
+
+  .fee-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--r-md); padding: 14px; margin: 16px 0;
+  }
+  .fee-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 4px 0; }
+  .fee-row__label { color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; }
+  .fee-row__val { color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+  .fee-row--total .fee-row__val { color: var(--gold); font-size: 14px; }
+
+  .step { display: none; }
+  .step.active { display: block; animation: fadeIn 0.3s; }
+
+  .pending-box { text-align: center; padding: 40px 20px; }
+  .pending-box__loader { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .success-box { text-align: center; padding: 32px 20px; }
+  .success-box__icon { font-size: 64px; margin-bottom: 16px; }
+  .ab-bar{ margin-top:6px; }
+  .ab-btn{ background:var(--bg-elevated,#1a1a1a); color:var(--text-secondary,#888); border:1px solid #333; border-radius:8px; padding:6px 12px; font-size:13px; cursor:pointer; }
+  .ab-caret{ font-size:10px; }
+  .ab-list{ margin-top:8px; background:var(--bg-elevated,#1a1a1a); border:1px solid #333; border-radius:8px; padding:6px; }
+  .ab-empty{ color:var(--text-secondary,#888); font-size:12px; padding:8px; text-align:center; }
+  .ab-item{ display:flex; align-items:center; justify-content:space-between; padding:8px; border-radius:6px; }
+  .ab-item__tap{ display:flex; flex-direction:column; cursor:pointer; flex:1; }
+  .ab-item__tap b{ color:var(--text-primary,#fff); font-size:14px; }
+  .ab-item__tap small{ color:var(--text-secondary,#888); font-size:11px; font-family:"JetBrains Mono",monospace; }
+  .ab-item__del{ background:none; border:none; color:var(--red,#FF3B3B); font-size:14px; cursor:pointer; padding:4px 8px; }
+  .ab-add{ width:100%; margin-top:6px; background:none; border:1px dashed #444; color:var(--primary,#F0C060); border-radius:6px; padding:8px; font-size:13px; cursor:pointer; }
+  .success-box__title { font-size: 22px; font-weight: 800; color: var(--green); margin-bottom: 8px; }
+  .success-box__tx { margin-top: 16px; padding: 12px; background: var(--bg-elevated); border-radius: var(--r-md); font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-secondary); word-break: break-all; }
+
+  .error-msg { margin: 10px 0; padding: 12px; background: rgba(255, 122, 107, 0.1); border: 1px solid var(--red-dim); border-radius: var(--r-md); color: var(--red); font-size: 13px; display: none; }
+  .error-msg.show { display: block; }
+
+  .lock-overlay { position: fixed; inset: 0; background: var(--bg-primary); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+  .loader-small { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; }
+
+  .qr-scan-btn{display:inline-flex;align-items:center;gap:6px;background:#F0C060;color:#000;padding:10px 16px;border:none;border-radius:8px;font-weight:700;margin-top:8px;cursor:pointer;font-size:14px;width:100%;justify-content:center}
+  .qr-scan-btn:hover{background:#F8D480}
+  .qr-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+  .qr-modal-content{background:#1a1a1a;padding:24px;border-radius:16px;max-width:500px;width:100%;text-align:center;border:1px solid #F0C060}
+  .qr-modal-content h3{color:#F0C060;margin-bottom:16px;font-size:20px}
+  #qr-reader{background:#000;border-radius:12px;overflow:hidden}
+  .qr-cancel-btn{background:#333;color:#fff;padding:10px 24px;border:none;border-radius:8px;margin-top:16px;cursor:pointer;font-weight:600;width:100%}
+
+/* V4.9 — Visible placeholders (added 2026-05-27) */
+input::placeholder, textarea::placeholder,
+input::-webkit-input-placeholder, textarea::-webkit-input-placeholder,
+input::-moz-placeholder, textarea::-moz-placeholder {
+  color: #eee !important;
+  opacity: 1 !important;
+}
+
+</style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#F5CC75">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/goldbrix-brand-180.png">
+    <script src="/v3/gbx-session.js?v=103"></script>
+    <script src="/v3/gbx-read.js?v=103"></script>
+<script src="/gbx-update-check.js" defer></script>
+    <script src="/gbx-native-bridge.js" defer></script>
+      <script src="/i18n.js?v=103" defer></script>
+  <script src="/promo-banner.js?v=103" defer></script>
+<style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
+<script src="/v3/nav-i18n.js?v=103" defer></script>
+<script src="/v3/send-token-picker.js?v=103" defer></script>
+</head>
+<body>
+
+<div class="lock-overlay" id="lockOverlay"><div class="loader-small"></div></div>
+
+<div class="v3-app" id="app" style="display:none;">
+  <div class="v3-container v3-fade-in">
+
+    <a class="back-btn" href="/app.html#wallet">← <span id="backLabel" data-t="wallet">Wallet</span></a>
+
+    <div class="send-hero">
+      <div class="send-hero__title" id="sendTitle" data-t="send">Send</div>
+      <div class="send-hero__sub" id="sendSub">TRANSFER TO ANOTHER WALLET</div>
+    </div>
+
+    <!-- STEP 1: Form -->
+    <div class="step active" id="step-form">
+
+      <label class="label" id="tokenLabel">Token</label>
+      <select class="token-select" id="tokenSelect" onchange="onTokenChange()">
+        <option value="GBX|GBX|0|null">GOLDBRIX (GBX) — loading...</option>
+      </select>
+
+      <label class="label v3-mt-md" id="toLabel" data-t="recipient">Recipient Address</label>
+      <input type="text" class="v3-input" id="toAddr" placeholder="bn1q..." autocomplete="off" autocapitalize="off" spellcheck="false">
+      <div id="abBar" class="ab-bar"><button type="button" class="ab-btn" onclick="abToggle()"><span id="abBtnLabel">Contacts</span> <span class="ab-caret">▾</span></button></div>
+      <div id="abList" class="ab-list" style="display:none;"></div>
+      <button type="button" class="qr-scan-btn" onclick="openQR()">📷 <span id="qrScanBtnLabel">SCAN QR</span></button>
+
+      <label class="label v3-mt-md" id="amtLabel">Amount</label>
+      <input type="number" class="v3-input" id="amount" placeholder="0.00" step="0.0001" min="0" inputmode="decimal">
+      <div class="balance-line">
+        <span><span id="availableLabel">Available</span>: <span id="balanceVal">0.00</span> <span id="balanceTicker">GBX</span></span>
+        <button class="max-btn" onclick="setMax()" id="maxBtn" data-t="max">MAX</button>
+      </div>
+
+      <div class="fee-card">
+        <div class="fee-row">
+          <span class="fee-row__label" id="netLabel">Network Fee</span>
+          <span class="fee-row__val" id="netFee">~0.0030 GBX</span>
+        </div>
+        <div class="fee-row fee-row--total v3-mt-sm" style="padding-top: 8px; border-top: 1px solid var(--border);">
+          <span class="fee-row__label" id="totalLabel" data-t="totalLbl">Total</span>
+          <span class="fee-row__val" id="totalVal">0.00</span>
+        </div>
+      </div>
+
+      <div class="error-msg" id="errMsg"></div>
+
+      <button class="v3-btn v3-btn--primary v3-btn--lg v3-btn--block v3-mt-md" onclick="doSend()" id="sendBtn">
+        <span id="sendBtnLabel">Review & Send</span>
+      </button>
+    </div>
+
+    <!-- STEP 2: Pending -->
+    <div class="step" id="step-pending">
+      <div class="pending-box">
+        <div class="pending-box__loader"></div>
+        <h2 style="font-size:20px;color:var(--gold);font-weight:800;" id="pendingTitle">Broadcasting...</h2>
+        <p style="margin-top:8px;color:var(--text-secondary);font-size:13px;" id="pendingSub">Publishing on-chain</p>
+      </div>
+    </div>
+
+    <!-- STEP 3: Success -->
+    <div class="step" id="step-success">
+      <div class="success-box">
+        <div class="success-box__icon">✓</div>
+        <div class="success-box__title" id="successTitle">Sent Successfully!</div>
+        <div style="color:var(--text-secondary);font-size:13px;" id="successAmt">— GBX</div>
+        <div class="success-box__tx" id="txHash"></div>
+        <button class="v3-btn v3-btn--primary v3-btn--lg v3-btn--block v3-mt-lg" onclick="window.location.href='/app.html#wallet'">
+          <span id="doneLabel">Back to Wallet</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="v3-footer">v3.0 · PHASE 1.5 LIVE · SELF-CUSTODY</div>
+  </div>
+</div>
+
+<script type="module" src="/crypto-utils-v2.js?v=103"></script>
+
+<script>
+const T = {
+  en: { back: 'Wallet', title: 'Send', sub: 'TRANSFER TO ANOTHER WALLET', token: 'Token', to: 'Recipient Address', amt: 'Amount', avail: 'Available', max: 'MAX', net: 'Network Fee', total: 'Total', sendBtn: 'Review & Send', pendingTitle: 'Broadcasting...', pendingSub: 'Publishing on-chain', successTitle: 'Sent Successfully!', done: 'Back to Wallet', errInvalidAddr: 'Invalid GoldBrix address', errAmount: 'Enter a valid amount', errInsufficient: 'Insufficient balance', errSelfSend: 'Cannot send to yourself', confirmSend: '⚠️ VERIFY ADDRESS:\n\n{addr}\n\nAmount: {amt} {tk}\n\nProceed?', noMnemonic: 'Wallet locked. Please unlock.', scanQR: 'SCAN QR', qrTitle: 'Scan QR Code', cancel: 'Cancel', antiDup: 'Wait {sec}s before retry', qrLoading: 'QR library loading, wait 2s', cameraPerm: 'Camera permission needed', errRbf: 'Previous transaction still pending. Wait 1-2 minutes and try again.', errBroadcast: 'Network error. Please try again.', errMaxPerTx: 'Amount too large for one transaction. Max right now: {max} GBX. Send in batches.', errLowFee: 'Network busy. Please wait a moment.', errSolGas: 'You need ~{sol} SOL for the Solana network fee. Your SOL balance is too low — top up SOL and retry.', errSolDrop: 'Solana network did not confirm the transaction. Funds NOT moved. Try again.' },
+  ro: { back: 'Portofel', title: 'Trimite', sub: 'TRANSFER LA ALT PORTOFEL', token: 'Token', to: 'Adresă Destinatar', amt: 'Sumă', avail: 'Disponibil', max: 'MAX', net: 'Comision Rețea', total: 'Total', sendBtn: 'Verifică & Trimite', pendingTitle: 'Se transmite...', pendingSub: 'Publicare on-chain', successTitle: 'Trimis cu succes!', done: 'Înapoi la Portofel', errInvalidAddr: 'Adresă GoldBrix invalidă', errAmount: 'Introdu o sumă validă', errInsufficient: 'Sold insuficient', errSelfSend: 'Nu poți trimite la tine însuți', confirmSend: '⚠️ VERIFICĂ ADRESA:\n\n{addr}\n\nSumă: {amt} {tk}\n\nContinuă?', noMnemonic: 'Portofel blocat. Deschide-l.', scanQR: 'SCANEAZĂ QR', qrTitle: 'Scanează cod QR', cancel: 'Anulează', antiDup: 'Așteaptă {sec}s', qrLoading: 'Biblioteca QR se încarcă, așteaptă 2s', cameraPerm: 'Permisiune cameră necesară', errRbf: 'Tranzacția anterioară încă în așteptare. Așteaptă 1-2 minute și încearcă din nou.', errBroadcast: 'Eroare rețea. Încearcă din nou.', errMaxPerTx: 'Suma prea mare pentru o singura tranzactie. Maxim acum: {max} GBX. Trimite in transe.', errLowFee: 'Rețeaua e ocupată. Așteaptă un moment.', errSolGas: 'Ai nevoie de ~{sol} SOL pentru taxa rețelei Solana. Soldul tău SOL e prea mic — alimentează SOL și reîncearcă.', errSolDrop: 'Rețeaua Solana nu a confirmat tranzacția. Banii NU s-au mișcat. Încearcă din nou.' },
+  de: { back: 'Wallet', title: 'Senden', sub: 'AN ANDERE WALLET ÜBERTRAGEN', token: 'Token', to: 'Empfänger-Adresse', amt: 'Betrag', avail: 'Verfügbar', max: 'MAX', net: 'Netzwerkgebühr', total: 'Gesamt', sendBtn: 'Prüfen & Senden', pendingTitle: 'Übertragung...', pendingSub: 'On-Chain veröffentlichen', successTitle: 'Erfolgreich gesendet!', done: 'Zurück zur Wallet', errInvalidAddr: 'Ungültige Adresse', errAmount: 'Gültigen Betrag eingeben', errInsufficient: 'Unzureichendes Guthaben', errSelfSend: 'Kann nicht an sich selbst senden', confirmSend: '⚠️ ADRESSE PRÜFEN:\n\n{addr}\n\nBetrag: {amt} {tk}\n\nFortfahren?', noMnemonic: 'Wallet gesperrt.', scanQR: 'QR SCANNEN', qrTitle: 'QR-Code scannen', cancel: 'Abbrechen', antiDup: 'Warte {sec}s', qrLoading: 'QR-Bibliothek lädt, warte 2s', cameraPerm: 'Kamera-Berechtigung erforderlich', errRbf: 'Vorherige Transaktion noch ausstehend. Warte 1-2 Minuten und versuche es erneut.', errBroadcast: 'Netzwerkfehler. Bitte versuche es erneut.', errMaxPerTx: 'Betrag zu gross fuer eine Transaktion. Maximum jetzt: {max} GBX. In Teilbetraegen senden.', errLowFee: 'Netzwerk ausgelastet. Bitte warte einen Moment.', errSolGas: 'Du benötigst ~{sol} SOL für die Solana-Netzwerkgebühr. Dein SOL-Guthaben ist zu niedrig — SOL aufladen und erneut versuchen.', errSolDrop: 'Das Solana-Netzwerk hat die Transaktion nicht bestätigt. Gelder NICHT bewegt. Erneut versuchen.' },
+  zh: { back: '钱包', title: '发送', sub: '转账到其他钱包', token: '代币', to: '接收地址', amt: '金额', avail: '可用', max: '最大', net: '网络费用', total: '总计', sendBtn: '检查并发送', pendingTitle: '正在广播...', pendingSub: '链上发布', successTitle: '发送成功!', done: '返回钱包', errInvalidAddr: '无效地址', errAmount: '输入有效金额', errInsufficient: '余额不足', errSelfSend: '不能发送给自己', confirmSend: '⚠️ 验证地址:\n\n{addr}\n\n金额: {amt} {tk}\n\n继续?', noMnemonic: '钱包已锁定.', scanQR: '扫描二维码', qrTitle: '扫描二维码', cancel: '取消', antiDup: '请等待 {sec}秒', qrLoading: 'QR库加载中,请稍后', cameraPerm: '需要相机权限', errRbf: '上一笔交易仍在处理中。请等待1-2分钟后重试。', errBroadcast: '网络错误。请重试。', errMaxPerTx: '单笔交易金额过大。当前最大：{max} GBX。请分批发送。', errLowFee: '网络繁忙。请稍等。', errSolGas: '您需要约 {sol} SOL 支付 Solana 网络费。SOL 余额不足，请充值后重试。', errSolDrop: 'Solana 网络未确认交易。资金未转移。请重试。' },
+  ar: { back: 'محفظة', title: 'إرسال', sub: 'تحويل إلى محفظة أخرى', token: 'الرمز', to: 'عنوان المستلم', amt: 'المبلغ', avail: 'متاح', max: 'الكل', net: 'رسوم الشبكة', total: 'الإجمالي', sendBtn: 'مراجعة وإرسال', pendingTitle: 'جاري البث...', pendingSub: 'النشر على السلسلة', successTitle: 'تم الإرسال بنجاح!', done: 'العودة للمحفظة', errInvalidAddr: 'عنوان غير صالح', errAmount: 'أدخل مبلغا صالحا', errInsufficient: 'رصيد غير كاف', errSelfSend: 'لا يمكن الإرسال لنفسك', confirmSend: '⚠️ تحقق من العنوان:\n\n{addr}\n\nالمبلغ: {amt} {tk}\n\nمتابعة?', noMnemonic: 'المحفظة مقفلة.', scanQR: 'مسح QR', qrTitle: 'مسح رمز QR', cancel: 'إلغاء', antiDup: 'انتظر {sec}ث', qrLoading: 'تحميل مكتبة QR، انتظر', cameraPerm: 'إذن الكاميرا مطلوب', errRbf: 'المعاملة السابقة قيد الانتظار. انتظر 1-2 دقيقة وحاول مرة أخرى.', errBroadcast: 'خطأ في الشبكة. حاول مرة أخرى.', errMaxPerTx: 'المبلغ كبير جداً لمعاملة واحدة. الحد الأقصى الآن: {max} GBX. أرسل على دفعات.', errLowFee: 'الشبكة مشغولة. انتظر لحظة.', errSolGas: 'تحتاج ~{sol} SOL لرسوم شبكة سولانا. رصيد SOL غير كافٍ — أضف SOL وحاول مجدداً.', errSolDrop: 'لم تؤكد شبكة سولانا المعاملة. الأموال لم تتحرك. حاول مجدداً.' }
+};
+
+let currentLang = localStorage.getItem('gbx_lang') || 'en';
+let activeWallet = null;
+let availableBalance = 0;
+const GBX_NET_FEE = 0.003;
+let selectedToken = { type: 'GBX', ticker: 'GBX', balance: 0, coin_id: null };
+// ── Multi-asset EVM config (Base live; Arbitrum/BNB extensibil) ──
+const EVM_CHAINS = {
+  base: { name:'Base', chainId:8453, rpc:'https://base-rpc.publicnode.com',
+          usdc:'0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', usdcDec:6, nativeSym:'ETH', nativeDec:18 },
+  arbitrum: { name:'Arbitrum', chainId:42161, rpc:'https://arb1.arbitrum.io/rpc',
+          usdc:'0xaf88d065e77c8cC2239327C5EDb3A432268e5831', usdcDec:6, nativeSym:'ETH', nativeDec:18 },
+  bsc: { name:'BNB Chain', chainId:56, rpc:'https://bsc-dataseed.binance.org',
+          usdc:'0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', usdcDec:18, nativeSym:'BNB', nativeDec:18 }
+};
+const EVM_ASSETS = [
+  { ticker:'USDC', label:'USD Coin (Base)', chain:'base', kind:'token',  dec:6  },
+  { ticker:'ETH',  label:'Ethereum (Base)', chain:'base', kind:'native', dec:18 },
+  { ticker:'USDC', label:'USD Coin (Arbitrum)', chain:'arbitrum', kind:'token',  dec:6  },
+  { ticker:'ETH',  label:'Ethereum (Arbitrum)', chain:'arbitrum', kind:'native', dec:18 },
+  { ticker:'USDC', label:'USD Coin (BNB Chain)', chain:'bsc', kind:'token',  dec:18 },
+  { ticker:'BNB',  label:'BNB (BNB Chain)', chain:'bsc', kind:'native', dec:18 }
+];
+let _evmAddrCache = null;
+async function getEvmAddr(){
+  if(_evmAddrCache) return _evmAddrCache;
+  const d = await window.GoldbrixMultichain.deriveEVM(activeWallet.mnemonic);
+  _evmAddrCache = d.address; return d.address;
+}
+function fmtUnits(bi, dec){ const s=bi.toString().padStart(dec+1,'0'); const i=s.slice(0,s.length-dec), fr=s.slice(s.length-dec).replace(/0+$/,''); return fr?(i+'.'+fr):i; }
+function toUnits(amtStr, dec){ const [i,fr='']=String(amtStr).split('.'); return BigInt(i+(fr+'0'.repeat(dec)).slice(0,dec)); }
+
+
+function t(k) { return (T[currentLang] && T[currentLang][k]) || T.en[k] || k; }
+/* ADDRESS BOOK (gbx_contacts, local-only, zero-ownership) */
+const AB={
+ en:{contacts:"Saved Contacts",none:"No saved contacts",add:"+ Save current address",name:"Contact name?",saved:"Contact saved",exists:"Already saved",badAddr:"Invalid GoldBrix address",del:"Delete this contact?",offer:"Save {addr} to contacts?"},
+ ro:{contacts:"Contacte Salvate",none:"Niciun contact salvat",add:"+ Salveaza adresa curenta",name:"Nume contact?",saved:"Contact salvat",exists:"Deja salvat",badAddr:"Adresa GoldBrix invalida",del:"Stergi acest contact?",offer:"Salvezi {addr} in contacte?"},
+ de:{contacts:"Gespeicherte Kontakte",none:"Keine Kontakte",add:"+ Aktuelle Adresse speichern",name:"Kontaktname?",saved:"Gespeichert",exists:"Bereits gespeichert",badAddr:"Ungueltige Adresse",del:"Diesen Kontakt loeschen?",offer:"{addr} speichern?"},
+ zh:{contacts:"已存联系人",none:"无已存联系人",add:"+ 保存当前地址",name:"联系人名称?",saved:"已保存",exists:"已存在",badAddr:"无效地址",del:"删除此联系人?",offer:"保存 {addr} 到联系人?"},
+ ar:{contacts:"جهات الاتصال المحفوظة",none:"لا جهات اتصال",add:"+ حفظ العنوان",name:"اسم جهة الاتصال؟",saved:"تم الحفظ",exists:"محفوظ مسبقا",badAddr:"عنوان غير صالح",del:"حذف جهة الاتصال؟",offer:"حفظ {addr}؟"}
+};
+function tab(k){ return (AB[currentLang]&&AB[currentLang][k])||AB.en[k]||k; }
+function abLoad(){ try{ return JSON.parse(localStorage.getItem("gbx_contacts")||"[]"); }catch(e){ return []; } }
+function abStore(a){ localStorage.setItem("gbx_contacts", JSON.stringify(a)); }
+function abShort(a){ return a.length>16 ? a.slice(0,10)+"…"+a.slice(-5) : a; }
+async function abValid(addr){ if(!addr||!addr.startsWith("bn1q")||addr.length<40) return false; try{ const r=await window.gbxRead("/address/"+addr); return r.ok; }catch(e){ return false; } }
+function abToggle(){ const el=document.getElementById("abList"); if(!el) return; if(el.style.display==="none"){ abRender(); el.style.display="block"; } else { el.style.display="none"; } }
+function abRender(){ const el=document.getElementById("abList"); if(!el) return; const list=abLoad(); let h=""; if(!list.length){ h+='<div class="ab-empty">'+tab("none")+'</div>'; } list.forEach((c,i)=>{ h+='<div class="ab-item"><span class="ab-item__tap" onclick="abFill('+i+')"><b>'+(c.name||"").replace(/</g,"&lt;")+'</b><small>'+abShort(c.addr)+'</small></span><button class="ab-item__del" onclick="abDelete('+i+')">✕</button></div>'; }); h+='<button type="button" class="ab-add" onclick="abAddCurrent()">'+tab("add")+'</button>'; el.innerHTML=h; }
+function abFill(i){ const c=abLoad()[i]; if(!c) return; const inp=document.getElementById("toAddr"); if(inp) inp.value=c.addr; document.getElementById("abList").style.display="none"; window.gbxHaptic&&gbxHaptic("light"); }
+async function abDelete(i){ if(!(await gbxConfirm(tab("del")))) return; const list=abLoad(); list.splice(i,1); abStore(list); abRender(); }
+async function abAddCurrent(){ const inp=document.getElementById("toAddr"); await abSave((inp&&inp.value||"").trim()); }
+async function abSave(addr){ if(!addr) return; const list=abLoad(); if(list.some(c=>c.addr===addr)){ await gbxAlert(tab("exists")); return; } if(!(await abValid(addr))){ await gbxAlert(tab("badAddr")); return; } const name=((await gbxPrompt(tab("name")))||"").trim(); if(!name) return; list.push({name:name,addr:addr,ts:Date.now()}); abStore(list); window.gbxHaptic&&gbxHaptic("success"); abRender(); const el=document.getElementById("abList"); if(el) el.style.display="block"; }
+async function abMaybeOfferSave(addr){ try{ if(!addr) return; const list=abLoad(); if(list.some(c=>c.addr===addr)) return; if(!(await gbxConfirm(tab("offer").replace("{addr}", abShort(addr))))) return; const name=((await gbxPrompt(tab("name")))||"").trim(); if(!name) return; list.push({name:name,addr:addr,ts:Date.now()}); abStore(list); window.gbxHaptic&&gbxHaptic("success"); }catch(e){} }
+(function(){ try{ var b=document.getElementById("abBtnLabel"); if(b) b.textContent=tab("contacts"); }catch(e){} })();
+
+function applyLang() {
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+  document.getElementById('backLabel').textContent = t('back');
+  document.getElementById('sendTitle').textContent = t('title');
+  document.getElementById('sendSub').textContent = t('sub');
+  document.getElementById('tokenLabel').textContent = t('token');
+  document.getElementById('toLabel').textContent = t('to');
+  document.getElementById('amtLabel').textContent = t('amt');
+  document.getElementById('availableLabel').textContent = t('avail');
+  document.getElementById('maxBtn').textContent = t('max');
+  document.getElementById('netLabel').textContent = t('net');
+  document.getElementById('totalLabel').textContent = t('total');
+  document.getElementById('sendBtnLabel').textContent = t('sendBtn');
+  document.getElementById('pendingTitle').textContent = t('pendingTitle');
+  document.getElementById('pendingSub').textContent = t('pendingSub');
+  document.getElementById('successTitle').textContent = t('successTitle');
+  document.getElementById('doneLabel').textContent = t('done');
+  const _qrBtn=document.getElementById('qrScanBtnLabel'); if(_qrBtn) _qrBtn.textContent=t('scanQR');
+  const _qrTitle=document.getElementById('qrModalTitle'); if(_qrTitle) _qrTitle.textContent=t('qrTitle');
+  const _qrCancel=document.getElementById('qrCancelBtn'); if(_qrCancel) _qrCancel.textContent=t('cancel');
+}
+
+function showStep(id) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showError(msg) {
+  const e = document.getElementById('errMsg');
+  e.textContent = msg;
+  e.classList.add('show');
+  setTimeout(() => e.classList.remove('show'), 5000);
+}
+
+function checkLock() {
+  try{ if(window.GBXSession){ var _w=GBXSession.activeWallet(); if(_w){ activeWallet=_w; return true; } } }catch(e){}
+  const unlockedRaw = sessionStorage.getItem('gbx_unlocked_wallets');
+  if (!unlockedRaw) { window.location.href = '/v3/unlock.html'; return false; }
+  try {
+    const u = JSON.parse(unlockedRaw);
+    if (!u.unlocked_at || (Date.now() - u.unlocked_at) > 30*60*1000) {
+      sessionStorage.removeItem('gbx_unlocked_wallets');
+      window.location.href = '/v3/unlock.html'; return false;
+    }
+    const w = u.wallets.find(x => x.id === u.activeWalletId) || u.wallets[0];
+    if (!w || !w.mnemonic || !w.address) { window.location.href = '/v3/unlock.html'; return false; }
+    activeWallet = w;
+    return true;
+  } catch(e) { window.location.href = '/v3/unlock.html'; return false; }
+}
+
+async function loadHoldings() {
+  // 1. GBX balance — RAPID (~1s), afisat INSTANT in dropdown
+  let gbxBal = 0;
+  try {
+    const r = await window.gbxRead('/address/' + activeWallet.address, {quorum:true, field:'spendable_gbx'});
+    if (r.ok) { const d = await r.json(); gbxBal = parseFloat(d.spendable_gbx) || 0; }
+  } catch(e) { console.warn('[gbx balance]', e); }
+
+  // Dropdown cu GBX DEJA — pagina utilizabila instant
+  const sel = document.getElementById('tokenSelect');
+  sel.innerHTML = '<option value="GBX|GBX|' + gbxBal + '|null">GOLDBRIX (GBX) · ' + gbxBal.toFixed(4) + '</option>';
+  onTokenChange();
+
+  // 2. Restul (memecoins + USDC/ETH) in FUNDAL — nu blocheaza
+  loadMemecoinsBg();
+  loadEvmHoldingsBg();
+  loadSolHoldingsBg();
+}
+
+// Memecoins din /trades (ca wallet.html) — in fundal, cu cache la lista
+let _coinListCache = null;
+async function getCoinList(){
+  if (_coinListCache) return _coinListCache;
+  try {
+    const cr = await fetch('https://goldbrix.app/v2/memecoin/list?limit=500');
+    _coinListCache = (await cr.json()).coins || [];
+  } catch(e){ _coinListCache = []; }
+  return _coinListCache;
+}
+async function loadMemecoinsBg(){
+  try {
+    const r = await fetch('https://goldbrix.app/launchpad/wallet/' + encodeURIComponent(activeWallet.address) + '/holdings');
+    const d = await r.json();
+    const sel = document.getElementById('tokenSelect');
+    (d.holdings || []).forEach(h => {
+      const bal = Number(h.balance) || 0;
+      if (bal <= 0) return;
+      if ([...sel.options].some(o=>o.value.startsWith('NATIVE|'+h.ticker+'|'))) return;
+      const opt = document.createElement('option');
+      opt.value = 'NATIVE|' + h.ticker + '|' + bal + '|' + h.coin_id;
+      opt.textContent = '$' + h.ticker + ' \u00b7 ' + bal.toLocaleString('en-US',{maximumFractionDigits:4});
+      sel.appendChild(opt);
+    });
+  } catch(e){ console.warn('[memecoins bg]', e); }
+}
+
+async function loadEvmHoldingsBg(){
+  try {
+    if (!(window.__evmSendReady && window.GoldbrixMultichain && window.GoldbrixEVM)) {
+      // asteapta max 5s ca modulele ES sa se incarce
+      for (let i=0;i<25 && !(window.__evmSendReady && window.GoldbrixMultichain && window.GoldbrixEVM);i++){
+        await new Promise(r=>setTimeout(r,200));
+      }
+    }
+    if (!(window.__evmSendReady && window.GoldbrixMultichain && window.GoldbrixEVM)) return;
+    const evmAddr = await getEvmAddr();
+    const sel = document.getElementById('tokenSelect');
+    for (const a of EVM_ASSETS) {
+      // skip daca deja adaugat
+      if ([...sel.options].some(o=>o.value.startsWith('EVM|'+a.ticker+'|') && o.value.endsWith('|'+a.chain))) continue;
+      const cc = EVM_CHAINS[a.chain];
+      const rpc = window.GoldbrixEVMSend.makeRPC(cc.rpc);
+      const es = window.GoldbrixEVMSend.makeEVMSend({ rpc, evm:window.GoldbrixEVM, chainId:cc.chainId });
+      let bal = 0n;
+      try { bal = a.kind==='token' ? await es.balanceToken(cc.usdc, evmAddr) : await es.balanceNative(evmAddr); }
+      catch(e){ console.warn('[evm bal bg]', a.ticker, e); }
+      const human = fmtUnits(bal, a.dec); const hn = Number(human)||0;
+      const opt = document.createElement('option');
+      opt.value = 'EVM|' + a.ticker + '|' + human + '|' + a.chain;
+      opt.textContent = a.label + ' · ' + hn.toLocaleString('en-US',{maximumFractionDigits: a.kind==='native'?6:2});
+      sel.appendChild(opt);
+    }
+  } catch(e){ console.warn('[evm bg]', e); }
+}
+
+let _solAddrCache = null, _solSecretCache = null;
+async function getSolAddr(){
+  if(_solAddrCache) return _solAddrCache;
+  const d = await window.GoldbrixMultichain.deriveSOL(activeWallet.mnemonic);
+  _solAddrCache = d.address; _solSecretCache = d.secretKey; return d.address;
+}
+async function loadSolHoldingsBg(){
+  try{
+    for (let i=0;i<25 && !(window.GoldbrixMultichain && window.GoldbrixMultichain.deriveSOL);i++){
+      await new Promise(r=>setTimeout(r,200));
+    }
+    if (!(window.GoldbrixMultichain && window.GoldbrixMultichain.deriveSOL)) return;
+    const mod = await import('/v3/sol-send.mjs?v=103');
+    window.__gbxSolSend = mod;
+    const addr = await getSolAddr();
+    const b = await mod.getSolBalances(addr);
+    const sel = document.getElementById('tokenSelect');
+    const items = [
+      { ticker:'SOL',  label:'Solana (SOL)', bal:b.sol,  dec:9 },
+      { ticker:'USDC', label:'USD Coin (Solana)', bal:b.usdc, dec:6 }
+    ];
+    for (const it of items){
+      if ([...sel.options].some(o=>o.value.startsWith('SOL|'+it.ticker+'|'))) continue;
+      const opt = document.createElement('option');
+      opt.value = 'SOL|' + it.ticker + '|' + it.bal + '|' + it.dec;
+      opt.textContent = it.label + ' · ' + Number(it.bal).toLocaleString('en-US',{maximumFractionDigits: it.ticker==='SOL'?6:2});
+      sel.appendChild(opt);
+    }
+  }catch(e){ console.warn('[sol bg]', e); }
+}
+function onTokenChange() {
+  const sel = document.getElementById('tokenSelect');
+  const [type, ticker, balanceStr, extra] = sel.value.split('|');
+  if (type === 'EVM') {
+    const a = EVM_ASSETS.find(x => x.ticker === ticker && x.chain === extra) || { dec: ticker==='ETH'?18:6, kind: ticker==='ETH'?'native':'token' };
+    selectedToken = { type:'EVM', ticker, balance: Number(balanceStr)||0, chain: extra, dec: a.dec, kind: a.kind };
+  } else if (type === 'SOL') {
+    selectedToken = { type:'SOL', ticker, balance: Number(balanceStr)||0, dec: Number(extra)||9 };
+  } else if (type === 'NATIVE') {
+    selectedToken = { type:'NATIVE', ticker, balance: Number(balanceStr)||0, coin_id: extra==='null'?null:extra };
+  } else {
+    selectedToken = { type:'GBX', ticker:'GBX', balance: Number(balanceStr)||0, coin_id:null };
+  }
+  availableBalance = selectedToken.balance;
+  const maxFrac = (selectedToken.type==='EVM' && selectedToken.kind==='native') ? 6 : 4;
+  document.getElementById('balanceVal').textContent = availableBalance.toLocaleString('en-US', {maximumFractionDigits: maxFrac});
+  document.getElementById('balanceTicker').textContent = selectedToken.ticker;
+  if (selectedToken.type === 'EVM') {
+    var _nat = (selectedToken.chain==='bsc') ? 'BNB' : 'ETH';
+    document.getElementById('netFee').textContent = '~gas ' + _nat;
+  } else if (selectedToken.type === 'SOL') {
+    document.getElementById('netFee').textContent = (selectedToken.ticker==='SOL') ? '~0.00001 SOL' : '~0.00001 SOL (+~0.002 SOL rent la destinatar nou)';
+  } else document.getElementById('netFee').textContent = '~' + GBX_NET_FEE.toFixed(4) + ' GBX';
+  updateTotal();
+}
+
+function setMax() {
+  var b = Number(selectedToken.balance) || 0;
+  if (selectedToken.type === 'SOL' && selectedToken.ticker === 'SOL') b = Math.max(0, b - 0.00095); // fee + rent-exempt minim Solana
+  else if (selectedToken.type === 'EVM' && selectedToken.kind === 'native') b = Math.max(0, b * 0.98); // lasa gas
+  document.getElementById('amount').value = (selectedToken.type==='GBX') ? Math.max(0, b - GBX_NET_FEE) : b;
+  updateTotal();
+}
+
+
+function updateTotal() {
+  const amt = Number(document.getElementById('amount').value) || 0;
+  if (selectedToken.type === 'GBX') {
+    document.getElementById('totalVal').textContent = (amt + GBX_NET_FEE).toFixed(4) + ' GBX';
+  } else if (selectedToken.type === 'EVM') {
+    const dp = selectedToken.kind==='native' ? 6 : 2;
+    document.getElementById('totalVal').textContent = amt.toLocaleString('en-US', {maximumFractionDigits: dp}) + ' ' + selectedToken.ticker + ' + gas ETH';
+  } else if (selectedToken.type === 'SOL') {
+    document.getElementById('totalVal').textContent = amt.toLocaleString('en-US', {maximumFractionDigits: selectedToken.ticker==='SOL'?6:2}) + ' ' + selectedToken.ticker + ' + gas SOL';
+  } else {
+    document.getElementById('totalVal').textContent = amt.toLocaleString('en-US', {maximumFractionDigits: 4}) + ' ' + selectedToken.ticker + ' + ' + GBX_NET_FEE.toFixed(4) + ' GBX fee';
+  }
+}
+
+async function waitForCrypto(maxMs=8000) {
+  const s = Date.now();
+  while (!window.GoldbrixCrypto) {
+    if (Date.now()-s > maxMs) throw new Error('crypto timeout');
+    await new Promise(r => setTimeout(r, 100));
+  }
+}
+
+
+// ═══ QR Scanner ═══
+let qrScanner=null;
+function openQR(){
+  if(typeof Html5Qrcode==='undefined'){gbxAlert(t('qrLoading'));return;}
+  document.getElementById('qr-modal').style.display='flex';
+  if(!qrScanner) qrScanner=new Html5Qrcode("qr-reader");
+  qrScanner.start({facingMode:"environment"},{fps:10,qrbox:250},
+    (txt)=>{
+      let addr=txt.trim();
+      if(addr.toLowerCase().startsWith('goldbrix:')) addr=addr.split(':')[1].split('?')[0];
+      document.getElementById('toAddr').value=addr;
+      closeQR();
+    },()=>{}
+  ).catch(e=>{console.error('QR err:',e);gbxAlert(t('cameraPerm'));document.getElementById('qr-modal').style.display='none';});
+}
+function closeQR(){
+  if(qrScanner&&qrScanner.isScanning) qrScanner.stop().then(()=>{document.getElementById('qr-modal').style.display='none';}).catch(()=>{document.getElementById('qr-modal').style.display='none';});
+  else document.getElementById('qr-modal').style.display='none';
+}
+// Anti-double-send
+let _lastSendAt=0, _lastSendKey=null;
+
+
+async function doSend() {
+  const to = document.getElementById('toAddr').value.trim();
+  const amt = Number(String(document.getElementById('amount').value).replace(',', '.'));
+  
+  // Anti-double-send protection
+  const _now=Date.now();
+  const _key=to+'|'+amt;
+  if(_lastSendKey===_key && (_now-_lastSendAt)<30000){
+    const _r=Math.ceil((30000-(_now-_lastSendAt))/1000);
+    showError(t('antiDup').replace('{sec}',_r));
+    return;
+  }
+
+  if (selectedToken.type === 'EVM') {
+    if (!to || !/^0x[0-9a-fA-F]{40}$/.test(to)) { showError(t('errInvalidAddr')); return; }
+  } else if (selectedToken.type === 'SOL') {
+    if (!to || !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(to)) { showError(t('errInvalidAddr')); return; }
+  } else {
+    if (!to || !to.startsWith('bn1q') || to.length < 40) { showError(t('errInvalidAddr')); return; }
+  }
+  if (!amt || amt <= 0 || isNaN(amt)) { showError(t('errAmount')); return; }
+  if (to === activeWallet.address) { showError(t('errSelfSend')); return; }
+  if (!activeWallet.mnemonic) { showError(t('noMnemonic')); return; }
+
+  if (selectedToken.type === 'GBX') {
+    if (amt + GBX_NET_FEE > availableBalance) { showError(t('errInsufficient')); return; }
+  } else {
+    if (amt > availableBalance) { showError(t('errInsufficient')); return; }
+  }
+
+  const confirmMsg = t('confirmSend')
+    .replace('{amt}', amt.toLocaleString('en-US', {maximumFractionDigits: 4}))
+    .replace('{tk}', selectedToken.ticker)
+    .replace('{addr}', to);
+  if (!(await gbxConfirm(confirmMsg))) return;
+  window.gbxHaptic&&gbxHaptic('medium');
+  _lastSendAt=_now; _lastSendKey=_key;
+  const _btn=document.querySelector('button[onclick="doSend()"]');
+  if(_btn){_btn.disabled=true;_btn.style.opacity='0.5';}
+  setTimeout(()=>{if(_btn){_btn.disabled=false;_btn.style.opacity='1';}},30000);
+
+  showStep('step-pending');
+
+  try {
+    let txHash = null;
+
+    if (selectedToken.type === 'GBX') {
+      // === GBX chain transfer ===
+      const result = await window.GoldbrixCrypto.sendGBX(
+        activeWallet.mnemonic, activeWallet.address, to, amt
+      );
+      txHash = (result && (result.txid || result.tx_hash || result.hash)) || 'broadcasted';
+    } else if (selectedToken.type === 'EVM') {
+      // === EVM transfer (USDC / ETH) — non-custodial, semnat LOCAL ===
+      const cc = EVM_CHAINS[selectedToken.chain];
+      const d = await window.GoldbrixMultichain.deriveEVM(activeWallet.mnemonic);
+      const rpc = window.GoldbrixEVMSend.makeRPC(cc.rpc);
+      const es = window.GoldbrixEVMSend.makeEVMSend({ rpc, evm:window.GoldbrixEVM, chainId:cc.chainId });
+      const units = toUnits(amt, selectedToken.dec);
+      const res = (selectedToken.kind === 'native')
+        ? await es.sendNative(d.privateKey, to, units)
+        : await es.sendToken(d.privateKey, cc.usdc, to, units);
+      txHash = (res && res.hash) || 'broadcasted';
+    } else if (selectedToken.type === 'SOL') {
+      // === SOLANA transfer (SOL / USDC-SPL) — non-custodial, semnat LOCAL ===
+      if (!window.__gbxSolSend) window.__gbxSolSend = await import('/v3/sol-send.mjs?v=103');
+      await getSolAddr();
+      const res = (selectedToken.ticker === 'SOL')
+        ? await window.__gbxSolSend.sendSOL(_solSecretCache, to, amt)
+        : await window.__gbxSolSend.sendUSDC(_solSecretCache, to, amt);
+      txHash = (res && res.hash) || 'broadcasted';
+    } else if (selectedToken.type === 'NATIVE') {
+      // === NATIVE MEMECOIN XFER on-chain ===
+      const r = await fetch('https://goldbrix.app/launchpad/native/transfer', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          coin_id: selectedToken.coin_id,
+          sender_address: activeWallet.address,
+          recipient_address: to,
+          tokens_amount: amt
+        })
+      });
+      const d = await r.json();
+      if (!d.ok) {
+        const errMsg = d.error || 'unknown';
+        const balInfo = d.your_balance !== undefined ? ' (have ' + d.your_balance + ')' : '';
+        throw new Error(errMsg + balInfo);
+      }
+      txHash = d.tx_hash || 'pending';
+    }
+
+    document.getElementById('successAmt').textContent = amt.toLocaleString('en-US', {maximumFractionDigits: 4}) + ' ' + selectedToken.ticker;
+    document.getElementById('txHash').textContent = 'TX: ' + txHash;
+    showStep('step-success'); window.gbxHaptic&&gbxHaptic('success'); abMaybeOfferSave(to);
+    
+    // Save sent TX to localStorage for wallet TX history
+    try {
+      const sh = JSON.parse(localStorage.getItem('goldbrix_sent_history') || '{}');
+      if (!sh[activeWallet.address]) sh[activeWallet.address] = [];
+      sh[activeWallet.address].unshift({
+        txid: txHash, to: to, amount: amt,
+        ticker: selectedToken.ticker, type: selectedToken.type,
+        coin_id: selectedToken.coin_id || null, timestamp: Date.now()
+      });
+      sh[activeWallet.address] = sh[activeWallet.address].slice(0, 50);
+      localStorage.setItem('goldbrix_sent_history', JSON.stringify(sh));
+    } catch(e) { console.warn('[sent-history]', e); }
+      setTimeout(()=>{document.getElementById('toAddr').value='';document.getElementById('amount').value='';},1500);
+  } catch (e) {
+    console.error('[send]', e); window.gbxHaptic&&gbxHaptic('error');
+    let msg = (e.message || 'unknown error').toString();
+    // SCRUB BTC/satoshi/kvB references (stealth)
+    msg = msg.replace(/BTC\/kvB/gi, 'GBX/kvB').replace(/\bBTC\b/g, 'GBX').replace(/\bsatoshis?\b/gi, 'sats').replace(/Bitcoin Core/gi, 'GoldBrix Core');
+    // Smart detection — friendly message instead of raw JSON
+    let friendly;
+    if (e && (e.code==='ERR_SOL_NO_GAS' || String(e.message).includes('ERR_SOL_NO_GAS'))) {
+      friendly = t('errSolGas').replace('{sol}', (e.needSol!=null ? (Math.ceil(e.needSol*10000)/10000) : 0.003).toString());
+      gbxAlert(friendly); showStep('step-form'); return;
+    }
+    if (e && (e.code==='ERR_SOL_DROPPED' || String(e.message).includes('ERR_SOL_DROPPED'))) {
+      friendly = t('errSolDrop');
+      gbxAlert(friendly); showStep('step-form'); return;
+    }
+    const lower = msg.toLowerCase();
+    if (e && e.message === 'MAX_PER_TX') {
+      friendly = t('errMaxPerTx').replace('{max}', (e.maxPerTx||0).toLocaleString('en-US',{maximumFractionDigits:2}));
+    } else if (lower.indexOf('-26') !== -1 && (lower.indexOf('rejecting replacement') !== -1 || lower.indexOf('insufficient fee') !== -1)) {
+      friendly = t('errRbf');
+    } else if (lower.indexOf('insufficient') !== -1 && lower.indexOf('balance') === -1) {
+      friendly = t('errLowFee');
+    } else if (lower.indexOf('lp_unavailable') !== -1 || lower.indexOf('broadcast') !== -1 || lower.indexOf('network') !== -1 || lower.indexOf('fetch') !== -1) {
+      friendly = t('errBroadcast');
+    } else {
+      // Fallback: scrubbed message, no JSON
+      friendly = msg.replace(/[{}"\\]/g, '').replace(/\\n/g, ' ').replace(/error code:\s*-?\d+/gi, '').replace(/error message:/gi, '').trim();
+      if (friendly.length > 150) friendly = friendly.substring(0, 147) + '...';
+      if (!friendly) friendly = t('errBroadcast');
+    }
+    gbxAlert(friendly);
+    showStep('step-form');
+  }
+}
+
+(async () => {
+  try{ applyLang(); }catch(e){ console.error('[lang]',e); }
+  // sesiunea se poate hidrata async la primul load -> retry scurt inainte de verdict
+  var _ok = false;
+  for (var _i=0; _i<8; _i++){
+    try{ if(window.GBXSession){ var _w=GBXSession.activeWallet(); if(_w){ activeWallet=_w; _ok=true; break; } } }catch(e){}
+    if (sessionStorage.getItem('gbx_unlocked_wallets')) { _ok = checkLock(); break; }
+    await new Promise(r=>setTimeout(r,250));
+  }
+  if (!_ok && !checkLock()) return;
+  document.getElementById('lockOverlay').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('amount').addEventListener('input', updateTotal);
+  try {
+    await waitForCrypto();
+    await loadHoldings();
+  } catch(e) { console.error(e); }
+  // plasa de siguranta: daca dropdown-ul a ramas gol (module lente), reincearca
+  setTimeout(function(){
+    var sel=document.getElementById('tokenSelect');
+    if (sel && sel.options.length===0) { loadHoldings().catch(function(e){console.error(e);}); }
+  }, 4000);
+})();
+</script>
+<script src="/v3/pwa.js?v=103" defer></script>
+
+<nav class="v3-final-nav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:999;">
+  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
+  <a href="/app.html#wallet" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#F5CC75;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:1;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
+  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
+  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
+  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
+  <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">⚙</span><span data-t="navSettings">SETTINGS</span></a>
+</nav>
+<style>body { padding-bottom: 76px !important; }</style>
+
+
+<div id="qr-modal" class="qr-modal-overlay" style="display:none">
+  <div class="qr-modal-content">
+    <h3 id="qrModalTitle">Scan QR Code</h3>
+    <div id="qr-reader"></div>
+    <button type="button" class="qr-cancel-btn" onclick="closeQR()" id="qrCancelBtn">Cancel</button>
+  </div>
+</div>
+
+
+<script>
+/* ═══ V4.9 PROMOTE INTEGRATION — prefill + auto-confirm ═══ */
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  const memo = params.get('memo') || '';
+  const isPromo = memo.startsWith('PROMO:');
+  
+  // === STEP 1: Prefill inputs from URL params ===
+  function prefill() {
+    if (params.has('to')) {
+      const toEl = document.getElementById('toAddr');
+      if (toEl) { toEl.value = params.get('to'); toEl.dispatchEvent(new Event('input')); }
+    }
+    if (params.has('amount')) {
+      const amtEl = document.getElementById('amount');
+      if (amtEl) { amtEl.value = params.get('amount'); amtEl.dispatchEvent(new Event('input')); }
+    }
+    if (isPromo) {
+      // Visual indicator that this is a PROMO send
+      const head = document.querySelector('.s-header__title, h1, h2, h3');
+      if (head) head.innerHTML = '🚀 ' + head.innerHTML + ' <span style="background:#F0C060;color:#000;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;margin-left:6px;">PROMOTE</span>';
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', prefill);
+  } else {
+    setTimeout(prefill, 100);
+  }
+  
+  // === STEP 2: Auto-confirm to backend after success ===
+  if (!isPromo) return;
+  const promoId = memo.substring(6); // skip "PROMO:"
+  let confirmed = false;
+  
+  const observer = new MutationObserver(() => {
+    if (confirmed) return;
+    const successEl = document.getElementById('step-success');
+    if (!successEl) return;
+    const visible = window.getComputedStyle(successEl).display !== 'none';
+    if (!visible) return;
+    
+    const txHashEl = document.getElementById('txHash');
+    const rawTx = txHashEl ? txHashEl.textContent : '';
+    const match = rawTx.match(/[a-f0-9]{64}/i);
+    const txHash = match ? match[0].toLowerCase() : '';
+    if (!txHash) return;
+    
+    confirmed = true;
+    observer.disconnect();
+    
+    let pending = {};
+    try { pending = JSON.parse(localStorage.getItem('gbx_pending_promo') || '{}'); } catch(e) {}
+    
+    // Save tx_hash to localStorage BEFORE confirm — enables auto-recovery if confirm fails
+    pending.tx_hash = txHash;
+    pending.timestamp = Date.now();
+    localStorage.setItem('gbx_pending_promo', JSON.stringify(pending));
+    
+    fetch('https://goldbrix.app/launchpad/promote/confirm', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ promo_id: promoId, tx_hash: txHash })
+    }).then(r => r.json()).then(data => {
+      localStorage.removeItem('gbx_pending_promo');
+      if (data.success) {
+        const msg = '🎉 $' + (pending.ticker || 'COIN') + ' promoted!';
+        // Add success badge to success screen
+        const titleEl = document.getElementById('successTitle');
+        if (titleEl) titleEl.textContent = msg;
+        const amtEl = document.getElementById('successAmt');
+        if (amtEl) amtEl.innerHTML += '<br><span style="color:#F0C060;font-size:11px;margin-top:8px;display:inline-block;">✓ Promotion activated</span>';
+        setTimeout(() => { window.location.href = '/'; }, 2500);
+      } else {
+        gbxAlert('Promote confirm failed: ' + (data.error || 'unknown'));
+      }
+    }).catch(e => {
+      gbxAlert('Promote confirm network error: ' + e.message);
+    });
+  });
+  
+  observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style','class'] });
+})();
+</script>
+
+  <script src="/v3/gbx-autolock.js" defer></script>
+</body>
+</html>

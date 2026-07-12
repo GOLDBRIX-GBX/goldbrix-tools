@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "lps": [
+    {
+      "name": "founder-lp",
+      "base_url": "https://goldbrix.app/lp",
+      "info_url": "https://goldbrix.app/lp-info",
+      "chains": [
+        "base",
+        "arbitrum",
+        "solana"
+      ],
+      "fee_bps": 0
+    },
+    {
+      "name": "citizen-lp",
+      "base_url": "https://155-117-232-248.sslip.io/lp",
+      "info_url": "https://155-117-232-248.sslip.io/lp/lp-info",
+      "chains": [
+        "base",
+        "arbitrum",
+        "solana"
+      ],
+      "fee_bps": 0
+    }
+  ]
+}

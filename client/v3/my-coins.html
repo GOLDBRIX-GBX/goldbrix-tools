@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- BUILD_VERSION: GBX-MYCOINS-1 -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
+<link rel="preconnect" href="https://goldbrix.app" crossorigin>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1c1610">
+<title>GoldBrix · My Memes</title>
+<link rel="icon" href="/assets/coin/gbx-coin-32.png">
+<link rel="stylesheet" href="/v3/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  .v3-app { padding-bottom: 90px; }
+  .mc-hero { text-align:center; padding:18px 16px 8px; }
+  .mc-hero__face { width:64px; height:64px; margin:0 auto 8px; filter:drop-shadow(0 4px 14px rgba(240,192,96,0.4)); }
+  .mc-hero__title { font-size:22px; font-weight:800; color:var(--gold); margin-bottom:4px; }
+  .mc-hero__sub { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.12em; color:var(--text-secondary); }
+  .mc-hero__total { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:800; color:var(--gold); margin-top:8px; }
+  .back-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.1em; color:var(--text-secondary); background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--r-full); margin:12px 0 8px 16px; text-decoration:none; }
+  .coin-card { display:flex; align-items:center; gap:12px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--r-md); padding:14px; margin:0 12px 8px; transition:all var(--t-fast); cursor:pointer; }
+  .coin-card:hover { border-color:var(--gold-deep); background:var(--bg-elevated); }
+  .coin-card__img { width:44px; height:44px; border-radius:50%; flex-shrink:0; object-fit:cover; background:var(--bg-elevated); }
+  .coin-card__info { flex:1; min-width:0; }
+  .coin-card__name { font-size:15px; font-weight:700; color:var(--text-primary); display:flex; align-items:center; gap:6px; }
+  .coin-card__meta { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-secondary); margin-top:2px; }
+  .coin-card__right { text-align:right; flex-shrink:0; }
+  .coin-card__mc { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:var(--gold); }
+  .coin-card__mclbl { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--text-muted); margin-top:2px; }
+  .mc-badge { font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; padding:2px 7px; border-radius:var(--r-full); letter-spacing:0.05em; }
+  .mc-badge--curve { background:rgba(122,184,255,0.14); color:#7ab8ff; }
+  .mc-badge--grad { background:rgba(78,224,140,0.14); color:var(--green); }
+  .coin-card__spark { width:54px; height:24px; flex-shrink:0; }
+  .coin-card__ch { font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; margin-top:2px; }
+  .ch-up { color:var(--green); } .ch-dn { color:var(--red); } .ch-flat { color:var(--text-muted); }
+  .mc-empty { text-align:center; padding:50px 24px; }
+  .mc-empty__title { font-size:16px; font-weight:700; color:var(--text-primary); margin-bottom:6px; }
+  .mc-empty__sub { font-size:13px; color:var(--text-secondary); margin-bottom:18px; }
+  .mc-launch-btn { display:inline-block; padding:12px 28px; background:linear-gradient(135deg,#F0C060,#B8860B); color:#1a1200; font-weight:800; font-size:14px; border-radius:var(--r-full); text-decoration:none; letter-spacing:0.05em; }
+  .mc-loading { text-align:center; padding:40px; color:var(--text-secondary); font-family:'JetBrains Mono',monospace; font-size:12px; }
+  .bnav { position:fixed; bottom:0; left:0; right:0; background:var(--bg-card); border-top:1px solid var(--border); display:flex; padding:8px 4px 12px; z-index:100; padding-bottom:calc(12px + env(safe-area-inset-bottom)); }
+  .bnav__item { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 2px; color:var(--text-muted); text-decoration:none; }
+  .bnav__icon { font-size:20px; line-height:1; }
+  .bnav__label { font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; letter-spacing:0.08em; }
+</style>
+</head>
+<body>
+<div class="v3-app">
+  <a class="back-btn" href="/v3/wallet.html">&larr; <span id="backLabel">Wallet</span></a>
+  <div class="mc-hero">
+    <div class="mc-hero__face">
+      <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="gbxM" cx="50%" cy="40%" r="65%"><stop offset="0%" stop-color="#FFE099"/><stop offset="55%" stop-color="#F0C060"/><stop offset="100%" stop-color="#B8860B"/></radialGradient></defs><circle cx="32" cy="32" r="28" fill="url(#gbxM)" stroke="#8B6914" stroke-width="2"/><rect x="12" y="26" width="16" height="9" rx="2" fill="#1a1200"/><rect x="36" y="26" width="16" height="9" rx="2" fill="#1a1200"/><rect x="28" y="29" width="8" height="2.5" fill="#1a1200"/><path d="M 22 42 Q 32 50 42 42" fill="none" stroke="#5a4410" stroke-width="3" stroke-linecap="round"/><text x="32" y="22" font-family="monospace" font-size="9" font-weight="bold" fill="#5a4410" text-anchor="middle">$</text></svg>
+    </div>
+    <div class="mc-hero__title" id="heroTitle">My Memes</div>
+    <div class="mc-hero__sub" id="heroSub">COINS YOU CREATED</div>
+    <div class="mc-hero__total" id="heroTotal"></div>
+  </div>
+  <div id="listWrap"><div class="mc-loading" id="loadingMsg">Loading...</div></div>
+</div>
+<div class="bnav">
+  <a class="bnav__item" href="/"><span class="bnav__icon">&#127968;</span><span class="bnav__label" data-t="navHome">HOME</span></a>
+  <a class="bnav__item" href="/v3/wallet.html"><span class="bnav__icon">&#128100;</span><span class="bnav__label" data-t="navWallet">WALLET</span></a>
+  <a class="bnav__item" href="/v3/launch.html"><span class="bnav__icon">&#128640;</span><span class="bnav__label" data-t="navLaunch">LAUNCH</span></a>
+  <a class="bnav__item" href="/v3/leaderboard.html"><span class="bnav__icon">&#128293;</span><span class="bnav__label" data-t="navBurns">BURNS</span></a>
+  <a class="bnav__item" href="/v3/settings.html"><span class="bnav__icon">&#9881;&#65039;</span><span class="bnav__label" data-t="navSettings">SETTINGS</span></a>
+</div>
+<script>
+const API = 'https://goldbrix.app';
+const T = {
+  en: { back:'Wallet', title:'My Memes', sub:'COINS YOU CREATED', total:'Total Market Cap', mc:'GBX MC', curve:'ON CURVE', grad:'GRADUATED', emptyTitle:'No coins created yet', emptySub:'Launch your first memecoin to see it here', launch:'\u{1F680} Launch a Coin', loading:'Loading...', navHome:'HOME', navWallet:'WALLET', navLaunch:'LAUNCH', navBurns:'BURNS', navSettings:'SETTINGS' },
+  ro: { back:'Portofel', title:'Memele Mele', sub:'MONEDE CREATE DE TINE', total:'Capitalizare Total\u0103', mc:'GBX MC', curve:'PE CURB\u0102', grad:'GRADUAT', emptyTitle:'Nicio moned\u0103 creat\u0103 \u00eenc\u0103', emptySub:'Lanseaz\u0103 prima ta moned\u0103 s\u0103 apar\u0103 aici', launch:'\u{1F680} Lanseaz\u0103 o Moned\u0103', loading:'Se \u00eencarc\u0103...', navHome:'ACAS\u0102', navWallet:'PORTOFEL', navLaunch:'LANSARE', navBurns:'ARDERI', navSettings:'SET\u0102RI' },
+  de: { back:'Wallet', title:'Meine Memes', sub:'VON DIR ERSTELLTE COINS', total:'Gesamt-Marktkap.', mc:'GBX MC', curve:'AUF KURVE', grad:'GRADUIERT', emptyTitle:'Noch keine Coins erstellt', emptySub:'Starte deinen ersten Memecoin', launch:'\u{1F680} Coin starten', loading:'Wird geladen...', navHome:'HOME', navWallet:'WALLET', navLaunch:'STARTEN', navBurns:'BURNS', navSettings:'EINSTELL.' },
+  zh: { back:'\u94b1\u5305', title:'\u6211\u7684\u6a21\u56e0', sub:'\u4f60\u521b\u5efa\u7684\u4ee3\u5e01', total:'\u603b\u5e02\u503c', mc:'GBX \u5e02\u503c', curve:'\u66f2\u7ebf\u4e2d', grad:'\u5df2\u6bd5\u4e1a', emptyTitle:'\u5c1a\u672a\u521b\u5efa\u4ee3\u5e01', emptySub:'\u53d1\u884c\u4f60\u7684\u7b2c\u4e00\u4e2a\u6a21\u56e0\u5e01', launch:'\u{1F680} \u53d1\u884c\u4ee3\u5e01', loading:'\u52a0\u8f7d\u4e2d...', navHome:'\u9996\u9875', navWallet:'\u94b1\u5305', navLaunch:'\u53d1\u884c', navBurns:'\u71c3\u70e7', navSettings:'\u8bbe\u7f6e' },
+  ar: { back:'\u0645\u062d\u0641\u0638\u0629', title:'\u0645\u064a\u0645\u0627\u062a\u064a', sub:'\u0627\u0644\u0639\u0645\u0644\u0627\u062a \u0627\u0644\u062a\u064a \u0623\u0646\u0634\u0623\u062a\u0647\u0627', total:'\u0625\u062c\u0645\u0627\u0644\u064a \u0627\u0644\u0642\u064a\u0645\u0629 \u0627\u0644\u0633\u0648\u0642\u064a\u0629', mc:'GBX \u0633\u0648\u0642\u064a\u0629', curve:'\u0639\u0644\u0649 \u0627\u0644\u0645\u0646\u062d\u0646\u0649', grad:'\u0645\u062a\u062e\u0631\u062c', emptyTitle:'\u0644\u0645 \u062a\u0646\u0634\u0626 \u0639\u0645\u0644\u0627\u062a \u0628\u0639\u062f', emptySub:'\u0623\u0637\u0644\u0642 \u0623\u0648\u0644 \u0639\u0645\u0644\u0629 \u0645\u064a\u0645 \u0644\u0643', launch:'\u{1F680} \u0625\u0637\u0644\u0627\u0642 \u0639\u0645\u0644\u0629', loading:'\u062c\u0627\u0631 \u0627\u0644\u062a\u062d\u0645\u064a\u0644...', navHome:'\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629', navWallet:'\u0645\u062d\u0641\u0638\u0629', navLaunch:'\u0625\u0637\u0644\u0627\u0642', navBurns:'\u062d\u0631\u0642', navSettings:'\u0625\u0639\u062f\u0627\u062f\u0627\u062a' }
+};
+let L = localStorage.getItem('gbx_lang') || 'en';
+function t(k){ return (T[L] && T[L][k]) || T.en[k] || k; }
+function applyLang(){
+  if (L === 'ar') document.documentElement.dir = 'rtl';
+  document.getElementById('backLabel').textContent = t('back');
+  document.getElementById('heroTitle').textContent = t('title');
+  document.getElementById('heroSub').textContent = t('sub');
+  document.querySelectorAll('[data-t]').forEach(function(el){ var k=el.getAttribute('data-t'); if(T[L]&&T[L][k]) el.textContent=T[L][k]; });
+}
+function sparkSVG(prices, up){
+  if(!prices || prices.length<2) return '';
+  var w=54,h=24,min=Math.min.apply(null,prices),max=Math.max.apply(null,prices),rng=(max-min)||1;
+  var pts=prices.map(function(p,i){ return (i/(prices.length-1)*w).toFixed(1)+','+(h-((p-min)/rng)*h).toFixed(1); }).join(' ');
+  var col=up?'#4ee08c':'#ff7a6b';
+  return '<svg class="coin-card__spark" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none"><polyline points="'+pts+'" fill="none" stroke="'+col+'" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+}
+function fmtGbx(n){ n=Number(n)||0; if(n>=1e6)return (n/1e6).toFixed(2)+'M'; if(n>=1e3)return (n/1e3).toFixed(2)+'K'; return n.toLocaleString('en-US',{maximumFractionDigits:2}); }
+function getAddr(){
+  var p=new URLSearchParams(location.search); var a=p.get('addr');
+  if(a && /^bn1q[a-z0-9]{30,}$/i.test(a)) return a;
+  try{ var w=JSON.parse(sessionStorage.getItem('gbx_unlocked_wallets')||'{}'); if(w.wallets&&w.wallets[0]&&w.wallets[0].address) return w.wallets[0].address; }catch(e){}
+  if(window.activeWallet&&window.activeWallet.address) return window.activeWallet.address;
+  return null;
+}
+async function load(){
+  var wrap=document.getElementById('listWrap'); var addr=getAddr();
+  if(!addr){ wrap.innerHTML='<div class="mc-empty"><div class="mc-empty__title">'+t('emptyTitle')+'</div></div>'; return; }
+  try{
+    var r=await fetch(API+'/v2/memecoin/list?creator='+addr); var d=await r.json();
+    // GBX — backend ignora ?creator, deci filtram REAL in frontend pe adresa curenta
+    var coins=(d.coins||d.memecoins||[]).filter(function(c){ return c.creator === addr; });
+    if(!coins.length){
+      wrap.innerHTML='<div class="mc-empty"><div class="mc-empty__title">'+t('emptyTitle')+'</div><div class="mc-empty__sub">'+t('emptySub')+'</div><a class="mc-launch-btn" href="/v3/launch.html">'+t('launch')+'</a></div>';
+      document.getElementById('heroTotal').textContent=''; return;
+    }
+    // GBX — market cap REAL din /stats (market_cap_gbx din lista e umflat)
+    var statsArr=await Promise.all(coins.map(function(c){return fetch(API+'/launchpad/coins/'+c.id+'/stats').then(function(r){return r.json();}).catch(function(){return null;});}));
+    coins.forEach(function(c,i){ var st=statsArr[i]||{}; c._realMc=Number(st.market_cap)||0; });
+    coins.sort(function(a,b){ return (b._realMc||0)-(a._realMc||0); });
+    var totalMc=0;
+    var html=coins.map(function(c){
+      var mc=Number(c._realMc)||0; totalMc+=mc;
+      var tk=String(c.ticker||'?').toUpperCase(); var name=(c.name||tk);
+      var img=c.image_url||'/assets/coin/gbx-coin-128.png';
+      var isGrad=c.graduated==1||c.graduated===true;
+      var badge=isGrad?'<span class="mc-badge mc-badge--grad">'+t('grad')+'</span>':'<span class="mc-badge mc-badge--curve">'+t('curve')+'</span>';
+      var ch=c.change_24h_pct;
+      var chHtml='';
+      if(ch!=null && !isNaN(ch)){ var cls=ch>0?'ch-up':(ch<0?'ch-dn':'ch-flat'); var sg=ch>0?'+':''; chHtml='<div class="coin-card__ch '+cls+'">'+sg+Number(ch).toFixed(1)+'%</div>'; }
+      return '<div class="coin-card" data-cid="'+c.id+'" onclick="location.href=\'/v3/trade.html?coin='+c.id+'\'">'+
+        '<img class="coin-card__img" src="'+img+'" onerror="this.src=\'/assets/coin/gbx-coin-128.png\'">'+
+        '<div class="coin-card__info"><div class="coin-card__name">$'+tk+' '+badge+'</div><div class="coin-card__meta">'+name+'</div></div>'+
+        '<div class="spark-slot" style="flex-shrink:0;"></div>'+
+        '<div class="coin-card__right"><div class="coin-card__mc">'+fmtGbx(mc)+'</div><div class="coin-card__mclbl">'+t('mc')+'</div>'+chHtml+'</div>'+
+      '</div>';
+    }).join('');
+    wrap.innerHTML=html;
+    document.getElementById('heroTotal').textContent=t('total')+': '+fmtGbx(totalMc)+' GBX';
+    // GBX — sparkline async per card (din /candles)
+    document.querySelectorAll('.coin-card[data-cid]').forEach(async function(card){
+      var cid=card.getAttribute('data-cid'); var slot=card.querySelector('.spark-slot'); if(!slot) return;
+      try{
+        var rc=await fetch(API+'/launchpad/coins/'+cid+'/candles?interval=1h&limit=24');
+        var dc=await rc.json(); var cd=Array.isArray(dc)?dc:(dc.candles||[]);
+        var closes=cd.map(function(x){return Number(x.close);}).filter(function(p){return p>0;});
+        if(closes.length>=2){ var up=closes[closes.length-1]>=closes[0]; slot.innerHTML=sparkSVG(closes,up); }
+      }catch(e){}
+    });
+  }catch(e){ wrap.innerHTML='<div class="mc-empty"><div class="mc-empty__title">\u26a0 '+t('loading')+'</div></div>'; }
+}
+applyLang(); load();
+setInterval(load, 20000); // GBX — auto-refresh silentios
+</script>
+  <script src="/v3/gbx-autolock.js" defer></script>
+<script src="/v3/pwa.js?v=103"></script>
+</body>
+</html>

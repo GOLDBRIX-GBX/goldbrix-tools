@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="prefetch" href="/v3/wallet.html"><link rel="prefetch" href="/v3/trade.html"><link rel="prefetch" href="/v3/launch.html"><link rel="prefetch" href="/v3/burns.html"><link rel="prefetch" href="/v3/settings.html"><link rel="prefetch" href="/v3/favorites.html"><link rel="prefetch" href="/v3/leaderboard.html"><link rel="prefetch" href="/v3/style.css"><link rel="dns-prefetch" href="https://goldbrix.app">
+<link rel="preconnect" href="https://goldbrix.app" crossorigin>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1c1610">
+<title>GoldBrix · Sell GBX</title>
+<link rel="icon" href="/assets/coin/gbx-coin-32.png">
+<link rel="stylesheet" href="/v3/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  .v3-app { padding-bottom:90px; }
+  .back-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-secondary); background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--r-full); margin:12px 0 8px 16px; }
+  .sell-hero { text-align:center; padding:16px; }
+  .sell-hero__title { font-size:26px; font-weight:800; color:var(--gold); margin-bottom:4px; }
+  .sell-hero__sub { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.12em; color:var(--text-secondary); }
+  .step { display:none; padding:0 12px; }
+  .step.active { display:block; animation:fadeIn 0.3s; }
+  @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+  .label { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-secondary); letter-spacing:0.1em; text-transform:uppercase; display:block; margin:14px 0 6px; }
+  .input-card { background:var(--bg-input); border:1px solid var(--border); border-radius:var(--r-md); padding:14px; display:flex; align-items:center; gap:10px; }
+  .amount-input { width:100%; background:transparent; border:none; color:var(--text-primary); font-family:'Inter',sans-serif; font-size:28px; font-weight:700; outline:none; }
+  .input-suffix { font-family:'JetBrains Mono',monospace; font-size:14px; color:var(--gold); font-weight:700; }
+  .v3-input { width:100%; background:var(--bg-input); border:1px solid var(--border); border-radius:var(--r-md); padding:12px 14px; font-size:13px; color:var(--text-primary); font-family:'JetBrains Mono',monospace; }
+  .v3-input:focus { outline:none; border-color:var(--gold); }
+  .balance-line { display:flex; justify-content:space-between; align-items:center; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-muted); margin-top:6px; }
+  .max-btn { background:var(--bg-elevated); border:1px solid var(--gold-deep); color:var(--gold); padding:4px 10px; border-radius:6px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.1em; cursor:pointer; }
+  .chain-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+  .chain-btn { padding:10px 4px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--r-md); text-align:center; cursor:pointer; transition:all var(--t-fast); }
+  .chain-btn.active { border-color:var(--gold); background:var(--bg-elevated); box-shadow:0 0 0 1px var(--gold-deep) inset; }
+  .chain-btn__icon { font-size:18px; }
+  .chain-btn__name { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--text-secondary); margin-top:2px; }
+  .quote-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--r-md); padding:14px; margin-top:14px; }
+  .quote-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; font-size:13px; }
+  .quote-row__k { color:var(--text-secondary); font-family:'JetBrains Mono',monospace; font-size:11px; }
+  .quote-row__v { color:var(--text-primary); font-family:'JetBrains Mono',monospace; font-weight:700; }
+  .quote-row--big .quote-row__v { color:var(--green); font-size:20px; }
+  .pending-box { text-align:center; padding:30px 20px; }
+  .loader { width:48px; height:48px; border:4px solid var(--border); border-top-color:var(--gold); border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 16px; }
+  @keyframes spin { to{transform:rotate(360deg);} }
+  .success-box { text-align:center; padding:30px 20px; }
+  .success-box__icon { font-size:64px; margin-bottom:10px; }
+  .success-box__title { font-size:22px; font-weight:800; color:var(--green); margin-bottom:8px; }
+  .err-box { background:rgba(255,122,107,0.1); border:1px solid var(--red-dim); border-radius:var(--r-md); padding:10px; color:var(--red); font-size:13px; margin-top:8px; display:none; }
+  .err-box.show { display:block; }
+  .order-row { display:flex; justify-content:space-between; align-items:center; padding:10px 12px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--r-md); margin-bottom:6px; font-size:12px; }
+  .order-row__status { font-family:'JetBrains Mono',monospace; font-size:10px; padding:3px 8px; border-radius:4px; }
+  .order-row__status--completed { background:rgba(78,224,140,0.15); color:var(--green); }
+  .order-row__status--pending { background:rgba(245,204,117,0.15); color:var(--gold); }
+  .order-row__status--expired, .order-row__status--cancelled { background:rgba(255,122,107,0.1); color:var(--red); }
+  .sect-label { display:flex; align-items:center; gap:10px; padding:0 4px; margin:20px 0 10px; }
+  .sect-label__text { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; letter-spacing:0.15em; color:var(--text-secondary); text-transform:uppercase; }
+  .sect-label::after { content:''; flex:1; height:1px; background:var(--border); }
+  .warn-box { background:rgba(245,204,117,0.05); border:1px solid var(--gold-deep); border-radius:var(--r-md); padding:10px 12px; margin-top:10px; font-size:12px; color:var(--text-tertiary); line-height:1.5; }
+  .bnav { position:fixed; bottom:0; left:0; right:0; background:var(--bg-card); border-top:1px solid var(--border); display:flex; padding:8px 4px 12px; padding-bottom:calc(12px + env(safe-area-inset-bottom)); z-index:100; }
+  .bnav__item { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 2px; color:var(--text-muted); }
+  .bnav__icon { font-size:20px; line-height:1; }
+  .bnav__label { font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; letter-spacing:0.08em; }
+  .toast { position:fixed; bottom:100px; left:50%; transform:translateX(-50%); background:var(--bg-card); border:1px solid var(--gold); border-radius:var(--r-md); padding:10px 18px; font-size:13px; color:var(--gold); z-index:1000; font-family:'JetBrains Mono',monospace; }
+
+/* V4.9 — Visible placeholders (added 2026-05-27) */
+input::placeholder, textarea::placeholder,
+input::-webkit-input-placeholder, textarea::-webkit-input-placeholder,
+input::-moz-placeholder, textarea::-moz-placeholder {
+  color: #eee !important;
+  opacity: 1 !important;
+}
+
+</style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#F5CC75">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/goldbrix-brand-180.png">
+    <script src="/gbx-update-check.js" defer></script>
+    <script src="/gbx-native-bridge.js" defer></script>
+      <script src="/i18n.js?v=103" defer></script>
+  <script src="/promo-banner.js?v=103" defer></script>
+<style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
+<script src="/v3/nav-i18n.js?v=103" defer></script>
+</head>
+<body>
+<div class="v3-app">
+  <a class="back-btn" href="/v3/wallet.html">← <span id="backLabel" data-t="wallet">Wallet</span></a>
+  <div class="sell-hero">
+    <div class="sell-hero__title">⬇ <span id="sellTitle" data-t="sellGbx">Sell GBX</span></div>
+    <div class="sell-hero__sub" id="sellSub">GBX → USDC</div>
+  </div>
+
+  <!-- STEP 1: Quote -->
+  <div class="step active" id="step-quote">
+    <label class="label" id="lblChain">Receive USDC on</label>
+    <div class="chain-grid">
+      <div class="chain-btn active" data-chain="solana" onclick="selectChain('solana')"><div class="chain-btn__icon">◎</div><div class="chain-btn__name">SOLANA</div></div>
+      <div class="chain-btn" data-chain="bsc" onclick="selectChain('bsc')"><div class="chain-btn__icon">🟡</div><div class="chain-btn__name">BSC</div></div>
+      <div class="chain-btn" data-chain="arbitrum" onclick="selectChain('arbitrum')"><div class="chain-btn__icon">🔵</div><div class="chain-btn__name">ARB</div></div>
+      <div class="chain-btn" data-chain="base" onclick="selectChain('base')"><div class="chain-btn__icon">🟦</div><div class="chain-btn__name">BASE</div></div>
+    </div>
+
+    <label class="label" id="lblAmt">Amount in GBX</label>
+    <div class="input-card">
+      <input class="amount-input" id="gbxAmount" type="number" min="1" step="0.0001" placeholder="0.00" oninput="updateQuote()">
+      <span class="input-suffix">GBX</span>
+    </div>
+    <div class="balance-line">
+      <span><span id="lblAvail">Available</span>: <span id="balVal">—</span> GBX</span>
+      <button class="max-btn" onclick="setMax()" id="maxBtn" data-t="max">MAX</button>
+    </div>
+
+    
+    <label class="label" id="lblConnect">Connect Wallet (Auto-Fill Destination)</label>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px;">
+      <button type="button" onclick="connectWalletSell('phantom')" style="padding:12px 4px;background:linear-gradient(135deg,#AB9FF2 0%,#8B7CD8 100%);color:white;border:none;border-radius:var(--r-md);font-family:JetBrains Mono,monospace;font-size:11px;font-weight:700;letter-spacing:0.05em;cursor:pointer;">👻 PHANTOM</button>
+      <button type="button" onclick="connectWalletSell('solflare')" style="padding:12px 4px;background:linear-gradient(135deg,#FC7434 0%,#FE6037 100%);color:white;border:none;border-radius:var(--r-md);font-family:JetBrains Mono,monospace;font-size:11px;font-weight:700;letter-spacing:0.05em;cursor:pointer;">🔥 SOLFLARE</button>
+      <button type="button" onclick="connectWalletSell('metamask')" style="padding:12px 4px;background:linear-gradient(135deg,#F6851B 0%,#C8731B 100%);color:white;border:none;border-radius:var(--r-md);font-family:JetBrains Mono,monospace;font-size:11px;font-weight:700;letter-spacing:0.05em;cursor:pointer;">🦊 METAMASK</button>
+    </div>
+    <div id="walletStatus" style="margin-bottom:10px;font-size:12px;color:var(--text-secondary);font-family:JetBrains Mono,monospace;min-height:18px;"></div>
+
+    <label class="label" id="lblDest">Phantom Address (USDC destination)</label>
+    <input class="v3-input" id="destAddr" placeholder="Solana wallet address" autocapitalize="off">
+
+    <div class="quote-card" id="quoteCard" style="display:none;">
+      <div class="quote-row"><span class="quote-row__k" id="qPrice" data-t="price">Price</span><span class="quote-row__v" id="qPriceV">—</span></div>
+      <div class="quote-row"><span class="quote-row__k" id="qFee">Fee</span><span class="quote-row__v" id="qFeeV">—</span></div>
+      <div class="quote-row quote-row--big" style="padding-top:8px; border-top:1px solid var(--border); margin-top:6px;"><span class="quote-row__k" id="qReceive" data-t="youReceive">You Receive</span><span class="quote-row__v" id="qReceiveV">—</span></div>
+    </div>
+
+    <div class="warn-box" id="warnBox">⚠ <span id="warnText">Make sure Phantom address is correct — funds sent to wrong address are unrecoverable.</span></div>
+    <div class="err-box" id="errBox"></div>
+
+    <button class="v3-btn v3-btn--primary v3-btn--lg v3-btn--block" style="margin-top:14px;" onclick="window.gbxHaptic&&gbxHaptic('medium');createSell()" id="btnCreate">
+      <span id="btnCreateLbl">SELL NOW</span>
+    </button>
+  </div>
+
+  <!-- STEP 2: Pending GBX send -->
+  <div class="step" id="step-sending">
+    <div class="pending-box">
+      <div class="loader"></div>
+      <div style="font-size:18px;font-weight:700;color:var(--gold);" id="sendingTitle">Sending GBX...</div>
+      <div style="margin-top:8px;font-size:12px;color:var(--text-secondary);" id="sendingSub">Publishing on-chain</div>
+    </div>
+  </div>
+
+  <!-- STEP 3: Pending USDC payout -->
+  <div class="step" id="step-pending">
+    <div class="pending-box">
+      <div class="loader"></div>
+      <div style="font-size:18px;font-weight:700;color:var(--gold);" id="pendingTitle">Processing payout...</div>
+      <div style="margin-top:8px;font-size:12px;color:var(--text-secondary);" id="pendingSub">Sending USDC to your wallet</div>
+      <button class="v3-btn v3-btn--secondary v3-btn--block" style="margin-top:24px;" onclick="checkSellStatus()" id="btnCheckLbl">CHECK STATUS</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: Success -->
+  <div class="step" id="step-success">
+    <div class="success-box">
+      <div class="success-box__icon">✓</div>
+      <div class="success-box__title" id="sucTitle">USDC Sent!</div>
+      <div style="font-size:24px;font-weight:800;color:var(--green);margin:10px 0;" id="sucAmount">—</div>
+      <div style="font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;word-break:break-all;padding:10px;background:var(--bg-elevated);border-radius:var(--r-md);" id="sucTx">—</div>
+      <button class="v3-btn v3-btn--primary v3-btn--block" style="margin-top:20px;" onclick="window.location.href='/v3/wallet.html'" id="btnDoneLbl">DONE</button>
+    </div>
+  </div>
+
+  <!-- ORDER HISTORY -->
+  <div class="step active" id="orderHistory" style="padding:0 12px;">
+    <div class="sect-label"><span class="sect-label__text" id="lblHistory">Recent Sells</span></div>
+    <div id="ordersList"></div>
+  </div>
+</div>
+
+<div class="bnav">
+  <a class="bnav__item" href="/"><span class="bnav__icon">🏠</span><span class="bnav__label" id="nH" data-t="navHome">HOME</span></a>
+  <a class="bnav__item" href="/v3/wallet.html"><span class="bnav__icon">👤</span><span class="bnav__label" id="nW" data-t="navWallet">WALLET</span></a>
+  <a class="bnav__item" href="/v3/launch.html"><span class="bnav__icon">🚀</span><span class="bnav__label" id="nL" data-t="navLaunch">LAUNCH</span></a>
+  <a class="bnav__item" href="/v3/leaderboard.html"><span class="bnav__icon">🔥</span><span class="bnav__label" id="nB" data-t="navBurns">BURNS</span></a>
+  <a class="bnav__item" href="/v3/settings.html"><span class="bnav__icon">⚙️</span><span class="bnav__label" id="nS" data-t="navSettings">SETTINGS</span></a>
+</div>
+
+<script type="module" src="/crypto-utils-v2.js?v=103"></script>
+
+<script>
+const T = {
+  en:{errRedeem:'Max redeemable now',errDailyCap:'Daily sell limit reached, try later',errPaused:'Sells temporarily paused',back:'Wallet',title:'Sell GBX',sub:'GBX → USDC',chain:'Receive USDC on',amt:'Amount in GBX',avail:'Available',dest:'Phantom Address (USDC destination)',price:'Price',fee:'Fee',receive:'You Receive',create:'SELL NOW',warn:'Make sure Phantom address is correct — funds sent to wrong address are unrecoverable.',sendingTitle:'Sending GBX...',sendingSub:'Publishing on-chain',pendingTitle:'Processing payout...',pendingSub:'Sending USDC to your wallet',check:'CHECK STATUS',sucTitle:'USDC Sent!',done:'DONE',history:'Recent Sells',errMin:'Minimum 10 GBX',errAddr:'Invalid Phantom address',errInsuf:'Insufficient balance',errUnlock:'Please unlock wallet',errSend:'Send failed',nav:{h:'HOME',w:'WALLET',l:'LAUNCH',b:'BURNS',s:'SETTINGS'}},
+  ro:{errRedeem:'Max răscumpărabil acum',errDailyCap:'Limită zilnică atinsă, încearcă mai târziu',errPaused:'Vânzări oprite temporar',back:'Portofel',title:'Vinde GBX',sub:'GBX → USDC',chain:'Primește USDC pe',amt:'Sumă în GBX',avail:'Disponibil',dest:'Adresă Phantom (destinație USDC)',price:'Preț',fee:'Comision',receive:'Vei Primi',create:'VINDE ACUM',warn:'Asigură-te că adresa Phantom este corectă — fondurile trimise la adresa greșită nu pot fi recuperate.',sendingTitle:'Trimite GBX...',sendingSub:'Publicare on-chain',pendingTitle:'Procesare plată...',pendingSub:'Trimite USDC la portofelul tău',check:'VERIFICĂ STATUS',sucTitle:'USDC Trimis!',done:'GATA',history:'Vânzări Recente',errMin:'Minim 10 GBX',errAddr:'Adresă Phantom invalidă',errInsuf:'Sold insuficient',errUnlock:'Te rog deblochează portofel',errSend:'Trimitere eșuată',nav:{h:'ACASĂ',w:'PORTOFEL',l:'LANSARE',b:'ARDERI',s:'SETĂRI'}},
+  de:{errRedeem:'Max. einlösbar jetzt',errDailyCap:'Tägliches Limit erreicht, später',errPaused:'Verkäufe pausiert',back:'Wallet',title:'GBX verkaufen',sub:'GBX → USDC',chain:'USDC erhalten auf',amt:'Betrag in GBX',avail:'Verfügbar',dest:'Phantom-Adresse (USDC-Ziel)',price:'Preis',fee:'Gebühr',receive:'Du erhältst',create:'JETZT VERKAUFEN',warn:'Stelle sicher dass die Phantom-Adresse korrekt ist.',sendingTitle:'Sende GBX...',sendingSub:'On-Chain veröffentlichen',pendingTitle:'Auszahlung läuft...',pendingSub:'USDC wird gesendet',check:'STATUS PRÜFEN',sucTitle:'USDC gesendet!',done:'FERTIG',history:'Letzte Verkäufe',errMin:'Minimum 10 GBX',errAddr:'Ungültige Adresse',errInsuf:'Unzureichendes Guthaben',errUnlock:'Wallet entsperren',errSend:'Senden fehlgeschlagen',nav:{h:'HOME',w:'WALLET',l:'STARTEN',b:'BURNS',s:'EINSTELL.'}},
+  zh:{errRedeem:'当前最多可赎回',errDailyCap:'已达每日上限，请稍后',errPaused:'卖出已暂停',back:'钱包',title:'卖出 GBX',sub:'GBX → USDC',chain:'接收 USDC 的网络',amt:'GBX 金额',avail:'可用',dest:'Phantom 地址 (USDC 目标)',price:'价格',fee:'费用',receive:'您收到',create:'立即卖出',warn:'请确保 Phantom 地址正确。',sendingTitle:'发送 GBX...',sendingSub:'链上发布',pendingTitle:'处理付款...',pendingSub:'发送 USDC 到您的钱包',check:'检查状态',sucTitle:'USDC 已发送!',done:'完成',history:'最近卖出',errMin:'最低 10 GBX',errAddr:'无效地址',errInsuf:'余额不足',errUnlock:'请解锁钱包',errSend:'发送失败',nav:{h:'首页',w:'钱包',l:'发行',b:'燃烧',s:'设置'}},
+  ar:{errRedeem:'الحد الأقصى للاسترداد الآن',errDailyCap:'تم بلوغ الحد اليومي، لاحقًا',errPaused:'تم إيقاف البيع مؤقتًا',back:'محفظة',title:'بيع GBX',sub:'GBX → USDC',chain:'استلام USDC على',amt:'المبلغ بـ GBX',avail:'متاح',dest:'عنوان Phantom (وجهة USDC)',price:'السعر',fee:'الرسوم',receive:'ستستلم',create:'بيع الآن',warn:'تأكد من صحة عنوان Phantom.',sendingTitle:'جاري إرسال GBX...',sendingSub:'النشر على السلسلة',pendingTitle:'معالجة الدفع...',pendingSub:'إرسال USDC',check:'فحص الحالة',sucTitle:'تم إرسال USDC!',done:'تم',history:'البيع الأخير',errMin:'الحد الأدنى 10 GBX',errAddr:'عنوان غير صالح',errInsuf:'رصيد غير كاف',errUnlock:'الرجاء فتح المحفظة',errSend:'فشل الإرسال',nav:{h:'الرئيسية',w:'محفظة',l:'إطلاق',b:'حرق',s:'إعدادات'}}
+};
+let currentLang = localStorage.getItem('gbx_lang') || 'en';
+let myAddr = null, myMnemonic = null, gbxBal = 0, selectedChain = 'solana', currentQuote = null, currentOrder = null, pollTimer = null;
+
+function getActiveWallet() {
+  try { const u = JSON.parse(sessionStorage.getItem('gbx_unlocked_wallets')||'{}'); const ws=(u.wallets||[]); const _urlA=new URLSearchParams(location.search).get('gbx'); if(_urlA){const _m=ws.find(x=>x&&x.address===_urlA); if(_m) return _m;} return ws.find(x=>x.id===u.activeWalletId) || ws[0] || null; } catch(e) { return null; }
+}
+function showToast(msg) { const e=document.querySelector('.toast'); if(e) e.remove(); const el=document.createElement('div'); el.className='toast'; el.textContent=msg; document.body.appendChild(el); setTimeout(()=>el.remove(),1800); }
+function showStep(id) { document.querySelectorAll('.step').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); document.getElementById('orderHistory').classList.add('active'); }
+function showError(msg) { const e=document.getElementById('errBox'); e.textContent=msg; e.classList.add('show'); setTimeout(()=>e.classList.remove('show'),5000); }
+
+function selectChain(c) {
+  selectedChain = c;
+  document.querySelectorAll('.chain-btn').forEach(b=>b.classList.toggle('active', b.dataset.chain===c));
+}
+
+async function loadBalance() {
+  if (!myAddr) return;
+  try {
+    const r = await fetch('https://goldbrix.app/onramp/wallet/' + myAddr + '/balance');
+    const d = await r.json();
+    if (d.ok && d.balance) {
+      gbxBal = d.balance.available_for_sell || d.balance.confirmed || 0;
+      document.getElementById('balVal').textContent = gbxBal.toLocaleString('en-US',{maximumFractionDigits:4});
+    }
+  } catch(e) {}
+}
+
+function setMax() { document.getElementById('gbxAmount').value = Math.max(0, gbxBal - 0.01).toFixed(4); updateQuote(); }
+
+async function updateQuote() {
+  const amt = parseFloat(document.getElementById('gbxAmount').value);
+  if (!amt || amt < 10) { document.getElementById('quoteCard').style.display='none'; return; }
+  try {
+    const r = await fetch('https://goldbrix.app/onramp/sell-quote', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ gbx_amount: amt }) });
+    const d = await r.json();
+    if (d.ok && d.quote) {
+      currentQuote = d.quote;
+      document.getElementById('quoteCard').style.display='block';
+      document.getElementById('qPriceV').textContent = '$' + (d.quote.gbx_price_usd || 0.1).toFixed(4);
+      document.getElementById('qFeeV').textContent = (d.quote.fee_usdc || 0).toFixed(4) + ' USDC';
+      const _calc = (d.quote.usdc_output != null ? d.quote.usdc_output : d.quote.usdc_amount) || Math.max(0, amt * (d.quote.gbx_price_usd || 0.1) - (d.quote.fee_usdc || 0));
+        document.getElementById('qReceiveV').textContent = _calc.toFixed(4) + ' USDC';
+    }
+  } catch(e) { console.warn('[quote]', e); }
+}
+
+async function waitForCrypto(maxMs=8000) {
+  const s = Date.now();
+  while (!window.GoldbrixCrypto) {
+    if (Date.now()-s > maxMs) throw new Error('crypto timeout');
+    await new Promise(r => setTimeout(r, 100));
+  }
+}
+
+function gbxConfirm(message){
+  return new Promise(function(resolve){
+    var L=({en:['Cancel','Confirm'],ro:['Anulează','Confirmă'],de:['Abbrechen','Bestätigen'],zh:['取消','确认'],ar:['إلغاء','تأكيد']})[currentLang]||['Cancel','Confirm'];
+    var ov=document.createElement('div');
+    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;z-index:99999;padding:24px;';
+    var card=document.createElement('div');
+    card.style.cssText='background:#1a1a1a;border:1px solid rgba(240,192,96,.35);border-radius:16px;max-width:360px;width:100%;padding:22px;color:#fff;box-shadow:0 12px 40px rgba(0,0,0,.6);';
+    var msg=document.createElement('div');
+    msg.style.cssText='font-family:JetBrains Mono,monospace;font-size:14px;line-height:1.55;white-space:pre-wrap;margin-bottom:20px;';
+    msg.textContent=message;
+    var row=document.createElement('div'); row.style.cssText='display:flex;gap:10px;';
+    var c=document.createElement('button'); c.textContent=L[0];
+    c.style.cssText='flex:1;padding:13px;border-radius:24px;border:1px solid rgba(255,255,255,.22);background:transparent;color:#fff;font-family:JetBrains Mono,monospace;font-weight:700;font-size:13px;cursor:pointer;';
+    var ok=document.createElement('button'); ok.textContent=L[1];
+    ok.style.cssText='flex:1;padding:13px;border-radius:24px;border:none;background:linear-gradient(135deg,#F5CC75,#F0C060);color:#1a140d;font-family:JetBrains Mono,monospace;font-weight:700;font-size:13px;cursor:pointer;';
+    function done(v){ if(ov.parentNode) document.body.removeChild(ov); resolve(v); }
+    c.onclick=function(){done(false);}; ok.onclick=function(){done(true);};
+    ov.onclick=function(e){ if(e.target===ov) done(false); };
+    row.appendChild(c); row.appendChild(ok); card.appendChild(msg); card.appendChild(row);
+    ov.appendChild(card); document.body.appendChild(ov);
+  });
+}
+async function createSell() {
+  const amt = parseFloat(document.getElementById('gbxAmount').value);
+  const dest = document.getElementById('destAddr').value.trim();
+  if (!amt || amt < 10) { showError((T[currentLang]||T.en).errMin); return; }
+  if (amt > gbxBal) { showError((T[currentLang]||T.en).errInsuf); return; }
+  if (!dest || dest.length < 32 || dest.length > 50) { showError((T[currentLang]||T.en).errAddr); return; }
+  if (!myAddr || !myMnemonic) { showError((T[currentLang]||T.en).errUnlock); return; }
+
+  const tt = T[currentLang]||T.en;
+  const confirmMsg = 'Sell ' + amt + ' GBX → ~' + ((currentQuote&&(currentQuote.usdc_output!=null?currentQuote.usdc_output:currentQuote.usdc_amount))||0).toFixed(2) + ' USDC?\n\nTo: ' + dest.slice(0,8) + '...' + dest.slice(-6);
+  if (!(await gbxConfirm(confirmMsg))) return;
+
+  const btn = document.getElementById('btnCreate'); btn.disabled = true; btn.style.opacity='0.6';
+
+  try {
+    // 1. Create sell order on backend
+    const _payload = { gbx_amount: amt, destination_address: dest, chain: selectedChain, gbx_address: myAddr };
+      if (selectedChain === 'solana') { _payload.phantom_address = dest; _payload.solflare_address = dest; }
+      else { _payload.metamask_address = dest; }
+      const r = await fetch('https://goldbrix.app/onramp/sell', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(_payload) });
+    const d = await r.json();
+    if (!d.ok) {
+        const errMap = {'invalid_phantom_address':'errAddr','invalid_solflare_address':'errAddr','invalid_metamask_address':'errAddr','invalid_destination_address':'errAddr','invalid_address':'errAddr','insufficient_balance':'errInsuf','minimum_amount':'errMin','wallet_locked':'errUnlock','exceeds_redeemable_float':'errRedeem','sell_daily_cap':'errDailyCap','sell_paused':'errPaused'};
+        const tt = T[currentLang]||T.en;
+        console.error('[sell] backend error:', d.error, 'dest:', dest, 'len:', dest.length);
+        let _emsg;
+        if (d.error === 'exceeds_redeemable_float') _emsg = (tt.errRedeem || 'Max redeemable now') + ': ' + (d.redeemable_gbx != null ? d.redeemable_gbx : '') + ' GBX';
+        else if (d.error === 'sell_daily_cap') _emsg = tt.errDailyCap || 'Daily sell limit reached, try later';
+        else if (d.error === 'sell_paused') _emsg = tt.errPaused || 'Sells temporarily paused';
+        else _emsg = errMap[d.error] ? tt[errMap[d.error]] : (d.error || 'Order creation failed');
+        showError(_emsg);
+        btn.disabled=false; btn.style.opacity='1';
+        return;
+      }
+
+    currentOrder = d.order || d;
+    const depositAddr = currentOrder.gbx_deposit_address || currentOrder.deposit_address || currentOrder.treasury_address;
+
+    // 2. Auto-send GBX from user wallet to deposit address
+    showStep('step-sending');
+    await waitForCrypto();
+    const result = await window.GoldbrixCrypto.sendGBX(myMnemonic, myAddr, depositAddr, amt);
+    console.log('[sell] GBX sent:', result);
+
+    // 3. Switch to pending USDC payout
+    showStep('step-pending');
+    startPolling();
+    loadHistory();
+  } catch(e) {
+    console.error('[sell]', e); window.gbxHaptic&&gbxHaptic('error');
+    const _emsg = (e.message || String(e));
+      if (/insufficient fee|rejecting replacement|code: ?-26/i.test(_emsg)) {
+        const _msgs = {en:'Previous transaction still pending. Wait 1-2 minutes and retry.',ro:'Tranzacție anterioară încă pending. Așteaptă 1-2 minute și încearcă din nou.',de:'Vorherige Transaktion noch ausstehend. Warten Sie 1-2 Minuten.',zh:'前一笔交易仍在处理中。请等待1-2分钟后重试。',ar:'المعاملة السابقة لا تزال معلقة. انتظر 1-2 دقيقة وأعد المحاولة.'};
+        showError(_msgs[currentLang] || _msgs.en);
+      } else {
+        showError((T[currentLang]||T.en).errSend + ': ' + _emsg);
+      }
+    showStep('step-quote');
+  } finally { btn.disabled = false; btn.style.opacity='1'; }
+}
+
+function startPolling() { if (pollTimer) clearInterval(pollTimer); pollTimer = setInterval(checkSellStatus, 10000); }
+
+async function checkSellStatus() {
+  if (!currentOrder || !currentOrder.id) return;
+  try {
+    const r = await fetch('https://goldbrix.app/onramp/sell-order/' + currentOrder.id);
+    const d = await r.json();
+    if (d.ok && d.order) {
+      const o = d.order;
+      if (o.status === 'completed') {
+        clearInterval(pollTimer);
+        document.getElementById('sucAmount').textContent = (o.usdc_amount || 0).toFixed(4) + ' USDC';
+        document.getElementById('sucTx').textContent = 'TX: ' + (o.sell_usdc_tx_hash || o.solana_tx_hash || '—');
+        showStep('step-success'); window.gbxHaptic&&gbxHaptic('success');
+        loadHistory();
+      } else if (o.status === 'expired' || o.status === 'cancelled') {
+        clearInterval(pollTimer);
+        showError('Order ' + o.status);
+        showStep('step-quote');
+      }
+    }
+  } catch(e) { console.warn('[poll]', e); }
+}
+
+async function loadHistory() {
+  if (!myAddr) return;
+  try {
+    const r = await fetch('https://goldbrix.app/onramp/orders/by-address/' + myAddr);
+    const d = await r.json();
+    if (d.ok && d.orders) {
+      const sells = d.orders.filter(o => o.order_type === 'sell').slice(0, 5);
+      const list = document.getElementById('ordersList');
+      if (sells.length === 0) { list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:14px;font-size:12px;">No sells yet</div>'; return; }
+      list.innerHTML = sells.map(o => '<div class="order-row"><div><b style="color:var(--green);">' + (o.usdc_amount || 0).toFixed(2) + ' USDC</b><br><span style="color:var(--text-muted);">' + (o.gbx_amount || 0).toFixed(2) + ' GBX</span></div><span class="order-row__status order-row__status--' + (o.status || 'pending') + '">' + (o.status || 'pending').toUpperCase() + '</span></div>').join('');
+    }
+  } catch(e) {}
+}
+
+function applyLang() {
+  const tt = T[currentLang]||T.en;
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+  document.getElementById('backLabel').textContent = tt.back;
+  document.getElementById('sellTitle').textContent = tt.title;
+  document.getElementById('sellSub').textContent = tt.sub;
+  document.getElementById('lblChain').textContent = tt.chain;
+  document.getElementById('lblAmt').textContent = tt.amt;
+  document.getElementById('lblAvail').textContent = tt.avail;
+  document.getElementById('lblDest').textContent = tt.dest;
+  document.getElementById('qPrice').textContent = tt.price;
+  document.getElementById('qFee').textContent = tt.fee;
+  document.getElementById('qReceive').textContent = tt.receive;
+  document.getElementById('btnCreateLbl').textContent = tt.create;
+  document.getElementById('warnText').textContent = tt.warn;
+  document.getElementById('sendingTitle').textContent = tt.sendingTitle;
+  document.getElementById('sendingSub').textContent = tt.sendingSub;
+  document.getElementById('pendingTitle').textContent = tt.pendingTitle;
+  document.getElementById('pendingSub').textContent = tt.pendingSub;
+  document.getElementById('btnCheckLbl').textContent = tt.check;
+  document.getElementById('sucTitle').textContent = tt.sucTitle;
+  document.getElementById('lblHistory').textContent = tt.history;
+  ['nH','nW','nL','nB','nS'].forEach((k,i)=>{ document.getElementById(k).textContent = tt.nav[['h','w','l','b','s'][i]]; });
+}
+
+
+// === AUTO-CONNECT if URL has ?wallet= param ===
+async function _autoConnectWalletFromURL() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const w = params.get('wallet');
+    if (!w) return;
+    let tries = 0;
+    while (tries < 30) {
+      if (w === 'phantom' && window.phantom && window.phantom.solana) {
+        if (typeof connectPhantomSell === 'function') connectPhantomSell('phantom');
+        return;
+      }
+      if (w === 'solflare' && window.solflare && window.solflare.isSolflare) {
+        if (typeof connectPhantomSell === 'function') connectPhantomSell('solflare');
+        return;
+      }
+      if (w === 'metamask' && window.ethereum && window.ethereum.isMetaMask) {
+        if (typeof connectMetaMaskSell === 'function') connectMetaMaskSell();
+        return;
+      }
+      await new Promise(r => setTimeout(r, 200));
+      tries++;
+    }
+  } catch(e) { console.warn('[auto-connect]', e); }
+}
+window.addEventListener('DOMContentLoaded', () => { setTimeout(_autoConnectWalletFromURL, 500); });
+
+(async function init() {
+  applyLang();
+  const w = getActiveWallet();
+  if (!w || !w.address || !w.mnemonic) { showError((T[currentLang]||T.en).errUnlock); return; }
+  myAddr = w.address;
+  myMnemonic = w.mnemonic;
+  await loadBalance();
+  await loadHistory();
+})();
+</script>
+
+<script>
+// === Universal wallet connect: Phantom/Solflare/MetaMask with mobile deeplinks ===
+function isMobileDevice() {
+  return /Android|webOS|iPhone|iPad|iPod|IEMobile/i.test(navigator.userAgent);
+}
+
+function setWalletStatus(html) {
+  const el = document.getElementById('walletStatus');
+  if (el) el.innerHTML = html;
+}
+
+
+// === Update destination field labels based on wallet type ===
+function updateDestLabels(walletKey) {
+  const lbl = document.getElementById('lblDest');
+  const inp = document.getElementById('destAddr');
+  const warnEl = document.getElementById('warnText');
+  if (!lbl || !inp) return;
+  const names = { phantom: 'Phantom', solflare: 'Solflare', metamask: 'MetaMask' };
+  const ph = { phantom: 'Solana wallet address (Cpa2...)', solflare: 'Solana wallet address (ARz...)', metamask: 'EVM wallet address (0x...)' };
+  const n = names[walletKey] || 'Wallet';
+  const p = ph[walletKey] || 'Wallet address';
+  lbl.textContent = n + ' Address (USDC destination)';
+  inp.placeholder = p;
+  if (warnEl) warnEl.textContent = 'Make sure ' + n + ' address is correct — funds sent to wrong address are unrecoverable.';
+}
+window.updateDestLabels = updateDestLabels;
+
+async function connectWalletSell(walletKey) {
+  updateDestLabels(walletKey);
+  const STORAGE_KEYS = { phantom: 'gbx_phantom_addr', solflare: 'gbx_solflare_addr', metamask: 'gbx_metamask_addr' };
+  const destEl = document.getElementById('destAddr');
+
+  // Try clipboard paste first (most reliable cross-browser)
+  let pastedAddr = null;
+  try {
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      const text = await navigator.clipboard.readText();
+      if (text && text.trim()) {
+        const trimmed = text.trim();
+        // Validate based on wallet type
+        if (walletKey === 'metamask' && trimmed.startsWith('0x') && trimmed.length === 42) {
+          pastedAddr = trimmed;
+        } else if ((walletKey === 'phantom' || walletKey === 'solflare') && /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(trimmed)) {
+          pastedAddr = trimmed;
+        }
+      }
+    }
+  } catch(e) { console.warn('[clipboard]', e); }
+
+  if (pastedAddr) {
+    destEl.value = pastedAddr;
+    localStorage.setItem(STORAGE_KEYS[walletKey], pastedAddr);
+    const short = walletKey === 'metamask' ? (pastedAddr.slice(0,6) + '...' + pastedAddr.slice(-4)) : (pastedAddr.slice(0,8) + '...' + pastedAddr.slice(-6));
+    setWalletStatus('<span style="color:#eee;font-weight:700;">✓ ' + walletKey.charAt(0).toUpperCase() + walletKey.slice(1) + ' pasted from clipboard:</span> ' + short);
+    if (typeof showToast === 'function') showToast('✓ ' + walletKey + ' address pasted');
+    return;
+  }
+
+  // Try saved address from localStorage
+  const saved = localStorage.getItem(STORAGE_KEYS[walletKey]);
+  if (saved) {
+    destEl.value = saved;
+    const short = walletKey === 'metamask' ? (saved.slice(0,6) + '...' + saved.slice(-4)) : (saved.slice(0,8) + '...' + saved.slice(-6));
+    setWalletStatus('<span style="color:#F5CC75;">→ ' + walletKey + ' (saved):</span> ' + short + ' <a href="#" onclick="event.preventDefault(); localStorage.removeItem(\'' + STORAGE_KEYS[walletKey] + '\'); document.getElementById(\'destAddr\').value=\'\'; setWalletStatus(\'\'); return false;" style="color:#eee;margin-left:8px;font-size:11px;">Clear</a>');
+    if (typeof showToast === 'function') showToast('→ Using saved ' + walletKey + ' address');
+    return;
+  }
+
+  // If in-page provider exists (extension or in-app browser), try connect
+  let provider = null;
+  if (walletKey === 'phantom' && window.phantom && window.phantom.solana && window.phantom.solana.isPhantom) provider = window.phantom.solana;
+  else if (walletKey === 'solflare' && window.solflare && window.solflare.isSolflare) provider = window.solflare;
+  else if (walletKey === 'metamask' && window.ethereum && window.ethereum.isMetaMask) provider = window.ethereum;
+
+  if (provider) {
+    setWalletStatus('<span style="color:#F5CC75;">Requesting ' + walletKey + ' approval...</span>');
+    try {
+      let address;
+      if (walletKey === 'metamask') {
+        const accounts = await provider.request({ method: 'eth_requestAccounts' });
+        address = accounts[0];
+      } else {
+        const resp = await provider.connect();
+        address = resp && resp.publicKey ? resp.publicKey.toString() : (provider.publicKey ? provider.publicKey.toString() : null);
+      }
+      if (!address) throw new Error('No address returned');
+      destEl.value = address;
+      localStorage.setItem(STORAGE_KEYS[walletKey], address);
+      const short = walletKey === 'metamask' ? (address.slice(0,6) + '...' + address.slice(-4)) : (address.slice(0,8) + '...' + address.slice(-6));
+      setWalletStatus('<span style="color:#eee;font-weight:700;">✓ ' + walletKey + ' connected:</span> ' + short);
+      if (typeof showToast === 'function') showToast('✓ ' + walletKey + ' connected');
+      return;
+    } catch(e) {
+      setWalletStatus('<span style="color:#eee;">✗ ' + (e.message || 'Cancelled') + '</span>');
+      return;
+    }
+  }
+
+  // Last resort: instructional message
+  const walletNames = { phantom: 'Phantom', solflare: 'Solflare', metamask: 'MetaMask' };
+  const installs = { phantom: 'phantom.app', solflare: 'solflare.com', metamask: 'metamask.io' };
+  setWalletStatus(
+    '<div style="font-size:12px;line-height:1.6;color:#F5CC75;">' +
+    '<b>How to use ' + walletNames[walletKey] + ':</b><br>' +
+    '1. Open <b>' + walletNames[walletKey] + ' app</b> on your phone<br>' +
+    '2. Copy your wallet address (tap address at top)<br>' +
+    '3. Come back here and tap <b>' + walletNames[walletKey] + '</b> again<br>' +
+    '<span style="font-size:11px;color:#fff;">Or install ' + installs[walletKey] + '</span>' +
+    '</div>'
+  );
+}
+window.connectWalletSell = connectWalletSell;
+window.connectPhantomSell = connectWalletSell;
+window.connectMetaMaskSell = function() { return connectWalletSell('metamask'); };
+</script>
+
+<script src="/v3/pwa.js?v=103" defer></script>
+
+<nav class="v3-final-nav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:999;">
+  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
+  <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
+  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
+  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
+  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
+  <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#F5CC75;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:1;"><span style="font-size:18px;">⚙</span><span data-t="navSettings">SETTINGS</span></a>
+</nav>
+<style>body { padding-bottom: 76px !important; }</style>
+
+  <script src="/v3/gbx-autolock.js" defer></script>
+</body>
+</html>

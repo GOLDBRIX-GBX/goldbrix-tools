@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="prefetch" href="/v3/wallet.html"><link rel="prefetch" href="/v3/trade.html"><link rel="prefetch" href="/v3/launch.html"><link rel="prefetch" href="/v3/burns.html"><link rel="prefetch" href="/v3/settings.html"><link rel="prefetch" href="/v3/favorites.html"><link rel="prefetch" href="/v3/leaderboard.html"><link rel="prefetch" href="/v3/style.css"><link rel="dns-prefetch" href="https://goldbrix.app">
+<link rel="preconnect" href="https://goldbrix.app" crossorigin>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1c1610">
+<title>GoldBrix · Explorer</title>
+<link rel="icon" href="/assets/coin/gbx-coin-32.png">
+<link rel="stylesheet" href="/v3/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  .v3-app { padding-bottom:90px; }
+  .back-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-secondary); background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--r-full); margin:12px 0 8px 16px; }
+  .ex-hero { text-align:center; padding:16px; }
+  .ex-hero__title { font-size:26px; font-weight:800; color:var(--gold); margin-bottom:4px; }
+  .ex-hero__sub { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.12em; color:var(--text-secondary); }
+  .stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:0 12px 12px; }
+  .stat-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--r-md); padding:14px; text-align:center; }
+  .stat-card__val { font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:700; color:var(--gold); }
+  .stat-card__lbl { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-muted); letter-spacing:0.1em; margin-top:4px; text-transform:uppercase; }
+  .stat-card__pulse { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--green); margin-right:5px; box-shadow:0 0 8px var(--green); animation:pulse 1.5s infinite; vertical-align:middle; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+  .search-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--r-md); padding:14px; margin:0 12px 12px; }
+  .search-card__label { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-secondary); letter-spacing:0.1em; margin-bottom:8px; text-transform:uppercase; }
+  .search-row { display:flex; gap:8px; }
+  .search-input { flex:1; background:var(--bg-input); border:1px solid var(--border); border-radius:var(--r-md); padding:10px 12px; font-size:13px; color:var(--text-primary); font-family:'JetBrains Mono',monospace; }
+  .search-input:focus { outline:none; border-color:var(--gold); }
+  .search-btn { padding:10px 18px; background:var(--gold); color:#eee; border-radius:var(--r-md); font-weight:700; font-family:'JetBrains Mono',monospace; font-size:12px; }
+  .sect-label { display:flex; align-items:center; gap:10px; padding:0 16px; margin:18px 0 10px; }
+  .sect-label__text { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; letter-spacing:0.15em; color:var(--text-secondary); text-transform:uppercase; }
+  .sect-label::after { content:''; flex:1; height:1px; background:var(--border); }
+  .block-row { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--r-md); padding:12px 14px; margin:0 12px 8px; display:flex; align-items:center; gap:12px; }
+  .block-row__num { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:var(--gold); min-width:60px; }
+  .block-row__info { flex:1; min-width:0; }
+  .block-row__hash { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .block-row__time { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-muted); margin-top:2px; }
+  .info-row { display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--r-md); margin:0 12px 8px; font-size:13px; }
+  .info-row__k { color:var(--text-secondary); font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.05em; }
+  .info-row__v { color:var(--gold); font-family:'JetBrains Mono',monospace; font-weight:700; }
+  .ext-btn { display:block; background:var(--bg-elevated); border:1px solid var(--gold-deep); padding:12px; text-align:center; border-radius:var(--r-md); margin:16px 12px; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--gold); letter-spacing:0.1em; }
+  .ext-btn:hover { background:var(--gold-glow); }
+  .bnav { position:fixed; bottom:0; left:0; right:0; background:var(--bg-card); border-top:1px solid var(--border); display:flex; padding:8px 4px 12px; padding-bottom:calc(12px + env(safe-area-inset-bottom)); z-index:100; }
+  .bnav__item { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 2px; color:var(--text-muted); }
+  .bnav__icon { font-size:20px; line-height:1; }
+  .bnav__label { font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; letter-spacing:0.08em; }
+
+/* V4.9 — Visible placeholders (added 2026-05-27) */
+input::placeholder, textarea::placeholder,
+input::-webkit-input-placeholder, textarea::-webkit-input-placeholder,
+input::-moz-placeholder, textarea::-moz-placeholder {
+  color: #eee !important;
+  opacity: 1 !important;
+}
+
+</style>
+
+<style>
+  /* Silent refresh — prevent visible flicker on innerHTML rebuilds */
+  #tokensList, #favsList, #recentBlocks, #burnList {
+    transition: opacity 0.0s !important;
+  }
+  #tokensList *, #favsList *, #recentBlocks *, #burnList * {
+    animation-duration: 0s !important;
+  }
+  /* Disable any flash/scale animations during refresh */
+  .no-flash {
+    animation: none !important;
+    transition: none !important;
+  }
+</style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#F5CC75">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/goldbrix-brand-180.png">
+    <script src="/v3/gbx-read.js?v=103"></script>
+<script src="/gbx-update-check.js" defer></script>
+    <script src="/gbx-native-bridge.js" defer></script>
+      <script src="/i18n.js?v=103" defer></script>
+  <script src="/promo-banner.js?v=103" defer></script>
+<style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
+<script src="/v3/nav-i18n.js?v=103" defer></script>
+</head>
+<body>
+<div class="v3-app">
+  <a class="back-btn" href="/v3/settings.html">← <span id="backLabel">Settings</span></a>
+  <div class="ex-hero">
+    <div class="ex-hero__title">🔍 <span id="exTitle" data-t="explorer">Block Explorer</span></div>
+    <div class="ex-hero__sub"><span class="stat-card__pulse"></span><span id="exSub">LIVE · GOLDBRIX-MAINNET</span></div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-card__val" id="statHeight">—</div><div class="stat-card__lbl" id="lblHeight">Block Height</div></div>
+    <div class="stat-card"><div class="stat-card__val" id="statTxOut">—</div><div class="stat-card__lbl" id="lblTxOut">Total UTXOs</div></div>
+    <div class="stat-card"><div class="stat-card__val" id="statSupply">—</div><div class="stat-card__lbl" id="lblSupply">Circulating GBX</div></div>
+    <div class="stat-card"><div class="stat-card__val" id="statDiff">—</div><div class="stat-card__lbl" id="lblDiff">Difficulty</div></div>
+  </div>
+
+  <div class="search-card">
+    <div class="search-card__label" id="lblSearch">Search Address or TX Hash</div>
+    <div class="search-row">
+      <input class="search-input" id="searchInput" placeholder="bn1q... or txid" autocapitalize="off">
+      <button class="search-btn" onclick="doSearch()" id="searchBtn">GO</button>
+    </div>
+    <div id="searchResult" style="margin-top:10px; font-size:12px; color:var(--text-secondary); font-family:'JetBrains Mono',monospace; word-break:break-all;"></div>
+  </div>
+
+  <div class="sect-label"><span class="sect-label__text" id="lblRecent">Recent Blocks</span></div>
+  <div id="blocksList"></div>
+
+  <div class="sect-label"><span class="sect-label__text" id="lblNetwork">Network Info</span></div>
+  <div class="info-row"><span class="info-row__k" id="kChain" data-t="chain">Chain</span><span class="info-row__v">goldbrix-mainnet</span></div>
+  <div class="info-row"><span class="info-row__k" id="kAlgo">Algorithm</span><span class="info-row__v">SHA-256d PoW</span></div>
+  <div class="info-row"><span class="info-row__k" id="kBlock">Block Time</span><span class="info-row__v">~3 sec</span></div>
+  <div class="info-row"><span class="info-row__k" id="kMax">Max Supply</span><span class="info-row__v">15,000,000 GBX</span></div>
+
+</div>
+
+<div class="bnav">
+  <a class="bnav__item" href="/"><span class="bnav__icon">🏠</span><span class="bnav__label" id="nH" data-t="navHome">HOME</span></a>
+  <a class="bnav__item" href="/v3/wallet.html"><span class="bnav__icon">👤</span><span class="bnav__label" id="nW" data-t="navWallet">WALLET</span></a>
+  <a class="bnav__item" href="/v3/launch.html"><span class="bnav__icon">🚀</span><span class="bnav__label" id="nL" data-t="navLaunch">LAUNCH</span></a>
+  <a class="bnav__item" href="/v3/leaderboard.html"><span class="bnav__icon">🔥</span><span class="bnav__label" id="nB" data-t="navBurns">BURNS</span></a>
+  <a class="bnav__item" href="/v3/settings.html"><span class="bnav__icon">⚙️</span><span class="bnav__label" id="nS" data-t="navSettings">SETTINGS</span></a>
+</div>
+
+<script>
+const T = {
+  en: { back:'Settings', title:'Block Explorer', sub:'LIVE · GOLDBRIX-MAINNET', height:'Block Height', txout:'Total UTXOs', supply:'Circulating GBX', diff:'Difficulty', search:'Search Address or TX Hash', recent:'Recent Blocks', network:'Network Info', chain:'Chain', algo:'Algorithm', block:'Block Time', max:'Max Supply', ext:'→ Open Full Explorer', noResult:'No results', searching:'Searching...', nav:{h:'HOME',w:'WALLET',l:'LAUNCH',b:'BURNS',s:'SETTINGS'} },
+  ro: { back:'Setări', title:'Block Explorer', sub:'LIVE · GOLDBRIX-MAINNET', height:'Înălțime Bloc', txout:'UTXOs Total', supply:'GBX Circulant', diff:'Dificultate', search:'Caută Adresă sau Hash TX', recent:'Blocuri Recente', network:'Info Rețea', chain:'Lanț', algo:'Algoritm', block:'Timp Bloc', max:'Ofertă Maximă', ext:'→ Deschide Explorer Complet', noResult:'Niciun rezultat', searching:'Se caută...', nav:{h:'ACASĂ',w:'PORTOFEL',l:'LANSARE',b:'ARDERI',s:'SETĂRI'} },
+  de: { back:'Einstellungen', title:'Block Explorer', sub:'LIVE · GOLDBRIX-MAINNET', height:'Blockhöhe', txout:'UTXOs Gesamt', supply:'Umlauf GBX', diff:'Schwierigkeit', search:'Adresse oder TX-Hash suchen', recent:'Aktuelle Blöcke', network:'Netzwerk-Info', chain:'Chain', algo:'Algorithmus', block:'Blockzeit', max:'Max. Versorgung', ext:'→ Vollständigen Explorer öffnen', noResult:'Keine Ergebnisse', searching:'Suche...', nav:{h:'HOME',w:'WALLET',l:'STARTEN',b:'BURNS',s:'EINSTELL.'} },
+  zh: { back:'设置', title:'区块浏览器', sub:'实时 · GOLDBRIX-MAINNET', height:'区块高度', txout:'UTXO 总数', supply:'流通 GBX', diff:'难度', search:'搜索地址或交易哈希', recent:'最近区块', network:'网络信息', chain:'链', algo:'算法', block:'出块时间', max:'最大供应', ext:'→ 打开完整浏览器', noResult:'无结果', searching:'搜索中...', nav:{h:'首页',w:'钱包',l:'发行',b:'燃烧',s:'设置'} },
+  ar: { back:'إعدادات', title:'مستكشف الكتل', sub:'مباشر · GOLDBRIX-MAINNET', height:'ارتفاع الكتلة', txout:'إجمالي UTXOs', supply:'GBX المتداول', diff:'الصعوبة', search:'البحث بالعنوان أو هاش المعاملة', recent:'كتل حديثة', network:'معلومات الشبكة', chain:'السلسلة', algo:'الخوارزمية', block:'وقت الكتلة', max:'الإمداد الأقصى', ext:'→ فتح المستكشف الكامل', noResult:'لا توجد نتائج', searching:'جاري البحث...', nav:{h:'الرئيسية',w:'محفظة',l:'إطلاق',b:'حرق',s:'إعدادات'} }
+};
+let currentLang = localStorage.getItem('gbx_lang') || 'en';
+
+function applyLang() {
+  const tt = T[currentLang]||T.en;
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+  document.getElementById('backLabel').textContent = tt.back;
+  document.getElementById('exTitle').textContent = tt.title;
+  document.getElementById('exSub').textContent = tt.sub;
+  document.getElementById('lblHeight').textContent = tt.height;
+  document.getElementById('lblTxOut').textContent = tt.txout;
+  document.getElementById('lblSupply').textContent = tt.supply;
+  document.getElementById('lblDiff').textContent = tt.diff;
+  document.getElementById('lblSearch').textContent = tt.search;
+  document.getElementById('lblRecent').textContent = tt.recent;
+  document.getElementById('lblNetwork').textContent = tt.network;
+  document.getElementById('kChain').textContent = tt.chain;
+  document.getElementById('kAlgo').textContent = tt.algo;
+  document.getElementById('kBlock').textContent = tt.block;
+  document.getElementById('kMax').textContent = tt.max;
+  ['nH','nW','nL','nB','nS'].forEach((k,i)=>{ document.getElementById(k).textContent = tt.nav[['h','w','l','b','s'][i]]; });
+}
+
+async function loadStats() {
+  try {
+    const r = await fetch('https://goldbrix.app/api/status');
+    if (r.ok) {
+      const d = await r.json();
+      const h = d.best_block_height || d.height || d.blocks || 0;
+      document.getElementById('statHeight').textContent = Number(h).toLocaleString('en-US');
+      // REAL circulating (suma UTXO set, <= 15M cap)
+      document.getElementById('statSupply').textContent = (d.circulating_gbx != null) ? Math.round(d.circulating_gbx).toLocaleString('en-US') : '—';
+      document.getElementById('statDiff').textContent = (d.difficulty != null) ? Number(d.difficulty).toExponential(2) : '—';
+      document.getElementById('statTxOut').textContent = (d.txouts != null) ? Number(d.txouts).toLocaleString('en-US') : '—';
+    }
+  } catch(e) { console.warn('[stats]', e); }
+}
+
+async function loadBlocks() {
+  try {
+    const r = await fetch('https://goldbrix.app/api/status');
+    const d = await r.json();
+    const tip = d.best_block_height || d.height || d.blocks || 0;
+    let html = '';
+    for (let i = 0; i < 5; i++) {
+      const h = tip - i;
+      if (h <= 0) break;
+      try {
+        const rb = await fetch('https://goldbrix.app/api/block/' + h);
+        if (rb.ok) {
+          const b = await rb.json();
+          const hash = b.hash || b.blockhash || '';
+          const t = b.time || b.timestamp || 0;
+          const ago = t > 0 ? Math.floor((Date.now()/1000 - t) / 60) + ' min ago' : '—';
+          html += '<div class="block-row"><div class="block-row__num">#' + h + '</div><div class="block-row__info"><div class="block-row__hash">' + hash.slice(0,32) + '...</div><div class="block-row__time">' + ago + '</div></div></div>';
+        } else {
+          html += '<div class="block-row"><div class="block-row__num">#' + h + '</div><div class="block-row__info"><div class="block-row__hash" data-t="loadingMsg">Loading...</div></div></div>';
+        }
+      } catch(e) {
+        html += '<div class="block-row"><div class="block-row__num">#' + h + '</div><div class="block-row__info"><div class="block-row__hash">—</div></div></div>';
+      }
+    }
+    document.getElementById('blocksList').innerHTML = html || '<div style="text-align:center;color:var(--text-muted);padding:20px;">No data</div>';
+  } catch(e) { console.warn('[blocks]', e); }
+}
+
+async function doSearch() {
+  const q = document.getElementById('searchInput').value.trim();
+  if (!q) return;
+  const result = document.getElementById('searchResult');
+  result.textContent = (T[currentLang]||T.en).searching;
+  if (q.startsWith('bn1q')) {
+    try {
+      const r = await window.gbxRead('/address/' + q);
+      if (r.ok) {
+        const d = await r.json();
+        result.innerHTML = '<div style="color:var(--gold);">✓ ADDRESS</div>Balance: <b>' + (d.balance_gbx || '0') + ' GBX</b><br>Spendable: <b>' + (d.spendable_gbx || '0') + '</b><br>TXs: <b>' + (d.tx_count || 0) + '</b><br>UTXOs: <b>' + (d.utxo_count || 0) + '</b>';
+      } else result.textContent = (T[currentLang]||T.en).noResult;
+    } catch(e) { result.textContent = (T[currentLang]||T.en).noResult; }
+  } else if (q.length === 64) {
+    try {
+      const r = await fetch('https://goldbrix.app/api/tx/' + q);
+      if (r.ok) {
+        const d = await r.json();
+        result.innerHTML = '<div style="color:var(--gold);">✓ TX</div>Block: <b>' + (d.blockheight || d.height || '—') + '</b><br>Confirmations: <b>' + (d.confirmations || 0) + '</b>';
+      } else result.textContent = (T[currentLang]||T.en).noResult;
+    } catch(e) { result.textContent = (T[currentLang]||T.en).noResult; }
+  } else {
+    result.textContent = 'Invalid format (need bn1q... or 64-char TX hash)';
+  }
+}
+
+(function init(){ applyLang(); loadStats(); loadBlocks(); setInterval(loadStats, 30000); })();
+</script>
+<script src="/v3/pwa.js?v=103" defer></script>
+
+<nav class="v3-final-nav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:999;">
+  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
+  <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
+  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
+  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
+  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
+  <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#F5CC75;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:1;"><span style="font-size:18px;">⚙</span><span data-t="navSettings">SETTINGS</span></a>
+</nav>
+<style>body { padding-bottom: 76px !important; }</style>
+
+</body>
+</html>

@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="prefetch" href="/v3/wallet.html"><link rel="prefetch" href="/v3/trade.html"><link rel="prefetch" href="/v3/launch.html"><link rel="prefetch" href="/v3/burns.html"><link rel="prefetch" href="/v3/settings.html"><link rel="prefetch" href="/v3/favorites.html"><link rel="prefetch" href="/v3/leaderboard.html"><link rel="prefetch" href="/v3/style.css"><link rel="dns-prefetch" href="https://goldbrix.app">
+<link rel="preconnect" href="https://goldbrix.app" crossorigin>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>GoldBrix Protocol — Whitepaper & Tokenomics</title>
+<link rel="icon" type="image/png" sizes="192x192" href="/assets/mark/g-mark-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/goldbrix-brand-180.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#000000">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+:root {
+  --bg: #000000;
+  --bg-2: #06080F;
+  --card: #0D1020;
+  --card-hi: #131730;
+  --border: #1A2035;
+  --border-hi: #2A3050;
+  --gold: #F5CC75;
+  --gold-2: #E0B560;
+  --gold-glow: rgba(245, 204, 117, 0.3);
+  --green: #1DB954;
+  --red: #FF3B3B;
+  --warning: #FFB800;
+  --text: #FFFFFF;
+  --text-dim: #FFE099;
+  --text-dimmer: #555;
+}
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', -apple-system, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+body { padding-bottom: 110px; }
+
+/* HEADER */
+.p-hdr {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(0,0,0,0.95);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px;
+  display: flex; align-items: center; gap: 12px;
+}
+.p-back, .p-close {
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gold); font-size: 18px;
+  cursor: pointer; background: transparent; border: none;
+}
+.p-title {
+  flex: 1;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--gold);
+}
+
+/* HERO */
+.p-hero {
+  padding: 40px 20px 30px;
+  text-align: center;
+  background: radial-gradient(ellipse at center top, rgba(245,204,117,0.08) 0%, transparent 70%);
+  border-bottom: 1px solid var(--border);
+}
+.p-logo {
+  width: 80px; height: 80px;
+  margin: 0 auto 16px;
+  border-radius: 20px;
+  background: url('/assets/brand/goldbrix-brand-180.png') center/cover;
+  box-shadow: 0 0 32px var(--gold-glow);
+  border: 2px solid var(--gold);
+}
+.p-hero-title {
+  font-size: 32px; font-weight: 900;
+  background: linear-gradient(135deg, var(--gold), var(--gold-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+.p-hero-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--text-dim);
+  letter-spacing: 0.2em; text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.p-status-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(29,185,84,0.1);
+  border: 1px solid rgba(29,185,84,0.3);
+  color: var(--green);
+  padding: 4px 10px; border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.1em;
+}
+.p-status-pill .dot {
+  width: 6px; height: 6px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* SECTIONS */
+.p-section {
+  padding: 24px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.p-section-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--gold);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.p-section-title .icon { font-size: 16px; }
+
+.p-body {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.7;
+}
+.p-body p { margin-bottom: 12px; }
+.p-body strong { color: var(--gold); font-weight: 700; }
+.p-body code {
+  background: var(--card);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--gold);
+  border: 1px solid var(--border);
+}
+
+.p-callout {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  margin: 14px 0;
+}
+.p-callout-warn {
+  background: rgba(255,184,0,0.06);
+  border-color: rgba(255,184,0,0.25);
+}
+.p-callout-good {
+  background: rgba(29,185,84,0.06);
+  border-color: rgba(29,185,84,0.25);
+}
+.p-callout-info {
+  background: rgba(245,204,117,0.06);
+  border-color: rgba(245,204,117,0.25);
+}
+.p-callout-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.p-callout-warn .p-callout-title { color: var(--warning); }
+.p-callout-good .p-callout-title { color: var(--green); }
+.p-callout-info .p-callout-title { color: var(--gold); }
+
+/* TOKENOMICS GRID */
+.p-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 12px;
+}
+.p-stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+}
+.p-stat-card.featured {
+  background: linear-gradient(135deg, rgba(245,204,117,0.08), rgba(0,0,0,0));
+  border-color: rgba(245,204,117,0.3);
+}
+.p-stat-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--text-dim);
+  letter-spacing: 0.15em; text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.p-stat-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px; font-weight: 800;
+  color: var(--text);
+}
+.p-stat-value.gold { color: var(--gold); }
+.p-stat-value.green { color: var(--green); }
+.p-stat-sub {
+  font-size: 10px; color: var(--text-dim);
+  margin-top: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* TIMELINE / PHASES */
+.p-phase {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  position: relative;
+}
+.p-phase.current {
+  border-color: var(--gold);
+  background: linear-gradient(135deg, rgba(245,204,117,0.08), rgba(0,0,0,0));
+}
+.p-phase-header {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-bottom: 8px;
+}
+.p-phase-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--gold);
+  letter-spacing: 0.15em;
+  font-weight: 700;
+}
+.p-phase-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--text-dim);
+  background: var(--card-hi);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+.p-phase-time.now {
+  background: var(--gold);
+  color: #000;
+}
+.p-phase-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.p-phase-desc {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+.p-phase-list {
+  margin-top: 8px;
+  padding-left: 0;
+  list-style: none;
+}
+.p-phase-list li {
+  font-size: 12px;
+  color: var(--text);
+  padding: 4px 0;
+  padding-left: 18px;
+  position: relative;
+}
+.p-phase-list li:before {
+  content: "→";
+  position: absolute;
+  left: 0;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+/* ADDRESSES */
+.p-address {
+  display: block;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--gold);
+  word-break: break-all;
+  margin-top: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.p-address:hover {
+  border-color: var(--gold);
+  background: var(--card-hi);
+}
+
+/* FEE TABLE */
+.p-fee-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  background: var(--card);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.p-fee-table th {
+  background: var(--card-hi);
+  color: var(--gold);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.p-fee-table td {
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+}
+.p-fee-table tr:last-child td { border-bottom: none; }
+.p-fee-table td.burn { color: var(--red); font-weight: 700; }
+.p-fee-table td.ops { color: var(--text-dim); }
+
+/* CTA */
+.p-cta-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 20px;
+}
+.p-cta-btn {
+  padding: 14px;
+  border-radius: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  color: #000;
+}
+.p-cta-btn:active { transform: scale(0.96); }
+.p-cta-mine {
+  background: linear-gradient(135deg, var(--gold-2), var(--gold));
+  box-shadow: 0 0 20px var(--gold-glow);
+}
+.p-cta-buy {
+  background: linear-gradient(135deg, var(--green), #15a047);
+  box-shadow: 0 0 20px rgba(29,185,84,0.3);
+}
+
+/* FOOTER */
+.p-footer {
+  padding: 30px 20px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-dimmer);
+  border-top: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.1em;
+  line-height: 1.6;
+}
+
+/* RTL */
+html[dir="rtl"] body { direction: rtl; }
+html[dir="rtl"] .p-phase-list li { padding-left: 0; padding-right: 18px; }
+html[dir="rtl"] .p-phase-list li:before { left: auto; right: 0; }
+
+/* TOAST */
+#toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--card);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  z-index: 1000;
+  transition: transform 0.3s;
+}
+#toast.show {
+  transform: translateX(-50%) translateY(0);
+}
+
+/* V4.9 — Visible placeholders (added 2026-05-27) */
+input::placeholder, textarea::placeholder,
+input::-webkit-input-placeholder, textarea::-webkit-input-placeholder,
+input::-moz-placeholder, textarea::-moz-placeholder {
+  color: #eee !important;
+  opacity: 1 !important;
+}
+
+</style>
+    <script src="/gbx-update-check.js" defer></script>
+    <script src="/gbx-native-bridge.js" defer></script>
+      <script src="/i18n.js?v=103" defer></script>
+  <script src="/promo-banner.js?v=103" defer></script>
+<style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
+<script src="/v3/nav-i18n.js?v=103" defer></script>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="p-hdr">
+  <button class="p-back" onclick="goBack()">←</button>
+  <div class="p-title"><span data-i18n="page.title">PROTOCOL · WHITEPAPER</span></div>
+  <button class="p-close" onclick="goBack()">✕</button>
+</div>
+
+<!-- HERO -->
+<div class="p-hero">
+  <div class="p-logo"></div>
+  <div class="p-hero-title">GoldBrix</div>
+  <div class="p-hero-sub" data-i18n="hero.sub">Decentralized · PoW · Open Source</div>
+  <div class="p-status-pill">
+    <span class="dot"></span>
+    <span data-i18n="hero.status">CHAIN LIVE · PHASE 1.5 · REAL BURNS</span>
+  </div>
+</div>
+
+<!-- VISION -->
+<div class="p-section">
+  <div class="p-section-title"><span class="icon">🎯</span><span data-i18n="vision.title">Vision</span></div>
+  <div class="p-body">
+    <p data-i18n="vision.p1">GoldBrix is a decentralized memecoin chain built on proof-of-work principles. The protocol has <strong>no admin keys</strong>, <strong>no centralized control</strong>, and <strong>anyone can participate</strong> as a miner, node operator, or user.</p>
+    <p data-i18n="vision.p2">The chain enables anyone to launch memecoins via bonding curve, trade them, and participate in a transparent fee-burn economy. Genesis launched January 22, 2026 with no premine, no ICO, and no founder allocation.</p>
+  </div>
+</div>
+
+<!-- THE FOUNDER -->
+<div class="p-section">
+  <div class="p-section-title"><span class="icon">🧱</span><span data-i18n="founder.title">The Founder</span></div>
+  <div class="p-body" style="text-align:center;">
+    <img src="/assets/brand/goldbrix-founder-512.png?v=103" alt="Gideon Brick" style="width:160px;height:160px;border-radius:50%;margin:8px auto 14px;display:block;box-shadow:0 0 24px rgba(201,162,39,0.45);">
+    <p style="font-size:17px;font-weight:800;color:#e8c455;margin:0 0 10px;letter-spacing:0.5px;">Gideon Brick</p>
+    <p data-i18n="founder.p1">GoldBrix was built by <strong>Gideon Brick</strong> — an anonymous founder who laid it brick by brick, then walked away. No CEO. No company. No key.</p>
+    <p data-i18n="founder.p2">GoldBrix belongs to no one but everyone who mines or holds it. The founder mines like anyone else and keeps no privileged control. <strong>Real chain. Real burn. Real fairness.</strong></p>
+  </div>
+</div>
+
+<!-- TOKENOMICS -->
+<div class="p-section">
+  <div class="p-section-title"><span class="icon">💰</span><span data-i18n="tokenomics.title">GBX Tokenomics</span></div>
+  <div class="p-body">
+    <p data-i18n="tokenomics.intro">GBX is the native currency of the GoldBrix blockchain. Mined via SHA-256d proof-of-work: 0.25 GBX per 3-second block, halving every 28,000,000 blocks, hard cap 15,000,000 GBX.</p>
+  </div>
+  <div class="p-stats-grid">
+    <div class="p-stat-card featured">
+      <div class="p-stat-label" data-i18n="tokenomics.supply">Max Supply</div>
+      <div class="p-stat-value gold">~15,000,000</div>
+      <div class="p-stat-sub">GBX (asymptotic)</div>
+    </div>
+    <div class="p-stat-card">
+      <div class="p-stat-label" data-i18n="tokenomics.mined">Mined Now</div>
+      <div class="p-stat-value" id="pStatMined">--</div>
+      <div class="p-stat-sub" id="pStatMinedPct">--%</div>
+    </div>
+    <div class="p-stat-card">
+      <div class="p-stat-label" data-i18n="tokenomics.reward">Block Reward</div>
+      <div class="p-stat-value">0.25</div>
+      <div class="p-stat-sub" data-i18n="tokenomics.rewardSub">GBX (halving 28M)</div>
+    </div>
+    <div class="p-stat-card">
+      <div class="p-stat-label" data-i18n="tokenomics.algo">Algorithm</div>
+      <div class="p-stat-value">SHA-256d</div>
+      <div class="p-stat-sub" data-i18n="tokenomics.algoSub">PoW · Native</div>
+    </div>
+    <div class="p-stat-card">
+      <div class="p-stat-label" data-i18n="tokenomics.blocktime">Block Time</div>
+      <div class="p-stat-value">3</div>
+      <div class="p-stat-sub" data-i18n="tokenomics.blocktimeSub">seconds target</div>
+    </div>
+    <div class="p-stat-card">
+      <div class="p-stat-label" data-i18n="tokenomics.price">Ref Price</div>
+      <div class="p-stat-value">$0.10</div>
+      <div class="p-stat-sub" data-i18n="tokenomics.priceSub">Phase 1 peg</div>
+    </div>
+  </div>
+  
+  <div class="p-callout p-callout-info" style="margin-top:14px;">
+    <div class="p-callout-title" data-i18n="tokenomics.halvingTitle">Halving Schedule</div>
+    <div style="font-size:12px;line-height:1.7;" data-i18n="tokenomics.halvingDesc">
+      Phase 1 (bootstrap, 10-min blocks): <strong>50 GBX/block</strong>, halving every 150,000 blocks.<br>
+      Phase 2 (from block 20,000, 3-sec blocks): <strong>0.25 GBX/block</strong>, halving every 28,000,000 blocks.<br>
+      Emission converges to the <strong>15,000,000 GBX</strong> hard cap.
+    </div>
+  </div>
+</div>
+
+<!-- FEE MODEL -->
+<div class="p-section">
+  <div class="p-section-title"><span class="icon">🔥</span><span data-i18n="fees.title">Fee Model & Burns</span></div>
+  <div class="p-body">
+    <p data-i18n="fees.intro">Protocol fees flow into a deflationary burn mechanism. ALL trade fees (buy, sell, dev buy, graduation, AMM) are REAL on-chain burns to unspendable address bn1qqqq...3kc3g2 — verifiable via TX hash. 0.5% on bonding curve trades, 0.3% on AMM post-graduation. 100% of fees burned — no team allocation.</p>
+  </div>
+  <table class="p-fee-table">
+    <thead>
+      <tr>
+        <th data-i18n="fees.action">Action</th>
+        <th data-i18n="fees.fee">Fee</th>
+        <th data-i18n="fees.destination">Destination</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td data-i18n="fees.tradeBuy">Trade Buy</td>
+        <td>0.5%</td>
+        <td class="burn" data-i18n="fees.burn">🔥 BURN</td>
+      </tr>
+      <tr>
+        <td data-i18n="fees.tradeSell">Trade Sell</td>
+        <td>0.5%</td>
+        <td class="burn" data-i18n="fees.burn2">🔥 BURN</td>
+      </tr>
+      <tr>
+        <td data-i18n="fees.graduation">Graduation</td>
+        <td>100 GBX</td>
+        <td class="burn" data-i18n="fees.burn3">🔥 BURN</td>
+      </tr>
+      <tr>
+        <td data-i18n="fees.bridge">Bridge USDC↔GBX</td>
+        <td>0.5%</td>
+        <td class="ops" data-i18n="fees.operations">Operations</td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <div class="p-callout p-callout-good" style="margin-top:14px;">
+    <div class="p-callout-title" data-i18n="fees.transparency">Transparent burn tracking</div>
+    <div style="font-size:12px;line-height:1.5;" data-i18n="fees.tracking">All burns are publicly tracked. Live counter visible at the Burn Tracker page.</div>
+  </div>
+</div>
+
+<!-- PRICE DISCOVERY -->
+<div class="p-section">
+  <div class="p-section-title"><span class="icon">📊</span><span data-i18n="price.title">Price Discovery</span></div>
+  <div class="p-body">
+    <p data-i18n="price.intro">Phase 1 uses a reference peg of <strong>$0.10/GBX</strong> through the bridge. This is NOT market price — it's a stable rate during pre-launch bootstrapping.</p>
+  </div>
+  
+  <div class="p-callout p-callout-info">
+    <div class="p-callout-title" data-i18n="price.howTitle">How price evolves</div>
+    <div style="font-size:12px;line-height:1.8;" data-i18n="price.how">
+      <strong>Phase 1.5 (NOW · LIVE):</strong> Fixed peg $0.10 via bridge + REAL burns active<br>
+      <strong>Phase 2 (NEXT):</strong> AMM dynamic pricing<br>
+      <strong>Phase 3 (LATER):</strong> External DEX listings — real market discovery
+    </div>
+  </div>
+  
+  <div class="p-callout p-callout-warn">
+    <div class="p-callout-title" data-i18n="price.faqTitle">FAQ: Protocol Reserve & Burns</div>
+    <div style="font-size:12px;line-height:1.6;" data-i18n="price.faq"><strong>Q:</strong> Does sending GBX to Protocol Reserve affect price?<br><strong>A:</strong> No. Protocol Reserve transfers are NOT burns. Total supply is unchanged. Phase 1.5 protocol burns (dev_buy + graduations) ARE real on-chain — verifiable in Burn Tracker. All trade fee burns are real on-chain since Phase C (May 2026).</div>
+  </div>
+</div>
+
+
+<!-- PROTOCOL RESERVE -->
+<div class="p-section">
+  <div class="p-section-title"><span class="icon">🏛️</span><span data-i18n="reserve.title">Protocol Reserve</span></div>
+  <div class="p-body">
+    <p data-i18n="reserve.intro">The Protocol Reserve is an autonomous on-chain pool funded by protocol fees. It operates by deterministic rules defined in code — no DAO votes, no committee, no human discretion.</p>
+  </div>
+
+  <div class="p-callout p-callout-good">
+    <div class="p-callout-title" data-i18n="reserve.featuresTitle">How It Works</div>
+    <div style="font-size:12px;line-height:1.8;" data-i18n="reserve.features">
+      ✓ <strong>Self-growing</strong> — fed by protocol fees (0.5% bridge, 0.5% launches)<br>
+      ✓ <strong>No premine</strong> — no team allocation, no founder claims<br>
+      ✓ <strong>Trustless outflow</strong> — code defines all withdrawal rules<br>
+      ✓ <strong>Keys burned Phase 2</strong> — public on-chain proof<br>
+      ✓ <strong>Operational fuel</strong> — bridge liquidity + AMM bootstrap
+    </div>
+  </div>
+
+  <div class="p-callout p-callout-info">
+    <div class="p-callout-title" data-i18n="reserve.principleTitle">Core Principle</div>
+    <div style="font-size:12px;line-height:1.6;" data-i18n="reserve.principle"><strong>Code = Law. Mining = Consensus. No DAO.</strong> The Reserve cannot be drained arbitrarily. All flows are deterministic and verifiable on-chain.</div>
+  </div>
+</div>
+
+<!-- MINING -->
+<div class="p-section">
+  <div class="p-section-title"><span class="icon">⛏️</span><span data-i18n="mining.title">Mining</span></div>
+  <div class="p-body">
+    <p data-i18n="mining.intro">Mining is open to anyone. The protocol distributes coins fairly through proof-of-work. Mining is permissionless — no registration, no whitelist.</p>
+  </div>
+  
+  <div class="p-callout p-callout-info">
+    <div class="p-callout-title" data-i18n="mining.howTitle">How to mine</div>
+    <div style="font-size:12px;line-height:1.7;" data-i18n="mining.how">
+      <strong>1.</strong> Get cpuminer or compatible SHA-256d miner<br>
+      <strong>2.</strong> Connect to seed: <code>stratum+tcp://goldbrix.app:3333</code><br>
+      <strong>3.</strong> Algorithm: <code>sha256d</code><br>
+      <strong>4.</strong> Use your GBX address as username<br>
+      <strong>5.</strong> Earn 0.25 GBX per block (current subsidy)
+    </div>
+  </div>
+  
+  <div class="p-callout p-callout-good">
+    <div class="p-callout-title" data-i18n="mining.fairTitle">Fair Launch</div>
+    <div style="font-size:12px;line-height:1.6;" data-i18n="mining.fair">No premine. No ICO. No founder allocation. Mining started Block 1 — every coin minted through proof-of-work, accessible to anyone with computing power.</div>
+  </div>
+</div>
+
+<!-- SECURITY -->
+<div class="p-section">
+  <div class="p-section-title"><span class="icon">🔐</span><span data-i18n="security.title">Security</span></div>
+  <div class="p-body">
+    <p data-i18n="security.intro">GoldBrix wallet uses <strong>maximum security</strong> protocols. Your password is required at the start of each session — exceeding industry standards for wallet protection.</p>
+  </div>
+  
+  <div class="p-callout p-callout-good">
+    <div class="p-callout-title" data-i18n="security.featuresTitle">Security Features</div>
+    <div style="font-size:12px;line-height:1.8;" data-i18n="security.features">
+      ✓ <strong>Self-custody</strong> — Your keys, your coins<br>
+      ✓ <strong>Session-lock</strong> — Password required each session<br>
+      ✓ <strong>Local encryption</strong> — Keys never leave device<br>
+      ✓ <strong>BIP39 seed phrase</strong> — Standard recovery<br>
+      ✓ <strong>No backend storage</strong> — Zero server-side keys<br>
+      ✓ <strong>Open source crypto</strong> — Auditable security
+    </div>
+  </div>
+  
+  <div class="p-callout p-callout-warn">
+    <div class="p-callout-title" data-i18n="security.responsibilityTitle">Your Responsibility</div>
+    <div style="font-size:12px;line-height:1.6;" data-i18n="security.responsibility">Self-custody means YOU control your funds. We never have access to your seed phrase or password. Always backup your seed phrase securely. Lost passwords cannot be recovered.</div>
+  </div>
+</div>
+
+<!-- ROADMAP -->
+<div class="p-section">
+  <div class="p-section-title"><span class="icon">🗺️</span><span data-i18n="roadmap.title">Roadmap</span></div>
+  
+  <div class="p-phase current">
+    <div class="p-phase-header">
+      <div class="p-phase-num">PHASE 1</div>
+      <div class="p-phase-time now" data-i18n="roadmap.now">NOW</div>
+    </div>
+    <div class="p-phase-title" data-i18n="roadmap.p1Title">Bootstrap · Mining · Bridge</div>
+    <div class="p-phase-desc" data-i18n="roadmap.p1Desc">Core protocol live with PoW mining, memecoin launchpad, bonding curve trading, and operational bridge.</div>
+    <ul class="p-phase-list">
+      <li data-i18n="roadmap.p1i1">PoW chain operational (block 1,900,000+)</li>
+      <li data-i18n="roadmap.p1i2">Memecoin launchpad with bonding curve</li>
+      <li data-i18n="roadmap.p1i3">Bridge USDC ↔ GBX (Solana, Arbitrum, Base)</li>
+      <li data-i18n="roadmap.p1i4">Real on-chain burns LIVE (11+ verified)</li>
+      <li data-i18n="roadmap.p1i5">5-language PWA + self-custody wallet</li>
+    </ul>
+  </div>
+  
+  <div class="p-phase">
+    <div class="p-phase-header">
+      <div class="p-phase-num">PHASE 2</div>
+      <div class="p-phase-time">NEXT</div>
+    </div>
+    <div class="p-phase-title" data-i18n="roadmap.p2Title">AMM · Real Burns · Trustless</div>
+    <div class="p-phase-desc" data-i18n="roadmap.p2Desc">Deploy AMM smart contract. Bridge migrates to trustless mode. Key renunciation is the FINAL step, gated on autonomous market price. All trading via on-chain AMM.</div>
+    <ul class="p-phase-list">
+      <li data-i18n="roadmap.p2i1">AMM contract deployed (Uniswap-style)</li>
+      <li data-i18n="roadmap.p2i2">Protocol Reserve → AMM pool migration</li>
+      <li data-i18n="roadmap.p2i3">Key renunciation — FINAL step (public proof, gated on market)</li>
+      <li data-i18n="roadmap.p2i4">Dynamic price discovery</li>
+      <li data-i18n="roadmap.p2i5">Anyone provides liquidity (LP tokens)</li>
+    </ul>
+  </div>
+  
+  <div class="p-phase">
+    <div class="p-phase-header">
+      <div class="p-phase-num">PHASE 3</div>
+      <div class="p-phase-time">LATER</div>
+    </div>
+    <div class="p-phase-title" data-i18n="roadmap.p3Title">Open Source · Decentralization</div>
+    <div class="p-phase-desc" data-i18n="roadmap.p3Desc">Application code open-sourced. Anyone runs own instance. Multiple bridges, multiple operators. External DEX listings. Full ecosystem decentralization.</div>
+    <ul class="p-phase-list">
+      <li data-i18n="roadmap.p3i1">Open-source GitHub release — LIVE ✓</li>
+      <li data-i18n="roadmap.p3i2">DEX listings (Raydium, Jupiter)</li>
+      <li data-i18n="roadmap.p3i3">Multi-chain wrapped GBX</li>
+      <li data-i18n="roadmap.p3i4">Decentralized infrastructure</li>
+      <li data-i18n="roadmap.p3i5">Code = Law (no DAO)</li>
+    </ul>
+  </div>
+</div>
+
+<!-- DECENTRALIZATION -->
+<div class="p-section">
+  <div class="p-section-title"><span class="icon">🛡️</span><span data-i18n="decent.title">Decentralization</span></div>
+  <div class="p-body">
+    <p data-i18n="decent.intro">The GoldBrix protocol is built decentralized at the consensus layer. The application running on the protocol is operated by a small team in Phase 1, transitioning to full autonomy in Phase 2-3.</p>
+  </div>
+  
+  <div class="p-callout p-callout-good">
+    <div class="p-callout-title" data-i18n="decent.protoTitle">Protocol Decentralization (NOW)</div>
+    <div style="font-size:12px;line-height:1.8;" data-i18n="decent.proto">
+      ✓ No admin keys on protocol<br>
+      ✓ Anyone can run a node — <a href="/v3/run-node.html" style="color:#58a6ff">guide</a><br>
+      ✓ Anyone can mine (permissionless)<br>
+      ✓ Open-source consensus code<br>
+      ✓ Self-custody by default<br>
+      ✓ Public blockchain (anyone can audit)
+    </div>
+  </div>
+  
+  <div class="p-callout p-callout-warn">
+    <div class="p-callout-title" data-i18n="decent.appTitle">Application (Phase 1)</div>
+    <div style="font-size:12px;line-height:1.6;" data-i18n="decent.app">The web application (PWA, bridge, launchpad) is operated by the initial development team in Phase 1. This enables bootstrapping. Phase 2 will deploy AMM smart contracts to remove operator dependency.</div>
+  </div>
+</div>
+
+<!-- NETWORK INFO -->
+<div class="p-section">
+  <div class="p-section-title"><span class="icon">🔗</span><span data-i18n="network.title">Network</span></div>
+  <div class="p-stats-grid">
+    <div class="p-stat-card">
+      <div class="p-stat-label" data-i18n="network.chain">Chain</div>
+      <div class="p-stat-value gold" style="font-size:13px;">goldbrix-main</div>
+    </div>
+    <div class="p-stat-card">
+      <div class="p-stat-label" data-i18n="network.block">Block Height</div>
+      <div class="p-stat-value" id="pStatBlock">--</div>
+    </div>
+    <div class="p-stat-card">
+      <div class="p-stat-label" data-i18n="network.hashrate">Hashrate</div>
+      <div class="p-stat-value" id="pStatHashrate">--</div>
+    </div>
+    <div class="p-stat-card">
+      <div class="p-stat-label" data-i18n="network.miners">Active Miners</div>
+      <div class="p-stat-value green">2</div>
+      <div class="p-stat-sub" data-i18n="network.minersSub">bootstrap</div>
+    </div>
+  </div>
+</div>
+
+<!-- CTAs -->
+<div class="p-section">
+  <div class="p-section-title"><span class="icon">🚀</span><span data-i18n="cta.title">Get Started</span></div>
+  <div class="p-cta-row">
+    <a href="/buy.html" class="p-cta-btn p-cta-buy" data-i18n="cta.buy">🌉 BUY GBX</a>
+    <a href="/v3/burns.html" class="p-cta-btn p-cta-mine" data-i18n="cta.burn">🔥 BURN TRACKER</a>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="p-footer">
+  <div data-i18n="footer.version">GoldBrix Protocol v2.8 · Phase 1.5</div>
+  <div style="margin-top:10px;font-size:9px;color:#fff;" data-i18n="footer.disclaimer">
+    AUTONOMOUS PROTOCOL · SELF-CUSTODY · YOUR KEYS · YOUR RESPONSIBILITY
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══ I18N ═══
+const __VROOT_protocol = window.__SPA_BOX || document;
+const LANG_protocol = (function() {
+  try { return localStorage.getItem('gbx_lang') || localStorage.getItem('goldbrix_lang') || 'en'; } catch(e) { return 'en'; }
+})();
+
+const I18N_protocol = {
+  en: {
+    'reserve.title': 'Protocol Reserve',
+    'reserve.intro': 'The Protocol Reserve is an autonomous on-chain pool funded by protocol fees. It operates by deterministic rules defined in code — no DAO votes, no committee, no human discretion.',
+    'reserve.featuresTitle': 'How It Works',
+    'reserve.features': '✓ <strong>Self-growing</strong> — fed by protocol fees (0.5% bridge, 0.5% launches)<br>✓ <strong>No premine</strong> — no team allocation, no founder claims<br>✓ <strong>Trustless outflow</strong> — code defines all withdrawal rules<br>✓ <strong>Keys burned Phase 2</strong> — public on-chain proof<br>✓ <strong>Operational fuel</strong> — bridge liquidity + AMM bootstrap',
+    'reserve.principleTitle': 'Core Principle',
+    'reserve.principle': '<strong>Code = Law. Mining = Consensus. No DAO.</strong> The Reserve cannot be drained arbitrarily. All flows are deterministic and verifiable on-chain.',
+    'page.title': 'PROTOCOL · WHITEPAPER',
+    'hero.sub': 'Decentralized · PoW · Open Source',
+    'hero.status': 'CHAIN LIVE · PHASE 1',
+    'vision.title': 'Vision',
+    'founder.title': 'The Founder',
+    'founder.p1': 'GoldBrix was built by <strong>Gideon Brick</strong> — an anonymous founder who laid it brick by brick, then walked away. No CEO. No company. No key.',
+    'founder.p2': 'GoldBrix belongs to no one but everyone who mines or holds it. The founder mines like anyone else and keeps no privileged control. <strong>Real chain. Real burn. Real fairness.</strong>',
+    'tokenomics.title': 'GBX Tokenomics',
+    'tokenomics.supply': 'Max Supply', 'tokenomics.mined': 'Mined Now',
+    'tokenomics.reward': 'Block Reward', 'tokenomics.rewardSub': 'GBX (halving 28M)',
+    'tokenomics.algo': 'Algorithm', 'tokenomics.algoSub': 'PoW · Native',
+    'tokenomics.blocktime': 'Block Time', 'tokenomics.blocktimeSub': 'seconds target',
+    'tokenomics.price': 'Ref Price', 'tokenomics.priceSub': 'Phase 1 peg',
+    'tokenomics.halvingTitle': 'Halving Schedule',
+    'fees.title': 'Fee Model & Burns',
+    'fees.action': 'Action', 'fees.fee': 'Fee', 'fees.destination': 'Destination',
+    'fees.tradeBuy': 'Trade Buy', 'fees.tradeSell': 'Trade Sell',
+    'fees.graduation': 'Graduation', 'fees.bridge': 'Bridge USDC↔GBX',
+    'fees.burn': '🔥 BURN', 'fees.burn2': '🔥 BURN', 'fees.burn3': '🔥 BURN',
+    'fees.operations': 'Operations',
+    'fees.transparency': 'Transparent burn tracking',
+    'fees.tracking': 'All burns are publicly tracked. Live counter visible at the Burn Tracker page.',
+    'price.title': 'Price Discovery',
+    'price.howTitle': 'How price evolves',
+    'price.faqTitle': 'FAQ: Protocol Reserve & Burns',
+    'mining.title': 'Mining',
+    'mining.howTitle': 'How to mine',
+    'mining.fairTitle': 'Fair Launch',
+    'security.title': 'Security',
+    'security.featuresTitle': 'Security Features',
+    'security.responsibilityTitle': 'Your Responsibility',
+    'roadmap.title': 'Roadmap', 'roadmap.now': 'NOW',
+    'roadmap.p1Title': 'Bootstrap · Mining · Bridge',
+    'roadmap.p2Title': 'AMM · Real Burns · Trustless',
+    'roadmap.p3Title': 'Open Source · Decentralization',
+    'decent.title': 'Decentralization',
+    'decent.protoTitle': 'Protocol Decentralization (NOW)',
+    'decent.appTitle': 'Application (Phase 1)',
+    'network.title': 'Network',
+    'network.chain': 'Chain', 'network.block': 'Block Height',
+    'network.hashrate': 'Hashrate', 'network.miners': 'Active Miners',
+    'network.minersSub': 'bootstrap',
+    'cta.title': 'Get Started', 'cta.buy': '🌉 BUY GBX', 'cta.burn': '🔥 BURN TRACKER',
+    'footer.version': 'GoldBrix Protocol v2.8 · Phase 1.5',
+    'footer.disclaimer': 'AUTONOMOUS PROTOCOL · SELF-CUSTODY · YOUR KEYS · YOUR RESPONSIBILITY'
+  },
+  ro: {
+    'reserve.title': 'Rezerva Protocol',
+    'reserve.intro': 'Rezerva Protocol este un pool autonom on-chain alimentat din taxele protocolului. Operează pe reguli deterministe definite în cod — fără voturi DAO, fără comitet, fără discreție umană.',
+    'reserve.featuresTitle': 'Cum Funcționează',
+    'reserve.features': '✓ <strong>Auto-creștere</strong> — alimentată din taxe protocol (0.5% bridge, 0.5% lansări)<br>✓ <strong>Fără premine</strong> — fără alocare echipă, fără claim founder<br>✓ <strong>Flux trustless</strong> — codul definește toate regulile de ieșire<br>✓ <strong>Chei arse în Phase 2</strong> — dovadă publică on-chain<br>✓ <strong>Combustibil operațional</strong> — lichiditate bridge + bootstrap AMM',
+    'reserve.principleTitle': 'Principiu Fundamental',
+    'reserve.principle': '<strong>Cod = Lege. Mining = Consens. Fără DAO.</strong> Rezerva nu poate fi drenată arbitrar. Toate fluxurile sunt deterministe și verificabile on-chain.',
+    'page.title': 'PROTOCOL · WHITEPAPER',
+    'hero.sub': 'Decentralizat · PoW · Open Source',
+    'hero.status': 'BLOCKCHAIN LIVE · FAZA 1',
+    'vision.title': 'Viziune',
+    'founder.title': 'Fondatorul',
+    'founder.p1': 'GoldBrix a fost construit de <strong>Gideon Brick</strong> — un fondator anonim care l-a zidit cărămidă cu cărămidă, apoi a plecat. Fără CEO. Fără companie. Fără cheie.',
+    'founder.p2': 'GoldBrix nu aparține nimănui, ci tuturor celor care minează sau dețin. Fondatorul minează ca oricine altcineva şi nu păstrează niciun control privilegiat. <strong>Lanț real. Burn real. Corectitudine reală.</strong>',
+    'tokenomics.title': 'Tokenomics GBX',
+    'tokenomics.supply': 'Ofertă Max', 'tokenomics.mined': 'Minat Acum',
+    'tokenomics.reward': 'Recompensă Bloc', 'tokenomics.rewardSub': 'GBX (halving 28M)',
+    'tokenomics.algo': 'Algoritm', 'tokenomics.algoSub': 'PoW · Nativ',
+    'tokenomics.blocktime': 'Timp Bloc', 'tokenomics.blocktimeSub': 'secunde țintă',
+    'tokenomics.price': 'Preț Ref', 'tokenomics.priceSub': 'Peg Faza 1',
+    'tokenomics.halvingTitle': 'Program Halving',
+    'fees.title': 'Model Taxe & Burns',
+    'fees.action': 'Acțiune', 'fees.fee': 'Taxă', 'fees.destination': 'Destinație',
+    'fees.tradeBuy': 'Cumpărare Trade', 'fees.tradeSell': 'Vânzare Trade',
+    'fees.graduation': 'Graduație', 'fees.bridge': 'Bridge USDC↔GBX',
+    'fees.burn': '🔥 ARDERE', 'fees.burn2': '🔥 ARDERE', 'fees.burn3': '🔥 ARDERE',
+    'fees.operations': 'Operațiuni',
+    'fees.transparency': 'Tracking burns transparent',
+    'fees.tracking': 'Toate arderile sunt urmărite public. Counter live vizibil la Burn Tracker.',
+    'price.title': 'Descoperire Preț',
+    'price.howTitle': 'Cum evoluează prețul',
+    'price.faqTitle': 'FAQ: Rezerva Protocol & Burns',
+    'mining.title': 'Mining',
+    'mining.howTitle': 'Cum se minează',
+    'mining.fairTitle': 'Lansare Echitabilă',
+    'security.title': 'Securitate',
+    'security.featuresTitle': 'Caracteristici Securitate',
+    'security.responsibilityTitle': 'Responsabilitatea Ta',
+    'roadmap.title': 'Roadmap', 'roadmap.now': 'ACUM',
+    'roadmap.p1Title': 'Bootstrap · Mining · Bridge',
+    'roadmap.p2Title': 'AMM · Burns Reale · Trustless',
+    'roadmap.p3Title': 'Open Source · Decentralizare',
+    'decent.title': 'Decentralizare',
+    'decent.protoTitle': 'Decentralizare Protocol (ACUM)',
+    'decent.appTitle': 'Aplicație (Faza 1)',
+    'network.title': 'Rețea',
+    'network.chain': 'Chain', 'network.block': 'Înălțime Bloc',
+    'network.hashrate': 'Hashrate', 'network.miners': 'Mineri Activi',
+    'network.minersSub': 'bootstrap',
+    'cta.title': 'Începe', 'cta.buy': '🌉 CUMPĂRĂ GBX', 'cta.burn': '🔥 BURN TRACKER',
+    'footer.version': 'Protocol GoldBrix v2.8 · Faza 1.5',
+        'mining.intro': 'Mineritul este deschis oricui. Protocolul distribuie monedele corect prin proof-of-work. Mineritul este permissionless — fără înregistrare, fără whitelist.',
+    'mining.how': '<strong>1.</strong> Obține cpuminer sau miner SHA-256d compatibil<br><strong>2.</strong> Conectează la seed: <code>stratum+tcp://goldbrix.app:3333</code><br><strong>3.</strong> Algoritm: <code>sha256d</code><br><strong>4.</strong> Folosește adresa ta GBX ca username<br><strong>5.</strong> Câștigi 0.25 GBX per bloc (subsidiu curent)',
+    'mining.fair': 'Fără premine. Fără ICO. Fără alocație fondator. Mineritul a început Blocul 1 — fiecare monedă creată prin proof-of-work, accesibilă oricui are putere de calcul.',
+    'vision.p1': 'GoldBrix este un memecoin chain decentralizat construit pe principii proof-of-work. Protocolul are <strong>fără admin keys</strong>, <strong>fără control centralizat</strong>, și <strong>oricine poate participa</strong> ca miner, operator de nod, sau utilizator.',
+    'vision.p2': 'Chain-ul permite oricui să lanseze memecoins prin bonding curve, să le tranzacționeze, și să participe într-o economie transparentă fee-burn. Genesis lansat 22 Ianuarie 2026 fără premine, fără ICO, și fără alocație fondator.',
+    'tokenomics.intro': 'GBX este moneda nativă a blockchain-ului GoldBrix. Minat prin SHA-256d proof-of-work: 0,25 GBX per bloc de 3 secunde, halving la fiecare 28.000.000 blocuri, limită fixă 15.000.000 GBX.',
+    'tokenomics.halvingDesc': 'Faza 1 (bootstrap, blocuri de 10 min): <strong>50 GBX/bloc</strong>, halving la fiecare 150.000 blocuri.<br>Faza 2 (de la blocul 20.000, blocuri de 3 sec): <strong>0.25 GBX/bloc</strong>, halving la fiecare 28.000.000 blocuri.<br>Emisia converge spre limita fixă de <strong>15.000.000 GBX</strong>.',
+    'fees.intro': 'Taxele protocolului curg într-un mecanism deflaționist de ardere. TOATE taxele (cumpărare, vânzare, dev buy, graduație, AMM) sunt arderi REALE on-chain la adresa imposibil de cheltuit bn1qqqq...3kc3g2 — verificabile prin TX hash. 0.5% pe bonding curve, 0.3% pe AMM post-graduație. 100% din taxe arse — fără alocare echipă.',
+    'price.intro': 'Faza 1 folosește un peg de referință de <strong>$0.10/GBX</strong> prin bridge. ASTA NU este preț de piață — e un rate stabil în timpul bootstrap pre-launch.',
+    'price.how': '<strong>Faza 1.5 (ACUM · LIVE):</strong> Peg fix $0.10 via bridge + burns REALE active<br><strong>Faza 2 (URMEAZĂ):</strong> Preț dinamic AMM<br><strong>Faza 3 (ULTERIOR):</strong> Listări DEX externe — descoperire reală de preț',
+    'price.faq': '<strong>Î:</strong> Trimiterea GBX la Rezerva Protocol afectează prețul?<br><strong>R:</strong> Nu. Transferurile către Rezerva Protocol NU sunt burns. Total supply rămâne neschimbat.',
+    'roadmap.p1Desc': 'Protocol core live cu PoW mining, launchpad memecoin, bonding curve trading, și bridge operațional.',
+    'roadmap.p1i1': 'PoW chain operațional (bloc 1.900.000+)',
+    'roadmap.p1i2': 'Launchpad memecoin cu bonding curve',
+    'roadmap.p1i3': 'Bridge USDC ↔ GBX (Solana, Arbitrum, Base)',
+    'roadmap.p1i4': 'Burns reale on-chain LIVE (Phase 1.5)',
+    'roadmap.p1i5': 'PWA 5 limbi + wallet self-custody',
+    'roadmap.p2Desc': 'Deploy AMM smart contract. Bridge migrează la mod trustless. Renunțarea la chei = PASUL FINAL, gated pe preț de piață autonom.',
+    'roadmap.p2i1': 'Contract AMM deployat (stil Uniswap)',
+    'roadmap.p2i2': 'Migrare Rezerva Protocol → AMM pool',
+    'roadmap.p2i3': 'Renunțare chei — PAS FINAL (dovadă publică, gated pe piață)',
+    'roadmap.p2i4': 'Descoperire preț dinamic',
+    'roadmap.p2i5': 'Oricine furnizează lichiditate (LP tokens)',
+    'roadmap.p3Desc': 'Cod aplicație open-source. Oricine rulează propria instanță. Decentralizare completă ecosistem.',
+    'roadmap.p3i1': 'Release open-source pe GitHub — LIVE ✓',
+    'roadmap.p3i2': 'Listing DEX (Raydium, Jupiter)',
+    'roadmap.p3i3': 'Native colored coins (OP_RETURN)',
+    'roadmap.p3i4': 'Infrastructură decentralizată',
+    'roadmap.p3i5': 'Code = Law (fără DAO)',
+    'decent.intro': 'Protocolul GoldBrix este construit decentralizat la nivelul consensus. Aplicația care rulează pe protocol este operată de o echipă mică în Faza 1, tranziționând la autonomie completă în Faza 2-3.',
+    'decent.proto': '✓ Fără admin keys pe protocol<br>✓ Oricine poate rula un nod<br>✓ Oricine poate mina (permissionless)<br>✓ Cod consensus open-source<br>✓ Self-custody by default<br>✓ Blockchain public (oricine poate audita)',
+    'decent.app': 'Aplicația web (PWA, bridge, launchpad) este operată de echipa inițială de dezvoltare în Faza 1. Faza 2 va deploya smart contracts AMM pentru a elimina dependența de operator.',
+    'security.intro': 'Wallet-ul GoldBrix folosește protocoale de <strong>securitate maximă</strong>. Parola ta este cerută la începutul fiecărei sesiuni — depășind standardele industriei pentru protecția wallet-ului.',
+    'security.features': '✓ <strong>Self-custody</strong> — Cheile tale, monedele tale<br>✓ <strong>Session-lock</strong> — Parolă cerută fiecare sesiune<br>✓ <strong>Criptare locală</strong> — Cheile nu părăsesc dispozitivul<br>✓ <strong>Seed phrase BIP39</strong> — Recovery standard<br>✓ <strong>Fără storage backend</strong> — Zero chei server-side<br>✓ <strong>Crypto open source</strong> — Securitate auditabilă',
+    'security.responsibility': 'Self-custody înseamnă că TU controlezi fondurile. Noi nu avem niciodată acces la seed phrase sau parolă. Întotdeauna backup seed phrase în siguranță. Parolele pierdute nu pot fi recuperate.',
+    'footer.disclaimer': 'PROTOCOL AUTONOM · SELF-CUSTODY · CHEILE TALE · RESPONSABILITATEA TA'
+  },
+  de: {
+    'reserve.title': 'Protokoll-Reserve',
+    'reserve.intro': 'Die Protokoll-Reserve ist ein autonomer On-Chain-Pool, gespeist aus Protokoll-Gebühren. Operiert nach deterministischen Regeln im Code — keine DAO-Votes, kein Komitee, keine menschliche Diskretion.',
+    'reserve.featuresTitle': 'Funktionsweise',
+    'reserve.features': '✓ <strong>Selbst-wachsend</strong> — gespeist aus Protokoll-Gebühren (0.5% Bridge, 0.5% Launches)<br>✓ <strong>Kein Premine</strong> — keine Team-Allokation, keine Founder-Claims<br>✓ <strong>Trustless Outflow</strong> — Code definiert alle Auszahlungsregeln<br>✓ <strong>Schlüssel verbrannt Phase 2</strong> — öffentlicher On-Chain-Beweis<br>✓ <strong>Operativer Treibstoff</strong> — Bridge-Liquidität + AMM-Bootstrap',
+    'reserve.principleTitle': 'Kernprinzip',
+    'reserve.principle': '<strong>Code = Gesetz. Mining = Konsens. Kein DAO.</strong> Die Reserve kann nicht beliebig geleert werden. Alle Flüsse sind deterministisch und on-chain verifizierbar.',
+    'page.title': 'PROTOKOLL · WHITEPAPER',
+    'hero.sub': 'Dezentralisiert · PoW · Open Source',
+    'hero.status': 'CHAIN LIVE · PHASE 1',
+    'vision.title': 'Vision',
+    'founder.title': 'Der Gründer',
+    'founder.p1': 'GoldBrix wurde von <strong>Gideon Brick</strong> erbaut — einem anonymen Gründer, der es Stein für Stein aufbaute und dann fortging. Kein CEO. Keine Firma. Kein Schlüssel.',
+    'founder.p2': 'GoldBrix gehört niemandem außer allen, die es schürfen oder halten. Der Gründer schürft wie jeder andere und behält keine privilegierte Kontrolle. <strong>Echte Chain. Echtes Burning. Echte Fairness.</strong>',
+    'tokenomics.title': 'GBX Tokenomics',
+    'tokenomics.supply': 'Max Angebot', 'tokenomics.mined': 'Gemined Jetzt',
+    'tokenomics.reward': 'Block Belohnung', 'tokenomics.rewardSub': 'GBX (halving 28M)',
+    'tokenomics.algo': 'Algorithmus', 'tokenomics.algoSub': 'PoW · Nativ',
+    'tokenomics.blocktime': 'Blockzeit', 'tokenomics.blocktimeSub': 'Sekunden Ziel',
+    'tokenomics.price': 'Ref Preis', 'tokenomics.priceSub': 'Phase 1 Peg',
+    'tokenomics.halvingTitle': 'Halving Zeitplan',
+    'fees.title': 'Gebührenmodell & Burns',
+    'fees.action': 'Aktion', 'fees.fee': 'Gebühr', 'fees.destination': 'Ziel',
+    'fees.tradeBuy': 'Trade Kauf', 'fees.tradeSell': 'Trade Verkauf',
+    'fees.graduation': 'Graduierung', 'fees.bridge': 'Bridge USDC↔GBX',
+    'fees.burn': '🔥 BURN', 'fees.burn2': '🔥 BURN', 'fees.burn3': '🔥 BURN',
+    'fees.operations': 'Operationen',
+    'fees.transparency': 'Transparentes Burn Tracking',
+    'fees.tracking': 'Alle Burns werden öffentlich verfolgt. Live-Counter beim Burn Tracker.',
+    'price.title': 'Preisfindung',
+    'price.howTitle': 'Wie sich der Preis entwickelt',
+    'price.faqTitle': 'FAQ: Protokoll-Reserve & Burns',
+    'mining.title': 'Mining',
+    'mining.howTitle': 'Wie man mined',
+    'mining.fairTitle': 'Fair Launch',
+    'security.title': 'Sicherheit',
+    'security.featuresTitle': 'Sicherheitsmerkmale',
+    'security.responsibilityTitle': 'Deine Verantwortung',
+    'roadmap.title': 'Roadmap', 'roadmap.now': 'JETZT',
+    'roadmap.p1Title': 'Bootstrap · Mining · Bridge',
+    'roadmap.p2Title': 'AMM · Echte Burns · Trustless',
+    'roadmap.p3Title': 'Open Source · Dezentralisierung',
+    'decent.title': 'Dezentralisierung',
+    'decent.protoTitle': 'Protokoll Dezentralisierung (JETZT)',
+    'decent.appTitle': 'Anwendung (Phase 1)',
+    'network.title': 'Netzwerk',
+    'network.chain': 'Chain', 'network.block': 'Block Höhe',
+    'network.hashrate': 'Hashrate', 'network.miners': 'Aktive Miner',
+    'network.minersSub': 'bootstrap',
+    'cta.title': 'Loslegen', 'cta.buy': '🌉 GBX KAUFEN', 'cta.burn': '🔥 BURN TRACKER',
+    'footer.version': 'GoldBrix Protokoll v2.8 · Phase 1.5',
+        'mining.intro': 'Mining ist für jeden offen. Das Protokoll verteilt Coins fair durch proof-of-work. Mining ist permissionless — keine Registrierung, keine Whitelist.',
+    'mining.how': '<strong>1.</strong> Hol dir cpuminer oder kompatible SHA-256d Miner<br><strong>2.</strong> Verbinde mit seed: <code>stratum+tcp://goldbrix.app:3333</code><br><strong>3.</strong> Algorithmus: <code>sha256d</code><br><strong>4.</strong> Nutze deine GBX-Adresse als Username<br><strong>5.</strong> Verdiene 0,25 GBX pro Block (aktuelle Subvention)',
+    'mining.fair': 'Kein Premine. Kein ICO. Keine Gründerzuteilung. Mining startete Block 1 — jeder Coin durch proof-of-work geprägt, für jeden mit Rechenleistung zugänglich.',
+    'vision.p1': 'GoldBrix ist eine dezentralisierte Memecoin-Chain auf proof-of-work Prinzipien. Das Protokoll hat <strong>keine Admin Keys</strong>, <strong>keine zentralisierte Kontrolle</strong>, und <strong>jeder kann teilnehmen</strong> als Miner, Node-Operator oder Nutzer.',
+    'vision.p2': 'Die Chain ermöglicht jedem Memecoins per Bonding-Kurve zu launchen, zu traden und an einer transparenten Fee-Burn Ökonomie teilzuhaben. Genesis launched 22. Januar 2026 ohne Premine, ohne ICO, ohne Founder-Zuteilung.',
+    'tokenomics.intro': 'GBX ist die native Währung der GoldBrix Blockchain. Gemined per SHA-256d Proof-of-Work: 0,25 GBX pro 3-Sekunden-Block, Halving alle 28.000.000 Blöcke, Hard Cap 15.000.000 GBX.',
+    'tokenomics.halvingDesc': 'Phase 1 (Bootstrap, 10-Min-Blöcke): <strong>50 GBX/Block</strong>, Halbierung alle 150.000 Blöcke.<br>Phase 2 (ab Block 20.000, 3-Sek-Blöcke): <strong>0,25 GBX/Block</strong>, Halbierung alle 28.000.000 Blöcke.<br>Die Emission konvergiert zur festen Obergrenze von <strong>15.000.000 GBX</strong>.',
+    'fees.intro': 'Protokoll-Gebühren fließen in einen deflationären Burn-Mechanismus. ALLE Gebühren (Kauf, Verkauf, Dev-Buy, Graduierung, AMM) sind ECHTE On-Chain-Burns an die nicht ausgebbare Adresse bn1qqqq...3kc3g2 — per TX-Hash verifizierbar. 0.5% auf Bonding Curve, 0.3% auf AMM. 100% verbrannt — keine Team-Zuteilung.',
+    'price.intro': 'Phase 1 nutzt einen Referenz-Peg von <strong>$0.10/GBX</strong> über Bridge. Dies ist KEIN Marktpreis — es ist eine stabile Rate während Pre-Launch Bootstrapping.',
+    'price.how': '<strong>Phase 1.5 (JETZT · LIVE):</strong> Fester Peg $0.10 via Bridge + ECHTE Burns aktiv<br><strong>Phase 2 (NÄCHSTE):</strong> Dynamische AMM-Preisbildung<br><strong>Phase 3 (SPÄTER):</strong> Externe DEX-Listings — echte Marktpreisfindung',
+    'price.faq': '<strong>F:</strong> Beeinflusst das Senden von GBX zur Protokoll-Reserve den Preis?<br><strong>A:</strong> Nein. Protokoll-Reserve-Transfers sind KEINE Burns. Gesamte Supply bleibt unverändert.',
+    'roadmap.p1Desc': 'Core-Protokoll live mit PoW Mining, Memecoin Launchpad, Bonding-Kurven Trading und operationaler Bridge.',
+    'roadmap.p1i1': 'PoW Chain operational (Block 1.900.000+)',
+    'roadmap.p1i2': 'Memecoin Launchpad mit Bonding-Kurve',
+    'roadmap.p1i3': 'Bridge USDC ↔ GBX (Solana, Arbitrum, Base)',
+    'roadmap.p1i4': 'Echte On-Chain Burns LIVE (Phase 1.5)',
+    'roadmap.p1i5': '5-Sprachen PWA + Self-Custody Wallet',
+    'roadmap.p2Desc': 'AMM Smart Contract deployen. Bridge migriert auf trustless Modus. Key-Verzicht ist der LETZTE Schritt, abhängig vom autonomen Marktpreis.',
+    'roadmap.p2i1': 'AMM Contract deployt (Uniswap-Stil)',
+    'roadmap.p2i2': 'Protokoll-Reserve → AMM Pool Migration',
+    'roadmap.p2i3': 'Key-Verzicht — LETZTER Schritt (öffentlicher Beweis, marktabhängig)',
+    'roadmap.p2i4': 'Dynamische Preisbildung',
+    'roadmap.p2i5': 'Jeder stellt Liquidität (LP Tokens)',
+    'roadmap.p3Desc': 'Anwendungscode open-source. Jeder betreibt eigene Instanz. Vollständige Ökosystem-Dezentralisierung.',
+    'roadmap.p3i1': 'GitHub Open-Source-Release — LIVE ✓',
+    'roadmap.p3i2': 'DEX Listings (Raydium, Jupiter)',
+    'roadmap.p3i3': 'Multi-Chain wrapped GBX',
+    'roadmap.p3i4': 'Dezentralisierte Infrastruktur',
+    'roadmap.p3i5': 'Community Governance',
+    'decent.intro': 'Das GoldBrix Protokoll ist auf Konsens-Ebene dezentralisiert. Die auf dem Protokoll laufende Anwendung wird in Phase 1 von einem kleinen Team betrieben, mit Übergang zu voller Autonomie in Phase 2-3.',
+    'decent.proto': '✓ Keine Admin Keys am Protokoll<br>✓ Jeder kann Node betreiben<br>✓ Jeder kann minen (permissionless)<br>✓ Open-Source Konsens-Code<br>✓ Self-Custody by Default<br>✓ Öffentliche Blockchain (jeder kann auditieren)',
+    'decent.app': 'Die Web-Anwendung (PWA, Bridge, Launchpad) wird in Phase 1 vom anfänglichen Entwicklungsteam betrieben. Phase 2 deployt AMM Smart Contracts um Operator-Abhängigkeit zu eliminieren.',
+    'security.intro': 'GoldBrix Wallet nutzt <strong>maximale Sicherheits</strong>-Protokolle. Dein Passwort wird zu Beginn jeder Session benötigt — übertrifft Industriestandards für Wallet-Schutz.',
+    'security.features': '✓ <strong>Self-Custody</strong> — Deine Keys, deine Coins<br>✓ <strong>Session-Lock</strong> — Passwort jede Session<br>✓ <strong>Lokale Verschlüsselung</strong> — Keys verlassen niemals Gerät<br>✓ <strong>BIP39 Seed Phrase</strong> — Standard Recovery<br>✓ <strong>Kein Backend-Storage</strong> — Null serverseitige Keys<br>✓ <strong>Open Source Crypto</strong> — Auditierbare Sicherheit',
+    'security.responsibility': 'Self-Custody bedeutet DU kontrollierst deine Mittel. Wir haben niemals Zugriff auf deine Seed Phrase oder Passwort. Sichere immer deine Seed Phrase. Verlorene Passwörter können nicht wiederhergestellt werden.',
+    'footer.disclaimer': 'AUTONOMES PROTOKOLL · SELF-CUSTODY · DEINE KEYS · DEINE VERANTWORTUNG'
+  },
+  zh: {
+    'reserve.title': '协议储备',
+    'reserve.intro': '协议储备是一个由协议费用资助的自主链上资金池。它按照代码中定义的确定性规则运作——没有DAO投票，没有委员会，没有人为裁量权。',
+    'reserve.featuresTitle': '运作方式',
+    'reserve.features': '✓ <strong>自我增长</strong>——由协议费用资助（桥接0.5%，发行0.5%）<br>✓ <strong>无预挖</strong>——无团队分配，无创始人主张<br>✓ <strong>无信任流出</strong>——代码定义所有提取规则<br>✓ <strong>第二阶段销毁密钥</strong>——链上公开证明<br>✓ <strong>运营燃料</strong>——桥接流动性 + AMM启动',
+    'reserve.principleTitle': '核心原则',
+    'reserve.principle': '<strong>代码即法律。挖矿即共识。无DAO。</strong>储备无法被任意提取。所有流动都是确定性的，可在链上验证。',
+    'page.title': '协议 · 白皮书',
+    'hero.sub': '去中心化 · PoW · 开源',
+    'hero.status': '链上线 · 第1阶段',
+    'vision.title': '愿景',
+    'founder.title': '创始人',
+    'founder.p1': 'GoldBrix 由 <strong>Gideon Brick</strong> 打造——一位匿名创始人，一砖一瓦地建立了它，然后默默离去。没有 CEO，没有公司，没有密钥。',
+    'founder.p2': 'GoldBrix 不属于任何人，只属于每一位挖矿或持有它的人。创始人像其他人一样挖矿，不保留任何特权控制。<strong>真实的链。真实的销毁。真实的公平。</strong>',
+    'tokenomics.title': 'GBX 代币经济学',
+    'tokenomics.supply': '最大供应', 'tokenomics.mined': '已挖',
+    'tokenomics.reward': '区块奖励', 'tokenomics.rewardSub': 'GBX (减半 2800万)',
+    'tokenomics.algo': '算法', 'tokenomics.algoSub': 'PoW · 原生',
+    'tokenomics.blocktime': '区块时间', 'tokenomics.blocktimeSub': '秒目标',
+    'tokenomics.price': '参考价格', 'tokenomics.priceSub': '第1阶段挂钩',
+    'tokenomics.halvingTitle': '减半时间表',
+    'fees.title': '费用模型和销毁',
+    'fees.action': '操作', 'fees.fee': '费用', 'fees.destination': '目的地',
+    'fees.tradeBuy': '交易买入', 'fees.tradeSell': '交易卖出',
+    'fees.graduation': '毕业', 'fees.bridge': '桥 USDC↔GBX',
+    'fees.burn': '🔥 销毁', 'fees.burn2': '🔥 销毁', 'fees.burn3': '🔥 销毁',
+    'fees.operations': '运营',
+    'fees.transparency': '透明销毁追踪',
+    'fees.tracking': '所有销毁都公开追踪。在销毁追踪页面查看实时计数器。',
+    'price.title': '价格发现',
+    'price.howTitle': '价格如何演变',
+    'price.faqTitle': '常见问题：协议储备和销毁',
+    'mining.title': '挖矿',
+    'mining.howTitle': '如何挖矿',
+    'mining.fairTitle': '公平启动',
+    'roadmap.title': '路线图', 'roadmap.now': '现在',
+    'roadmap.p1Title': '启动 · 挖矿 · 桥',
+    'roadmap.p2Title': 'AMM · 真实销毁 · 无信任',
+    'roadmap.p3Title': '开源 · 去中心化',
+    'decent.title': '去中心化',
+    'decent.protoTitle': '协议去中心化（现在）',
+    'decent.appTitle': '应用（第1阶段）',
+    'network.title': '网络',
+    'network.chain': '链', 'network.block': '区块高度',
+    'network.hashrate': '算力', 'network.miners': '活跃矿工',
+    'network.minersSub': 'bootstrap',
+    'cta.title': '开始', 'cta.buy': '🌉 购买 GBX', 'cta.burn': '🔥 销毁追踪',
+    'footer.version': 'GoldBrix 协议 v2.8 · 第1.5阶段',
+        'mining.intro': '挖矿对所有人开放。协议通过工作量证明公平分配代币。挖矿无需许可——无需注册，无白名单。',
+    'mining.how': '<strong>1.</strong> 获取cpuminer或兼容的SHA-256d矿工<br><strong>2.</strong> 连接到种子: <code>stratum+tcp://goldbrix.app:3333</code><br><strong>3.</strong> 算法: <code>sha256d</code><br><strong>4.</strong> 使用您的GBX地址作为用户名<br><strong>5.</strong> 每区块获得0.25 GBX（当前奖励）',
+    'mining.fair': '没有预挖。没有ICO。没有创始人分配。挖矿从区块1开始 — 每个代币都通过工作量证明铸造，任何拥有计算能力的人都可以使用。',
+    'vision.p1': 'GoldBrix是基于工作量证明原则构建的去中心化memecoin链。该协议<strong>没有管理员密钥</strong>，<strong>没有中心化控制</strong>，<strong>任何人都可以参与</strong>，作为矿工、节点运营者或用户。',
+    'vision.p2': '该链允许任何人通过bonding curve启动memecoin，进行交易，并参与透明的费用销毁经济。Genesis于2026年1月22日启动，没有预挖，没有ICO，没有创始人分配。',
+    'tokenomics.intro': 'GBX是GoldBrix区块链的原生货币。通过SHA-256d工作量证明挖矿：每3秒区块0.25 GBX，每28,000,000个区块减半，硬上限15,000,000 GBX。',
+    'tokenomics.halvingDesc': '阶段1（引导期，10分钟区块）：<strong>50 GBX/区块</strong>，每150,000区块减半。<br>阶段2（从区块20,000起，3秒区块）：<strong>0.25 GBX/区块</strong>，每28,000,000区块减半。<br>总量收敛至<strong>15,000,000 GBX</strong>硬上限。',
+    'fees.intro': '协议费用流入通缩销毁机制。所有费用（买入、卖出、开发者买入、毕业、AMM）都是真实的链上销毁，发送至不可花费地址 bn1qqqq...3kc3g2——可通过TX哈希验证。bonding curve 0.5%，AMM 0.3%。100%销毁——无团队分配。',
+    'price.intro': '第1阶段通过桥使用<strong>$0.10/GBX</strong>的参考挂钩。这不是市场价格 — 是预启动引导期间的稳定汇率。',
+    'price.how': '<strong>第1.5阶段（现在 · 已上线）：</strong>桥固定挂钩$0.10 + 真实销毁已激活<br><strong>第2阶段（下一步）：</strong>AMM动态定价<br><strong>第3阶段（之后）：</strong>外部DEX上市 — 真实市场价格发现',
+    'price.faq': '<strong>问：</strong>向协议储备发送GBX会影响价格吗？<br><strong>答：</strong>不会。协议储备转账不是销毁。总供应量不变。',
+    'roadmap.p1Desc': '核心协议上线，包括PoW挖矿、memecoin发射台、bonding curve交易和运营桥。',
+    'roadmap.p1i1': 'PoW链运营（区块1,900,000+）',
+    'roadmap.p1i2': 'Memecoin发射台与bonding curve',
+    'roadmap.p1i3': '桥USDC ↔ GBX（Solana, Arbitrum, Base）',
+    'roadmap.p1i4': '逻辑销毁跟踪',
+    'roadmap.p1i5': '5语言PWA + 自托管钱包',
+    'roadmap.p2Desc': '部署AMM智能合约。桥迁移到无信任模式。放弃密钥是最后一步，取决于自主市场价格。',
+    'roadmap.p2i1': 'AMM合约部署（Uniswap风格）',
+    'roadmap.p2i2': '协议储备 → AMM池迁移',
+    'roadmap.p2i3': '放弃密钥——最后一步（公开证明，取决于市场）',
+    'roadmap.p2i4': '动态价格发现',
+    'roadmap.p2i5': '任何人提供流动性（LP代币）',
+    'roadmap.p3Desc': '应用代码开源。任何人运行自己的实例。完整生态系统去中心化。',
+    'roadmap.p3i1': 'GitHub开源发布 — 已上线 ✓',
+    'roadmap.p3i2': 'DEX上市（Raydium, Jupiter）',
+    'roadmap.p3i3': '原生彩色币 (OP_RETURN)',
+    'roadmap.p3i4': '去中心化基础设施',
+    'roadmap.p3i5': '代码即法律（无DAO）',
+    'decent.intro': 'GoldBrix协议在共识层是去中心化构建的。在协议上运行的应用程序在第1阶段由小团队运营，在第2-3阶段过渡到完全自治。',
+    'decent.proto': '✓ 协议无管理员密钥<br>✓ 任何人都可以运行节点<br>✓ 任何人都可以挖矿（permissionless）<br>✓ 开源共识代码<br>✓ 默认自托管<br>✓ 公共区块链（任何人都可以审计）',
+    'decent.app': 'Web应用程序（PWA、桥、发射台）在第1阶段由初始开发团队运营。第2阶段将部署AMM智能合约以消除运营商依赖。',
+    'security.intro': 'GoldBrix钱包使用<strong>最高安全</strong>协议。每个会话开始时都需要您的密码 — 超过行业钱包保护标准。',
+    'security.features': '✓ <strong>自托管</strong> — 您的密钥，您的代币<br>✓ <strong>会话锁定</strong> — 每个会话需要密码<br>✓ <strong>本地加密</strong> — 密钥从不离开设备<br>✓ <strong>BIP39种子短语</strong> — 标准恢复<br>✓ <strong>无后端存储</strong> — 零服务器端密钥<br>✓ <strong>开源加密</strong> — 可审计的安全性',
+    'security.responsibility': '自托管意味着您控制您的资金。我们从未访问您的种子短语或密码。始终安全备份您的种子短语。丢失的密码无法恢复。',
+    'footer.disclaimer': '自治协议 · 自我托管 · 你的密钥 · 你的责任'
+  },
+  ar: {
+    'reserve.title': 'احتياطي البروتوكول',
+    'reserve.intro': 'احتياطي البروتوكول هو تجمع مستقل على السلسلة يموَّل من رسوم البروتوكول. يعمل وفق قواعد حتمية محددة في الكود — بدون تصويت DAO، بدون لجنة، بدون تقدير بشري.',
+    'reserve.featuresTitle': 'كيف يعمل',
+    'reserve.features': '✓ <strong>نمو ذاتي</strong> — يموَّل من رسوم البروتوكول (0.5% للجسر، 0.5% للإطلاقات)<br>✓ <strong>بدون تعدين مسبق</strong> — بدون تخصيص للفريق، بدون مطالبات للمؤسس<br>✓ <strong>تدفق بدون ثقة</strong> — الكود يحدد جميع قواعد السحب<br>✓ <strong>المفاتيح محروقة المرحلة 2</strong> — دليل علني على السلسلة<br>✓ <strong>وقود تشغيلي</strong> — سيولة الجسر + بدء AMM',
+    'reserve.principleTitle': 'المبدأ الأساسي',
+    'reserve.principle': '<strong>الكود هو القانون. التعدين هو الإجماع. بدون DAO.</strong> لا يمكن استنزاف الاحتياطي عشوائياً. جميع التدفقات حتمية وقابلة للتحقق على السلسلة.',
+    'page.title': 'البروتوكول · الورقة البيضاء',
+    'hero.sub': 'لامركزي · PoW · مفتوح المصدر',
+    'hero.status': 'السلسلة مباشرة · المرحلة 1',
+    'vision.title': 'الرؤية',
+    'founder.title': 'المؤسس',
+    'founder.p1': 'بُني GoldBrix على يد <strong>Gideon Brick</strong> — مؤسس مجهول بناه لبنة لبنة ثم رحل. لا رئيس تنفيذي. لا شركة. لا مفتاح.',
+    'founder.p2': 'GoldBrix لا يملكه أحد، بل كل من يُعدّنه أو يحتفظ به. المؤسس يُعدّن مثل أي شخص آخر ولا يحتفظ بأي تحكم مميز. <strong>سلسلة حقيقية. حرق حقيقي. عدالة حقيقية.</strong>',
+    'tokenomics.title': 'اقتصاد رموز GBX',
+    'tokenomics.supply': 'الحد الأقصى', 'tokenomics.mined': 'تم تعدينه',
+    'tokenomics.reward': 'مكافأة الكتلة', 'tokenomics.rewardSub': 'GBX (تنصيف 28 مليون)',
+    'tokenomics.algo': 'الخوارزمية', 'tokenomics.algoSub': 'PoW · أصلي',
+    'tokenomics.blocktime': 'وقت الكتلة', 'tokenomics.blocktimeSub': 'ثواني هدف',
+    'tokenomics.price': 'السعر المرجعي', 'tokenomics.priceSub': 'ربط المرحلة 1',
+    'tokenomics.halvingTitle': 'جدول التنصيف',
+    'fees.title': 'نموذج الرسوم والحرق',
+    'fees.action': 'الإجراء', 'fees.fee': 'الرسوم', 'fees.destination': 'الوجهة',
+    'fees.tradeBuy': 'شراء التداول', 'fees.tradeSell': 'بيع التداول',
+    'fees.graduation': 'التخرج', 'fees.bridge': 'جسر USDC↔GBX',
+    'fees.burn': '🔥 حرق', 'fees.burn2': '🔥 حرق', 'fees.burn3': '🔥 حرق',
+    'fees.operations': 'العمليات',
+    'fees.transparency': 'تتبع الحرق الشفاف',
+    'fees.tracking': 'يتم تتبع جميع عمليات الحرق علناً. العداد المباشر مرئي في صفحة متعقب الحرق.',
+    'price.title': 'اكتشاف السعر',
+    'price.howTitle': 'كيف يتطور السعر',
+    'price.faqTitle': 'أسئلة شائعة: احتياطي البروتوكول والحرق',
+    'mining.title': 'التعدين',
+    'mining.howTitle': 'كيفية التعدين',
+    'mining.fairTitle': 'إطلاق عادل',
+    'roadmap.title': 'خارطة الطريق', 'roadmap.now': 'الآن',
+    'roadmap.p1Title': 'البدء · التعدين · الجسر',
+    'roadmap.p2Title': 'AMM · حرق حقيقي · بدون ثقة',
+    'roadmap.p3Title': 'مفتوح المصدر · اللامركزية',
+    'decent.title': 'اللامركزية',
+    'decent.protoTitle': 'لامركزية البروتوكول (الآن)',
+    'decent.appTitle': 'التطبيق (المرحلة 1)',
+    'network.title': 'الشبكة',
+    'network.chain': 'السلسلة', 'network.block': 'ارتفاع الكتلة',
+    'network.hashrate': 'معدل التجزئة', 'network.miners': 'المعدنون النشطون',
+    'network.minersSub': 'bootstrap',
+    'cta.title': 'ابدأ', 'cta.buy': '🌉 شراء GBX', 'cta.burn': '🔥 متعقب الحرق',
+    'footer.version': 'بروتوكول GoldBrix v2.8 · المرحلة 1.5',
+        'mining.intro': 'التعدين مفتوح للجميع. يوزع البروتوكول العملات بشكل عادل من خلال إثبات العمل. التعدين مفتوح — بدون تسجيل وبدون قائمة.',
+    'mining.how': '<strong>1.</strong> احصل على cpuminer أو معدن SHA-256d متوافق<br><strong>2.</strong> اتصل بالبذرة: <code>stratum+tcp://goldbrix.app:3333</code><br><strong>3.</strong> الخوارزمية: <code>sha256d</code><br><strong>4.</strong> استخدم عنوان GBX كاسم مستخدم<br><strong>5.</strong> اكسب 0.25 GBX لكل كتلة (الدعم الحالي)',
+    'mining.fair': 'لا تعدين مسبق. لا ICO. لا تخصيص للمؤسس. بدأ التعدين في الكتلة 1 — كل عملة تم سكها من خلال إثبات العمل، متاحة لأي شخص لديه قوة حوسبة.',
+    'vision.p1': 'GoldBrix هي سلسلة memecoin لامركزية مبنية على مبادئ إثبات العمل. البروتوكول <strong>بدون مفاتيح إدارية</strong>، <strong>بدون تحكم مركزي</strong>، و<strong>يمكن لأي شخص المشاركة</strong> كمعدن أو مشغل عقدة أو مستخدم.',
+    'vision.p2': 'تتيح السلسلة لأي شخص إطلاق memecoins عبر منحنى الترابط، وتداولها، والمشاركة في اقتصاد شفاف لحرق الرسوم. تم إطلاق Genesis في 22 يناير 2026 بدون تعدين مسبق، بدون ICO، وبدون تخصيص للمؤسس.',
+    'tokenomics.intro': 'GBX هي العملة الأصلية لبلوكتشين GoldBrix. تُعدَّن عبر إثبات العمل SHA-256d: 0.25 GBX لكل كتلة كل 3 ثوانٍ، تنصيف كل 28,000,000 كتلة، حد أقصى 15,000,000 GBX.',
+    'tokenomics.halvingDesc': 'المرحلة 1 (بدء، كتل 10 دقائق): <strong>50 GBX/كتلة</strong>، النصف كل 150,000 كتلة.<br>المرحلة 2 (من الكتلة 20,000، كتل 3 ثوان): <strong>0.25 GBX/كتلة</strong>، النصف كل 28,000,000 كتلة.<br>يتقارب الإصدار نحو الحد الأقصى <strong>15,000,000 GBX</strong>.',
+    'fees.intro': 'تتدفق رسوم البروتوكول إلى آلية حرق انكماشية. جميع الرسوم (شراء، بيع، شراء المطور، تخرج، AMM) هي حروق حقيقية على السلسلة إلى عنوان غير قابل للإنفاق bn1qqqq...3kc3g2 — يمكن التحقق عبر TX hash. 0.5% على bonding curve، 0.3% على AMM. 100% محروقة — بدون تخصيص للفريق.',
+    'price.intro': 'تستخدم المرحلة 1 ربط مرجعي قدره <strong>$0.10/GBX</strong> عبر الجسر. هذا ليس سعر السوق — إنه معدل ثابت أثناء التمهيد قبل الإطلاق.',
+    'price.how': '<strong>المرحلة 1.5 (الآن · مباشر):</strong> ربط ثابت $0.10 عبر الجسر + حرق حقيقي نشط<br><strong>المرحلة 2 (التالي):</strong> تسعير AMM ديناميكي<br><strong>المرحلة 3 (لاحقاً):</strong> إدراج DEX خارجي — اكتشاف سعر حقيقي',
+    'price.faq': '<strong>س:</strong> هل يؤثر إرسال GBX إلى احتياطي البروتوكول على السعر؟<br><strong>ج:</strong> لا. تحويلات احتياطي البروتوكول ليست حروق. إجمالي العرض دون تغيير.',
+    'roadmap.p1Desc': 'البروتوكول الأساسي مباشر مع تعدين PoW ومنصة إطلاق memecoin وتداول منحنى الترابط وجسر تشغيلي.',
+    'roadmap.p1i1': 'سلسلة PoW تشغيلية (كتلة 1,900,000+)',
+    'roadmap.p1i2': 'منصة إطلاق memecoin مع منحنى الترابط',
+    'roadmap.p1i3': 'جسر USDC ↔ GBX (Solana, Arbitrum, Base)',
+    'roadmap.p1i4': 'تتبع الحرق المنطقي',
+    'roadmap.p1i5': 'PWA بـ 5 لغات + محفظة ذاتية الحفظ',
+    'roadmap.p2Desc': 'نشر عقد AMM ذكي. يهاجر الجسر إلى وضع بدون ثقة. التخلي عن المفاتيح هو الخطوة الأخيرة، مشروط بسعر سوق مستقل.',
+    'roadmap.p2i1': 'تم نشر عقد AMM (على غرار Uniswap)',
+    'roadmap.p2i2': 'هجرة احتياطي البروتوكول → مجمع AMM',
+    'roadmap.p2i3': 'التخلي عن المفاتيح — الخطوة الأخيرة (دليل عام، مشروط بالسوق)',
+    'roadmap.p2i4': 'اكتشاف سعر ديناميكي',
+    'roadmap.p2i5': 'أي شخص يوفر السيولة (رموز LP)',
+    'roadmap.p3Desc': 'كود التطبيق مفتوح المصدر. أي شخص يقوم بتشغيل مثيله الخاص. لامركزية كاملة للنظام البيئي.',
+    'roadmap.p3i1': 'إصدار GitHub مفتوح المصدر — مباشر ✓',
+    'roadmap.p3i2': 'إدراج DEX (Raydium, Jupiter)',
+    'roadmap.p3i3': 'عملات ملونة أصلية (OP_RETURN)',
+    'roadmap.p3i4': 'بنية تحتية لامركزية',
+    'roadmap.p3i5': 'الكود هو القانون (بدون DAO)',
+    'decent.intro': 'تم بناء بروتوكول GoldBrix بشكل لامركزي على مستوى الإجماع. يتم تشغيل التطبيق الذي يعمل على البروتوكول من قبل فريق صغير في المرحلة 1، مع الانتقال إلى الاستقلالية الكاملة في المرحلة 2-3.',
+    'decent.proto': '✓ لا مفاتيح إدارية على البروتوكول<br>✓ يمكن لأي شخص تشغيل عقدة<br>✓ يمكن لأي شخص التعدين (permissionless)<br>✓ كود إجماع مفتوح المصدر<br>✓ حفظ ذاتي افتراضي<br>✓ بلوكتشين عام (يمكن لأي شخص التدقيق)',
+    'decent.app': 'يتم تشغيل تطبيق الويب (PWA، الجسر، منصة الإطلاق) من قبل فريق التطوير الأولي في المرحلة 1. ستنشر المرحلة 2 عقود AMM ذكية لإزالة الاعتماد على المشغل.',
+    'security.intro': 'تستخدم محفظة GoldBrix بروتوكولات <strong>أمان قصوى</strong>. كلمة المرور الخاصة بك مطلوبة في بداية كل جلسة — تتجاوز معايير الصناعة لحماية المحفظة.',
+    'security.features': '✓ <strong>حفظ ذاتي</strong> — مفاتيحك، عملاتك<br>✓ <strong>قفل الجلسة</strong> — كلمة مرور كل جلسة<br>✓ <strong>تشفير محلي</strong> — المفاتيح لا تغادر الجهاز<br>✓ <strong>عبارة بذرة BIP39</strong> — استعادة قياسية<br>✓ <strong>لا تخزين خلفي</strong> — صفر مفاتيح من جانب الخادم<br>✓ <strong>تشفير مفتوح المصدر</strong> — أمان قابل للتدقيق',
+    'security.responsibility': 'الحفظ الذاتي يعني أنك تتحكم في أموالك. ليس لدينا أبداً وصول إلى عبارة البذرة أو كلمة المرور. احرص دائماً على نسخة احتياطية آمنة من عبارة البذرة. كلمات المرور المفقودة لا يمكن استردادها.',
+    'footer.disclaimer': 'بروتوكول مستقل · حفظ ذاتي · مفاتيحك · مسؤوليتك'
+  }
+};
+
+function t_protocol(key) {
+  const dict = I18N[LANG_protocol] || I18N_protocol.en;
+  const val = dict[key];
+  if (val !== undefined && val !== null && val !== '') return val;
+  const enVal = I18N_protocol.en[key];
+  if (enVal !== undefined && enVal !== null && enVal !== '') return enVal;
+  return key;
+}
+
+function applyI18n_protocol() {
+  if (LANG_protocol === 'ar') {
+    document.documentElement.setAttribute('dir', 'rtl');
+    document.documentElement.setAttribute('lang', 'ar');
+  }
+  __VROOT_protocol.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const val = t(key);
+    if (val && (val.includes('<br>') || val.includes('<strong>'))) {
+      el.innerHTML = val;
+    } else {
+      el.textContent = val;
+    }
+  });
+}
+
+// ═══ NAV ═══
+function goBack() {
+  if (window.history.length > 1) {
+    try {
+      history.back();
+      return;
+    } catch(e) {}
+  }
+  window.location.href = '/';
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ═══ LOAD LIVE STATS ═══
+async function loadStats() {
+  try {
+    const r = await fetch('https://goldbrix.app/launchpad/gbx/stats');
+    if (r.ok) {
+      const d = await r.json();
+      const mined = d.supply_mined_gbx || 0;
+      const pct = (mined / 15000000) * 100;
+      document.getElementById('pStatMined').textContent = mined.toLocaleString();
+      document.getElementById('pStatMinedPct').textContent = pct.toFixed(2) + '%';
+      document.getElementById('pStatBlock').textContent = '#' + (d.blocks || 0).toLocaleString();
+      document.getElementById('pStatHashrate').textContent = Math.round((d.networkhashps || 0)/1000) + ' KH/s';
+    }
+  } catch(e) { console.warn('stats fail:', e); }
+}
+
+// INIT
+(function init() {
+  applyI18n_protocol();
+  loadStats();
+  setInterval(loadStats, 60000);
+})();
+</script>
+
+
+<style>
+  .v3-bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #2a2218; border-top: 1px solid #3a3025; padding: 6px 0 calc(6px + env(safe-area-inset-bottom)); display: flex; z-index: 100; }
+  .v3-nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px; text-decoration: none; color: #FFE099; font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700; letter-spacing: 0.1em; opacity: 0.7; }
+  .v3-nav-item:hover { opacity: 1; }
+  .v3-nav-emoji { font-size: 18px; line-height: 1; }
+  body { padding-bottom: 70px !important; }
+</style>
+
+
+<script src="/v3/pwa.js?v=103" defer></script>
+
+<nav class="v3-final-nav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:999;">
+  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
+  <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
+  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
+  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
+  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
+  <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#F5CC75;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:1;"><span style="font-size:18px;">⚙</span><span data-t="navSettings">SETTINGS</span></a>
+</nav>
+<style>body { padding-bottom: 76px !important; }</style>
+
+</body>
+</html>

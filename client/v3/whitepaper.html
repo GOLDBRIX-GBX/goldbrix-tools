@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="prefetch" href="/v3/wallet.html"><link rel="prefetch" href="/v3/trade.html"><link rel="prefetch" href="/v3/launch.html"><link rel="prefetch" href="/v3/burns.html"><link rel="prefetch" href="/v3/settings.html"><link rel="prefetch" href="/v3/favorites.html"><link rel="prefetch" href="/v3/leaderboard.html"><link rel="prefetch" href="/v3/style.css"><link rel="dns-prefetch" href="https://goldbrix.app">
+<link rel="preconnect" href="https://goldbrix.app" crossorigin>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1c1610">
+<title>GoldBrix · Whitepaper</title>
+<link rel="icon" href="/assets/coin/gbx-coin-32.png">
+<link rel="stylesheet" href="/v3/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  .v3-app { padding-bottom:90px; }
+  .back-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-secondary); background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--r-full); margin:12px 0 8px 16px; }
+  .wp-hero { text-align:center; padding:16px; }
+  .wp-hero__title { font-size:28px; font-weight:800; color:var(--gold); margin-bottom:4px; }
+  .wp-hero__sub { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.12em; color:var(--text-secondary); }
+  .wp-sect { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--r-md); margin:12px; padding:18px; }
+  .wp-sect__title { font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:0.12em; color:var(--gold); text-transform:uppercase; margin-bottom:10px; }
+  .wp-sect__body { font-size:14px; line-height:1.7; color:var(--text-primary); }
+  .wp-sect__body ul { margin:8px 0; padding-left:20px; }
+  .wp-sect__body li { margin:4px 0; }
+  .wp-sect__body code { background:var(--bg-elevated); padding:2px 6px; border-radius:4px; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--gold); }
+  .wp-stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px; }
+  .wp-stat { background:var(--bg-elevated); padding:10px; border-radius:var(--r-md); text-align:center; }
+  .wp-stat__val { font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:700; color:var(--gold); }
+  .wp-stat__lbl { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-muted); letter-spacing:0.08em; margin-top:2px; }
+  .phase-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); }
+  .phase-row:last-child { border-bottom:none; }
+  .phase-row__num { width:32px; height:32px; border-radius:50%; background:var(--bg-elevated); display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--gold); flex-shrink:0; }
+  .phase-row__info { flex:1; }
+  .phase-row__title { font-weight:600; }
+  .phase-row__status { font-family:'JetBrains Mono',monospace; font-size:10px; padding:3px 8px; border-radius:var(--r-full); }
+  .phase-row__status--live { background:rgba(78,224,140,0.15); color:var(--green); }
+  .phase-row__status--soon { background:rgba(245,204,117,0.1); color:var(--gold); }
+  .phase-row__status--future { background:var(--bg-elevated); color:var(--text-muted); }
+  .bnav { position:fixed; bottom:0; left:0; right:0; background:var(--bg-card); border-top:1px solid var(--border); display:flex; padding:8px 4px 12px; padding-bottom:calc(12px + env(safe-area-inset-bottom)); z-index:100; }
+  .bnav__item { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 2px; color:var(--text-muted); }
+  .bnav__icon { font-size:20px; line-height:1; }
+  .bnav__label { font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; letter-spacing:0.08em; }
+
+/* V4.9 — Visible placeholders (added 2026-05-27) */
+input::placeholder, textarea::placeholder,
+input::-webkit-input-placeholder, textarea::-webkit-input-placeholder,
+input::-moz-placeholder, textarea::-moz-placeholder {
+  color: #eee !important;
+  opacity: 1 !important;
+}
+
+</style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#F5CC75">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/goldbrix-brand-180.png">
+    <script src="/gbx-update-check.js" defer></script>
+    <script src="/gbx-native-bridge.js" defer></script>
+      <script src="/i18n.js?v=103" defer></script>
+  <script src="/promo-banner.js?v=103" defer></script>
+<style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
+<script src="/v3/nav-i18n.js?v=103" defer></script>
+</head>
+<body>
+<div class="v3-app">
+  <a class="back-btn" href="/v3/settings.html">← <span id="backLabel">Settings</span></a>
+  <div class="wp-hero">
+    <div class="wp-hero__title">📜 <span id="wpTitle">Whitepaper</span></div>
+    <div class="wp-hero__sub" id="wpSub">GOLDBRIX PROTOCOL v3.0 · MAINNET</div>
+  </div>
+
+  <div class="wp-sect">
+    <div class="wp-sect__title" id="sOverview">Overview</div>
+    <div class="wp-sect__body" id="bOverview"></div>
+  </div>
+  <div class="wp-sect" style="text-align:center;">
+    <div class="wp-sect__title" id="sFounder" style="justify-content:center;">The Founder</div>
+    <img src="/assets/brand/goldbrix-founder-512.png?v=103" alt="Gideon Brick" style="width:150px;height:150px;border-radius:50%;margin:6px auto 12px;display:block;box-shadow:0 0 22px rgba(201,162,39,0.45);">
+    <div style="font-size:17px;font-weight:800;color:#e8c455;margin:0 0 10px;letter-spacing:0.5px;">Gideon Brick</div>
+    <div class="wp-sect__body" id="bFounder"></div>
+  </div>
+
+  <div class="wp-sect">
+    <div class="wp-sect__title" id="sTokenomics">Tokenomics</div>
+    <div class="wp-sect__body" id="bTokenomics"></div>
+    <div class="wp-stat-grid">
+      <div class="wp-stat"><div class="wp-stat__val">15M</div><div class="wp-stat__lbl">MAX SUPPLY</div></div>
+      <div class="wp-stat"><div class="wp-stat__val">PoW</div><div class="wp-stat__lbl">SHA-256d</div></div>
+      <div class="wp-stat"><div class="wp-stat__val">0%</div><div class="wp-stat__lbl">PREMINE</div></div>
+      <div class="wp-stat"><div class="wp-stat__val">~3 sec</div><div class="wp-stat__lbl">BLOCK TIME</div></div>
+    </div>
+  </div>
+
+  <div class="wp-sect">
+    <div class="wp-sect__title" id="sLaunchpad">Memecoin Launchpad</div>
+    <div class="wp-sect__body" id="bLaunchpad"></div>
+  </div>
+
+  <div class="wp-sect">
+    <div class="wp-sect__title" id="sFees">Fee Structure</div>
+    <div class="wp-sect__body" id="bFees"></div>
+  </div>
+
+  <div class="wp-sect">
+    <div class="wp-sect__title" id="sRoadmap">Roadmap</div>
+    <div class="wp-sect__body">
+      <div class="phase-row"><div class="phase-row__num">1</div><div class="phase-row__info"><div class="phase-row__title" id="p1Title">Phase 1.5 — Mainnet Launch</div></div><span class="phase-row__status phase-row__status--live" data-t="liveLabel">LIVE</span></div>
+      <div class="phase-row"><div class="phase-row__num">2</div><div class="phase-row__info"><div class="phase-row__title" id="p2Title">Phase 2 — Public Launch & Liquidity</div></div><span class="phase-row__status phase-row__status--soon">2026 Q4</span></div>
+      <div class="phase-row"><div class="phase-row__num">3</div><div class="phase-row__info"><div class="phase-row__title" id="p3Title">Phase 3 — Open Source Release</div></div><span class="phase-row__status phase-row__status--future">2027</span></div>
+      <div class="phase-row"><div class="phase-row__num">4</div><div class="phase-row__info"><div class="phase-row__title" id="p4Title">Phase 4 — Full Decentralization</div></div><span class="phase-row__status phase-row__status--future">2028+</span></div>
+    </div>
+  </div>
+
+  <div class="wp-sect">
+    <div class="wp-sect__title" id="sDecent">Decentralization</div>
+    <div class="wp-sect__body" id="bDecent"></div>
+  </div>
+
+  <div class="wp-sect" style="border-color:var(--red-dim);">
+    <div class="wp-sect__title" style="color:var(--red);" id="sRisks">⚠ Risks</div>
+    <div class="wp-sect__body" id="bRisks"></div>
+  </div>
+
+  <div class="v3-footer">GoldBrix Whitepaper · v3.0 · 2026</div>
+</div>
+
+<div class="bnav">
+  <a class="bnav__item" href="/"><span class="bnav__icon">🏠</span><span class="bnav__label" id="nH" data-t="navHome">HOME</span></a>
+  <a class="bnav__item" href="/v3/wallet.html"><span class="bnav__icon">👤</span><span class="bnav__label" id="nW" data-t="navWallet">WALLET</span></a>
+  <a class="bnav__item" href="/v3/launch.html"><span class="bnav__icon">🚀</span><span class="bnav__label" id="nL" data-t="navLaunch">LAUNCH</span></a>
+  <a class="bnav__item" href="/v3/leaderboard.html"><span class="bnav__icon">🔥</span><span class="bnav__label" id="nB" data-t="navBurns">BURNS</span></a>
+  <a class="bnav__item" href="/v3/settings.html"><span class="bnav__icon">⚙️</span><span class="bnav__label" id="nS" data-t="navSettings">SETTINGS</span></a>
+</div>
+
+<script>
+const T = {
+  en: { back:'Settings', title:'Whitepaper',
+    sOverview:'Overview', bOverview:'GoldBrix is an autonomous Layer-1 PoW blockchain with a native memecoin launchpad. No team, no admin, no central authority. Code is the law.',
+    sFounder:'The Founder', bFounder:'GoldBrix was built by <strong>Gideon Brick</strong> — an anonymous founder who laid it brick by brick, then walked away. No CEO. No company. No key. The founder mines like anyone else and keeps no privileged control. <strong>Real chain. Real burn. Real fairness.</strong>',
+    sTokenomics:'Tokenomics', bTokenomics:'GBX is the native token. Pure proof-of-work emission. No premine. No founder allocation. Capped supply: 15,000,000 GBX. Dual-phase emission: bootstrap phase issues 50 GBX per 10-minute block until block 20,000, then production phase activates with 3-second blocks via LWMA-3 difficulty algorithm and 0.25 GBX subsidy with stepped deflationary schedule (subsidy halves every 28,000,000 blocks).',
+    sLaunchpad:'Memecoin Launchpad', bLaunchpad:'Anyone can launch memecoins backed by GBX via bonding curve. Curve auto-prices coin. No liquidity pools needed. Each coin has its own OP_RETURN registry on-chain.',
+    sFees:'Fee Structure', bFees:'<ul><li>Launch: dev buy 0.5% &rarr; burn</li><li>Trade: 0.5% buy + 0.5% sell &rarr; 100% burn</li><li>AMM (post-graduation): 0.3% &rarr; burn</li><li>Graduation: 80,000 GBX &rarr; liquidity pool LOCKED permanently</li><li>No team allocation &mdash; all fees burned</li></ul>',
+    p1Title:'Phase 1.5 — Mainnet Launch', p2Title:'Phase 2 — Public Launch & Liquidity', p3Title:'Phase 3 — Open Source Release', p4Title:'Phase 4 — Full Decentralization',
+    sDecent:'Decentralization', bDecent:'No central server. No admin keys. Source code release Phase 3. Mining open to all. Treasury auto-managed via on-chain rules.',
+    sRisks:'⚠ Risks', bRisks:'<ul><li>Crypto is extremely volatile — you can lose 100%</li><li>Bonding curves have no minimum price</li><li>No recovery if you lose seed phrase</li><li>Not financial advice</li><li>Comply with your local crypto regulations</li></ul>',
+    nav:{h:'HOME',w:'WALLET',l:'LAUNCH',b:'BURNS',s:'SETTINGS'} },
+  ro: { back:'Setări', title:'Whitepaper',
+    sOverview:'Privire de Ansamblu', bOverview:'GoldBrix este o blockchain Layer-1 PoW autonomă cu lansator nativ de memecoins. Fără echipă, fără admini, fără autoritate centrală. Codul este legea.',
+    sFounder:'Fondatorul', bFounder:'GoldBrix a fost construit de <strong>Gideon Brick</strong> — un fondator anonim care l-a zidit cărămidă cu cărămidă, apoi a plecat. Fără CEO. Fără companie. Fără cheie. Fondatorul minează ca oricine altcineva şi nu păstrează niciun control privilegiat. <strong>Lanț real. Burn real. Corectitudine reală.</strong>',
+    sTokenomics:'Tokenomics', bTokenomics:'GBX este token-ul nativ. Emisie pură proof-of-work. Fără premine. Fără alocare fondatori. Ofertă maximă: 15.000.000 GBX. Emisie în două faze: faza bootstrap emite 50 GBX pe bloc de 10 minute până la blocul 20.000, apoi faza de producție se activează cu blocuri de 3 secunde prin algoritmul LWMA-3 și subvenție 0,25 GBX cu schemă deflaționistă în trepte (subvenția se înjumătățește la fiecare 28.000.000 blocuri).',
+    sLaunchpad:'Lansator Memecoins', bLaunchpad:'Oricine poate lansa memecoins susținute de GBX prin bonding curve. Curve auto-stabilește prețul. Fără pool-uri de lichiditate. Fiecare monedă are registru on-chain OP_RETURN.',
+    sFees:'Structură Comisioane', bFees:'<ul><li>Lansare: dev buy 0.5% &rarr; ardere</li><li>Trade: 0.5% cumpărare + 0.5% vânzare &rarr; 100% ardere</li><li>AMM (post-graduație): 0.3% &rarr; ardere</li><li>Graduație: 80.000 GBX &rarr; pool lichiditate BLOCAT permanent</li><li>Fără alocare echipă &mdash; toate taxele arse</li></ul>',
+    p1Title:'Faza 1.5 — Lansare Mainnet', p2Title:'Faza 2 — Lansare Publică & Lichiditate', p3Title:'Faza 3 — Cod Sursă Public', p4Title:'Faza 4 — Descentralizare Totală',
+    sDecent:'Descentralizare', bDecent:'Fără server central. Fără chei admin. Cod sursă Faza 3. Mining deschis. Trezorerie auto-gestionată.',
+    sRisks:'⚠ Riscuri', bRisks:'<ul><li>Crypto este extrem de volatil — poți pierde 100%</li><li>Bonding curves nu au preț minim</li><li>Nicio recuperare dacă pierzi seed</li><li>Nu este sfat financiar</li><li>Respectă regulile crypto locale</li></ul>',
+    nav:{h:'ACASĂ',w:'PORTOFEL',l:'LANSARE',b:'ARDERI',s:'SETĂRI'} },
+  de: { back:'Einstellungen', title:'Whitepaper',
+    sOverview:'Übersicht', bOverview:'GoldBrix ist eine autonome Layer-1 PoW Blockchain mit nativer Memecoin-Plattform. Kein Team, kein Admin, keine zentrale Autorität. Der Code ist das Gesetz.',
+    sFounder:'Der Gründer', bFounder:'GoldBrix wurde von <strong>Gideon Brick</strong> erbaut — einem anonymen Gründer, der es Stein für Stein aufbaute und dann fortging. Kein CEO. Keine Firma. Kein Schlüssel. Der Gründer schürft wie jeder andere und behält keine privilegierte Kontrolle. <strong>Echte Chain. Echtes Burning. Echte Fairness.</strong>',
+    sTokenomics:'Tokenomics', bTokenomics:'GBX ist der native Token. Reine Proof-of-Work-Emission. Kein Premine. Keine Gründer-Allokation. Maximalversorgung: 15.000.000 GBX. Zweiphasige Emission: Bootstrap-Phase gibt 50 GBX pro 10-Minuten-Block bis Block 20.000 aus, dann aktiviert die Produktionsphase 3-Sekunden-Blöcke via LWMA-3 Difficulty-Algorithmus und 0,25 GBX Subvention mit gestufter deflationärer Schema (Subvention halbiert sich alle 28.000.000 Blöcke).',
+    sLaunchpad:'Memecoin-Plattform', bLaunchpad:'Jeder kann GBX-gestützte Memecoins per Bonding Curve starten.',
+    sFees:'Gebührenstruktur', bFees:'<ul><li>Start: Dev-Buy 0.5% &rarr; Burn</li><li>Handel: 0.5% Kauf + 0.5% Verkauf &rarr; 100% Burn</li><li>AMM (nach Graduierung): 0.3% &rarr; Burn</li><li>Graduierung: 80.000 GBX &rarr; Liquiditätspool DAUERHAFT gesperrt</li><li>Keine Team-Zuteilung</li></ul>',
+    p1Title:'Phase 1.5 — Mainnet-Start', p2Title:'Phase 2 — Öffentlicher Start', p3Title:'Phase 3 — Open Source', p4Title:'Phase 4 — Volle Dezentralisierung',
+    sDecent:'Dezentralisierung', bDecent:'Kein zentraler Server. Keine Admin-Schlüssel. Quellcode Phase 3.',
+    sRisks:'⚠ Risiken', bRisks:'<ul><li>Krypto ist extrem volatil — 100% Verlust möglich</li><li>Bonding Curves haben keinen Mindestpreis</li><li>Keine Wiederherstellung</li><li>Keine Finanzberatung</li></ul>',
+    nav:{h:'HOME',w:'WALLET',l:'STARTEN',b:'BURNS',s:'EINSTELL.'} },
+  zh: { back:'设置', title:'白皮书',
+    sOverview:'概述', bOverview:'GoldBrix 是一个自治的 Layer-1 PoW 区块链，具有原生模因币发行平台。无团队，无管理员，无中央权威。代码即法律。',
+    sFounder:'创始人', bFounder:'GoldBrix 由 <strong>Gideon Brick</strong> 打造——一位匿名创始人，一砖一瓦地建立了它，然后默默离去。没有 CEO，没有公司，没有密钥。创始人像其他人一样挖矿，不保留任何特权控制。<strong>真实的链。真实的销毁。真实的公平。</strong>',
+    sTokenomics:'代币经济学', bTokenomics:'GBX 是原生代币。纯工作量证明发行。无预挖。无创始人分配。最大供应量：15,000,000 GBX。双阶段发行：引导阶段每个 10 分钟区块发放 50 GBX，直到第 20,000 区块，然后生产阶段激活，采用 LWMA-3 难度算法的 3 秒区块和 0.25 GBX 奖励，按阶梯式通缩计划（奖励每 28,000,000 区块减半）。',
+    sLaunchpad:'模因币平台', bLaunchpad:'任何人都可以通过联合曲线推出 GBX 支持的模因币。',
+    sFees:'费用结构', bFees:'<ul><li>发行: 开发者买入 0.5% &rarr; 销毁</li><li>交易: 买入 0.5% + 卖出 0.5% &rarr; 100% 销毁</li><li>AMM(毕业后): 0.3% &rarr; 销毁</li><li>毕业: 80,000 GBX &rarr; 流动性池永久锁定</li><li>无团队分配</li></ul>',
+    p1Title:'第1.5阶段 — 主网启动', p2Title:'第2阶段 — 公开启动', p3Title:'第3阶段 — 开源发布', p4Title:'第4阶段 — 完全去中心化',
+    sDecent:'去中心化', bDecent:'无中央服务器。无管理员密钥。第3阶段发布源代码。',
+    sRisks:'⚠ 风险', bRisks:'<ul><li>加密货币极易波动 — 您可能损失 100%</li><li>联合曲线没有最低价格</li><li>无法恢复</li><li>非财务建议</li></ul>',
+    nav:{h:'首页',w:'钱包',l:'发行',b:'燃烧',s:'设置'} },
+  ar: { back:'إعدادات', title:'الورقة البيضاء',
+    sOverview:'نظرة عامة', bOverview:'GoldBrix هي بلوكتشين Layer-1 PoW مستقلة مع منصة عملات ميم أصلية. لا فريق، لا مسؤول، لا سلطة مركزية.',
+    sFounder:'المؤسس', bFounder:'بُني GoldBrix على يد <strong>Gideon Brick</strong> — مؤسس مجهول بناه لبنة لبنة ثم رحل. لا رئيس تنفيذي. لا شركة. لا مفتاح. المؤسس يُعدّن مثل أي شخص آخر ولا يحتفظ بأي تحكم مميز. <strong>سلسلة حقيقية. حرق حقيقي. عدالة حقيقية.</strong>',
+    sTokenomics:'اقتصاديات الرمز', bTokenomics:'GBX هو الرمز الأصلي. إصدار خالص لإثبات العمل. لا تعدين مسبق. لا توجد مخصصات للمؤسسين. الإمداد الأقصى: 15,000,000 GBX. إصدار ثنائي المراحل: مرحلة التشغيل تصدر 50 GBX لكل كتلة مدتها 10 دقائق حتى الكتلة 20,000، ثم تنشط مرحلة الإنتاج بكتل مدتها 3 ثوان عبر خوارزمية صعوبة LWMA-3 ومكافأة 0.25 GBX وفق جدول انكماشي تدريجي (المكافأة تنخفض إلى النصف كل 28,000,000 كتلة).',
+    sLaunchpad:'منصة عملات الميم', bLaunchpad:'يمكن لأي شخص إطلاق عملات ميم مدعومة من GBX عبر منحنى السندات.',
+    sFees:'هيكل الرسوم', bFees:'<ul><li>الإطلاق: شراء المطور 0.5% &rarr; حرق</li><li>التداول: 0.5% شراء + 0.5% بيع &rarr; 100% حرق</li><li>AMM (بعد التخرج): 0.3% &rarr; حرق</li><li>التخرج: 80,000 GBX &rarr; مجمع سيولة مقفل دائمًا</li><li>بدون تخصيص للفريق</li></ul>',
+    p1Title:'المرحلة 1.5 — إطلاق الشبكة الرئيسية', p2Title:'المرحلة 2 — الإطلاق العام', p3Title:'المرحلة 3 — إصدار مفتوح المصدر', p4Title:'المرحلة 4 — اللامركزية الكاملة',
+    sDecent:'اللامركزية', bDecent:'لا خادم مركزي. لا مفاتيح مسؤول.',
+    sRisks:'⚠ المخاطر', bRisks:'<ul><li>التشفير شديد التقلب — يمكن أن تفقد 100%</li><li>منحنيات السندات ليس لها سعر أدنى</li><li>لا يوجد استرداد</li></ul>',
+    nav:{h:'الرئيسية',w:'محفظة',l:'إطلاق',b:'حرق',s:'إعدادات'} }
+};
+
+let currentLang = localStorage.getItem('gbx_lang') || 'en';
+
+function applyLang() {
+  const tt = T[currentLang] || T.en;
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+  document.getElementById('backLabel').textContent = tt.back;
+  document.getElementById('wpTitle').textContent = tt.title;
+  ['sOverview','bOverview','sFounder','bFounder','sTokenomics','bTokenomics','sLaunchpad','bLaunchpad','sFees','bFees','p1Title','p2Title','p3Title','p4Title','sDecent','bDecent','sRisks','bRisks'].forEach(k => {
+    const el = document.getElementById(k);
+    if (el) {
+      if (k.startsWith('b')) el.innerHTML = tt[k];
+      else el.textContent = tt[k];
+    }
+  });
+  document.getElementById('nH').textContent = tt.nav.h;
+  document.getElementById('nW').textContent = tt.nav.w;
+  document.getElementById('nL').textContent = tt.nav.l;
+  document.getElementById('nB').textContent = tt.nav.b;
+  document.getElementById('nS').textContent = tt.nav.s;
+}
+applyLang();
+</script>
+<script src="/v3/pwa.js?v=103" defer></script>
+
+<nav class="v3-final-nav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:999;">
+  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
+  <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
+  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
+  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
+  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
+  <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#F5CC75;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:1;"><span style="font-size:18px;">⚙</span><span data-t="navSettings">SETTINGS</span></a>
+</nav>
+<style>body { padding-bottom: 76px !important; }</style>
+
+</body>
+</html>

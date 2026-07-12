@@ -1,0 +1,33 @@
+/* GOLDBRIX chart styles — partajat (trade + gbx). O SURSA UNICA (LOCK V7.2). */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.t-status{display:flex;align-items:center;gap:4px;font-size:9px;color:#1DB954;font-family:'JetBrains Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;}
+.t-status::before{content:'';width:5px;height:5px;background:#1DB954;border-radius:50%;animation:pulse 1.5s infinite;}
+.t-price-row{padding:6px 16px 12px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;}
+.t-price-big{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:800;color:#fff;letter-spacing:-0.02em;line-height:1;}
+.t-price-change{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:0.02em;}
+.t-price-change.pos{color:#1DB954;background:rgba(29,185,84,0.12);}
+.t-price-change.neg{color:#FF3B3B;background:rgba(255,59,59,0.12);}
+.t-price-change.neu{color:#fff;}
+.t-price-gbx{font-family:'JetBrains Mono',monospace;font-size:10px;color:#fff;letter-spacing:0.05em;width:100%;margin-top:2px;}
+.t-tf-bar{display:flex;overflow-x:auto;padding:0;gap:0;border-top:1px solid #1a1a1a;border-bottom:1px solid #1a1a1a;background:#0a0a0a;scrollbar-width:none;align-items:stretch;height:36px;justify-content:flex-start;}
+.t-tf-bar::-webkit-scrollbar{display:none;}
+.t-tf-btn{background:transparent;border:none;color:#fff;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;padding:0 11px;min-width:38px;height:36px;cursor:pointer;letter-spacing:0.02em;flex-shrink:0;transition:color 0.15s,border-color 0.15s;text-align:center;border-bottom:2px solid transparent;margin-top:-1px;}
+.t-tf-btn:hover{color:#ddd;}
+.t-tf-btn:active{color:#fff;}
+.t-tf-btn.active{color:#F0C060;border-bottom-color:#F0C060;background:transparent;}
+.t-tf-spacer{flex:1;}
+.t-tf-icon{background:transparent;border:none;color:#fff;font-size:14px;padding:0 12px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:color 0.15s;}
+.t-tf-icon:hover{color:#ddd;}
+.t-tf-icon.active{color:#F0C060;background:rgba(240,192,96,0.08);}
+.t-tf-divider{width:1px;background:#222;margin:8px 0;align-self:stretch;}
+.t-ma-bar{display:flex;gap:14px;padding:8px 16px;border-bottom:1px solid #0a0a0a;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:0.02em;overflow-x:auto;scrollbar-width:none;}
+.t-ma-bar::-webkit-scrollbar{display:none;}
+.t-ma-item{flex-shrink:0;color:#fff;}
+.t-ma-item.ma20{color:#F0C060;}
+.t-ma-item.ma50{color:#4A9EFF;}
+.t-ma-item.ma100{color:#B084F0;}
+.t-ma-value{color:#fff;font-weight:700;margin-left:3px;}
+.t-chart-wrap{width:100%;height:260px;background:#000;position:relative;}
+.t-chart-badge{position:absolute;top:8px;left:10px;background:rgba(240,192,96,0.15);color:#F0C060;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.18em;padding:4px 10px;border-radius:6px;border:1px solid rgba(240,192,96,0.35);z-index:10;pointer-events:none;}
+.t-chart{width:100%;height:100%;}
+.t-chart-empty{display:flex;align-items:center;justify-content:center;height:100%;color:#fff;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;}

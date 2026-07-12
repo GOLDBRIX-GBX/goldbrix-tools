@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Swap · GoldBrix</title>
+<script>window.__gbxErr=[];addEventListener("error",function(e){window.__gbxErr.push((e.message||e.type)+" @ "+((e.filename||"").split("/").pop())+":"+(e.lineno||""));},true);</script>
+<script>
+window.GBX_API_BASE='https://goldbrix.app/api'; window.GBX_LP_BASE='https://goldbrix.app/lp';
+// IDEE S (partea client): failover PER-REQUEST intre LP-uri. Orice fetch spre gateway
+// esuat -> re-selectie LP sanatos din lps.json pentru lantul respectiv -> retry o data.
+window.GBX_LP_FETCH = async function(C, pathq){
+  async function tryOne(base){
+    var c=new AbortController(); var t=setTimeout(function(){c.abort();},6000);
+    try{ var r=await fetch(base+pathq,{cache:'no-store',signal:c.signal}); clearTimeout(t);
+         if(!r.ok) throw new Error('http '+r.status); return r; }
+    catch(e){ clearTimeout(t); throw e; }
+  }
+  try{ return await tryOne(C.gateway); }catch(e0){}
+  try{
+    var d=await (await fetch('/lps.json',{cache:'no-store'})).json();
+    var ch=Object.keys(window.GBX_CHAINS).find(function(k){return window.GBX_CHAINS[k]===C;});
+    for(var i=0;i<d.lps.length;i++){
+      var lp=d.lps[i];
+      if(lp.base_url===C.gateway) continue;
+      if(ch && lp.chains && lp.chains.indexOf(ch)<0) continue;
+      try{
+        var info=await (await fetch(lp.base_url+'/lp-info',{cache:'no-store'})).json();
+        if(!info || !info.lp_evm_addr) continue;
+        var r2=await tryOne(lp.base_url);
+        C.gateway=lp.base_url; C.lpName=lp.name;
+        if(C.kind==='evm') C.lpEvm=info.lp_evm_addr;
+        return r2;
+      }catch(e1){ continue; }
+    }
+  }catch(e2){}
+  return fetch(C.gateway+pathq); // ultimul: lasa eroarea originala sa iasa onest
+};
+window.GBX_LP_ENSURE = async function(C){
+  try{ await (await window.GBX_LP_FETCH(C,'/quote?usd=1')).json(); }catch(e){}
+};
+// LP-ROUTER: reads /lps.json, health-checks /lp-info, picks first healthy LP per chain.
+// Fail-safe: on ANY error keeps the defaults above. founder-lp = ordinary entry.
+window.GBX_LP_ROUTE = (async function(){
+  try{
+    for(var w=0; w<100 && !window.GBX_CHAINS; w++) await new Promise(function(r){setTimeout(r,50);});
+    if(!window.GBX_CHAINS) return null;
+    var d = await (await fetch('/lps.json',{cache:'no-store'})).json();
+    if(!d || !Array.isArray(d.lps) || !d.lps.length) return null;
+    async function ok(lp){
+      try{
+        var c=new AbortController(); var t=setTimeout(function(){c.abort();},4000);
+        var i=await (await fetch(lp.base_url+'/lp-info',{cache:'no-store',signal:c.signal})).json();
+        clearTimeout(t);
+        return (i && i.lp_evm_addr && !(i.breaker && i.breaker.active)) ? i : null;
+      }catch(e){ return null; }
+    }
+    var chosen={};
+    for(var ci=0; ci<d.lps.length; ci++){
+      var lp=d.lps[ci]; var info=null;
+      var chains=lp.chains||[];
+      var needed=chains.some(function(ch){ return !chosen[ch]; });
+      if(!needed) continue;
+      info=await ok(lp);
+      if(!info) continue;
+      chains.forEach(function(ch){ if(!chosen[ch]) chosen[ch]={base:lp.base_url,name:lp.name,info:info}; });
+    }
+    Object.keys(chosen).forEach(function(ch){
+      if(window.GBX_CHAINS && window.GBX_CHAINS[ch]){
+        window.GBX_CHAINS[ch].gateway = chosen[ch].base;
+        window.GBX_CHAINS[ch].lpName  = chosen[ch].name;
+        if(window.GBX_CHAINS[ch].kind==='evm' && chosen[ch].info.lp_evm_addr) window.GBX_CHAINS[ch].lpEvm = chosen[ch].info.lp_evm_addr;
+      }
+    });
+    if(chosen.base) window.GBX_LP_BASE = chosen.base.base;
+    return chosen;
+  }catch(e){ return null; }
+})();
+    window.GBX_CHAINS = {
+  base: {
+    kind:'evm', label:'Base', chainId: 8453,
+    gateway: 'https://goldbrix.app/lp',
+    evmRpc:  'https://mainnet.base.org',
+    htlc:    '0x8e351c32dfb27aa22334a20dcf7262f54f78e0c0',
+    usdc:    '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+    lpEvm:   '0x3b5Bdd8c7f597Fe4e66a876B7279ffEb9e9d57De'
+  },
+  arbitrum: {
+    kind:'evm', label:'Arbitrum', chainId: 42161,
+    gateway: 'https://goldbrix.app/lp',
+    evmRpc:  'https://arb1.arbitrum.io/rpc',
+    htlc:    '0xa43813d90adb98a5c400113ce2cc29d43d4ab867',
+    usdc:    '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+    lpEvm:   '0x3b5Bdd8c7f597Fe4e66a876B7279ffEb9e9d57De'
+  },
+  solana: {
+    kind:'solana', label:'Solana',
+    gateway: 'https://goldbrix.app/lp',
+    program: 'AAbKiRpmY5jYfC37DuQ9aTsWnNqxZXLe4fvyGSb3YS1F',
+    usdc:    'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+    lpSol:   '67giiRaNb6qUjX6DnSrEZc7fbgSu5zxCDXNrUAELaDWh',
+    lpAta:   '3CDM2VF59AzdWXGL7PERSwqN49m3J2MshatYzTTLkojZ',
+    rpc:     'https://api.mainnet-beta.solana.com',
+    t2Blocks: 600
+  }
+};
+</script>
+<style>
+  :root{
+    --bg:#0b0900; --surface:#15110a; --surface-2:#1d1709;
+    --gold:#F0C060; --gold-hi:#FFE099; --gold-deep:#B8860B; --edge:#3a2e12;
+    --ink:#ECE0C4; --muted:#e8dab0; --muted-d:#cbb46e;
+    --buy:#7BD3A0; --sell:#E6A45C; --bad:#E07a6a;
+    --r:18px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  body{min-height:100dvh;display:flex;flex-direction:column;align-items:center;
+    padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom))}
+  .num{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-variant-numeric:tabular-nums}
+  body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:radial-gradient(120% 60% at 50% -10%, rgba(240,192,96,.10), transparent 60%)}
+  .wrap{position:relative;z-index:1;width:100%;max-width:430px;margin:auto 0}
+  .spa-viewbox .wrap{margin:0 auto;padding:12px 14px 90px;max-width:min(430px,100vw);box-sizing:border-box}
+  .spa-viewbox{max-width:100vw;overflow-x:hidden}
+  header{display:flex;align-items:center;gap:10px;margin:6px 2px 18px}
+  .mark{width:32px;height:32px;flex:0 0 32px;border-radius:50%;object-fit:cover;
+    box-shadow:0 0 0 1px var(--gold-deep), 0 2px 8px -2px #000}
+  .back-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;flex:0 0 36px;
+    border-radius:10px;background:var(--surface,#1a1408);border:1px solid var(--edge,#3a3025);
+    color:var(--gold-hi,#f0c060);font-size:20px;text-decoration:none;line-height:1;
+    transition:all .15s;cursor:pointer}
+  .back-btn:active{transform:scale(0.94)}
+  .back-btn:hover{border-color:var(--gold-deep);background:var(--surface-2,#221a0c)}
+  .brand{font-weight:700;letter-spacing:.14em;font-size:13px;color:var(--gold-hi);text-transform:uppercase}
+  .brand small{display:block;letter-spacing:.32em;font-size:9px;color:var(--muted-d);font-weight:600}
+  .lang{margin-left:auto;background:transparent;border:1px solid var(--edge);color:var(--muted);
+    border-radius:999px;padding:6px 10px;font-size:11px;letter-spacing:.08em}
+  .seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--surface);
+    border:1px solid var(--edge);border-radius:999px;padding:4px;margin-bottom:14px}
+  .seg button{appearance:none;border:0;background:transparent;color:var(--muted);
+    padding:11px 8px;border-radius:999px;font-weight:700;font-size:13px;letter-spacing:.1em;
+    text-transform:uppercase;cursor:pointer;transition:.18s}
+  .seg button[aria-selected="true"]{background:linear-gradient(180deg,var(--surface-2),#120d05);
+    color:var(--gold-hi);box-shadow:inset 0 0 0 1px var(--gold-deep)}
+  .seg3{grid-template-columns:1fr 1fr 1fr;margin-top:-8px}
+  .seg3 button{font-size:12px;letter-spacing:.06em;padding:9px 6px}
+  .card{background:linear-gradient(180deg,var(--surface),#0f0b04);
+    border:1px solid var(--edge);border-radius:var(--r);padding:18px 16px;
+    box-shadow:0 1px 0 rgba(255,224,153,.06) inset, 0 18px 40px -24px #000}
+  .field{display:flex;flex-direction:column;gap:7px}
+  .field + .field{margin-top:12px}
+  .lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .amt{display:flex;align-items:baseline;gap:10px;border:1px solid var(--edge);
+    background:#0d0a03;border-radius:14px;padding:14px 14px}
+  .amt input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--gold-hi);
+    font-size:30px;font-weight:600;letter-spacing:-.01em}
+  .amt input::placeholder{color:var(--muted-d)}
+  .amt .tk{font-size:13px;font-weight:700;letter-spacing:.1em;color:var(--muted)}
+  .recv{display:flex;justify-content:space-between;align-items:baseline;
+    padding:13px 14px;border:1px dashed var(--edge);border-radius:14px;background:#0d0a03}
+  .recv .v{font-size:21px;font-weight:600;color:var(--ink)}
+  .recv .v.muted{color:var(--muted-d)}
+  .rate{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);
+    margin:11px 2px 2px}
+  .rate b{color:var(--ink);font-weight:600}
+  .atomic{margin:16px 0 4px;padding:14px;border:1px solid var(--edge);border-radius:14px;
+    background:repeating-linear-gradient(180deg,#0d0a03,#0d0a03 22px,#0c0902 22px,#0c0902 44px)}
+  .atomic[hidden]{display:none}
+  .step{display:flex;align-items:center;gap:12px;height:30px;position:relative}
+  .dot{width:11px;height:11px;border-radius:50%;border:2px solid var(--muted-d);flex:0 0 11px;
+    background:var(--bg);transition:.25s;z-index:1}
+  .step:not(:last-child)::before{content:"";position:absolute;left:5px;top:24px;width:1px;height:18px;
+    background:var(--muted-d)}
+  .step.on .dot{border-color:var(--gold);box-shadow:0 0 0 4px rgba(240,192,96,.14)}
+  .step.done .dot{background:var(--gold);border-color:var(--gold)}
+  .step.done:not(:last-child)::before{background:var(--gold-deep)}
+  .step.fail .dot{border-color:var(--bad);background:var(--bad)}
+  .step .t{font-size:12.5px;color:var(--muted)}
+  .step.on .t,.step.done .t{color:var(--ink)}
+  .step .k{margin-left:auto;font-size:10px;letter-spacing:.12em;color:var(--gold-deep);text-transform:uppercase}
+  .step.done .k{color:var(--gold-deep)}
+  .cta{width:100%;margin-top:16px;border:0;border-radius:14px;padding:16px;cursor:pointer;
+    font-size:15px;font-weight:800;letter-spacing:.06em;color:#241a04;
+    background:linear-gradient(180deg,var(--gold-hi),var(--gold));
+    box-shadow:0 1px 0 #fff5 inset, 0 10px 24px -12px var(--gold-deep);transition:.15s}
+  .cta:active{transform:translateY(1px)}
+  .cta:disabled{filter:grayscale(.5) brightness(.7);cursor:not-allowed;box-shadow:none}
+  .note{margin:13px 2px 0;font-size:11.5px;line-height:1.5;color:var(--muted)}
+  .note b{color:var(--gold)}
+  .err{margin-top:12px;padding:11px 13px;border-radius:12px;font-size:12.5px;line-height:1.45;
+    border:1px solid #5a2a22;background:#1c0f0a;color:#f0b3a6}
+  .err[hidden]{display:none}
+  .ok{border-color:#2c4a36;background:#0e1a12;color:#9fe0b8}
+  footer{margin:16px 2px 0;font-size:10.5px;letter-spacing:.06em;color:var(--muted-d);text-align:center}
+  [dir="rtl"] .step .k{margin-left:0;margin-right:auto}
+  [dir="rtl"] .rate, [dir="rtl"] .recv{direction:rtl}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.cap-warn{color:#b8860b;font-size:.85em;margin-top:4px;display:block}
+</style>
+<style id="gbxNoCopy">
+/* Anti-copiere: textul general nu se poate selecta/copia (profesional) */
+body, .swap-card, button, label, h1, h2, h3, p, span, div { -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none; -webkit-touch-callout:none; }
+/* EXCEPTII: campurile utile raman copiabile (adrese, hash-uri, sume, input) */
+input, textarea, .copyable, [data-copyable], .addr, .hash, .txid, code, .gbx-amount, .mono, #gbxCopyHint { -webkit-user-select:text !important; -moz-user-select:text !important; -ms-user-select:text !important; user-select:text !important; -webkit-touch-callout:default !important; }
+</style>
+<script>
+// Anti-copiere: blocheaza copy/contextmenu pe text general, permite pe elemente utile
+(function(){
+  function isAllowed(el){ if(!el) return false; return !!(el.closest && el.closest('input,textarea,.copyable,[data-copyable],.addr,.hash,.txid,code,.gbx-amount,.mono,#gbxCopyHint')); }
+  document.addEventListener('copy', function(e){ if(!isAllowed(e.target) && !window.getSelection().toString().match(/^[a-zA-Z0-9x]{8,}$/)){ /* permite hash/adrese chiar daca selectate */ if(!isAllowed(document.activeElement)){ e.preventDefault(); } } }, true);
+  document.addEventListener('contextmenu', function(e){ if(!isAllowed(e.target)) e.preventDefault(); }, true);
+  // long-press pe mobil (selectstart) blocat pe text general
+  document.addEventListener('selectstart', function(e){ if(!isAllowed(e.target)) e.preventDefault(); }, true);
+  // permite mereu copierea prin butoanele "tap to copy" (navigator.clipboard ramane functional)
+})();
+</script>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <a class="back-btn" href="/app.html#wallet" aria-label="Back">←</a>
+    <img class="mark" src="/assets/coin/gbx-coin-128.png" alt="GoldBrix" decoding="async">
+    <div class="brand">GoldBrix<small>Atomic Swap</small></div>
+    <button class="lang" id="langBtn" type="button">EN</button>
+  </header>
+  <div class="seg" role="tablist">
+    <button id="tabBuy"  role="tab" aria-selected="true"  data-i="buy">Buy GBX</button>
+    <button id="tabSell" role="tab" aria-selected="false" data-i="sell">Sell GBX</button>
+  </div>
+  <div class="seg seg3" id="chainSel" role="tablist" aria-label="Network">
+    <button id="chBase"  role="tab" data-chain="base"     aria-selected="true">Base</button>
+    <button id="chArb"   role="tab" data-chain="arbitrum" aria-selected="false">Arbitrum</button>
+    <button id="chSol"   role="tab" data-chain="solana"   aria-selected="false">Solana</button>
+  </div>
+  <div class="card">
+    <div class="field">
+      <span class="lbl" id="lblPay" data-i="youPay">You pay</span>
+        <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin:-2px 0 4px;"><span id="balInfo" style="font-size:11px;color:#9a8c6f;font-family:monospace;">—</span><button type="button" id="btnMax" style="font-size:10px;font-weight:700;color:#F0C060;background:rgba(240,192,96,0.12);border:1px solid rgba(240,192,96,0.35);border-radius:6px;padding:2px 8px;cursor:pointer;font-family:monospace;">MAX</button></div>
+      <label class="amt">
+        <input id="amt" class="num" inputmode="decimal" placeholder="0.00" autocomplete="off">
+        <span class="tk" id="payTk">USDC</span>
+      </label>
+    </div>
+    <div class="field">
+      <span class="lbl" id="lblGet" data-i="youGet">You receive</span>
+      <div class="recv">
+        <span class="v muted num" id="recv">0.00</span>
+        <span class="tk" id="getTk">GBX</span>
+      </div>
+    </div>
+    <div class="rate">
+      <span data-i="rate">Rate</span>
+      <span><b id="rate" class="num">—</b> · <span data-i="fee">spread</span> <b id="spread" class="num">—</b></span>
+    </div>
+    <div id="priceInfoBox" style="margin-top:6px;font-size:10.5px;line-height:1.5;color:var(--muted);border-top:1px solid rgba(255,255,255,.08);padding-top:6px">
+      <span id="piToggle" data-i="piHow" title="V40" style="cursor:pointer;color:var(--accent,#F0C060);font-weight:600">How is the price set?</span>
+      <div id="piBody" style="display:block;margin-top:5px"></div>
+    </div>
+    <div class="atomic" id="atomic" hidden></div>
+    <button class="cta" id="go" type="button" data-i="cta_buy">Buy GBX</button>
+    <div class="err" id="msg" hidden></div>
+    <div class="recover" id="recover" hidden></div>
+    <p class="note" id="note" data-i="note_buy"></p>
+  </div>
+  <footer data-i="foot">Non-custodial · atomic · no one holds your keys</footer>
+</div>
+<script src="/v3/gbx-read.js?v=103"></script>
+<script src="/v3/gbx-session.js?v=103"></script>
+<script type="module" src="/crypto-utils-v2.js"></script>
+<script type="module" src="/multichain-utils.js?v=103"></script>
+<script type="module" src="/evm-tx.mjs"></script>
+<script type="module">
+import("/mod-b-browser.mjs").then(function(){ if(!window.GoldbrixModB) window.__gbxErr.push("ModB importat dar window.GoldbrixModB NESETAT"); }).catch(function(e){ window.__gbxErr.push("ModB: "+((e&&e.message)||String(e))); });
+import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(function(e){ window.__gbxErr.push("ModSol: "+((e&&e.message)||String(e))); });
+</script>
+<script>
+(() => {
+  let chain = new URLSearchParams(location.search).get('chain') || (typeof localStorage!=='undefined' && localStorage.getItem('gbx_chain')) || 'base';
+  if(!window.GBX_CHAINS[chain]) chain='base';
+  let C = window.GBX_CHAINS[chain];
+  const $ = s => document.querySelector(s);
+  const el = { amt:$('#amt'), recv:$('#recv'), rate:$('#rate'), spread:$('#spread'),
+    go:$('#go'), msg:$('#msg'), note:$('#note'), atomic:$('#atomic'),
+    tabBuy:$('#tabBuy'), tabSell:$('#tabSell'), payTk:$('#payTk'), getTk:$('#getTk'),
+    chBase:$('#chBase'), chArb:$('#chArb'), chSol:$('#chSol'),
+    balInfo:$('#balInfo'), btnMax:$('#btnMax'),
+    lblPay:$('#lblPay'), lblGet:$('#lblGet'), lang:$('#langBtn') };
+  const T = {
+    en:{piVerify:"Verify on explorer",piHow:"How is the price set?",piFloor:"Now: floor price $",piBoot:" (bootstrap phase).",piOnchain:" Fully backed by real on-chain reserves — anyone can verify. Treasury excluded (to be burned).",piCurve:"Live: automatic curve x·y=k — nobody sets the price. Fully backed by on-chain reserves; large trades move the price progressively — automatic fairness for everyone.",piSpread:"Spread",piVerif:"Verifiable on-chain · treasury excluded → burn",buy:"Buy GBX",sell:"Sell GBX",youPay:"You pay",youGet:"You receive",rate:"Rate",fee:"spread",
+      cta_buy:"Buy GBX",cta_sell:"Sell GBX",cta_wait:"Processing…",foot:"Non-custodial · atomic · no one holds your keys",
+      note_buy:"Atomic swap: your USDC and GBX settle together through one secret. No custodian, no middleman. Settlement takes a short moment — that's the price of trustlessness.",
+      note_sell:"Atomic swap: your GBX and USDC settle together through one secret. No custodian, no middleman. Settlement takes a short moment — that's the price of trustlessness.",
+      s_prepared:"Preparing swap",s_lock_usdc:"Locking your USDC",s_lock_gbx:"Locking your GBX",
+      s_verify:"Verifying counterparty lock",s_claim:"Revealing secret · settling",s_done:"Swap complete",
+      locked:"locked",verified:"verified",settled:"settled",
+      need_unlock:"Unlock your wallet to swap.",enter_amt:"Enter an amount.",cap_msg:"Max {m} USDC per swap right now (automatic limit, scales with liquidity).",cap_msg_sell:"Max {m} GBX per swap right now (automatic limit, scales with liquidity).",
+      loading:"Loading swap engine…",done_buy:"Done. GBX is in your wallet.",done_sell:"Done. USDC is in your wallet."},
+    ro:{piVerify:"Verifică pe explorer",piHow:"Cum se stabilește prețul?",piFloor:"Acum: preț plasă $",piBoot:" (fază bootstrap).",piOnchain:" Acoperit integral de rezerve reale on-chain — oricine poate verifica. Trezoreria e exclusă (se va arde).",piCurve:"Activ: curbă automată x·y=k — nimeni nu setează prețul. Acoperit integral de rezerve on-chain; tranzacțiile mari mișcă prețul progresiv — corectitudine automată pentru toți.",piSpread:"Spread",piVerif:"Verificabil on-chain · trezorerie exclusă → burn",buy:"Cumpără GBX",sell:"Vinde GBX",youPay:"Plătești",youGet:"Primești",rate:"Curs",fee:"spread",
+      cta_buy:"Cumpără GBX",cta_sell:"Vinde GBX",cta_wait:"Se procesează…",foot:"Non-custodial · atomic · nimeni nu-ți deține cheile",
+      note_buy:"Swap atomic: USDC și GBX se decontează împreună printr-un singur secret. Fără custode, fără intermediar. Decontarea durează un moment — ăsta e prețul lipsei de încredere necesară.",
+      note_sell:"Swap atomic: GBX și USDC se decontează împreună printr-un singur secret. Fără custode, fără intermediar. Decontarea durează un moment — ăsta e prețul lipsei de încredere necesară.",
+      s_prepared:"Se pregătește swap-ul",s_lock_usdc:"Se blochează USDC",s_lock_gbx:"Se blochează GBX",
+      s_verify:"Se verifică blocarea contrapărții",s_claim:"Se dezvăluie secretul · decontare",s_done:"Swap complet",
+      locked:"blocat",verified:"verificat",settled:"decontat",
+      need_unlock:"Deblochează portofelul pentru swap.",enter_amt:"Introdu o sumă.",cap_msg:"Maxim {m} USDC per swap acum (limită automată, scalată cu lichiditatea).",cap_msg_sell:"Maxim {m} GBX per swap acum (limită automată, scalată cu lichiditatea).",below_floor:"Vânzarea e în pauză: prețul pieței e sub prețul minim de {f} USD. Cumpărările la preț minim refac lichiditatea — revino mai târziu.",
+      loading:"Se încarcă motorul de swap…",done_buy:"Gata. GBX e în portofel.",done_sell:"Gata. USDC e în portofel."},
+    de:{piVerify:"Im Explorer prüfen",piHow:"Wie wird der Preis festgelegt?",piFloor:"Jetzt: Mindestpreis $",piBoot:" (Bootstrap-Phase).",piOnchain:" Vollständig durch echte On-Chain-Reserven gedeckt — jeder kann es prüfen. Treasury ausgeschlossen (wird verbrannt).",piCurve:"Live: automatische Kurve x·y=k — niemand setzt den Preis. Vollständig durch On-Chain-Reserven gedeckt; große Trades bewegen den Preis progressiv — automatische Fairness für alle.",piSpread:"Spread",piVerif:"On-chain überprüfbar · Treasury ausgeschlossen → Burn",buy:"GBX kaufen",sell:"GBX verkaufen",youPay:"Du zahlst",youGet:"Du erhältst",rate:"Kurs",fee:"Spread",
+      cta_buy:"GBX kaufen",cta_sell:"GBX verkaufen",cta_wait:"Wird verarbeitet…",foot:"Non-custodial · atomar · niemand hält deine Schlüssel",
+      note_buy:"Atomarer Swap: USDC und GBX werden über ein Geheimnis gemeinsam abgewickelt. Keine Verwahrstelle, kein Mittelsmann. Die Abwicklung dauert einen Moment — das ist der Preis der Vertrauensfreiheit.",
+      note_sell:"Atomarer Swap: GBX und USDC werden über ein Geheimnis gemeinsam abgewickelt. Keine Verwahrstelle, kein Mittelsmann. Die Abwicklung dauert einen Moment — das ist der Preis der Vertrauensfreiheit.",
+      s_prepared:"Swap wird vorbereitet",s_lock_usdc:"USDC wird gesperrt",s_lock_gbx:"GBX wird gesperrt",
+      s_verify:"Gegenpartei-Sperre wird geprüft",s_claim:"Geheimnis wird offengelegt · Abwicklung",s_done:"Swap abgeschlossen",
+      locked:"gesperrt",verified:"geprüft",settled:"abgewickelt",
+      need_unlock:"Wallet entsperren, um zu tauschen.",enter_amt:"Betrag eingeben.",cap_msg:"Max. {m} USDC pro Swap derzeit (automatisches Limit, skaliert mit der Liquidität).",cap_msg_sell:"Max. {m} GBX pro Swap derzeit (automatisches Limit, skaliert mit der Liquidität).",
+      loading:"Swap-Engine wird geladen…",done_buy:"Fertig. GBX ist in deiner Wallet.",done_sell:"Fertig. USDC ist in deiner Wallet."},
+    zh:{piVerify:"在浏览器验证",piHow:"价格如何确定？",piFloor:"当前：保底价 $",piBoot:"（启动阶段）。",piOnchain:"由真实链上储备全额支持 — 任何人都可验证。国库已排除（将被销毁）。",piCurve:"实时：自动曲线 x·y=k — 无人设定价格。由链上储备全额支持；大额交易会逐步推动价格 — 对所有人自动公平。",piSpread:"价差",piVerif:"链上可验证 · 国库排除 → 销毁",buy:"购买 GBX",sell:"出售 GBX",youPay:"你支付",youGet:"你获得",rate:"汇率",fee:"价差",
+      cta_buy:"购买 GBX",cta_sell:"出售 GBX",cta_wait:"处理中…",foot:"非托管 · 原子交换 · 无人持有你的密钥",
+      note_buy:"原子交换：你的 USDC 与 GBX 通过同一个密钥一起结算。无托管方，无中间人。结算需要片刻——这是无需信任的代价。",
+      note_sell:"原子交换：你的 GBX 与 USDC 通过同一个密钥一起结算。无托管方，无中间人。结算需要片刻——这是无需信任的代价。",
+      s_prepared:"正在准备交换",s_lock_usdc:"正在锁定 USDC",s_lock_gbx:"正在锁定 GBX",
+      s_verify:"正在验证对方锁定",s_claim:"揭示密钥 · 结算中",s_done:"交换完成",
+      locked:"已锁定",verified:"已验证",settled:"已结算",
+      need_unlock:"请先解锁钱包。",enter_amt:"请输入金额。",cap_msg:"当前每次兑换上限 {m} USDC（自动上限，随流动性调整）。",cap_msg_sell:"当前每次兑换上限 {m} GBX（自动上限，随流动性调整）。",
+      loading:"正在加载交换引擎…",done_buy:"完成。GBX 已到账。",done_sell:"完成。USDC 已到账。"},
+    ar:{piVerify:"تحقق على المستكشف",piHow:"كيف يُحدَّد السعر؟",piFloor:"الآن: السعر الأدنى $",piBoot:" (مرحلة التمهيد).",piOnchain:" مدعوم بالكامل باحتياطيات حقيقية على السلسلة — يمكن لأي شخص التحقق. الخزينة مستبعدة (سيتم حرقها).",piCurve:"مباشر: منحنى تلقائي x·y=k — لا أحد يحدد السعر. مدعوم بالكامل باحتياطيات على السلسلة؛ الصفقات الكبيرة تحرّك السعر تدريجياً — عدالة تلقائية للجميع.",piSpread:"الفارق",piVerif:"قابل للتحقق على السلسلة · الخزينة مستثناة → حرق",buy:"شراء GBX",sell:"بيع GBX",youPay:"تدفع",youGet:"تستلم",rate:"السعر",fee:"الفارق",
+      cta_buy:"شراء GBX",cta_sell:"بيع GBX",cta_wait:"جارٍ المعالجة…",foot:"غير وصائي · ذرّي · لا أحد يملك مفاتيحك",
+      note_buy:"مبادلة ذرّية: يُسوّى USDC وGBX معًا عبر سرّ واحد. بلا وصيّ، بلا وسيط. تستغرق التسوية لحظة — هذا ثمن انعدام الحاجة للثقة.",
+      note_sell:"مبادلة ذرّية: يُسوّى GBX وUSDC معًا عبر سرّ واحد. بلا وصيّ، بلا وسيط. تستغرق التسوية لحظة — هذا ثمن انعدام الحاجة للثقة.",
+      s_prepared:"جارٍ تجهيز المبادلة",s_lock_usdc:"جارٍ قفل USDC",s_lock_gbx:"جارٍ قفل GBX",
+      s_verify:"جارٍ التحقق من قفل الطرف الآخر",s_claim:"كشف السرّ · التسوية",s_done:"اكتملت المبادلة",
+      locked:"مقفل",verified:"مُتحقَّق",settled:"مُسوّى",
+      need_unlock:"افتح محفظتك لإجراء المبادلة.",enter_amt:"أدخل مبلغًا.",cap_msg:"الحد الأقصى {m} USDC لكل مبادلة الآن (حد تلقائي يتناسب مع السيولة).",cap_msg_sell:"الحد الأقصى {m} GBX لكل مبادلة الآن (حد تلقائي يتناسب مع السيولة).",
+      loading:"جارٍ تحميل محرك المبادلة…",done_buy:"تم. GBX في محفظتك.",done_sell:"تم. USDC في محفظتك."}
+  };
+  const LANGS = ["en","ro","de","zh","ar"];
+  let lang = (localStorage.getItem('gbx_lang')||'en').slice(0,2);
+  if(!T[lang]) lang='en';
+  const t = k => (T[lang]&&T[lang][k]) || T.en[k] || k;
+  let dir = new URLSearchParams(location.search).get('dir')==='sell' ? 'sell' : 'buy';
+  function applyLang(){
+    document.documentElement.lang = lang;
+    document.documentElement.dir = (lang==='ar') ? 'rtl' : 'ltr';
+    el.lang.textContent = lang.toUpperCase();
+    document.querySelectorAll('[data-i]').forEach(n=>{
+      const k = n.getAttribute('data-i');
+      if(k==='cta_buy'||k==='cta_sell'||k==='note_buy'||k==='note_sell') return;
+      if(T[lang][k]!=null) n.textContent = T[lang][k];
+    });
+    el.tabBuy.textContent = t('buy'); el.tabSell.textContent = t('sell');
+    applyDir();
+  }
+  function applyDir(){
+    const buy = dir==='buy';
+    el.tabBuy.setAttribute('aria-selected', buy);
+    el.tabSell.setAttribute('aria-selected', !buy);
+    el.payTk.textContent = buy ? 'USDC' : 'GBX';
+    el.getTk.textContent = buy ? 'GBX' : 'USDC';
+    el.go.textContent = buy ? t('cta_buy') : t('cta_sell');
+    el.note.textContent = buy ? t('note_buy') : t('note_sell');
+    try{ refreshQuote(); }catch(_eq){}
+    setTimeout(function(){ try{ loadPriceInfo(); }catch(_el){} }, 50);
+    refreshBalance();
+  }
+  var _balCache={buy:null,sell:null};
+  async function refreshBalance(){
+    try{
+      var buy=(dir==='buy'); var tok=buy?'USDC':'GBX';
+      var lbl=(lang==='ro'?'Disponibil: ':lang==='de'?'Verfügbar: ':lang==='zh'?'可用: ':lang==='ar'?'المتاح: ':'Available: ');
+      el.balInfo.textContent = lbl+'…';
+      var w=activeWallet(); if(!w){ el.balInfo.textContent=''; return; }
+      if(!(await waitGlobals())){ el.balInfo.textContent=''; return; }
+      var bal=0;
+      if(buy && C.kind==='solana'){
+        // BALANTA USDC SPL pe Solana (RPC keyless, NU C.rpc care e 403 din browser - regula #7)
+        var _sol=await window.GoldbrixMultichain.deriveSOL(w.mnemonic);
+        var _V=window.GoldbrixModSol&&window.GoldbrixModSol._vendor?window.GoldbrixModSol._vendor:null;
+        var _owner, _mint, _ata;
+        try{
+          var _sv=await import('/vendor/solana.mjs');
+          _owner=new _sv.PublicKey(_sol.address);
+          _mint=new _sv.PublicKey(C.usdc);
+          _ata=(await _sv.getAssociatedTokenAddress(_mint,_owner)).toBase58();
+        }catch(_e){ el.balInfo.textContent=''; return; }
+        var _SR=['https://solana-rpc.publicnode.com','https://solana.leorpc.com/?api_key=FREE','https://api.mainnet-beta.solana.com'];
+        for(var _i=0;_i<_SR.length;_i++){
+          try{
+            var _rr=await (await fetch(_SR[_i],{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getTokenAccountBalance',params:[_ata]})})).json();
+            if(_rr&&_rr.result&&_rr.result.value){ bal=Number(_rr.result.value.uiAmount)||0; break; }
+            if(_rr&&_rr.error){ bal=0; break; } // ATA inexistent = user fara USDC = 0, gratios
+          }catch(_e2){ continue; }
+        }
+        _balCache[dir]=bal;
+        el.balInfo.textContent = lbl+bal.toLocaleString(undefined,{maximumFractionDigits:2})+' '+tok;
+        return;
+      }
+      if(buy){
+        var _a=(await window.GoldbrixMultichain.deriveEVM(w.mnemonic)).address;
+        var _d='0x70a08231000000000000000000000000'+_a.replace(/^0x/,'').toLowerCase();
+        var _r=await (await fetch(C.evmRpc,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_call',params:[{to:C.usdc,data:_d},'latest']})})).json();
+        bal=Number(BigInt(_r.result||'0x0'))/1e6;
+      }else{
+        var _a2=(await window.GoldbrixCrypto.deriveKeypairFromMnemonic(w.mnemonic)).address;
+        var _ar=await (await window.gbxRead('/address/'+_a2, {quorum:true, field:'spendable_gbx'})).json();
+        bal=parseFloat(_ar.spendable_gbx)||0;
+      }
+      _balCache[dir]=bal;
+      el.balInfo.textContent = lbl+bal.toLocaleString(undefined,{maximumFractionDigits:buy?2:4})+' '+tok;
+    }catch(e){ el.balInfo.textContent=''; }
+  }
+  el.lang.addEventListener('click', ()=>{
+    lang = LANGS[(LANGS.indexOf(lang)+1)%LANGS.length];
+    localStorage.setItem('gbx_lang', lang); applyLang(); try{ loadPriceInfo(); }catch(_){}
+  });
+  el.tabBuy.addEventListener('click', ()=>{ dir='buy'; clearMsg(); applyDir(); });
+  el.tabSell.addEventListener('click', ()=>{ dir='sell'; clearMsg(); applyDir(); });
+  function applyChain(){
+    el.chBase.setAttribute('aria-selected', chain==='base');
+    el.chArb.setAttribute('aria-selected', chain==='arbitrum');
+    el.chSol.setAttribute('aria-selected', chain==='solana');
+    try{ localStorage.setItem('gbx_chain', chain); }catch(_e){}
+    clearMsg(); refreshQuote(); refreshBalance();
+  }
+  el.chBase.addEventListener('click', ()=>{ chain='base';     C=window.GBX_CHAINS[chain]; applyChain(); });
+  el.chArb .addEventListener('click', ()=>{ chain='arbitrum'; C=window.GBX_CHAINS[chain]; applyChain(); });
+  el.chSol .addEventListener('click', ()=>{ chain='solana';   C=window.GBX_CHAINS[chain]; applyChain(); });
+  // sincronizare initiala selector cu chain-ul curent
+  el.chBase.setAttribute('aria-selected', chain==='base');
+  el.chArb.setAttribute('aria-selected', chain==='arbitrum');
+  el.chSol.setAttribute('aria-selected', chain==='solana');
+  el.btnMax.addEventListener('click', ()=>{ var b=_balCache[dir]; if(b>0){ el.amt.value=(dir==='buy'?Math.floor(b*100)/100:Math.floor(b*10000)/10000); el.amt.dispatchEvent(new Event('input')); } });
+  function activeWallet(){
+    try{
+      if(window.GBXSession){ var _gw=GBXSession.activeWallet(); if(_gw) return _gw; }
+      const u = JSON.parse(sessionStorage.getItem('gbx_unlocked_wallets')||'null');
+      if(!u || !u.wallets) return null;
+      if(u.unlocked_at && (Date.now()-u.unlocked_at) > 30*60*1000){
+        sessionStorage.removeItem('gbx_unlocked_wallets'); return null;
+      }
+      const w = u.wallets.find(x=>x.id===u.activeWalletId) || u.wallets[0];
+      return (w && w.address && w.mnemonic) ? w : null;
+    }catch(e){ return null; }
+  }
+  let quoteTimer=null;
+  function refreshQuote(){
+    const v = parseFloat(el.amt.value);
+    if(!(v>0)){ el.recv.textContent='0.00'; el.recv.classList.add('muted'); el.rate.textContent='—'; el.spread.textContent='—'; return; }
+    clearTimeout(quoteTimer);
+    quoteTimer = setTimeout(async ()=>{
+      try{
+        if(dir==='buy'){
+          const q = await (await GBX_LP_FETCH(C,'/quote?usd='+v)).json();
+          if(q.breaker){ el.msg.textContent = humanError('breaker'); el.msg.classList.add('cap-warn'); }
+          el.recv.textContent = (+q.gbx_out).toLocaleString(undefined,{maximumFractionDigits:4});
+          window._gbxShownOut = +q.gbx_out;
+          el.rate.textContent = '1 GBX = $'+(+q.price_usd).toFixed(4);
+          if(q.capped && q.max_usd_in!=null){ el.msg.textContent = t('cap_msg').replace('{m}', (+q.max_usd_in).toLocaleString(undefined,{maximumFractionDigits:2})); el.msg.classList.add('cap-warn'); }
+          else if(el.msg.classList.contains('cap-warn')){ el.msg.textContent=''; el.msg.classList.remove('cap-warn'); }
+          el.spread.textContent = (q.spread_bps/100).toFixed(2)+'%';
+        }else{
+          // quote de SELL real (AMM cu price impact) — afisajul = executia, zero divergenta
+          const probe = await (await GBX_LP_FETCH(C,'/quote?gbx='+v)).json();
+          if(probe.breaker){ el.msg.textContent = humanError('breaker'); el.msg.classList.add('cap-warn'); }
+          const usd = +probe.usd_out;
+          el.recv.textContent = usd.toLocaleString(undefined,{maximumFractionDigits:4});
+          window._gbxShownOut = usd;
+          el.rate.textContent = '1 GBX = $'+(+probe.price_usd).toFixed(4);
+          if(probe.cap_gbx!=null && v > +probe.cap_gbx){ el.msg.textContent = t('cap_msg_sell').replace('{m}', (+probe.cap_gbx).toLocaleString(undefined,{maximumFractionDigits:4})); el.msg.classList.add('cap-warn'); }
+          else if(el.msg.classList.contains('cap-warn')){ el.msg.textContent=''; el.msg.classList.remove('cap-warn'); }
+          el.spread.textContent = (probe.spread_bps/100).toFixed(2)+'%';
+        }
+        el.recv.classList.remove('muted');
+      }catch(e){ el.recv.textContent='—'; }
+    }, 220);
+  }
+  el.amt.addEventListener('input', refreshQuote);
+  const FLOW = {
+    buy:[['prepared','s_prepared'],['usdc_locked','s_lock_usdc','locked'],
+         ['gbx_verified','s_verify','verified'],['gbx_claimed','s_claim'],['completed','s_done','settled']],
+    sell:[['prepared','s_prepared'],['gbx_locked','s_lock_gbx','locked'],
+         ['usdc_verified','s_verify','verified'],['usdc_claimed','s_claim'],['completed','s_done','settled']]
+  };
+  function renderFlow(activeEv, failed){
+    const steps = FLOW[dir];
+    let idx = steps.findIndex(s=>s[0]===activeEv);
+    if(activeEv==='completed') idx = steps.length-1;
+    el.atomic.hidden = false;
+    el.atomic.innerHTML = steps.map((s,i)=>{
+      const cls = failed && i===idx ? 'fail' : i<idx ? 'done' : i===idx ? 'on' : '';
+      const tag = s[2] ? '<span class="k">'+t(s[2])+'</span>' : '';
+      return '<div class="step '+cls+'"><span class="dot"></span><span class="t">'+t(s[1])+'</span>'+tag+'</div>';
+    }).join('');
+  }
+  function setMsg(text, ok){ el.msg.hidden=false; el.msg.className='err'+(ok?' ok':''); el.msg.textContent=text; }
+  function humanError(e){
+    var raw=((e&&e.message)||String(e)||'').toLowerCase();
+    var EM={
+      busy:{en:'Funds are still updating — please try again in a few seconds.',ro:'Fondurile încă se actualizează — încearcă din nou în câteva secunde.',de:'Guthaben wird noch aktualisiert — bitte in ein paar Sekunden erneut versuchen.',zh:'资金正在更新 — 请几秒后重试。',ar:'يتم تحديث الأموال — يرجى المحاولة مرة أخرى بعد بضع ثوانٍ.'},
+      net:{en:'Connection interrupted — please try again.',ro:'Conexiune întreruptă — încearcă din nou.',de:'Verbindung unterbrochen — bitte erneut versuchen.',zh:'连接中断 — 请重试。',ar:'انقطع الاتصال — يرجى المحاولة مرة أخرى.'},
+      low:{en:'Insufficient balance for this swap.',ro:'Sold insuficient pentru acest swap.',de:'Unzureichendes Guthaben für diesen Swap.',zh:'余额不足，无法完成此次交换。',ar:'الرصيد غير كافٍ لإتمام هذه المبادلة.'},
+      gen:{en:'Something went wrong — please try again.',ro:'Ceva n-a mers — încearcă din nou.',de:'Etwas ist schiefgelaufen — bitte erneut versuchen.',zh:'出现问题 — 请重试。',ar:'حدث خطأ ما — يرجى المحاولة مرة أخرى.'},
+      prep:{en:'Preparing your wallet — please try again in a moment.',ro:'Se pregătește portofelul tău — încearcă din nou într-un moment.',de:'Wallet wird vorbereitet — bitte gleich erneut versuchen.',zh:'正在准备您的钱包 — 请稍后重试。',ar:'يتم تحضير محفظتك — يرجى المحاولة بعد لحظة.'},
+      slow:{en:'High demand right now — please wait a minute and try again.',ro:'Cerere mare acum — așteaptă un minut și încearcă din nou.',de:'Hohe Nachfrage — bitte eine Minute warten und erneut versuchen.',zh:'当前需求较高 — 请等待一分钟后重试。',ar:'الطلب مرتفع حالياً — يرجى الانتظار دقيقة ثم المحاولة.'},
+      cool:{en:'You sold recently — please wait a few minutes before selling again.',ro:'Ai vândut recent — așteaptă câteva minute înainte să vinzi din nou.',de:'Du hast kürzlich verkauft — bitte ein paar Minuten warten.',zh:'您刚刚卖出 — 请等待几分钟后再卖。',ar:'لقد بعت مؤخراً — يرجى الانتظار بضع دقائق قبل البيع مجدداً.'},
+      dcap:{en:'Daily sell limit reached for this wallet — try again tomorrow.',ro:'Limita zilnică de vânzare atinsă pentru acest portofel — încearcă mâine.',de:'Tägliches Verkaufslimit für diese Wallet erreicht — morgen erneut versuchen.',zh:'该钱包已达每日卖出上限 — 请明天再试。',ar:'تم بلوغ حد البيع اليومي لهذه المحفظة — حاول غداً.'},
+      pause:{en:'Swaps are briefly paused for safety — they resume automatically.',ro:'Schimburile sunt în pauză scurtă pentru siguranță — revin automat.',de:'Swaps sind kurz pausiert zur Sicherheit — sie werden automatisch fortgesetzt.',zh:'为安全起见交换暂停 — 将自动恢复。',ar:'تم إيقاف التبادلات مؤقتاً للأمان — ستستأنف تلقائياً.'}
+    };
+    var k='gen';
+    if(raw.indexOf('missingorspent')>=0||raw.indexOf('bad-txns')>=0||raw.indexOf('-25')>=0||raw.indexOf('already')>=0) k='busy';
+    else if(raw.indexOf('no_utxo')>=0) k='prep';
+    else if(raw.indexOf('sell_cooldown')>=0) k='cool';
+    else if(raw.indexOf('sell_daily_cap')>=0) k='dcap';
+    else if(raw.indexOf('rate_limited')>=0||raw.indexOf('429')>=0) k='slow';
+    else if(raw.indexOf('breaker')>=0||raw.indexOf('503')>=0) k='pause';
+    else if(raw.indexOf('fetch')>=0||raw.indexOf('network')>=0||raw.indexOf('timeout')>=0||raw.indexOf('failed to')>=0) k='net';
+    else if(raw.indexOf('insufficient')>=0||raw.indexOf('not enough')>=0||raw.indexOf('enough')>=0) k='low';
+    return (EM[k][lang]||EM[k].en);
+  }
+  function clearMsg(){ el.msg.hidden=true; el.atomic.hidden=true; }
+  async function waitGlobals(){
+    let n=0;
+    while(n<100 && !(window.GoldbrixCrypto && window.GoldbrixMultichain && window.GoldbrixEVM && window.GoldbrixModB)){
+      await new Promise(r=>setTimeout(r,100)); n++;
+    }
+    return !!(window.GoldbrixCrypto && window.GoldbrixMultichain && window.GoldbrixEVM && window.GoldbrixModB);
+  }
+  let _swapBusy=false;
+  // ===== P1 SLIPPAGE PROTECTION (build-once, zero-cost) =====
+  const GBX_SLIPPAGE_BPS = 100; // 1% prag default (configurabil)
+  function _slipMsg(shown, actual){
+    var SM={
+      en:'Price moved: you saw '+shown+', now '+actual+'. Tap again to confirm at the new price.',
+      ro:'Prețul s-a schimbat: vedeai '+shown+', acum '+actual+'. Apasă din nou ca să confirmi la prețul nou.',
+      de:'Preis hat sich geändert: vorher '+shown+', jetzt '+actual+'. Erneut tippen, um zum neuen Preis zu bestätigen.',
+      zh:'价格已变动：之前 '+shown+'，现在 '+actual+'。再次点击以新价格确认。',
+      ar:'تغيّر السعر: كان '+shown+'، الآن '+actual+'. اضغط مرة أخرى للتأكيد بالسعر الجديد.'};
+    return SM[lang]||SM.en;
+  }
+  function _slipCheck(actualOut){
+    var shown = +window._gbxShownOut;
+    if(!(shown>0) || !(actualOut>0)) return true; // fara referinta -> lasa sa treaca
+    if(actualOut >= shown*(1 - GBX_SLIPPAGE_BPS/10000)) return true; // in prag -> OK
+    // peste prag -> daca userul a confirmat deja acest pret, lasa; altfel opreste si cere re-confirmare
+    if(window._gbxSlipAck && Math.abs(window._gbxSlipAck-actualOut)/actualOut < 0.0001) return true;
+    window._gbxSlipAck = actualOut;
+    var fmt=function(x){return (+x).toLocaleString(undefined,{maximumFractionDigits:4});};
+    setMsg(_slipMsg(fmt(shown), fmt(actualOut)));
+    return false;
+  }
+  el.go.addEventListener('click', async ()=>{
+    if(_swapBusy) return;
+    _swapBusy=true;
+    const _ctaText = el.go.textContent;
+    el.go.disabled = true;
+    el.go.textContent = t('cta_wait');
+    el.go.style.opacity = '0.75';
+    try{ window.gbxHaptic && gbxHaptic('medium'); }catch(_h){}
+    const _reset=()=>{ _swapBusy=false; el.go.disabled=false; el.go.textContent=_ctaText; el.go.style.opacity=''; };
+    clearMsg();
+    const w = activeWallet();
+    if(!w){ setMsg(t('need_unlock')); setTimeout(()=>location.href='/v3/unlock.html', 900); _reset(); return; }
+    const v = parseFloat(el.amt.value);
+    if(!(v>0)){ setMsg(t('enter_amt')); _reset(); return; }
+
+    // anti-overspend: verifica soldul REAL inainte de swap (mesaj clar, nu eroare tehnica)
+    try{
+      const _M={en:dir==='buy'?'Not enough USDC — you have ':'Not enough GBX — you have ',
+        ro:dir==='buy'?'Nu ai destui USDC — ai ':'Nu ai destui GBX — ai ',
+        de:dir==='buy'?'Nicht genug USDC — du hast ':'Nicht genug GBX — du hast ',
+        zh:dir==='buy'?'USDC 不足，你有 ':'GBX 不足，你有 ',
+        ar:dir==='buy'?'USDC غير كافٍ — لديك ':'GBX غير كافٍ — لديك '};
+      if(dir==='buy'){
+        const _a=(await window.GoldbrixMultichain.deriveEVM(w.mnemonic)).address;
+        const _d='0x70a08231000000000000000000000000'+_a.replace(/^0x/,'').toLowerCase();
+        const _r=await (await fetch(C.evmRpc,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_call',params:[{to:C.usdc,data:_d},'latest']})})).json();
+        const _have=BigInt(_r.result||'0x0'), _need=BigInt(Math.round(v*1e6));
+        if(_have<_need){ setMsg((_M[lang]||_M.en)+(Number(_have)/1e6).toLocaleString()+' USDC'); _reset(); return; }
+      }else{
+        const _a=(await window.GoldbrixCrypto.deriveKeypairFromMnemonic(w.mnemonic)).address;
+        // sold REAL din summary (quorum P6.A), nu felie de UTXO (limit=1000 dadea sume partiale -> mesaj fals)
+        const _sr=await (await window.gbxRead('/address/'+_a,{quorum:true,field:'spendable_gbx'})).json();
+        const _have=Math.round((+_sr.spendable_gbx||0)*1e8), _need=Math.round(v*1e8);
+        if(_have<_need){ setMsg((_M[lang]||_M.en)+(_have/1e8).toLocaleString()+' GBX'); _reset(); return; }
+        // IDEE B pre-check INAINTE de lock L1 (altfel GBX ramane blocat pana la refund T1)
+        try{
+          const _kp=await window.GoldbrixCrypto.deriveKeypairFromMnemonic(w.mnemonic);
+          const _pk=Array.from(_kp.publicKey).map(b=>b.toString(16).padStart(2,'0')).join('');
+          const _sg=await (await GBX_LP_FETCH(C,'/sell-guard/'+_pk+'?val='+_need)).json();
+          if(!_sg.ok&&_sg.err){ setMsg(humanError(JSON.stringify(_sg.err))); _reset(); return; }
+        }catch(_e){}
+      }
+    }catch(_e){}
+    try{
+      if(!(await waitGlobals())){ var m=[];if(!window.GoldbrixCrypto)m.push('Crypto');if(!window.GoldbrixMultichain)m.push('Multichain');if(!window.GoldbrixEVM)m.push('EVM');if(!window.GoldbrixModB)m.push('ModB');setMsg('Lipsa: '+m.join(',')+(window.__gbxErr&&window.__gbxErr.length?' | '+window.__gbxErr.slice(0,2).join(' ; '):'')); _reset(); return; }
+      // ===== RAMURA SOLANA (gasless co-semnare) — buy USDC->GBX =====
+      if(C.kind==='solana'){
+        if(dir!=='buy'){
+          // quote de SELL real de la LP (AMM cu price impact) — NU derivare liniara din quote-ul de buy
+          const probe=await (await GBX_LP_FETCH(C,'/quote?gbx='+v)).json();
+          if(probe.below_floor){ setMsg((t('below_floor')||'').replace('{f}', String(probe.floor_usd||0.10))); _reset(); return; }
+          if(probe.capped){ setMsg(t('cap_msg_sell').replace('{m}', String(probe.cap_gbx||probe.max_gbx_in||''))); _reset(); return; }
+          const usd=+probe.usd_out;
+          if(!(usd>0)){ setMsg('quote sell indisponibil'); _reset(); return; }
+          if(!_slipCheck(usd)){ _reset(); return; }
+          const deriv=await window.GoldbrixMultichain.deriveSOL(w.mnemonic);
+          const kp=window.GoldbrixModSol.solKeypairFromDerive(deriv);
+          await GBX_LP_ENSURE(C); const _sr=await window.GoldbrixModSol.sellGbxSolana({
+            gatewayBase:C.gateway, program:C.program, mint:C.usdc, solKeypair:kp,
+            usdcAmount:Math.round(usd*1e6),
+            gbxLock:async({H})=>{ await GBX_LP_ENSURE(C); const _c=window.GoldbrixModB.makeInAppClient({ crypto:window.GoldbrixCrypto, multichain:window.GoldbrixMultichain, GoldbrixEVM:window.GoldbrixEVM, gatewayBase:C.gateway, evmRpc:'https://mainnet.base.org', chainId:8453, htlcAddr:'0x0000000000000000000000000000000000000000', usdcAddr:'0x0000000000000000000000000000000000000000', lpEvmAddr:'0x0000000000000000000000000000000000000000', fetchUtxos:window.GoldbrixCrypto.fetchUtxos }); return _c.lockGbxForSell({mnemonic:w.mnemonic,gbxAmount:v,H}); },
+            onStatus:(ev)=>renderFlow(ev,false) });
+          try{ if(_sr&&_sr.hashlock) localStorage.removeItem('gbx_pending_'+_sr.hashlock); }catch(_e){}
+          try{ const _h=JSON.parse(localStorage.getItem('gbx_swaps_history')||'[]'); _h.unshift({type:'GBX_SELL',chain:'solana',gbx_amount:v,usdc:usd,tx_hash:(_sr&&_sr.sig)||'',timestamp:Date.now(),status:'completed'}); localStorage.setItem('gbx_swaps_history',JSON.stringify(_h.slice(0,100))); }catch(_e){}
+          renderFlow('completed',false); setMsg(t('done_sell'), true); try{checkPendingSwaps();}catch(_e){}; _reset(); return; }
+        if(!window.GoldbrixModSol){ setMsg('Solana engine loading…'); _reset(); return; }
+        const onStatusS=(ev)=>renderFlow(ev,false);
+        renderFlow('prepared',false);
+        const _sol=window.GoldbrixMultichain.deriveSOL ? (await window.GoldbrixMultichain.deriveSOL(w.mnemonic)) : null;
+        if(!_sol){ setMsg('Solana derive unavailable'); _reset(); return; }
+        const _solKp=window.GoldbrixModSol.solKeypairFromDerive(_sol);
+        const _gk=await window.GoldbrixCrypto.deriveKeypairFromMnemonic(w.mnemonic);
+        const _pkUHex=[].map.call(_gk.publicKey,x=>('0'+x.toString(16)).slice(-2)).join('');
+        const _q=await (await GBX_LP_FETCH(C,'/quote?usd='+v)).json();
+        if(!_slipCheck(+_q.gbx_out)){ _reset(); return; }
+        await GBX_LP_ENSURE(C); const _res=await window.GoldbrixModSol.lockUsdcSolana({
+          gatewayBase:C.gateway, solKeypair:_solKp, usdcAmount:Math.round(v*1e6),
+          gbxAmount:Number(_q.gbx_out), pkUHex:_pkUHex, t2Blocks:C.t2Blocks, onStatus:onStatusS
+        });
+        await GBX_LP_ENSURE(C); const _clB=window.GoldbrixModB.makeInAppClient({ crypto:window.GoldbrixCrypto, multichain:window.GoldbrixMultichain, GoldbrixEVM:window.GoldbrixEVM, gatewayBase:C.gateway, evmRpc:C.evmRpc, chainId:C.chainId, htlcAddr:C.htlc, usdcAddr:C.usdc, lpEvmAddr:C.lpEvm, fetchUtxos:window.GoldbrixCrypto.fetchUtxos });
+        const _cr=await _clB.claimGbxForBuy({ mnemonic:w.mnemonic, hashlock:_res.hashlock, secret:_res.secret, minGbx8:Math.round(Number(_q.gbx_out)*1e8*0.99), onStatus:onStatusS });
+        try{ localStorage.removeItem('gbx_pending_'+_res.hashlock); }catch(_e){}
+        try{ const _h=JSON.parse(localStorage.getItem('gbx_swaps_history')||'[]'); _h.unshift({type:'GBX_BUY',chain:'solana',gbx_amount:Number(_q.gbx_out)||0,usdc:v,tx_hash:(_cr&&_cr.txid)||(_res&&_res.sig)||'',timestamp:Date.now(),status:'completed'}); localStorage.setItem('gbx_swaps_history',JSON.stringify(_h.slice(0,100))); }catch(_e){}
+        renderFlow('completed',false); setMsg(t('done_buy'), true); try{checkPendingSwaps();}catch(_e){};
+        _reset(); return;
+      }
+      await GBX_LP_ENSURE(C); const client = window.GoldbrixModB.makeInAppClient({
+        crypto: window.GoldbrixCrypto, multichain: window.GoldbrixMultichain,
+        GoldbrixEVM: window.GoldbrixEVM, gatewayBase: C.gateway, evmRpc: C.evmRpc,
+        chainId: C.chainId, chainName: chain, htlcAddr: C.htlc, usdcAddr: C.usdc, lpEvmAddr: C.lpEvm,
+        fetchUtxos: window.GoldbrixCrypto.fetchUtxos
+      });
+      const onStatus = (ev)=>renderFlow(ev,false);
+      renderFlow('prepared',false);
+      if(dir==='buy'){
+        const _qx=await (await GBX_LP_FETCH(C,'/quote?usd='+v)).json();
+        if(!_slipCheck(+_qx.gbx_out)){ _reset(); return; }
+        const _br=await client.buyGbxInApp({ mnemonic:w.mnemonic, usdcAmount:String(Math.round(v*1e6)), onStatus });
+        try{ const _h=JSON.parse(localStorage.getItem('gbx_swaps_history')||'[]'); _h.unshift({type:'GBX_BUY',chain:chain,gbx_amount:(v/(+(C._lastPrice||0.1024))||0),usdc:v,tx_hash:(_br&&(_br.gbxClaimTx||_br.hash))||'',timestamp:Date.now(),status:'completed'}); localStorage.setItem('gbx_swaps_history',JSON.stringify(_h.slice(0,100))); }catch(_e){}
+        renderFlow('completed',false); setMsg(t('done_buy'), true);
+      }else{
+        // quote de SELL real de la LP (AMM cu price impact) — NU derivare liniara din quote-ul de buy
+        const probe = await (await GBX_LP_FETCH(C,'/quote?gbx='+v)).json();
+        if(probe.below_floor){ setMsg((t('below_floor')||'').replace('{f}', String(probe.floor_usd||0.10))); _reset(); return; }
+        if(probe.capped){ setMsg(t('cap_msg_sell').replace('{m}', String(probe.cap_gbx||probe.max_gbx_in||''))); _reset(); return; }
+        const usd = +probe.usd_out;
+        if(!(usd>0)){ setMsg('quote sell indisponibil'); _reset(); return; }
+        if(!_slipCheck(usd)){ _reset(); return; }
+        const _sr=await client.sellGbxInApp({ mnemonic:w.mnemonic, gbxAmount:v, usdcAmount:Math.round(usd*1e6), onStatus });
+        try{ if(_sr&&_sr.hashlock) localStorage.removeItem('gbx_pending_'+_sr.hashlock); }catch(_e){}
+        try{ const _h=JSON.parse(localStorage.getItem('gbx_swaps_history')||'[]'); _h.unshift({type:'GBX_SELL',chain:chain,gbx_amount:v,usdc:usd,tx_hash:(_sr&&(_sr.hash||_sr.gbx_txid))||'',timestamp:Date.now(),status:'completed'}); localStorage.setItem('gbx_swaps_history',JSON.stringify(_h.slice(0,100))); }catch(_e){}
+        renderFlow('completed',false); setMsg(t('done_sell'), true); try{checkPendingSwaps();}catch(_e){};
+      }
+    }catch(e){
+      try{ window.__lastSwapErr=(e&&e.message||String(e))+' @ '+(e&&e._at||'?'); }catch(_x){}
+      renderFlow((e&&e._at)||'prepared', true);
+      setMsg(humanError(e));
+    }finally{
+      _reset();
+    }
+  });
+  // ===== FUNDS-SAFE: recuperare swap in asteptare (USDC blocat) =====
+  const RECT={
+    en:{ready:'Pending swap — your USDC is locked. You can recover it now:',wait:'Swap in progress — your USDC is protected. If it doesn\'t complete, it auto-refunds in ~{min} min.',gauto:'Pending swap — {usd} USDC locked safely. If LP doesn\'t deliver GBX, it auto-refunds in ~{min} min (no action needed).',gdone:'Swap complete — GBX is in your wallet. Nothing to recover.',btn:'Recover USDC',doing:'Recovering…',done:'USDC recovered ✓',err:'Recovery failed: ',psell:'Pending SELL — claim your USDC',cbtn:'Claim USDC',cdoing:'Claiming…',cdone:'USDC claimed ✓',cerr:'Claim failed: '},
+    ro:{ready:'Swap în așteptare — USDC-ul tău e blocat. Îl poți recupera acum:',wait:'Swap în curs — USDC-ul tău e protejat. Dacă nu se finalizează, se returnează automat în ~{min} min.',gauto:'Swap în așteptare — {usd} USDC blocat în siguranță. Dacă LP nu livrează GBX, se returnează automat în ~{min} min (fără acțiune din partea ta).',gdone:'Swap finalizat — GBX e în portofel. Nimic de recuperat.',btn:'Recuperează USDC',doing:'Se recuperează…',done:'USDC recuperat ✓',err:'Recuperare eșuată: ',psell:'SELL în așteptare — revendică USDC',cbtn:'Revendică USDC',cdoing:'Se revendică…',cdone:'USDC revendicat ✓',cerr:'Revendicare eșuată: '},
+    de:{ready:'Ausstehender Swap — dein USDC ist gesperrt. Jetzt zurückholbar:',wait:'Swap läuft — dein USDC ist geschützt. Falls er nicht abschließt, wird er in ~{min} Min automatisch zurückerstattet.',btn:'USDC zurückholen',doing:'Wird zurückgeholt…',done:'USDC zurückgeholt ✓',err:'Rückholung fehlgeschlagen: ',psell:'Ausstehender VERKAUF — USDC beanspruchen',cbtn:'USDC beanspruchen',cdoing:'Wird beansprucht…',cdone:'USDC beansprucht ✓',cerr:'Anspruch fehlgeschlagen: '},
+    zh:{ready:'待处理交换 — 您的 USDC 已锁定。现在可取回：',wait:'交换进行中 — 您的 USDC 受保护。若未完成，约 {min} 分钟后自动退回。',btn:'取回 USDC',doing:'取回中…',done:'USDC 已取回 ✓',err:'取回失败: ',psell:'待处理卖单 — 领取您的 USDC',cbtn:'领取 USDC',cdoing:'领取中…',cdone:'USDC 已领取 ✓',cerr:'领取失败: '},
+    ar:{ready:'مبادلة معلّقة — USDC مقفل. يمكنك استرداده الآن:',wait:'المبادلة جارية — USDC محمي. إذا لم تكتمل، تتم إعادته تلقائيًا خلال ~{min} دقيقة.',btn:'استرداد USDC',doing:'جارٍ الاسترداد…',done:'تم استرداد USDC ✓',err:'فشل الاسترداد: ',psell:'بيع معلّق — طالب بـ USDC',cbtn:'المطالبة بـ USDC',cdoing:'جارٍ المطالبة…',cdone:'تمت المطالبة بـ USDC ✓',cerr:'فشلت المطالبة: '}
+  };
+  const RT=(k)=>((RECT[lang]||RECT.en)[k]||RECT.en[k]);
+  function gbxPendingKeys(){ let ks=[]; try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.indexOf('gbx_pending_')===0) ks.push(k);} }catch(_e){} return ks; }
+  // Verifica pe chain statusul unui lock HTLC: {claimed, refunded, exists}
+  async function htlcLockStatus(lockId){
+    try{
+      if(!lockId) return null;
+      const id = lockId.startsWith('0x')? lockId : '0x'+lockId;
+      const data = '0xeb84e7f2' + id.replace(/^0x/,'').padStart(64,'0');
+      const r = await (await fetch(C.evmRpc,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_call',params:[{to:C.htlc,data:data},'latest']})})).json();
+      const out = (r && r.result) || '0x';
+      if(out.length < 2+64*8) return null;
+      const hexd = out.replace(/^0x/,'');
+      const word = (i)=> hexd.slice(i*64,(i+1)*64);
+      const sender = '0x'+word(0).slice(24);
+      const claimed  = /[1-9a-f]/.test(word(6).slice(-1));
+      const refunded = /[1-9a-f]/.test(word(7).slice(-1));
+      const exists = sender !== '0x0000000000000000000000000000000000000000';
+      return { exists, claimed, refunded };
+    }catch(_e){ return null; }
+  }
+  async function checkPendingSwaps(){
+    const rec=document.getElementById('recover'); if(!rec) return;
+    const ks=gbxPendingKeys(); if(!ks.length){ rec.hidden=true; rec.innerHTML=''; return; }
+    rec.hidden=false; rec.innerHTML='';
+    for(const k of ks){
+      let p; try{ p=JSON.parse(localStorage.getItem(k)); }catch(_e){ continue; }
+      if(p.dir==='sell'){
+        // IZOLARE PER-WALLET: cardul apare doar pe wallet-ul care a initiat sell-ul
+        try{ const _aw=activeWallet(); if(p.owner && _aw){ const _ev=await window.GoldbrixMultichain.deriveEVM(_aw.mnemonic); if(_ev && _ev.address && _ev.address.toLowerCase()!==p.owner){ continue; } } }catch(_e){}
+        // ORFANE: pending mai vechi de 48h fara lock la niciun LP -> curata automat
+        try{ if(p.ts && (Date.now()-p.ts)>172800000){ const _sw=await (await GBX_LP_FETCH(C,'/swap/'+(p.hashlock||'').toLowerCase())).json(); if(!_sw || _sw.status==='pending'){ localStorage.removeItem(k); continue; } } }catch(_e){}
+        // VERIFICA daca sell-ul s-a finalizat deja (USDC revendicat) -> sterge pending, nu afisa "Revendica"
+        let _sdone=false;
+        try{ const sw=await (await GBX_LP_FETCH(C,'/swap/'+(p.hashlock||'').toLowerCase())).json(); if(sw && (sw.status==='completed'||sw.status==='claimed'||sw.status==='settled')) _sdone=true; }catch(_e){}
+        // SOLANA: gateway-ul nu stie statusul on-chain -> confirma prin history completed cu acelasi sig/hashlock
+        if(!_sdone && (p.chain==='solana' || p.claimChain==='solana')){
+          try{
+            const hist=JSON.parse(localStorage.getItem('gbx_swaps_history')||'[]');
+            const hl=(p.hashlock||'').toLowerCase();
+            const match=hist.find(h=> h && h.type==='GBX_SELL' && h.chain==='solana' && h.status==='completed'
+              && ( (h.hashlock&&h.hashlock.toLowerCase()===hl) || (p.usdcAmount && Math.abs((Number(h.usdc)||0)-(Number(p.usdcAmount)/1e6))<0.001) ) );
+            if(match) _sdone=true;
+          }catch(_e){}
+        }
+        if(_sdone){ try{ localStorage.removeItem(k); }catch(_e){} continue; }
+        const usdS=(Number(p.usdcAmount||0)/1e6).toLocaleString();
+        const box=document.createElement('div'); box.style.cssText='border:1px solid var(--gold-deep,#b8860b);border-radius:12px;padding:12px;margin-top:12px;background:rgba(184,134,11,.06)';
+        const m=document.createElement('div'); m.style.marginBottom='8px'; m.textContent=RT('psell')+' ('+usdS+' USDC)'; box.appendChild(m);
+        const btn=document.createElement('button'); btn.className='cta'; btn.type='button'; btn.textContent=RT('cbtn');
+        btn.onclick=async()=>{
+          btn.disabled=true; btn.textContent=RT('cdoing');
+          try{
+            const w=activeWallet(); if(!w){ location.href='/v3/unlock.html'; return; }
+            // FIX: claim pe lantul PENDINGULUI (nu pe cel selectat in UI) — altfel lock not found
+            const PC=(p.chain && GBX_CHAINS[p.chain]) ? GBX_CHAINS[p.chain] : C;
+            await GBX_LP_ENSURE(PC); const client=window.GoldbrixModB.makeInAppClient({ crypto:window.GoldbrixCrypto, multichain:window.GoldbrixMultichain, GoldbrixEVM:window.GoldbrixEVM, gatewayBase:PC.gateway, evmRpc:PC.evmRpc, chainId:PC.chainId, htlcAddr:PC.htlc, usdcAddr:PC.usdc, lpEvmAddr:PC.lpEvm, fetchUtxos:window.GoldbrixCrypto.fetchUtxos });
+            const r=await client.claimUsdcForSell({ mnemonic:w.mnemonic, hashlock:p.hashlock, secret:p.secret, userEvmAddr:p.userEvmAddr });
+            try{ const _h=JSON.parse(localStorage.getItem('gbx_swaps_history')||'[]'); _h.unshift({type:'GBX_SELL',gbx_amount:0,usdc:(Number(p.usdcAmount||0)/1e6),tx_hash:(r&&r.hash)||'',timestamp:Date.now(),status:'completed'}); localStorage.setItem('gbx_swaps_history',JSON.stringify(_h.slice(0,100))); }catch(_e){}
+            localStorage.removeItem(k); box.innerHTML='<div style="color:#2e7d32">'+RT('cdone')+' '+(r&&r.hash?('('+r.hash.slice(0,12)+'…)'):'')+'</div>';
+          }catch(e){ btn.disabled=false; btn.textContent=RT('cbtn'); let er=box.querySelector('.recerr'); if(!er){ er=document.createElement('div'); er.className='recerr'; er.style.cssText='color:#b03a2e;margin-top:6px;font-size:13px'; box.appendChild(er);} er.textContent=RT('cerr')+humanError(e); }
+        };
+        box.appendChild(btn); rec.appendChild(box); continue;
+      }
+      // ===== BUY SOLANA: pending are usdcAmount (nu amountUsdc) si secret+hashlock -> claim GBX direct =====
+      if(p.dir==='buy_solana'){
+        let _bs=false;
+        try{ const sw=await (await GBX_LP_FETCH(C,'/swap/'+(p.hashlock||'').toLowerCase())).json(); if(sw && (sw.status==='completed'||sw.status==='claimed')) _bs=true; }catch(_e){}
+        if(_bs){ try{ localStorage.removeItem(k); }catch(_e){} continue; }
+        const usdBS=(Number(p.usdcAmount||0)/1e6).toLocaleString();
+        const box=document.createElement('div'); box.style.cssText='border:1px solid var(--gold-deep,#b8860b);border-radius:12px;padding:12px;margin-top:12px;background:rgba(184,134,11,.06)';
+        const m=document.createElement('div'); m.style.marginBottom='8px'; m.textContent='BUY Solana în așteptare — revendică GBX ('+usdBS+' USDC)'; box.appendChild(m);
+        const btn=document.createElement('button'); btn.className='cta'; btn.type='button'; btn.textContent='Revendică GBX';
+        btn.onclick=async()=>{
+          btn.disabled=true; btn.textContent='Se revendică…';
+          try{
+            const w=activeWallet(); if(!w){ location.href='/v3/unlock.html'; return; }
+            await GBX_LP_ENSURE(C); const client=window.GoldbrixModB.makeInAppClient({ crypto:window.GoldbrixCrypto, multichain:window.GoldbrixMultichain, GoldbrixEVM:window.GoldbrixEVM, gatewayBase:C.gateway, evmRpc:C.evmRpc, chainId:C.chainId, htlcAddr:C.htlc, usdcAddr:C.usdc, lpEvmAddr:C.lpEvm, fetchUtxos:window.GoldbrixCrypto.fetchUtxos });
+            const r=await client.claimGbxForBuy({ mnemonic:w.mnemonic, hashlock:p.hashlock, secret:p.secret, minGbx8:1, maxPolls:8 });
+            try{ const _h=JSON.parse(localStorage.getItem('gbx_swaps_history')||'[]'); _h.unshift({type:'GBX_BUY',chain:'solana',gbx_amount:0,usdc:(Number(p.usdcAmount||0)/1e6),tx_hash:(r&&r.txid)||'',timestamp:Date.now(),status:'completed'}); localStorage.setItem('gbx_swaps_history',JSON.stringify(_h.slice(0,100))); }catch(_e){}
+            localStorage.removeItem(k); box.innerHTML='<div style="color:#2e7d32">GBX revendicat ✓ '+(r&&r.txid?('('+r.txid.slice(0,12)+'…)'):'')+'</div>';
+          }catch(e){ btn.disabled=false; btn.textContent='Revendică GBX'; let er=box.querySelector('.recerr'); if(!er){ er=document.createElement('div'); er.className='recerr'; er.style.cssText='color:#b03a2e;margin-top:6px;font-size:13px'; box.appendChild(er);} er.textContent='Eroare: '+humanError(e); }
+        };
+        box.appendChild(btn); rec.appendChild(box); continue;
+      }
+      const now=Math.floor(Date.now()/1000), tl=Number(p.timelock||0);
+      const _amt6=Number(p.amountUsdc||0);
+      // GARDA: pending corupt/incomplet (suma 0 sau lipsa) -> curata si sari (nu afisa "0 USDC" fals)
+      if(!(_amt6>0)){ try{ localStorage.removeItem(k); }catch(_e){} continue; }
+      const usd=(_amt6/1e6).toLocaleString(undefined,{maximumFractionDigits:2});
+      // ===== GASLESS (EIP-3009): userul NU detine lock-ul (LP il muta via lockAuth). Fara refund manual. =====
+      if(p.gasless){
+        // verific daca swap-ul s-a finalizat: GBX a ajuns? (fetchSwap -> claimed) SAU lock LP inactiv
+        let done=false;
+        try{ const sw=await (await GBX_LP_FETCH(C,'/swap/'+(p.hashlock||'').toLowerCase())).json(); if(sw && (sw.status==='completed'||sw.status==='claimed')) done=true; }catch(_e){}
+        if(done){ try{ localStorage.removeItem(k); }catch(_e){} continue; }   // swap reusit -> nimic de recuperat
+        const box=document.createElement('div'); box.style.cssText='border:1px solid var(--gold-deep,#b8860b);border-radius:12px;padding:12px;margin-top:12px;background:rgba(184,134,11,.06)';
+        const mins=Math.max(1,Math.ceil((Math.max(tl,now+1)-now)/60));
+        const m=document.createElement('div'); m.textContent=RT('gauto').replace('{usd}',usd).replace('{min}',mins); box.appendChild(m);
+        rec.appendChild(box); continue;
+      }
+      // ===== CLASIC: userul detine lock-ul -> poate face refund manual dupa T1 =====
+      const _st = await htlcLockStatus(p.lockId);
+      if(_st && (_st.claimed || _st.refunded || !_st.exists)){
+        try{ localStorage.removeItem(k); }catch(_e){}
+        continue;
+      }
+      const box=document.createElement('div'); box.style.cssText='border:1px solid var(--gold-deep,#b8860b);border-radius:12px;padding:12px;margin-top:12px;background:rgba(184,134,11,.06)';
+      if(now>=tl){
+        const m=document.createElement('div'); m.style.marginBottom='8px'; m.textContent=RT('ready')+' ('+usd+' USDC)'; box.appendChild(m);
+        const btn=document.createElement('button'); btn.className='cta'; btn.type='button'; btn.textContent=RT('btn');
+        btn.onclick=async()=>{
+          btn.disabled=true; btn.textContent=RT('doing');
+          try{
+            const w=activeWallet(); if(!w){ location.href='/v3/unlock.html'; return; }
+            await GBX_LP_ENSURE(C); const client=window.GoldbrixModB.makeInAppClient({ crypto:window.GoldbrixCrypto, multichain:window.GoldbrixMultichain, GoldbrixEVM:window.GoldbrixEVM, gatewayBase:C.gateway, evmRpc:C.evmRpc, chainId:C.chainId, htlcAddr:C.htlc, usdcAddr:C.usdc, lpEvmAddr:C.lpEvm, fetchUtxos:window.GoldbrixCrypto.fetchUtxos });
+            await client.refundUsdc({ mnemonic:w.mnemonic, lockId:p.lockId });
+            localStorage.removeItem(k); box.innerHTML='<div style="color:#2e7d32">'+RT('done')+'</div>';
+          }catch(e){ btn.disabled=false; btn.textContent=RT('btn'); let er=box.querySelector('.recerr'); if(!er){ er=document.createElement('div'); er.className='recerr'; er.style.cssText='color:#b03a2e;margin-top:6px;font-size:13px'; box.appendChild(er);} er.textContent=RT('err')+((e&&e.message)||String(e)); }
+        };
+        box.appendChild(btn);
+      } else {
+        const mins=Math.max(1,Math.ceil((tl-now)/60));
+        const m=document.createElement('div'); m.textContent=RT('wait').replace('{min}',mins)+' ('+usd+' USDC)'; box.appendChild(m);
+      }
+      rec.appendChild(box);
+    }
+  }
+  setTimeout(checkPendingSwaps, 600);
+  setInterval(checkPendingSwaps, 30000);
+
+  applyLang();
+})();
+
+  var PI_T={
+    en:{how:"How is the price set?",floor:"Now: floor price $",boot:" (bootstrap phase).",onchain:" Fully backed by real on-chain reserves — anyone can verify. Treasury excluded (to be burned).",curve:"Live: automatic curve x·y=k — nobody sets the price. Fully backed by on-chain reserves; large trades move the price progressively — automatic fairness for everyone.",verif:"Verifiable on-chain · treasury excluded → burn",verify:"Verify on explorer"},
+    ro:{how:"Cum se stabilește prețul?",floor:"Acum: preț plasă $",boot:" (fază bootstrap).",onchain:" Acoperit integral de rezerve reale on-chain — oricine poate verifica. Trezoreria e exclusă (se va arde).",curve:"Activ: curbă automată x·y=k — nimeni nu setează prețul. Acoperit integral de rezerve on-chain; tranzacțiile mari mișcă prețul progresiv — corectitudine automată pentru toți.",verif:"Verificabil on-chain · trezorerie exclusă → burn",verify:"Verifică pe explorer"},
+    de:{how:"Wie wird der Preis festgelegt?",floor:"Jetzt: Mindestpreis $",boot:" (Bootstrap-Phase).",onchain:" Vollständig durch echte On-Chain-Reserven gedeckt — jeder kann es prüfen. Treasury ausgeschlossen (wird verbrannt).",curve:"Live: automatische Kurve x·y=k — niemand setzt den Preis. Vollständig durch On-Chain-Reserven gedeckt; große Trades bewegen den Preis progressiv — automatische Fairness für alle.",verif:"On-chain überprüfbar · Treasury ausgeschlossen → Burn",verify:"Im Explorer prüfen"},
+    zh:{how:"价格如何确定？",floor:"当前：保底价 $",boot:"（启动阶段）。",onchain:"由真实链上储备全额支持 — 任何人都可验证。国库已排除（将被销毁）。",curve:"实时：自动曲线 x·y=k — 无人设定价格。由链上储备全额支持；大额交易会逐步推动价格 — 对所有人自动公平。",verif:"链上可验证 · 国库排除 → 销毁",verify:"在浏览器验证"},
+    ar:{how:"كيف يُحدَّد السعر؟",floor:"الآن: السعر الأدنى $",boot:" (مرحلة التمهيد).",onchain:" مدعوم بالكامل باحتياطيات حقيقية على السلسلة — يمكن لأي شخص التحقق. الخزينة مستبعدة (سيتم حرقها).",curve:"مباشر: منحنى تلقائي x·y=k — لا أحد يحدد السعر. مدعوم بالكامل باحتياطيات على السلسلة؛ الصفقات الكبيرة تحرّك السعر تدريجياً — عدالة تلقائية للجميع.",verif:"قابل للتحقق على السلسلة · الخزينة مستثناة → حرق",verify:"تحقق على المستكشف"}
+  };
+  async function loadPriceInfo(){
+    var box=document.getElementById('piBody'); var tg=document.getElementById('piToggle');
+    if(!box) return;
+    var LG=(localStorage.getItem('gbx_lang')||'en').slice(0,2); if(!PI_T[LG]) LG='en';
+    var t=PI_T[LG];
+    if(tg) tg.textContent=t.how;
+    try{
+      var _lpbase=(typeof C!=='undefined'&&C.gateway)?C.gateway:(window.GBX_LP_BASE||'/lp'); var r=await fetch(_lpbase+'/lp-info',{cache:'no-store'}); var d=await r.json(); var p=d.price||{};
+      var x=(p.x_usdc!=null)?(+p.x_usdc).toFixed(2):'0.00';
+      var head = p.amm_active ? '• '+t.curve
+        : '• '+t.floor+(+p.floor_usd).toFixed(2)+t.boot+t.onchain;
+      var EXP={base:{u:'https://basescan.org/token/0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913?a=',n:'Base'},
+               arbitrum:{u:'https://arbiscan.io/token/0xaf88d065e77c8cC2239327C5EDb3A432268e5831?a=',n:'Arbitrum'},
+               solana:{u:'https://solscan.io/account/',n:'Solana'}};
+      var btns=''; var rv=(p.reserves_usdc||{});
+      for(var ck in rv){ var rr=rv[ck]; if(!rr.active||!(rr.amount>0)||!rr.lp_addr||!EXP[ck]) continue;
+        btns+='<a href="'+EXP[ck].u+rr.lp_addr+'" target="_blank" rel="noopener" style="display:block;margin-top:5px;padding:6px 9px;border:1px solid rgba(240,192,96,.35);border-radius:7px;color:#F0C060;text-decoration:none;font-weight:600">🔍 '+t.verify+' — '+EXP[ck].n+' →</a>';
+      }
+      box.innerHTML=head+btns;
+    }catch(e){ box.textContent='—'; }
+  }
+  document.addEventListener('click',function(ev){
+    var el=ev.target;
+    if(el && el.id==='piToggle'){ var b=document.getElementById('piBody');
+      if(b){ b.style.display=(b.style.display==='none'?'block':'none'); } }
+  });
+</script>
+</body>
+</html>

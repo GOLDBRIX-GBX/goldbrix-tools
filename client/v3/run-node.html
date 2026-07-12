@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Run a GoldBrix Node</title>
+<style>
+body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#0d1117;color:#e6edf3;max-width:820px;margin:0 auto;padding:24px;line-height:1.6}
+h1{color:#f0b90b}h2{color:#f0b90b;margin-top:32px;font-size:20px}
+code,pre{background:#161b22;border:1px solid #30363d;border-radius:6px;color:#7ee787}
+code{padding:2px 6px;font-size:13px}
+pre{padding:14px;overflow-x:auto;font-size:13px}
+.warn{background:#1c1917;border-left:3px solid #f0b90b;padding:10px 14px;margin:14px 0;font-size:14px}
+a{color:#58a6ff}
+table{border-collapse:collapse;width:100%;font-size:14px}
+td,th{border:1px solid #30363d;padding:6px 10px;text-align:left}
+</style>
+</head>
+<body>
+<h1>Run a GoldBrix Node</h1>
+<p>Anyone can run a full GoldBrix node. No permission, no registration, no keys required. Your node independently verifies every block and strengthens the network.</p>
+
+<h2>0. One command (recommended)</h2>
+<p>Full non-pruned node + public read endpoint (<code>/api/status</code>, <code>/api/utxos</code>) in one step. Keyless — the machine never holds funds. Needs x86_64 Linux, root, &ge;900GB free disk.</p>
+<pre><code>curl -fsSL https://raw.githubusercontent.com/GOLDBRIX-GBX/goldbrix-tools/main/run-node/install-node.sh -o install-node.sh
+less install-node.sh   # read before running — verify, don't trust
+sudo bash install-node.sh</code></pre>
+<p>The script pins the binary SHA-256 (also anchored on-chain) and installs systemd services <code>goldbrixd</code>, <code>gbx-read-api</code>, <code>gbx-indexer</code>. When synced, expose port 8088 behind HTTPS and submit your endpoint for <code>nodes.json</code> — wallets pick you up via quorum, no app rebuild.</p>
+<h2>1. Requirements</h2>
+<table>
+<tr><th>OS</th><td>Linux x86_64 (Ubuntu 22.04+ / Debian 12+)</td></tr>
+<tr><th>RAM</th><td>2 GB minimum (4 GB recommended)</td></tr>
+<tr><th>Disk</th><td>10 GB free (chain grows over time)</td></tr>
+<tr><th>Network</th><td>Open inbound TCP port 39444 (recommended)</td></tr>
+</table>
+
+<h2>2. Download &amp; verify the binary</h2>
+<p>The release is built with a fully reproducible process. Anyone rebuilding from source obtains byte-identical binaries — verify, don't trust.</p>
+<pre>wget https://goldbrix.app/downloads/goldbrix-30-gbx-10-x86_64-linux-gnu.tar.gz
+wget https://goldbrix.app/downloads/SHA256SUMS-v30-gbx-10.txt
+sha256sum goldbrix-30-gbx-10-x86_64-linux-gnu.tar.gz</pre>
+<div class="warn">Expected SHA-256:<br><code>2f384b897fc0ee106466275c376aa192a596d0feb7537bf0158a67fc6c2c794e</code><br>If the hash does not match — STOP. Do not run the binary.</div>
+
+<h2>3. Install</h2>
+<pre>tar -xzf goldbrix-30-gbx-10-x86_64-linux-gnu.tar.gz
+sudo cp goldbrix-30-gbx-10/bin/goldbrixd goldbrix-30-gbx-10/bin/goldbrix-cli /usr/local/bin/</pre>
+
+<h2>4. Configure</h2>
+<pre>mkdir -p ~/.bitcoin
+cat &gt; ~/.bitcoin/goldbrix.conf &lt;&lt; 'EOF'
+server=1
+listen=1
+txindex=1
+EOF</pre>
+<p>Peers are discovered automatically via DNS seed <code>seed.goldbrix.app</code>. No manual configuration needed.</p>
+
+<h2>5. Run</h2>
+<pre>goldbrixd -daemon
+goldbrix-cli getblockcount
+goldbrix-cli getpeerinfo</pre>
+<p>Block height should grow and match <a href="https://goldbrix.app/gbx-node-info">goldbrix.app/gbx-node-info</a>.</p>
+
+<h2>6. Run as a service (recommended)</h2>
+<pre>sudo tee /etc/systemd/system/goldbrixd.service &lt;&lt; 'EOF'
+[Unit]
+Description=GoldBrix Core daemon
+After=network.target
+[Service]
+ExecStart=/usr/local/bin/goldbrixd -datadir=/root/.bitcoin
+Restart=always
+RestartSec=10
+[Install]
+WantedBy=multi-user.target
+EOF
+sudo systemctl daemon-reload
+sudo systemctl enable --now goldbrixd</pre>
+
+<h2>7. Verify your node's integrity (optional)</h2>
+<p>Compare your binary hash with the network's canonical release:</p>
+<pre>sha256sum /usr/local/bin/goldbrixd
+curl -s https://goldbrix.app/gbx-node-info</pre>
+<p>The <code>binary_sha256</code> field shows the hash of the reproducible Guix build currently running on public seed nodes.</p>
+
+<h2>8. Rebuild from source (verify, don't trust)</h2>
+<p>Source: <a href="https://github.com/GOLDBRIX-GBX/goldbrix-core">goldbrix-core</a> (<code>git clone</code>, tag <code>v30-gbx-10</code>). Full reproducible-build instructions ship inside the source tree (<code>contrib/guix/</code>). Two independent builds of tag <code>v30-gbx-10</code> produce identical SHA-256 sums.</p>
+<h2>9. Run the public watchtower (optional)</h2>
+<p>Independent, keyless liveness monitor. Records the network's uptime history on YOUR machine — proof the system runs without its founder.</p>
+<pre>wget https://goldbrix.app/downloads/watchtower.py
+python3 watchtower.py</pre>
+
+<h2>10. Mine to your own address (solo, non-custodial)</h2>
+<p>The public pool at <code>stratum+tcp://goldbrix.app:3333</code> runs in <strong>solo non-custodial</strong> mode: the coinbase of every block pays <strong>your address directly</strong>. The pool never holds funds. Fee: <strong>0</strong> (code-is-law) — verify live at <a href="https://goldbrix.app/pool-info">/pool-info</a>.</p>
+<pre>./cpuminer -a sha256d -o stratum+tcp://goldbrix.app:3333 -u bn1youraddress.worker1 -p x</pre>
+<p>Login format: <code>bn1address.workername</code>. Any SHA-256d stratum miner works. Rewards mature after 100 blocks. You can also run this pool software against your own node — source: <a href="https://github.com/GOLDBRIX-GBX/goldbrix-tools">goldbrix-tools</a>. Node source: <a href="https://github.com/GOLDBRIX-GBX/goldbrix-core">goldbrix-core</a>.</p>
+</body>
+</html>

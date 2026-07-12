@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- BUILD_VERSION: GBX-WALLETVIEW-4 -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
+<link rel="preconnect" href="https://goldbrix.app" crossorigin>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1c1610">
+<title>GoldBrix · Wallet</title>
+<link rel="icon" href="/assets/coin/gbx-coin-32.png">
+<link rel="stylesheet" href="/v3/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  .v3-app{padding-bottom:90px}
+  .wv-top{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 4px}
+  .wv-back{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;color:var(--text-secondary);background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--r-full);text-decoration:none}
+  .wv-live{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--green);letter-spacing:0.1em}
+  .wv-card{margin:8px 12px;padding:18px;border:1px solid var(--gold-deep);border-radius:var(--r-md);background:linear-gradient(135deg,var(--bg-card),rgba(240,192,96,0.05))}
+  .wv-ro{float:right;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--gold);border:1px solid var(--gold-deep);border-radius:var(--r-full);padding:4px 10px;letter-spacing:0.08em}
+  .wv-lbl{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-secondary);letter-spacing:0.1em}
+  .wv-usd{font-size:32px;font-weight:800;color:var(--gold);margin:4px 0 2px}
+  .wv-gbx{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-secondary)}
+  .wv-chg{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;margin-top:4px}
+  .wv-chart{margin:14px 0 6px;position:relative;height:120px}
+  .wv-chart svg{width:100%;height:120px;display:block}
+  .wv-range{display:flex;gap:6px;margin-top:8px}
+  .wv-range button{flex:1;padding:7px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--r-full);color:var(--text-secondary);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;cursor:pointer}
+  .wv-range button.on{background:var(--gold);color:#1a1200;border-color:var(--gold)}
+  .wv-addr{font-family:'JetBrains Mono',monospace;font-size:12px;color:#fff;background:var(--bg-elevated);border-radius:10px;padding:10px 12px;margin-top:12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+  .wv-follow{display:block;width:100%;margin-top:10px;padding:11px;background:transparent;border:1px solid var(--gold-deep);border-radius:var(--r-full);color:var(--gold);font-weight:700;font-size:13px;font-family:'JetBrains Mono',monospace;letter-spacing:0.08em;cursor:pointer}
+  .wv-follow.on{background:var(--gold);color:#1a1200}
+  .wv-meme{display:flex;align-items:center;gap:10px;margin:8px 12px;padding:14px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-md);cursor:pointer;text-decoration:none}
+  .wv-meme:hover{border-color:var(--gold-deep)}
+  .wv-meme svg{width:34px;height:34px;flex-shrink:0}
+  .wv-meme__t{font-size:14px;font-weight:700;color:var(--text-primary)}
+  .wv-meme__s{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-secondary);margin-top:2px}
+  .wv-meme__a{color:var(--gold);font-size:18px;margin-left:auto}
+  .wv-sect{display:flex;justify-content:space-between;padding:16px 16px 8px}
+  .wv-sect__l{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--gold);letter-spacing:0.05em}
+  .cc{display:flex;align-items:center;gap:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-md);padding:13px;margin:0 12px 8px;cursor:pointer;transition:border-color var(--t-fast)}
+  .cc:hover{border-color:var(--gold-deep)}
+  .cc__img{width:40px;height:40px;border-radius:50%;flex-shrink:0;object-fit:cover;background:var(--bg-elevated)}
+  .cc__info{flex:1;min-width:0}
+  .cc__name{font-size:14px;font-weight:700;color:var(--text-primary)}
+  .cc__meta{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-secondary);margin-top:2px}
+  .cc__spark{width:50px;height:22px;flex-shrink:0}
+  .cc__r{text-align:right;flex-shrink:0}
+  .cc__val{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--gold)}
+  .cc__sub{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);margin-top:2px}
+  .tx{display:flex;align-items:center;gap:12px;padding:11px 14px;margin:0 12px 6px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-md)}
+  .tx__ic{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;background:var(--bg-elevated)}
+  .tx__t{font-size:13px;font-weight:700;color:var(--text-primary)}
+  .tx__m{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-secondary);margin-top:2px}
+  .tx__a{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;margin-left:auto}
+  .wv-empty{text-align:center;padding:22px;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;font-size:12px}
+  .bnav{position:fixed;bottom:0;left:0;right:0;background:var(--bg-card);border-top:1px solid var(--border);display:flex;padding:8px 4px 12px;z-index:100;padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+  .bnav__item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 2px;color:var(--text-muted);text-decoration:none}
+  .bnav__icon{font-size:20px}.bnav__label{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.08em}
+</style>
+</head>
+<body>
+<div class="v3-app">
+  <div class="wv-top"><a class="wv-back" href="javascript:history.back()">&larr; <span id="backLbl">Back</span></a><span class="wv-live" id="liveLbl">&#9679; LIVE</span></div>
+  <div class="wv-card">
+    <span class="wv-ro" id="roBadge">READ-ONLY</span>
+    <div class="wv-lbl" id="totalLbl">TOTAL VALUE</div>
+    <div class="wv-usd" id="heroUsd">$0.00</div>
+    <div class="wv-gbx" id="heroGbx">0 GBX</div>
+    <div class="wv-chg" id="heroChg"></div>
+    <div class="wv-chart" id="chartWrap"><svg id="chartSvg" viewBox="0 0 300 120" preserveAspectRatio="none"></svg></div>
+    <div class="wv-range">
+      <button data-d="7" class="on" id="r7">7D</button>
+      <button data-d="30" id="r30">30D</button>
+      <button data-d="365" id="r365">1A</button>
+    </div>
+    <div class="wv-addr" id="addrBox" onclick="copyAddr()"><span id="addrShort">...</span><span>&#128203;</span></div>
+    <button class="wv-follow" id="followBtn" onclick="toggleFollow()">&#9733; <span id="followLbl">FOLLOW</span></button>
+  </div>
+  <a class="wv-meme" id="memeBtn">
+    <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="gM" cx="50%" cy="40%" r="65%"><stop offset="0%" stop-color="#FFE099"/><stop offset="55%" stop-color="#F0C060"/><stop offset="100%" stop-color="#B8860B"/></radialGradient></defs><circle cx="32" cy="32" r="28" fill="url(#gM)" stroke="#8B6914" stroke-width="2"/><rect x="12" y="26" width="16" height="9" rx="2" fill="#1a1200"/><rect x="36" y="26" width="16" height="9" rx="2" fill="#1a1200"/><rect x="28" y="29" width="8" height="2.5" fill="#1a1200"/><path d="M 22 42 Q 32 50 42 42" fill="none" stroke="#5a4410" stroke-width="3" stroke-linecap="round"/></svg>
+    <div><div class="wv-meme__t" id="memeT">Created Memes</div><div class="wv-meme__s" id="memeS">Coins launched</div></div>
+    <span class="wv-meme__a">&rsaquo;</span>
+  </a>
+  <div class="wv-sect"><span class="wv-sect__l" id="holdLbl">HOLDINGS</span></div>
+  <div id="holdList"><div class="wv-empty" id="holdLoad">Loading...</div></div>
+  <div class="wv-sect"><span class="wv-sect__l" id="txLbl">RECENT TRANSACTIONS</span></div>
+  <div id="txList"><div class="wv-empty" id="txLoad">Loading...</div></div>
+</div>
+<div class="bnav">
+  <a class="bnav__item" href="/"><span class="bnav__icon">&#127968;</span><span class="bnav__label" data-t="h">HOME</span></a>
+  <a class="bnav__item" href="/v3/wallet.html"><span class="bnav__icon">&#128100;</span><span class="bnav__label" data-t="w">WALLET</span></a>
+  <a class="bnav__item" href="/v3/trade.html"><span class="bnav__icon">&#128202;</span><span class="bnav__label" data-t="t">TRADE</span></a>
+  <a class="bnav__item" href="/v3/launch.html"><span class="bnav__icon">&#128640;</span><span class="bnav__label" data-t="l">LAUNCH</span></a>
+  <a class="bnav__item" href="/v3/settings.html"><span class="bnav__icon">&#9881;</span><span class="bnav__label" data-t="s">SETTINGS</span></a>
+</div>
+<script>
+const API='https://goldbrix.app';
+let GBX_USD=0.10;
+const T={
+  en:{back:'Back',ro:'READ-ONLY',total:'TOTAL VALUE',follow:'FOLLOW',following:'FOLLOWING',copied:'Copied!',memeT:'Created Memes',memeS:'Coins launched',hold:'HOLDINGS',noHold:'No tokens held',tx:'RECENT TRANSACTIONS',noTx:'No transactions',h:'HOME',w:'WALLET',t:'TRADE',l:'LAUNCH',s:'SETTINGS'},
+  ro:{back:'\u00cenapoi',ro:'DOAR CITIRE',total:'VALOARE TOTAL\u0102',follow:'URM\u0102RE\u0218TE',following:'URM\u0102RIT',copied:'Copiat!',memeT:'Meme Create',memeS:'Monede lansate',hold:'DE\u021aINERI',noHold:'Niciun token',tx:'TRANZAC\u021aII RECENTE',noTx:'Nicio tranzac\u021bie',h:'ACAS\u0102',w:'PORTOFEL',t:'TRADE',l:'LANSARE',s:'SET\u0102RI'},
+  de:{back:'Zur\u00fcck',ro:'NUR LESEN',total:'GESAMTWERT',follow:'FOLGEN',following:'GEFOLGT',copied:'Kopiert!',memeT:'Erstellte Memes',memeS:'Erstellte Coins',hold:'BEST\u00c4NDE',noHold:'Keine Token',tx:'TRANSAKTIONEN',noTx:'Keine',h:'HOME',w:'WALLET',t:'HANDEL',l:'STARTEN',s:'EINSTELL.'},
+  zh:{back:'\u8fd4\u56de',ro:'\u53ea\u8bfb',total:'\u603b\u4ef7\u503c',follow:'\u5173\u6ce8',following:'\u5df2\u5173\u6ce8',copied:'\u5df2\u590d\u5236!',memeT:'\u521b\u5efa\u7684\u6a21\u56e0',memeS:'\u53d1\u884c\u7684\u5e01',hold:'\u6301\u4ed3',noHold:'\u65e0\u6301\u4ed3',tx:'\u6700\u8fd1\u4ea4\u6613',noTx:'\u6682\u65e0',h:'\u9996\u9875',w:'\u94b1\u5305',t:'\u4ea4\u6613',l:'\u53d1\u884c',s:'\u8bbe\u7f6e'},
+  ar:{back:'\u0631\u062c\u0648\u0639',ro:'\u0644\u0644\u0642\u0631\u0627\u0621\u0629',total:'\u0627\u0644\u0642\u064a\u0645\u0629 \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a\u0629',follow:'\u0645\u062a\u0627\u0628\u0639\u0629',following:'\u0645\u062a\u0627\u0628\u0639',copied:'\u062a\u0645 \u0627\u0644\u0646\u0633\u062e!',memeT:'\u0627\u0644\u0645\u064a\u0645\u0627\u062a',memeS:'\u0639\u0645\u0644\u0627\u062a \u0645\u0646\u0634\u0623\u0629',hold:'\u0627\u0644\u062d\u064a\u0627\u0632\u0627\u062a',noHold:'\u0644\u0627 \u0631\u0645\u0648\u0632',tx:'\u0627\u0644\u0645\u0639\u0627\u0645\u0644\u0627\u062a',noTx:'\u0644\u0627 \u0634\u064a\u0621',h:'\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629',w:'\u0645\u062d\u0641\u0638\u0629',t:'\u062a\u062f\u0627\u0648\u0644',l:'\u0625\u0637\u0644\u0627\u0642',s:'\u0625\u0639\u062f\u0627\u062f\u0627\u062a'}
+};
+let L=localStorage.getItem('gbx_lang')||'en';
+function t(k){return (T[L]&&T[L][k])||T.en[k]||k;}
+function fmtNum(n,d){if(d==null)d=2;if(n==null||isNaN(n))return '0';return parseFloat(n).toLocaleString('en-US',{maximumFractionDigits:d});}
+function fmtUsd(n){if(n==null||isNaN(n))return '$0.00';return '$'+parseFloat(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function getAddr(){var qs=location.search;var hi=(location.hash||'').indexOf('?');if(hi>=0)qs='?'+location.hash.slice(hi+1);var p=new URLSearchParams(qs);var a=p.get('addr')||p.get('ro_addr')||p.get('viewAddr');return (a&&/^bn1q[a-z0-9]{30,}$/i.test(a))?a:null;}
+let ADDR=getAddr();
+window['gbxRefresh_wallet-view']=function(){var a=getAddr();if(a&&a!==ADDR){ADDR=a;loadData(false);loadChart();}else if(a&&ADDR===null){ADDR=a;loadData(false);loadChart();}};
+
+let curDays=7;
+
+function applyLang(){
+  if(L==='ar')document.documentElement.dir='rtl';
+  document.getElementById('backLbl').textContent=t('back');
+  document.getElementById('roBadge').textContent=t('ro');
+  document.getElementById('totalLbl').textContent=t('total');
+  document.getElementById('memeT').textContent=t('memeT');
+  document.getElementById('memeS').textContent=t('memeS');
+  document.getElementById('holdLbl').textContent=t('hold');
+  document.getElementById('txLbl').textContent=t('tx');
+  document.querySelectorAll('[data-t]').forEach(function(el){var k=el.getAttribute('data-t');if(T[L]&&T[L][k])el.textContent=T[L][k];});
+  updateFollowBtn();
+}
+function copyAddr(){if(ADDR&&navigator.clipboard){navigator.clipboard.writeText(ADDR).then(function(){alert(t('copied'));});}}
+function getFollows(){try{return JSON.parse(localStorage.getItem('gbx_followed')||'[]');}catch(e){return [];}}
+function isFollowing(){return getFollows().indexOf(ADDR)!==-1;}
+function updateFollowBtn(){var b=document.getElementById('followBtn'),l=document.getElementById('followLbl');if(isFollowing()){b.classList.add('on');l.textContent=t('following');}else{b.classList.remove('on');l.textContent=t('follow');}}
+function toggleFollow(){var f=getFollows(),i=f.indexOf(ADDR);if(i===-1)f.push(ADDR);else f.splice(i,1);localStorage.setItem('gbx_followed',JSON.stringify(f));updateFollowBtn();}
+
+function drawChart(series){
+  var svg=document.getElementById('chartSvg');
+  if(!series||series.length<2){svg.innerHTML='';return;}
+  var vals=series.map(function(s){return Number(s.value_gbx)||0;});
+  var min=Math.min.apply(null,vals),max=Math.max.apply(null,vals),rng=(max-min)||1;
+  var W=300,H=120,pad=4;
+  var pts=vals.map(function(v,i){var x=(i/(vals.length-1))*W;var y=H-pad-((v-min)/rng)*(H-pad*2);return x.toFixed(1)+','+y.toFixed(1);});
+  var up=vals[vals.length-1]>=vals[0];
+  var col=up?'#4ee08c':'#ff7a6b';
+  var line=pts.join(' ');
+  var area='0,'+H+' '+line+' '+W+','+H;
+  svg.innerHTML='<defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="'+col+'" stop-opacity="0.25"/><stop offset="100%" stop-color="'+col+'" stop-opacity="0"/></linearGradient></defs>'+
+    '<polygon points="'+area+'" fill="url(#ag)"/>'+
+    '<polyline points="'+line+'" fill="none" stroke="'+col+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+  // % schimbare pe perioada
+  var chg=vals[0]>0?((vals[vals.length-1]/vals[0]-1)*100):0;
+  var chEl=document.getElementById('heroChg');
+  var sg=chg>=0?'+':'';var ccol=chg>=0?'var(--green)':'var(--red)';
+  chEl.style.color=ccol;
+  chEl.textContent=sg+chg.toFixed(2)+'% ('+curDays+'D)';
+}
+
+async function loadChart(){
+  try{
+    var r=await fetch(API+'/launchpad/wallet/'+ADDR+'/portfolio-history?days='+curDays);
+    var d=await r.json();
+    drawChart(d.series||[]);
+  }catch(e){}
+}
+function setRange(days){
+  curDays=days;
+  ['r7','r30','r365'].forEach(function(id){document.getElementById(id).classList.remove('on');});
+  document.getElementById(days===7?'r7':days===30?'r30':'r365').classList.add('on');
+  loadChart();
+}
+document.getElementById('r7').onclick=function(){setRange(7);};
+document.getElementById('r30').onclick=function(){setRange(30);};
+document.getElementById('r365').onclick=function(){setRange(365);};
+
+function sparkSVG(prices,up){if(!prices||prices.length<2)return '';var w=50,h=22,mn=Math.min.apply(null,prices),mx=Math.max.apply(null,prices),rg=(mx-mn)||1;var pts=prices.map(function(p,i){return (i/(prices.length-1)*w).toFixed(1)+','+(h-((p-mn)/rg)*h).toFixed(1);}).join(' ');return '<svg class="cc__spark" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none"><polyline points="'+pts+'" fill="none" stroke="'+(up?'#4ee08c':'#ff7a6b')+'" stroke-width="1.5"/></svg>';}
+
+async function loadData(silent){
+  try{const _r=await fetch(API+'/onramp/gbx-price');const _d=await _r.json();if(_d&&_d.gbx_price_usd>0)GBX_USD=_d.gbx_price_usd;}catch(e){}
+  if(!ADDR){document.getElementById('holdLoad').textContent='Invalid address';return;}
+  document.getElementById('addrShort').textContent=ADDR.slice(0,8)+'...'+ADDR.slice(-6);
+  document.getElementById('memeBtn').href='/v3/my-coins.html?addr='+ADDR;
+  var gbxBal=0;
+  try{
+    // asteapta gbx-read.js (scriptul se incarca dupa inline-ul curent)
+    for(var _w=0;!window.gbxRead&&_w<40;_w++){await new Promise(function(res){setTimeout(res,100);});}
+    if(window.gbxRead){var r=await window.gbxRead('/address/'+ADDR, {quorum:true, field:'spendable_gbx'});var d=await r.json();gbxBal=parseFloat(d.spendable_gbx||d.balance_gbx||0)||0;}
+    else{var r2=await fetch(API+'/api/address/'+ADDR);var d2=await r2.json();gbxBal=parseFloat(d2.spendable_gbx||d2.balance_gbx||0)||0;}
+  }catch(e){}
+  // GBX — pozitii din TRADES (ca wallet propriu; /holdings e incomplet, doar native)
+  var coins={}; var coinsById={};
+  try{var rc=await fetch(API+'/v2/memecoin/list?limit=2000');var dc=await rc.json();(dc.coins||[]).forEach(function(c){if(c.ticker)coins[c.ticker.toUpperCase()]=c; coinsById[c.id]=c;});}catch(e){}
+  var pos={}, buyGbx={}, buyCoin={};
+  try{
+    var rtr=await fetch(API+'/launchpad/wallet/'+ADDR+'/trades'); var dtr=await rtr.json();
+    var trs=Array.isArray(dtr)?dtr:(dtr.trades||[]);
+    trs.forEach(function(t){var id=t.coin_id;if(!id)return;var amt=Number(t.coin_amount)||0;var g=Number(t.gbx_amount)||0;pos[id]=(pos[id]||0)+(t.side==='buy'?1:-1)*amt;if(t.side==='buy'){buyGbx[id]=(buyGbx[id]||0)+g;buyCoin[id]=(buyCoin[id]||0)+amt;}});
+  }catch(e){}
+  var totalGbx=gbxBal;
+  var enriched=[];
+  // GBX — pret REAL din /stats (ca wallet propriu enrichHoldings), nu market_cap/supply (umflat)
+  var ids=Object.keys(pos).filter(function(id){return pos[id]>1;});
+  var statsArr=await Promise.all(ids.map(function(id){return fetch(API+'/launchpad/coins/'+id+'/stats').then(function(r){return r.json();}).catch(function(){return null;});}));
+  ids.forEach(function(id,i){
+    var net=pos[id]; var c=coinsById[id]||{}; var st=statsArr[i]||{};
+    var price=Number(st.price)||0; var val=net*price;
+    var ch=(st.change_24h!=null)?st.change_24h:c.change_24h_pct;
+    totalGbx+=val;
+    enriched.push({ticker:c.ticker||st.ticker||'?',balance:net,image_url:c.image_url,_val:val,_ch:ch,_uuid:id});
+  });
+  enriched.sort(function(a,b){return (b._val||0)-(a._val||0);});
+  document.getElementById('heroUsd').textContent=fmtUsd(totalGbx*GBX_USD);
+  document.getElementById('heroGbx').textContent=fmtNum(totalGbx)+' GBX';
+  var hl=document.getElementById('holdList');var html='';
+  if(gbxBal>0){html+='<div class="cc" onclick="location.href=\'/v3/swap.html\'"><img class="cc__img" src="/assets/coin/gbx-coin-128.png"><div class="cc__info"><div class="cc__name">GOLDBRIX</div><div class="cc__meta">GBX</div></div><div class="cc__r"><div class="cc__val">'+fmtNum(gbxBal)+' GBX</div><div class="cc__sub">'+fmtUsd(gbxBal*GBX_USD)+'</div></div></div>';}
+  enriched.forEach(function(tk){var img=tk.image_url||'/assets/coin/gbx-coin-128.png';var click=tk._uuid?"location.href='/v3/trade.html?coin="+tk._uuid+"'":"";var chHtml='';if(tk._ch!=null&&!isNaN(tk._ch)){var col=tk._ch>=0?'var(--green)':'var(--red)';var sg=tk._ch>=0?'+':'';chHtml='<div class="cc__sub" style="color:'+col+'">'+sg+Number(tk._ch).toFixed(1)+'%</div>';}html+='<div class="cc" data-cid="'+(tk._uuid||'')+'" onclick="'+click+'"><img class="cc__img" src="'+img+'" onerror="this.src=\'/assets/coin/gbx-coin-128.png\'"><div class="cc__info"><div class="cc__name">$'+(tk.ticker||'?').toUpperCase()+'</div><div class="cc__meta">'+fmtNum(tk.balance,0)+' '+(tk.ticker||'').toUpperCase()+'</div></div><div class="spark-slot"></div><div class="cc__r"><div class="cc__val">'+fmtNum(tk._val)+' GBX</div><div class="cc__sub">'+fmtUsd(tk._val*GBX_USD)+'</div>'+chHtml+'</div></div>';});
+  hl.innerHTML=html||('<div class="wv-empty">'+t('noHold')+'</div>');
+  document.querySelectorAll('.cc[data-cid]').forEach(async function(card){var cid=card.getAttribute('data-cid');var slot=card.querySelector('.spark-slot');if(!cid||!slot)return;try{var rc=await fetch(API+'/launchpad/coins/'+cid+'/candles?interval=1h&limit=24');var dc=await rc.json();var cd=Array.isArray(dc)?dc:(dc.candles||[]);var cl=cd.map(function(x){return Number(x.close);}).filter(function(p){return p>0;});if(cl.length>=2){slot.innerHTML=sparkSVG(cl,cl[cl.length-1]>=cl[0]);}}catch(e){}});
+  try{var rt=await fetch(API+'/launchpad/wallet/'+ADDR+'/trades');var dt=await rt.json();var txs=Array.isArray(dt)?dt:(dt.trades||[]);var tl=document.getElementById('txList');if(!txs.length){tl.innerHTML='<div class="wv-empty">'+t('noTx')+'</div>';}else{txs.sort(function(a,b){return (b.created_at||0)-(a.created_at||0);});tl.innerHTML=txs.slice(0,12).map(function(tx){var amt=parseFloat(tx.gbx_amount||0).toFixed(2);var isBuy=(tx.side||'').toLowerCase()==='buy';var ageMs=Date.now()-(tx.created_at||0);var time;if(ageMs<60000)time='now';else if(ageMs<3600000)time=Math.floor(ageMs/60000)+'m';else if(ageMs<86400000)time=Math.floor(ageMs/3600000)+'h';else time=Math.floor(ageMs/86400000)+'d';return '<div class="tx"><div class="tx__ic">'+(isBuy?'\u2193':'\u2191')+'</div><div><div class="tx__t">'+(isBuy?'BUY':'SELL')+' $'+(tx.ticker||'')+'</div><div class="tx__m">'+time+'</div></div><div class="tx__a" style="color:'+(isBuy?'var(--red)':'var(--green)')+'">'+(isBuy?'-':'+')+amt+' GBX</div></div>';}).join('');}}catch(e){}
+}
+
+applyLang();
+loadData(false);
+loadChart();
+// auto-refresh silentios la 15s
+setInterval(function(){loadData(true);loadChart();},15000);
+</script>
+<script src="/v3/gbx-read.js?v=103"></script>
+<script src="/v3/pwa.js?v=103"></script>
+</body>
+</html>

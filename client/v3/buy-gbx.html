@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="prefetch" href="/v3/wallet.html"><link rel="prefetch" href="/v3/trade.html"><link rel="prefetch" href="/v3/launch.html"><link rel="prefetch" href="/v3/burns.html"><link rel="prefetch" href="/v3/settings.html"><link rel="prefetch" href="/v3/favorites.html"><link rel="prefetch" href="/v3/leaderboard.html"><link rel="prefetch" href="/v3/style.css"><link rel="dns-prefetch" href="https://goldbrix.app">
+<link rel="preconnect" href="https://goldbrix.app" crossorigin>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1c1610">
+<title>GoldBrix · Buy GBX</title>
+<link rel="icon" href="/assets/coin/gbx-coin-32.png">
+<link rel="stylesheet" href="/v3/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  body { padding: 0; background: var(--bg-primary); color: var(--text-primary); font-family: 'Inter', sans-serif; }
+  .v3-app { padding: 0 12px 90px; max-width: 480px; margin: 0 auto; }
+  .back-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-secondary); background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--r-full); margin:12px 0; }
+  .buy-hero { text-align:center; padding:8px 0 18px; }
+  .buy-hero__title { font-size:26px; font-weight:800; color:var(--gold); margin-bottom:4px; }
+  .buy-hero__sub { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.12em; color:var(--text-secondary); }
+  h2 { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; letter-spacing:0.15em; color:var(--text-secondary); text-transform:uppercase; margin:22px 0 10px; }
+
+  /* Chain picker */
+  .chain-picker { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .chain-btn { padding: 12px 4px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-md); color: var(--text-secondary); font-family:'JetBrains Mono',monospace; font-size: 10px; font-weight: 600; cursor: pointer; text-align: center; transition: all var(--t-fast); }
+  .chain-btn:hover { border-color: var(--gold-deep); }
+  .chain-active { border-color: var(--gold) !important; background: var(--bg-elevated) !important; color: var(--gold) !important; box-shadow: 0 0 0 1px var(--gold-deep) inset; }
+  .chain-icon { display:block; font-size: 20px; margin-bottom: 4px; }
+
+  /* Wallet picker */
+  .wallet-picker { display: flex; flex-direction: column; gap: 8px; }
+  .btn-wallet { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 14px; border: none; border-radius: var(--r-md); font-family:'JetBrains Mono',monospace; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; cursor: pointer; transition: all var(--t-fast); }
+  .btn-wallet:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+  .btn-wallet-phantom { background: linear-gradient(135deg, #AB9FF2 0%, #8B7CD8 100%); color: white; }
+  .btn-wallet-solflare { background: linear-gradient(135deg, #FC7434 0%, #FE6037 100%); color: white; }
+  .btn-wallet-metamask { background: linear-gradient(135deg, #F6851B 0%, #C8731B 100%); color: white; }
+  .w-icon { font-size: 18px; }
+
+  #disconnectBtn { width: 100%; padding: 12px; background: var(--bg-card); color: var(--red); border: 1px solid var(--red-dim); border-radius: var(--r-md); font-family:'JetBrains Mono',monospace; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; cursor: pointer; }
+  #disconnectBtn:hover { background: rgba(255,122,107,0.05); }
+
+  /* Inputs */
+  input { width: 100%; padding: 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--r-md); color: var(--text-primary); font-size: 16px; font-family: 'Inter', sans-serif; }
+  input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-glow); }
+  input::placeholder { color: #fff; }
+  #usdc-input { font-size: 24px; font-weight: 700; }
+  #gbx-addr { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+  /* Buttons */
+  button:not(.btn-wallet):not(.chain-btn):not(#disconnectBtn) {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, var(--gold-bright) 0%, var(--gold) 100%); color: #eee;
+    border: none; border-radius: var(--r-md); font-family:'JetBrains Mono',monospace;
+    font-size: 14px; font-weight: 700; letter-spacing: 0.1em; cursor: pointer;
+    transition: all var(--t-fast); box-shadow: 0 4px 12px var(--gold-glow);
+  }
+  button:not(.btn-wallet):not(.chain-btn):not(#disconnectBtn):hover { transform: translateY(-1px); box-shadow: 0 6px 16px var(--gold-glow-strong); }
+  button:not(.btn-wallet):not(.chain-btn):not(#disconnectBtn):disabled { background: var(--bg-elevated); color: var(--text-muted); box-shadow: none; cursor: not-allowed; transform: none; }
+
+  /* Status & display */
+  #status { padding: 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-md); font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; min-height: 20px; word-break: break-all; }
+  #status .ok, #status .success { color: var(--green); font-weight: 700; }
+  #status .err, #status .error { color: var(--red); font-weight: 700; }
+  #status a { color: var(--gold); text-decoration: underline; }
+  #status .addr { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--gold); word-break: break-all; }
+
+  #quote-display { padding: 14px; background: var(--bg-card); border: 1px solid var(--gold-deep); border-radius: var(--r-md); margin: 12px 0; font-size: 14px; line-height: 1.6; }
+  #quote-display .big { color: var(--gold); font-size: 20px; font-weight: 700; }
+
+  #order-details { padding: 14px; background: linear-gradient(135deg, var(--bg-card) 0%, rgba(245,204,117,0.05) 100%); border: 1px solid var(--gold); border-radius: var(--r-md); margin: 12px 0; font-size: 13px; line-height: 1.6; }
+  #order-details .label { color: var(--text-muted); font-family:'JetBrains Mono',monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 8px; }
+  #order-details .val { color: var(--gold); font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; word-break: break-all; }
+
+  #mobile-hint { padding: 10px; background: rgba(245,204,117,0.05); border: 1px solid var(--gold-deep); border-radius: var(--r-md); font-size: 12px; color: var(--text-tertiary); margin-bottom: 12px; text-align: center; }
+  #mobile-hint a { color: var(--gold); text-decoration: underline; font-weight: 700; }
+
+  /* bridge.js controls step4 via .hidden attribute */
+  [hidden] { display: none !important; }
+
+  .bnav { position:fixed; bottom:0; left:0; right:0; background:var(--bg-card); border-top:1px solid var(--border); display:flex; padding:8px 4px 12px; padding-bottom:calc(12px + env(safe-area-inset-bottom)); z-index:100; }
+  .bnav__item { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 2px; color:var(--text-muted); }
+  .bnav__icon { font-size:20px; line-height:1; }
+  .bnav__label { font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; letter-spacing:0.08em; }
+
+/* V4.9 — Visible placeholders (added 2026-05-27) */
+input::placeholder, textarea::placeholder,
+input::-webkit-input-placeholder, textarea::-webkit-input-placeholder,
+input::-moz-placeholder, textarea::-moz-placeholder {
+  color: #eee !important;
+  opacity: 1 !important;
+}
+
+</style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#F5CC75">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/goldbrix-brand-180.png">
+    <script src="/gbx-update-check.js" defer></script>
+    <script src="/gbx-native-bridge.js" defer></script>
+      <script src="/i18n.js?v=103" defer></script>
+  <script src="/promo-banner.js?v=103" defer></script>
+<style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
+<script src="/v3/nav-i18n.js?v=103" defer></script>
+</head>
+<body>
+<div class="v3-app">
+  <a class="back-btn" href="/v3/wallet.html">← WALLET</a>
+  <div class="buy-hero">
+    <div class="buy-hero__title">⬆ Buy GBX</div>
+    <div class="buy-hero__sub">USDC → GBX · LIVE PRICE $0.10</div>
+  </div>
+
+  <!-- STEP 1: Chain -->
+  <h2>Step 1: Select Network</h2>
+  <div class="chain-picker">
+    <button class="chain-btn chain-active" data-chain="solana" onclick="selectChain('solana')"><span class="chain-icon">◎</span>SOLANA</button>
+    <button class="chain-btn" data-chain="bsc" onclick="selectChain('bsc')"><span class="chain-icon">🟡</span>BSC</button>
+    <button class="chain-btn" data-chain="arbitrum" onclick="selectChain('arbitrum')"><span class="chain-icon">🔵</span>ARB</button>
+    <button class="chain-btn" data-chain="base" onclick="selectChain('base')"><span class="chain-icon">🟦</span>BASE</button>
+  </div>
+
+  <!-- STEP 2: Connect -->
+  <h2>Step 2: Connect Wallet</h2>
+  <button id="connect" style="display:none;"></button>
+  <div id="step2" style="display:contents;">
+  <div id="walletPicker" class="wallet-picker">
+    <button class="btn-wallet btn-wallet-phantom" onclick="connectWallet('phantom')">
+      <span class="w-icon">👻</span> CONNECT PHANTOM
+    </button>
+    <button class="btn-wallet btn-wallet-solflare" onclick="connectWallet('solflare')">
+      <span class="w-icon">🔥</span> CONNECT SOLFLARE
+    </button>
+  </div>
+  <div id="evmWalletPicker" class="wallet-picker" style="display:none;">
+    <button class="btn-wallet btn-wallet-metamask" onclick="connectMetaMask()">
+      <span class="w-icon">🦊</span> CONNECT METAMASK
+    </button>
+  </div>
+  <div id="mobile-hint" style="display:none;"></div>
+  <button id="disconnectBtn" style="display:none;" onclick="disconnect()">DISCONNECT</button>
+  <div id="status"></div>
+  </div><!-- /step2 -->
+
+  <!-- STEP 3: Order -->
+  <h2>Step 3: Enter Amount</h2>
+  <div style="margin-bottom: 10px;">
+    <label style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-secondary); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:6px; display:block;">Amount in USDC (min 1, max 10000)</label>
+    <input id="usdc-input" type="number" min="1" max="10000" step="0.01" placeholder="0.00">
+  </div>
+  <div id="quote-display" style="display:none;"></div>
+
+  <div style="margin-top: 14px; margin-bottom: 10px;">
+    <label style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-secondary); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:6px; display:block;">Your GBX Receiving Address</label>
+    <input id="gbx-addr" type="text" placeholder="bn1q..." autocapitalize="off" autocomplete="off" spellcheck="false">
+  </div>
+
+  <button id="create-order-btn" onclick="window.gbxHaptic&&gbxHaptic('medium');createOrder()" disabled>CREATE ORDER</button>
+
+  <!-- STEP 4: Pay -->
+  <div id="step4" hidden>
+    <h2>Step 4: Pay</h2>
+    <div id="order-details"></div>
+    <button id="pay-btn" onclick="window.gbxHaptic&&gbxHaptic('medium');payNow()">PAY USDC NOW</button>
+    <div id="status-display" style="margin-top: 10px;"></div>
+  </div>
+
+  <h2>Recent Orders</h2>
+  <div id="ordersList"></div>
+</div>
+
+<div class="bnav">
+  <a class="bnav__item" href="/"><span class="bnav__icon">🏠</span><span class="bnav__label" data-t="navHome">HOME</span></a>
+  <a class="bnav__item" href="/v3/wallet.html"><span class="bnav__icon">👤</span><span class="bnav__label" data-t="navWallet">WALLET</span></a>
+  <a class="bnav__item" href="/v3/launch.html"><span class="bnav__icon">🚀</span><span class="bnav__label" data-t="navLaunch">LAUNCH</span></a>
+  <a class="bnav__item" href="/v3/leaderboard.html"><span class="bnav__icon">🔥</span><span class="bnav__label" data-t="navBurns">BURNS</span></a>
+  <a class="bnav__item" href="/v3/settings.html"><span class="bnav__icon">⚙️</span><span class="bnav__label" data-t="navSettings">SETTINGS</span></a>
+</div>
+
+
+
+
+
+
+
+
+
+
+<script>
+// === SUPER ROBUST AUTO-FILL: 3 sources + retry + visual feedback ===
+function _gbxAutoFill() {
+  const el = document.getElementById('gbx-addr');
+  if (!el) return false;
+
+  // Skip if already filled with valid bn1q address
+  if (el.value && el.value.startsWith('bn1q') && el.value.length > 40) {
+    return true;
+  }
+
+  let addr = null;
+  let source = '';
+
+  // === SOURCE 0: URL param ?gbx= (works across browsers via deeplink) ===
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl = params.get('gbx');
+    if (fromUrl && fromUrl.startsWith('bn1q') && fromUrl.length > 40) {
+      addr = fromUrl;
+      source = 'url-param';
+    }
+  } catch(e) {}
+
+  // === SOURCE 1: unlocked session (doar daca url-param n-a dat adresa) ===
+  if (!addr) try {
+    const raw = sessionStorage.getItem('gbx_unlocked_wallets');
+    if (raw) {
+      const u = JSON.parse(raw);
+      const w = (u.wallets||[]).find(x => x.id === u.activeWalletId) || (u.wallets||[])[0];
+      if (w && w.address && w.address.startsWith('bn1q')) {
+        addr = w.address;
+        source = 'session';
+      }
+    }
+  } catch(e) { console.warn('[gbx-fill] session err:', e); }
+
+  // === SOURCE 2: persistent state_v3 ===
+  if (!addr) {
+    try {
+      const raw = localStorage.getItem('goldbrix_state_v3');
+      if (raw) {
+        const s = JSON.parse(raw);
+        const w = (s.wallets||[]).find(x => x.id === s.activeWalletId) || (s.wallets||[])[0];
+        if (w && w.address && w.address.startsWith('bn1q')) {
+          addr = w.address;
+          source = 'state_v3';
+        }
+      }
+    } catch(e) { console.warn('[gbx-fill] state err:', e); }
+  }
+
+  // === SOURCE 3: scan ALL localStorage for any bn1q address ===
+  if (!addr) {
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        const val = localStorage.getItem(key);
+        if (val && val.indexOf('bn1q') !== -1) {
+          const m = val.match(/bn1q[a-z0-9]{30,50}/);
+          if (m) { /* SCAN DEZACTIVAT: putea prinde adresa altui wallet/contact */ break; }
+        }
+      }
+    } catch(e) {}
+  }
+
+  // === Apply or show error ===
+  const parent = el.parentElement;
+  // Remove old indicators
+  const oldInd = parent ? parent.querySelector('.gbx-addr-indicator') : null;
+  if (oldInd) oldInd.remove();
+
+  if (addr) {
+    el.value = addr;
+    el.readOnly = true;
+    el.style.background = 'var(--bg-elevated)';
+    el.style.borderColor = '#F5CC75';
+    el.style.color = '#F5CC75';
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+
+    const ind = document.createElement('div');
+    ind.className = 'gbx-addr-indicator';
+    ind.style.cssText = 'margin-top:6px;font-size:11px;color:#eee;font-family:JetBrains Mono,monospace;letter-spacing:0.05em;';
+    ind.innerHTML = '✓ Auto-filled from your GoldBrix wallet (' + source + ')';
+    if (parent) parent.appendChild(ind);
+
+    console.log('[gbx-fill] OK from', source, ':', addr);
+    return true;
+  } else {
+    // No wallet found — show prominent warning + link to create
+    const ind = document.createElement('div');
+    ind.className = 'gbx-addr-indicator';
+    ind.style.cssText = 'margin-top:6px;padding:8px;background:rgba(255,122,107,0.1);border:1px solid #FF7A6B;border-radius:8px;font-size:12px;color:#eee;font-family:JetBrains Mono,monospace;';
+    ind.innerHTML = '⚠ No GoldBrix wallet found. <a href="/v3/welcome.html" style="color:#F5CC75;text-decoration:underline;">CREATE WALLET FIRST</a>';
+    if (parent) parent.appendChild(ind);
+    console.warn('[gbx-fill] No wallet found in session or localStorage');
+    return false;
+  }
+}
+
+// Run multiple times to catch all timing scenarios
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _gbxAutoFill);
+} else {
+  _gbxAutoFill();
+}
+setTimeout(_gbxAutoFill, 50);
+setTimeout(_gbxAutoFill, 300);
+setTimeout(_gbxAutoFill, 1000);
+setTimeout(_gbxAutoFill, 3000);
+</script>
+
+
+<script>
+// === Pay dispatcher: routes to Solana or EVM based on selected chain ===
+window.payNow = function() {
+  const activeBtn = document.querySelector('.chain-btn.chain-active');
+  const chain = activeBtn ? activeBtn.dataset.chain : 'solana';
+  if (chain === 'solana') {
+    if (typeof payUSDC === 'function') return payUSDC();
+  } else {
+    if (typeof payUSDC_EVM === 'function') return payUSDC_EVM();
+    if (typeof payUSDC === 'function') return payUSDC();
+  }
+  alert('Payment function not loaded');
+};
+</script>
+
+<!-- bridge.js handles ALL wallet logic: connect/disconnect/quote/order/pay/poll -->
+
+<script src="/bridge.js?v=103"></script>
+
+<script src="/v3/pwa.js?v=103" defer></script>
+
+<nav class="v3-final-nav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:999;">
+  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
+  <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
+  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
+  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
+  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
+  <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#F5CC75;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:1;"><span style="font-size:18px;">⚙</span><span data-t="navSettings">SETTINGS</span></a>
+</nav>
+<style>body { padding-bottom: 76px !important; }</style>
+
+  <script src="/v3/gbx-autolock.js" defer></script>
+</body>
+</html>

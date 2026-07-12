@@ -1,0 +1,32 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1c1610">
+<link rel="icon" href="/assets/coin/gbx-coin-32.png">
+<link rel="stylesheet" href="/v3/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  #spa-view{ padding-bottom:80px; min-height:60vh; overflow-x:hidden; }
+  /* swap/send au .wrap cu max-width:430px fix; pe ecrane mici depaseste -> doar centrez, fara sa fortez latimi pe copii */
+  #spa-view .wrap{ margin-left:auto; margin-right:auto; }
+  #spa-nav.bnav{ position:fixed; bottom:0; left:0; right:0; background:var(--bg-card,#1c1610); border-top:1px solid var(--border,#2a2218); display:none; padding:8px 4px 12px; padding-bottom:calc(12px + env(safe-area-inset-bottom)); z-index:100; }
+  #spa-nav .bnav__item{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 2px; color:var(--text-muted,#9a8c6f); text-decoration:none; cursor:pointer; }
+  #spa-nav .bnav__item.active{ color:var(--gold,#F0C060); }
+  #spa-nav .bnav__icon{ font-size:20px; line-height:1; }
+  #spa-nav .bnav__label{ font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; letter-spacing:0.08em; }
+</style>
+</head><body>
+<div id="spa-view"></div>
+<nav id="spa-nav" class="bnav">
+  <a class="bnav__item" data-route="home"     href="#home"><span class="bnav__icon">🏠</span><span class="bnav__label" data-t="navHome">HOME</span></a>
+  <a class="bnav__item" data-route="wallet"   href="#wallet"><span class="bnav__icon">👤</span><span class="bnav__label" data-t="navWallet">WALLET</span></a>
+  <a class="bnav__item" data-route="trade"    href="#trade"><span class="bnav__icon">📊</span><span class="bnav__label" data-t="navTrade">TRADE</span></a>
+  <a class="bnav__item" data-route="launch"   href="#launch"><span class="bnav__icon">🚀</span><span class="bnav__label" data-t="navLaunch">LAUNCH</span></a>
+  <a class="bnav__item" data-route="leaderboard" href="#leaderboard"><span class="bnav__icon">🔥</span><span class="bnav__label" data-t="navBurns">BURNS</span></a>
+  <a class="bnav__item" data-route="explorer" href="#explorer"><span class="bnav__icon">🔍</span><span class="bnav__label" data-t="navExplorer">EXPLORER</span></a>
+  <a class="bnav__item" data-route="settings" href="#settings"><span class="bnav__icon">⚙️</span><span class="bnav__label" data-t="navSettings">SETTINGS</span></a>
+</nav>
+<script src="/v3/gbx-session.js?v=103"></script>
+<script src="/v3/gbx-read.js?v=103"></script>
+<script src="/v3/spa-loader.js?v=103"></script>
+</body></html>

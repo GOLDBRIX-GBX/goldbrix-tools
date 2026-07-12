@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="prefetch" href="/v3/wallet.html"><link rel="prefetch" href="/v3/trade.html"><link rel="prefetch" href="/v3/launch.html"><link rel="prefetch" href="/v3/burns.html"><link rel="prefetch" href="/v3/settings.html"><link rel="prefetch" href="/v3/favorites.html"><link rel="prefetch" href="/v3/leaderboard.html"><link rel="prefetch" href="/v3/style.css"><link rel="dns-prefetch" href="https://goldbrix.app">
+<link rel="preconnect" href="https://goldbrix.app" crossorigin>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>GoldBrix · Burns LIVE</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/coin/gbx-coin-32.png">
+<link rel="stylesheet" href="/v3/style.css">
+<style>
+  .burn-hero { padding: 22px 16px; background: linear-gradient(135deg, rgba(255,122,107,0.15) 0%, rgba(245,204,117,0.1) 100%); border: 2px solid #FF7A6B; border-radius: var(--r-lg); text-align: center; margin-bottom: 14px; position: relative; overflow: hidden; }
+  .burn-hero::before { content: '🔥'; position: absolute; right: -10px; top: -10px; font-size: 90px; opacity: 0.08; transform: rotate(15deg); }
+  .burn-hero-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #FFE099; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 8px; }
+  .burn-hero-val { font-family: 'JetBrains Mono', monospace; font-size: 36px; font-weight: 800; color: #FFE099; text-shadow: 0 0 20px rgba(255,122,107,0.6); margin-bottom: 4px; line-height: 1; }
+  .burn-hero-sub { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #FFFFFF; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; margin-bottom: 14px; }
+  .stat-card { padding: 14px; background: var(--bg-card); border-radius: var(--r-md); border: 1px solid var(--border); }
+  .stat-card-icon { font-size: 18px; margin-bottom: 6px; }
+  .stat-card-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #FFE099; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+  .stat-card-val { font-family: 'JetBrains Mono', monospace; font-size: 18px; color: #FFFFFF; font-weight: 800; }
+  .stat-card-val.red { color: #eee; }
+  .stat-card-val.gold { color: #F5CC75; }
+
+  .live-bar { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--bg-card); border-radius: 100px; border: 1px solid var(--gold-deep); margin-bottom: 12px; }
+  .live-dot-burn { display: inline-block; width: 8px; height: 8px; background: #4EE08C; border-radius: 50%; box-shadow: 0 0 10px #4EE08C, 0 0 16px rgba(78,224,140,0.6); animation: liveBurnPulse 1.4s ease-in-out infinite; }
+  @keyframes liveBurnPulse { 0%,100% { opacity: 0.5; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1.3); } }
+  .live-text { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; color: #eee; letter-spacing: 0.1em; }
+  .live-ticks { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #FFE099; opacity: 0.7; margin-left: auto; }
+
+  .section-title { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #FFE099; text-transform: uppercase; letter-spacing: 0.1em; margin: 16px 0 8px; padding: 0 2px; }
+
+  .burn-list { display: flex; flex-direction: column; gap: 6px; }
+  .burn-row { display: flex; align-items: center; gap: 10px; padding: 11px 12px; background: var(--bg-card); border-radius: var(--r-md); border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; animation: slideIn 0.4s ease-out; }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+  .burn-row:hover { border-color: var(--gold); background: var(--bg-elevated); }
+  .burn-row.new { border-color: #eee; box-shadow: 0 0 18px rgba(255,122,107,0.4); animation: flashNew 1.5s ease-out; }
+  @keyframes flashNew {
+    0% { background: rgba(255,122,107,0.25); transform: scale(0.98); }
+    50% { background: rgba(255,122,107,0.15); }
+    100% { background: var(--bg-card); transform: scale(1); }
+  }
+  .burn-icon { font-size: 18px; flex-shrink: 0; }
+  .burn-info { flex: 1; min-width: 0; }
+  .burn-amount { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; color: #eee; }
+  .burn-source { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #FFE099; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+  .burn-meta { text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 10px; flex-shrink: 0; }
+  .burn-time { color: #FFFFFF; font-weight: 700; }
+  .burn-tx { color: #F5CC75; font-size: 9px; margin-top: 2px; }
+
+  .empty-state { padding: 30px 14px; text-align: center; color: #FFE099; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+/* V4.9 — Visible placeholders (added 2026-05-27) */
+input::placeholder, textarea::placeholder,
+input::-webkit-input-placeholder, textarea::-webkit-input-placeholder,
+input::-moz-placeholder, textarea::-moz-placeholder {
+  color: #eee !important;
+  opacity: 1 !important;
+}
+
+</style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#F5CC75">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/goldbrix-brand-180.png">
+    <script src="/gbx-update-check.js" defer></script>
+    <script src="/gbx-native-bridge.js" defer></script>
+      <script src="/i18n.js?v=103" defer></script>
+  <script src="/promo-banner.js?v=103" defer></script>
+<style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
+<script src="/v3/nav-i18n.js?v=103" defer></script>
+</head>
+<body>
+<div class="v3-app">
+  <div class="v3-topbar">
+    <button class="v3-back" onclick="history.back()">‹</button>
+    <div class="v3-title" data-t="pageTitle">🔥 BURNS LIVE</div>
+    <button class="v3-back" onclick="window.location.href='/index.html'" style="font-size:22px;font-weight:300;color:#fff;width:36px;height:36px;border-radius:50%;border:2px solid #F0C060;background:rgba(240,192,96,0.1);display:flex;align-items:center;justify-content:center;padding:0;line-height:1;margin-right:4px;" aria-label="Close">×</button>
+  </div>
+
+  <div class="v3-content">
+    <div class="burn-hero">
+      <div class="burn-hero-label" data-t="totalBurned">🔥 TOTAL BURNED FOREVER</div>
+      <div class="burn-hero-val" id="totalBurned">— GBX</div>
+      <div class="burn-hero-sub" id="totalCount">— transactions</div>
+    </div>
+
+    
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-card-icon">📅</div>
+        <div class="stat-card-label" data-t="stat24hBurned">24h Burned</div>
+        <div class="stat-card-val red" id="burn24h">— GBX</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-icon">📆</div>
+        <div class="stat-card-label" data-t="stat7dBurned">7d Burned</div>
+        <div class="stat-card-val gold" id="burn7d">— GBX</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-icon">⚡</div>
+        <div class="stat-card-label" data-t="stat24hBurns">24h Burns</div>
+        <div class="stat-card-val" id="count24h">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-icon">🕐</div>
+        <div class="stat-card-label" data-t="lastBurn">Last Burn</div>
+        <div class="stat-card-val" id="lastBurn" style="font-size:13px;">—</div>
+      </div>
+    </div>
+
+    <div class="section-title" data-t="recentBurns">⚡ RECENT BURNS (Last 50)</div>
+    <div class="burn-list" id="burnList">
+      <div class="empty-state" data-t="loading">Loading live burns...</div>
+    </div>
+  </div>
+
+  
+</div>
+
+<script>
+const API = 'https://goldbrix.app';
+let knownBurnIds = new Set();
+let pollCount = 0;
+
+function fmtGbx(n) {
+  if (typeof n !== 'number' || isNaN(n)) return '0';
+  if (n >= 1e6) return (n/1e6).toFixed(2) + 'M';
+  if (n >= 1e3) return (n/1e3).toFixed(2) + 'K';
+  return n.toFixed(4);
+}
+
+function fmtGbxFull(n) {
+  if (typeof n !== 'number' || isNaN(n)) return '0';
+  return n.toFixed(2);
+}
+
+function timeAgo(ts) {
+  if (!ts) return '—';
+  const t = typeof ts === 'string' ? new Date(ts).getTime() : ts;
+  const diff = Date.now() - t;
+  const s = Math.floor(diff / 1000);
+  if (s < 60) return s + 's ago';
+  const m = Math.floor(s / 60);
+  if (m < 60) return m + 'm ago';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + 'h ago';
+  const d = Math.floor(h / 24);
+  return d + 'd ago';
+}
+
+function getBurnIcon(source) {
+  if (!source) return '🔥';
+  const s = source.toLowerCase();
+  if (s.includes('buy')) return '💰';
+  if (s.includes('sell')) return '💸';
+  if (s.includes('launch')) return '🚀';
+  if (s.includes('promote')) return '📢';
+  return '🔥';
+}
+
+async function loadStats() {
+  try {
+    const r = await fetch(API + '/v2/memecoin/burns/stats');
+    const d = await r.json();
+    if (!d.ok) return;
+    document.getElementById('totalBurned').textContent = fmtGbxFull(d.all_time_gbx || 0) + ' GBX';
+    document.getElementById('totalCount').textContent = (d.all_time_count || 0) + ' transactions';
+    document.getElementById('burn24h').textContent = fmtGbx(d.burns_24h_gbx || 0) + ' GBX';
+    document.getElementById('burn7d').textContent = fmtGbx(d.burns_7d_gbx || 0) + ' GBX';
+    document.getElementById('count24h').textContent = (d.burns_24h_count || 0);
+    if (d.last_burn && d.last_burn.ts) {
+      document.getElementById('lastBurn').textContent = timeAgo(d.last_burn.ts);
+    }
+  } catch(e) { console.warn('stats:', e); }
+}
+
+async function loadBurns(isInitial) {
+  try {
+    const r = await fetch(API + '/v2/memecoin/burns/recent?limit=50');
+    const d = await r.json();
+    if (!d.ok || !d.burns) return;
+
+    const list = document.getElementById('burnList');
+
+    if (isInitial) {
+      list.innerHTML = '';
+      knownBurnIds.clear();
+      if (d.burns.length === 0) {
+        list.innerHTML = '<div class="empty-state">' + (window._BURNS_T ? window._BURNS_T.noBurns : 'No burns yet') + '</div>';
+        return;
+      }
+      // Render all initial without animation
+      d.burns.forEach(b => {
+        const id = b.tx_hash || (b.ts + '_' + b.amount_gbx);
+        knownBurnIds.add(id);
+        const row = buildBurnRow(b, false);
+        list.appendChild(row);
+      });
+      return;
+    }
+
+    // === Non-initial: ONLY prepend NEW burns silently ===
+    const newOnes = [];
+    d.burns.forEach(b => {
+      const id = b.tx_hash || (b.ts + '_' + b.amount_gbx);
+      if (!knownBurnIds.has(id)) {
+        newOnes.push(b);
+        knownBurnIds.add(id);
+      }
+    });
+    // Prepend new ones at top (reverse so latest is on top)
+    newOnes.reverse().forEach(b => {
+      const row = buildBurnRow(b, true);
+      list.insertBefore(row, list.firstChild);
+    });
+    // Trim to 50 max
+    while (list.children.length > 50) list.removeChild(list.lastChild);
+  } catch(e) {}
+}
+
+function buildBurnRow(b, animate) {
+  const row = document.createElement('div');
+  row.className = 'burn-row' + (animate ? ' new' : '');
+  row.onclick = () => { if (b.tx_hash) window.location.href = '/v3/explorer.html?tx=' + b.tx_hash; };
+  row.innerHTML = '<div class="burn-icon">' + getBurnIcon(b.source) + '</div>' +
+    '<div class="burn-info">' +
+    '<div class="burn-amount">-' + fmtGbxFull(b.amount_gbx || 0) + ' GBX 🔥</div>' +
+    '<div class="burn-source">' + (b.source || 'burn').replace(/_/g, ' ') + '</div>' +
+    '</div>' +
+    '<div class="burn-meta">' +
+    '<div class="burn-time">' + timeAgo(b.ts) + '</div>' +
+    '<div class="burn-tx">' + (b.tx_hash_short || (b.tx_hash ? b.tx_hash.slice(0, 8) + '...' : '—')) + '</div>' +
+    '</div>';
+  return row;
+}
+
+
+async function pollAll() {
+  await loadStats();
+  await loadBurns(false);
+    pollCount++;
+}
+
+// Initial load
+loadStats();
+loadBurns(true).then(() => {
+  // After initial, mark all known
+  setTimeout(() => {
+    document.querySelectorAll('.burn-row').forEach(r => r.classList.remove('new'));
+  }, 100);
+});
+
+// Poll every 3s
+setInterval(pollAll, 12000);
+
+// Pause when hidden
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {} // can pause here if needed
+});
+</script>
+<script src="/v3/pwa.js?v=103" defer></script>
+
+<nav class="v3-final-nav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:999;">
+  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
+  <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
+  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
+  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
+  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#F5CC75;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:1;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
+  <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">⚙</span><span data-t="navSettings">SETTINGS</span></a>
+</nav>
+<style>body { padding-bottom: 76px !important; }
+  /* V4.9 — Force topbar horizontal layout */
+  .v3-topbar { 
+    display: flex !important; 
+    align-items: center !important; 
+    justify-content: space-between !important; 
+    padding: 8px 12px !important;
+    gap: 8px !important;
+  }
+  .v3-topbar .v3-title { 
+    flex: 1; 
+    text-align: center; 
+  }
+
+</style>
+
+
+<script>
+// === BURNS i18n — 5 limbi ===
+const BURNS_T = {
+  en: {
+    pageTitle: '🔥 BURNS LIVE',
+    totalBurned: '🔥 TOTAL BURNED FOREVER',
+    stat24hBurned: '24h Burned',
+    stat7dBurned: '7d Burned',
+    stat24hBurns: '24h Burns',
+    lastBurn: 'Last Burn',
+    recentBurns: '⚡ RECENT BURNS (Last 50)',
+    loading: 'Loading live burns...',
+    noBurns: 'No burns yet',
+    navHome: 'HOME', navWallet: 'WALLET', navTrade: 'TRADE', navLaunch: 'LAUNCH', navBurns: 'BURNS', navSettings: 'SETTINGS'
+  },
+  ro: {
+    pageTitle: '🔥 ARDERI LIVE',
+    totalBurned: '🔥 TOTAL ARS PENTRU TOTDEAUNA',
+    stat24hBurned: 'Ars 24h',
+    stat7dBurned: 'Ars 7z',
+    stat24hBurns: 'Arderi 24h',
+    lastBurn: 'Ultima Ardere',
+    recentBurns: '⚡ ARDERI RECENTE (Ultimele 50)',
+    loading: 'Se încarcă arderi live...',
+    noBurns: 'Nicio ardere încă',
+    navHome: 'ACASĂ', navWallet: 'PORTOFEL', navTrade: 'TRADE', navLaunch: 'LANSARE', navBurns: 'ARDERI', navSettings: 'SETĂRI'
+  },
+  de: {
+    pageTitle: '🔥 BURNS LIVE',
+    totalBurned: '🔥 GESAMT VERBRANNT FÜR IMMER',
+    stat24hBurned: '24h Verbrannt',
+    stat7dBurned: '7T Verbrannt',
+    stat24hBurns: '24h Burns',
+    lastBurn: 'Letzte Verbrennung',
+    recentBurns: '⚡ NEUSTE VERBRENNUNGEN (Letzte 50)',
+    loading: 'Live-Verbrennungen werden geladen...',
+    noBurns: 'Noch keine Verbrennungen',
+    navHome: 'HOME', navWallet: 'WALLET', navTrade: 'HANDEL', navLaunch: 'STARTEN', navBurns: 'BURNS', navSettings: 'EINSTELL.'
+  },
+  zh: {
+    pageTitle: '🔥 燃烧实况',
+    totalBurned: '🔥 永久燃烧总量',
+    stat24hBurned: '24小时燃烧',
+    stat7dBurned: '7天燃烧',
+    stat24hBurns: '24小时燃烧次数',
+    lastBurn: '最近燃烧',
+    recentBurns: '⚡ 最近燃烧 (最近50)',
+    loading: '加载实时燃烧...',
+    noBurns: '暂无燃烧',
+    navHome: '首页', navWallet: '钱包', navTrade: '交易', navLaunch: '发行', navBurns: '燃烧', navSettings: '设置'
+  },
+  ar: {
+    pageTitle: '🔥 الحرق المباشر',
+    totalBurned: '🔥 إجمالي المحروق إلى الأبد',
+    stat24hBurned: 'محروق 24 ساعة',
+    stat7dBurned: 'محروق 7 أيام',
+    stat24hBurns: 'عمليات حرق 24 ساعة',
+    lastBurn: 'آخر حرق',
+    recentBurns: '⚡ الحروق الأخيرة (آخر 50)',
+    loading: 'جاري تحميل الحروق المباشرة...',
+    noBurns: 'لا توجد حروق بعد',
+    navHome: 'الرئيسية', navWallet: 'محفظة', navTrade: 'تداول', navLaunch: 'إطلاق', navBurns: 'حرق', navSettings: 'إعدادات'
+  }
+};
+
+function applyBurnsLang() {
+  const lang = localStorage.getItem('gbx_lang') || localStorage.getItem('goldbrix_lang') || 'en';
+  const t = BURNS_T[lang] || BURNS_T.en;
+  window._BURNS_T = t;
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.querySelectorAll('[data-t]').forEach(el => {
+    const key = el.getAttribute('data-t');
+    if (t[key]) el.textContent = t[key];
+  });
+  // Title also
+  if (t.pageTitle) document.title = 'GoldBrix · ' + t.pageTitle.replace(/[^a-zA-ZÀ-ſĀ-ɏ一-鿿؀-ۿ ]/g, '').trim();
+}
+applyBurnsLang();
+window.addEventListener('storage', e => {
+  if (e.key && e.key.indexOf('lang') > -1) applyBurnsLang();
+});
+</script>
+
+</body>
+</html>

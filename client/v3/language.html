@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="prefetch" href="/v3/wallet.html"><link rel="prefetch" href="/v3/trade.html"><link rel="prefetch" href="/v3/launch.html"><link rel="prefetch" href="/v3/burns.html"><link rel="prefetch" href="/v3/settings.html"><link rel="prefetch" href="/v3/favorites.html"><link rel="prefetch" href="/v3/leaderboard.html"><link rel="prefetch" href="/v3/style.css"><link rel="dns-prefetch" href="https://goldbrix.app">
+<link rel="preconnect" href="https://goldbrix.app" crossorigin>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1c1610">
+<title>GoldBrix · Language</title>
+<link rel="icon" href="/assets/coin/gbx-coin-32.png">
+<link rel="apple-touch-icon" href="/assets/coin/gbx-coin-128.png">
+<link rel="stylesheet" href="/v3/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  .lang-header {
+    text-align: center;
+    padding: 40px 16px 28px;
+  }
+  .lang-header__title {
+    font-family: 'Inter', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    background: linear-gradient(135deg, var(--gold-bright) 0%, var(--gold) 50%, var(--gold-dim) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 10px;
+  }
+  .lang-header__sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.18em;
+    line-height: 1.8;
+  }
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 12px 0 0 0;
+    padding: 8px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--r-full);
+    transition: all var(--t-fast);
+  }
+  .back-btn:hover { color: var(--gold); border-color: var(--gold-deep); }
+
+/* V4.9 — Visible placeholders (added 2026-05-27) */
+input::placeholder, textarea::placeholder,
+input::-webkit-input-placeholder, textarea::-webkit-input-placeholder,
+input::-moz-placeholder, textarea::-moz-placeholder {
+  color: #eee !important;
+  opacity: 1 !important;
+}
+
+</style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#F5CC75">
+    <script src="/gbx-update-check.js" defer></script>
+    <script src="/gbx-native-bridge.js" defer></script>
+      <script src="/i18n.js?v=103" defer></script>
+<style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
+</head>
+<body>
+<div class="v3-app">
+
+  <!-- PWA BANNER -->
+  <div class="v3-pwa-banner" id="pwaBanner">
+    <div class="v3-pwa-banner__icon">
+      <img src="/assets/coin/gbx-coin-32.png" alt="">
+    </div>
+    <div class="v3-pwa-banner__text">
+      <div class="v3-pwa-banner__title" id="pwaBannerTitle">Install GoldBrix App</div>
+      <div class="v3-pwa-banner__sub" id="pwaBannerSub">Faster · Offline · Native feel</div>
+    </div>
+    <button class="v3-pwa-banner__install" id="pwaInstallBtn" onclick="pwaInstall()">INSTALL</button>
+    <button class="v3-pwa-banner__close" onclick="pwaDismiss()">×</button>
+  </div>
+
+  <div class="v3-container v3-fade-in">
+
+    <a class="back-btn" href="javascript:history.back()" data-t="back">← Back</a>
+
+    <div class="lang-header">
+      <div class="lang-header__title">SELECT LANGUAGE</div>
+      <div class="lang-header__sub">LIMBĂ · SPRACHE · 语言 · لغة</div>
+    </div>
+
+    <div class="lang-list v3-slide-up">
+
+      <div class="v3-lang-row" onclick="pickLang('en')">
+        <span class="v3-lang-row__flag">🇬🇧</span>
+        <div class="v3-lang-row__info">
+          <div class="v3-lang-row__name">English</div>
+          <div class="v3-lang-row__code">EN</div>
+        </div>
+        <span class="v3-lang-row__arrow">→</span>
+      </div>
+
+      <div class="v3-lang-row" onclick="pickLang('ro')">
+        <span class="v3-lang-row__flag">🇷🇴</span>
+        <div class="v3-lang-row__info">
+          <div class="v3-lang-row__name">Română</div>
+          <div class="v3-lang-row__code">RO</div>
+        </div>
+        <span class="v3-lang-row__arrow">→</span>
+      </div>
+
+      <div class="v3-lang-row" onclick="pickLang('de')">
+        <span class="v3-lang-row__flag">🇩🇪</span>
+        <div class="v3-lang-row__info">
+          <div class="v3-lang-row__name">Deutsch</div>
+          <div class="v3-lang-row__code">DE</div>
+        </div>
+        <span class="v3-lang-row__arrow">→</span>
+      </div>
+
+      <div class="v3-lang-row" onclick="pickLang('zh')">
+        <span class="v3-lang-row__flag">🇨🇳</span>
+        <div class="v3-lang-row__info">
+          <div class="v3-lang-row__name">中文</div>
+          <div class="v3-lang-row__code">ZH</div>
+        </div>
+        <span class="v3-lang-row__arrow">→</span>
+      </div>
+
+      <div class="v3-lang-row" onclick="pickLang('ar')">
+        <span class="v3-lang-row__flag">🇸🇦</span>
+        <div class="v3-lang-row__info">
+          <div class="v3-lang-row__name">العربية</div>
+          <div class="v3-lang-row__code">AR</div>
+        </div>
+        <span class="v3-lang-row__arrow">→</span>
+      </div>
+
+    </div>
+
+    <div class="v3-footer">
+      v3.0 · PHASE 1.5 LIVE · NO TEAM · NO ADMIN
+    </div>
+
+  </div>
+</div>
+
+<script>
+const PWA_T = {
+  en: { title: 'Install GoldBrix App', sub: 'Faster · Offline · Native feel', install: 'INSTALL' },
+  ro: { title: 'Instalează GoldBrix App', sub: 'Mai rapid · Offline · Aplicație nativă', install: 'INSTALEAZĂ' },
+  de: { title: 'GoldBrix App installieren', sub: 'Schneller · Offline · Native', install: 'INSTALLIEREN' },
+  zh: { title: '安装 GoldBrix 应用', sub: '更快 · 离线 · 原生体验', install: '安装' },
+  ar: { title: 'تثبيت تطبيق GoldBrix', sub: 'أسرع · بدون اتصال · أصلي', install: 'تثبيت' }
+};
+
+function pickLang(lang) {
+  localStorage.setItem('gbx_lang', lang);
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  // Redirect back to where user came from (or welcome by default)
+  const ref = document.referrer;
+  if (ref && ref.includes('/v3/') && !ref.includes('language.html')) {
+    window.location.href = ref;
+  } else {
+    window.location.href = '/v3/welcome.html';
+  }
+}
+
+// PWA
+let deferredPrompt = null;
+function isPwaInstalled() {
+  if (window.matchMedia('(display-mode: standalone)').matches) return true;
+  if (window.navigator.standalone === true) return true;
+  const d = parseInt(localStorage.getItem('gbx_pwa_dismissed_at') || '0');
+  if (d && (Date.now() - d) < 7*24*60*60*1000) return true;
+  return false;
+}
+function showPwaBanner() {
+  if (isPwaInstalled()) return;
+  const lang = localStorage.getItem('gbx_lang') || 'en';
+  const t = PWA_T[lang] || PWA_T.en;
+  document.getElementById('pwaBannerTitle').textContent = t.title;
+  document.getElementById('pwaBannerSub').textContent = t.sub;
+  document.getElementById('pwaInstallBtn').textContent = t.install;
+  document.getElementById('pwaBanner').classList.add('show');
+}
+function pwaDismiss() {
+  document.getElementById('pwaBanner').classList.remove('show');
+  localStorage.setItem('gbx_pwa_dismissed_at', String(Date.now()));
+}
+async function pwaInstall() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const c = await deferredPrompt.userChoice;
+    if (c.outcome === 'accepted') document.getElementById('pwaBanner').classList.remove('show');
+    deferredPrompt = null;
+  } else {
+    const ua = navigator.userAgent.toLowerCase();
+    if (/iphone|ipad|ipod/.test(ua)) alert('iOS: Share → Add to Home Screen');
+    else alert('Open menu → Install / Add to Home Screen');
+  }
+}
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; showPwaBanner(); });
+setTimeout(() => {
+  if (!isPwaInstalled()) {
+    const ua = navigator.userAgent.toLowerCase();
+    if (deferredPrompt || /iphone|ipad|ipod|android/.test(ua)) showPwaBanner();
+  }
+}, 1500);
+
+// RTL on load if AR was already set
+const savedLang = localStorage.getItem('gbx_lang');
+if (savedLang === 'ar') document.documentElement.dir = 'rtl';
+</script>
+<script src="/v3/pwa.js?v=103" defer></script>
+
+
+
+</body>
+</html>

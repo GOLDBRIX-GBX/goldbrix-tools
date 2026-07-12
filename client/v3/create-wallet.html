@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="prefetch" href="/v3/wallet.html"><link rel="prefetch" href="/v3/trade.html"><link rel="prefetch" href="/v3/launch.html"><link rel="prefetch" href="/v3/burns.html"><link rel="prefetch" href="/v3/settings.html"><link rel="prefetch" href="/v3/favorites.html"><link rel="prefetch" href="/v3/leaderboard.html"><link rel="prefetch" href="/v3/style.css"><link rel="dns-prefetch" href="https://goldbrix.app">
+<link rel="preconnect" href="https://goldbrix.app" crossorigin>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1c1610">
+<title>GoldBrix · Create Wallet</title>
+<link rel="icon" href="/assets/coin/gbx-coin-32.png">
+<link rel="stylesheet" href="/v3/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  .step { display: none; }
+  .step.active { display: block; animation: fadeIn 0.4s; }
+  .seed-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin: 20px 0;
+    padding: 16px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--gold-deep);
+    border-radius: var(--r-lg);
+  }
+  .seed-word {
+    display: flex;
+    flex-direction: column;
+    padding: 10px 8px;
+    background: var(--bg-card);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .seed-word__n {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+  }
+  .seed-word__w {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gold);
+    margin-top: 2px;
+  }
+  .warning-box {
+    background: linear-gradient(135deg, rgba(255, 122, 107, 0.12) 0%, var(--bg-card) 100%);
+    border: 1px solid var(--red-dim);
+    border-radius: var(--r-md);
+    padding: 14px;
+    margin: 16px 0;
+  }
+  .warning-box__title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--red);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .warning-box__body { font-size: 12.5px; line-height: 1.5; color: var(--text-tertiary); }
+  .pwd-wrap { position: relative; }
+  .pwd-eye {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    background: transparent; color: var(--text-muted); font-size: 18px; padding: 4px;
+  }
+  .pwd-eye:hover { color: var(--gold); }
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: 0.1em; color: var(--text-secondary);
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    border-radius: var(--r-full); transition: all var(--t-fast);
+    margin-bottom: 16px;
+  }
+  .back-btn:hover { color: var(--gold); border-color: var(--gold-deep); }
+  .verify-input { margin: 12px 0; }
+  .copy-btn {
+    width: 100%; margin-top: 10px;
+    padding: 10px; background: var(--bg-elevated); border: 1px solid var(--border);
+    border-radius: var(--r-md); font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 0.12em; color: var(--text-secondary);
+    transition: all var(--t-fast);
+  }
+  .copy-btn:hover { color: var(--gold); border-color: var(--gold-deep); }
+  .crypto-loading {
+    text-align: center; padding: 40px; color: var(--text-secondary);
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+  }
+  .loader {
+    width: 32px; height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--gold);
+    border-radius: 50%; margin: 0 auto 12px;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+/* V4.9 — Visible placeholders (added 2026-05-27) */
+input::placeholder, textarea::placeholder,
+input::-webkit-input-placeholder, textarea::-webkit-input-placeholder,
+input::-moz-placeholder, textarea::-moz-placeholder {
+  color: #eee !important;
+  opacity: 1 !important;
+}
+
+</style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#F5CC75">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/goldbrix-brand-180.png">
+    <script src="/gbx-update-check.js" defer></script>
+    <script src="/gbx-native-bridge.js" defer></script>
+      <script src="/v3/gbx-session.js?v=103"></script>
+      <script src="/i18n.js?v=103" defer></script>
+<style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
+</head>
+<body>
+<div class="v3-app">
+  <div class="v3-container v3-fade-in">
+
+    <a class="back-btn" href="/v3/welcome.html">← <span id="backLabel">Back</span></a>
+
+    <!-- LOADING crypto lib -->
+    <div class="crypto-loading" id="cryptoLoading">
+      <div class="loader"></div>
+      <div id="loadingLabel">Loading crypto library...</div>
+    </div>
+
+    <!-- STEP 1: Password -->
+    <div class="step" id="step-pwd">
+      <div class="v3-text-center" style="padding: 16px 0 24px;">
+        <img src="/assets/coin/gbx-coin-128.png" style="width: 72px; height: 72px; filter: drop-shadow(0 0 24px var(--gold-glow-strong));">
+        <h2 style="margin-top: 16px; font-size: 22px; font-weight: 800; color: var(--gold);" id="setPwdTitle" data-i18n="setPassword">Set Password</h2>
+        <p style="margin-top: 6px; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.15em; color: var(--text-secondary);" id="setPwdSub" data-t="unlockWallet">UNLOCK YOUR WALLET ON THIS DEVICE</p>
+      </div>
+
+      <div class="warning-box">
+        <div class="warning-box__title">⚠ <span id="warn1Title">IMPORTANT</span></div>
+        <div class="warning-box__body" id="warn1Body">This password unlocks your wallet on this device. If you forget it, you'll need the seed phrase to recover.</div>
+      </div>
+
+      <div class="pwd-wrap v3-mt-md">
+        <input type="password" class="v3-input" id="pwd1" placeholder="Password (8+ chars)" data-i18n-placeholder="passwordPh" autocomplete="new-password">
+        <button class="pwd-eye" onclick="togglePwd('pwd1', this)">👁</button>
+      </div>
+      <div class="pwd-wrap v3-mt-sm">
+        <input type="password" class="v3-input" id="pwd2" placeholder="Confirm password" data-i18n-placeholder="confirmPasswordPh" autocomplete="new-password">
+        <button class="pwd-eye" onclick="togglePwd('pwd2', this)">👁</button>
+      </div>
+
+      <button class="v3-btn v3-btn--primary v3-btn--lg v3-btn--block v3-mt-lg" onclick="goGenerate()">
+        <span id="genBtn" data-i18n="generateSeed">Generate Seed Phrase</span>
+      </button>
+    </div>
+
+    <!-- STEP 2: Show seed phrase -->
+    <div class="step" id="step-seed">
+      <div class="v3-text-center" style="padding: 8px 0 16px;">
+        <h2 style="font-size: 22px; font-weight: 800; color: var(--gold);" id="seedTitle" data-i18n="seedTitle">Your Seed Phrase</h2>
+        <p style="margin-top: 6px; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.15em; color: var(--text-secondary);" id="seedSub">12 WORDS · WRITE THEM DOWN</p>
+      </div>
+
+      <div class="warning-box">
+        <div class="warning-box__title">🔒 <span id="warn2Title">CRITICAL SECURITY</span></div>
+        <div class="warning-box__body" id="warn2Body">Write these 12 words on paper and store offline. Never share with anyone. Anyone with these words controls your wallet forever.</div>
+      </div>
+
+      <div class="seed-grid" id="seedGrid"></div>
+
+      <button class="copy-btn" onclick="copySeed()"><span id="copyBtn">📋 Copy to Clipboard</span></button>
+
+      <button class="v3-btn v3-btn--primary v3-btn--lg v3-btn--block v3-mt-lg" onclick="goVerify()">
+        <span id="continueBtn">I've Saved It · Continue</span>
+      </button>
+    </div>
+
+    <!-- STEP 3: Verify -->
+    <div class="step" id="step-verify">
+      <div class="v3-text-center" style="padding: 8px 0 16px;">
+        <h2 style="font-size: 22px; font-weight: 800; color: var(--gold);" id="verifyTitle">Verify Seed</h2>
+        <p style="margin-top: 6px; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.15em; color: var(--text-secondary);" id="verifySub">CONFIRM YOU SAVED IT</p>
+      </div>
+
+      <div id="verifyPrompts"></div>
+
+      <button class="v3-btn v3-btn--primary v3-btn--lg v3-btn--block v3-mt-lg" onclick="finalizeWallet()">
+        <span id="finalizeBtn">Confirm & Create Wallet</span>
+      </button>
+
+      <button class="copy-btn v3-mt-sm" onclick="showStep('step-seed')"><span id="reviewBtn">← Review seed phrase</span></button>
+    </div>
+
+    <!-- STEP 4: Success / Encrypting -->
+    <div class="step" id="step-done">
+      <div class="v3-text-center" style="padding: 40px 0;">
+        <div class="loader" id="encLoader"></div>
+        <h2 style="margin-top: 16px; font-size: 22px; font-weight: 800; color: var(--gold);" id="doneTitle">Encrypting...</h2>
+        <p style="margin-top: 8px; color: var(--text-secondary); font-size: 13px;" id="doneSub">Securing your wallet with AES-GCM</p>
+      </div>
+    </div>
+
+    <div class="v3-footer">v3.0 · PHASE 1.5 LIVE · SELF-CUSTODY</div>
+  </div>
+</div>
+
+<!-- CRYPTO LIBRARY (ES MODULE) -->
+<script type="module" src="/crypto-utils-v2.js?v=103"></script>
+
+<script>
+// ═══ TRANSLATIONS ═══
+const T = {
+  en: { back: 'Back', loading: 'Loading crypto library...', setPwdTitle: 'Set Password', setPwdSub: 'UNLOCK YOUR WALLET ON THIS DEVICE', warn1Title: 'IMPORTANT', warn1Body: "This password unlocks your wallet on this device. If you forget it, you'll need the seed phrase to recover.", genBtn: 'Generate Seed Phrase', seedTitle: 'Your Seed Phrase', seedSub: '12 WORDS · WRITE THEM DOWN', warn2Title: 'CRITICAL SECURITY', warn2Body: 'Write these 12 words on paper and store offline. Never share with anyone. Anyone with these words controls your wallet forever.', copyBtn: '📋 Copy to Clipboard', continueBtn: "I've Saved It · Continue", verifyTitle: 'Verify Seed', verifySub: 'CONFIRM YOU SAVED IT', finalizeBtn: 'Confirm & Create Wallet', reviewBtn: '← Review seed phrase', doneTitle: 'Encrypting...', doneSub: 'Securing your wallet with AES-GCM', verifyPrompt: 'Enter word #', pwdShort: 'Password must be 8+ characters', pwdMismatch: 'Passwords do not match', verifyWrong: 'Verification failed. Check your words.', copied: '✓ Copied!', wrongPwdAdd: 'Password does not match your existing wallet' },
+  ro: { back: 'Înapoi', loading: 'Se încarcă biblioteca crypto...', setPwdTitle: 'Setează Parola', setPwdSub: 'DESCHIDE PORTOFELUL PE ACEST DISPOZITIV', warn1Title: 'IMPORTANT', warn1Body: 'Această parolă deschide portofelul pe acest dispozitiv. Dacă o uiți, ai nevoie de seed phrase pentru recuperare.', genBtn: 'Generează Seed Phrase', seedTitle: 'Seed Phrase-ul Tău', seedSub: '12 CUVINTE · SCRIE-LE ACUM', warn2Title: 'SECURITATE CRITICĂ', warn2Body: 'Scrie aceste 12 cuvinte pe hârtie și păstrează offline. Nu le împărtăși niciodată. Oricine le are, controlează portofelul tău pe veci.', copyBtn: '📋 Copiază în Clipboard', continueBtn: 'Le-am Salvat · Continuă', verifyTitle: 'Verifică Seed', verifySub: 'CONFIRMĂ CĂ LE-AI SALVAT', finalizeBtn: 'Confirmă & Creează Portofel', reviewBtn: '← Revezi seed phrase', doneTitle: 'Se criptează...', doneSub: 'Securizare portofel cu AES-GCM', verifyPrompt: 'Introdu cuvântul #', pwdShort: 'Parola trebuie să aibă 8+ caractere', pwdMismatch: 'Parolele nu se potrivesc', verifyWrong: 'Verificare eșuată. Verifică cuvintele.', copied: '✓ Copiat!', wrongPwdAdd: 'Parola nu se potrivește cu portofelul existent' },
+  de: { back: 'Zurück', loading: 'Krypto-Bibliothek wird geladen...', setPwdTitle: 'Passwort festlegen', setPwdSub: 'WALLET AUF DIESEM GERÄT ENTSPERREN', warn1Title: 'WICHTIG', warn1Body: 'Dieses Passwort entsperrt deine Wallet auf diesem Gerät. Wenn du es vergisst, brauchst du die Seed-Phrase zur Wiederherstellung.', genBtn: 'Seed-Phrase Generieren', seedTitle: 'Deine Seed-Phrase', seedSub: '12 WÖRTER · SCHREIBE SIE AUF', warn2Title: 'KRITISCHE SICHERHEIT', warn2Body: 'Schreibe diese 12 Wörter auf Papier und bewahre sie offline auf. Niemals teilen. Wer diese Wörter hat, kontrolliert deine Wallet für immer.', copyBtn: '📋 In Zwischenablage kopieren', continueBtn: 'Gespeichert · Weiter', verifyTitle: 'Seed verifizieren', verifySub: 'BESTÄTIGE DASS DU GESPEICHERT HAST', finalizeBtn: 'Bestätigen & Wallet erstellen', reviewBtn: '← Seed-Phrase überprüfen', doneTitle: 'Wird verschlüsselt...', doneSub: 'Wallet mit AES-GCM sichern', verifyPrompt: 'Wort eingeben #', pwdShort: 'Passwort muss 8+ Zeichen lang sein', pwdMismatch: 'Passwörter stimmen nicht überein', verifyWrong: 'Verifizierung fehlgeschlagen.', copied: '✓ Kopiert!', wrongPwdAdd: 'Passwort stimmt nicht mit bestehender Wallet überein' },
+  zh: { back: '返回', loading: '正在加载加密库...', setPwdTitle: '设置密码', setPwdSub: '在此设备上解锁您的钱包', warn1Title: '重要', warn1Body: '此密码用于在此设备上解锁钱包。如果忘记，您需要种子短语来恢复。', genBtn: '生成种子短语', seedTitle: '您的种子短语', seedSub: '12 个单词 · 请记下来', warn2Title: '关键安全', warn2Body: '将这 12 个单词写在纸上并离线存储。永远不要与任何人分享。任何拥有这些单词的人将永远控制您的钱包。', copyBtn: '📋 复制到剪贴板', continueBtn: '我已保存 · 继续', verifyTitle: '验证种子', verifySub: '确认您已保存', finalizeBtn: '确认并创建钱包', reviewBtn: '← 查看种子短语', doneTitle: '正在加密...', doneSub: '使用 AES-GCM 保护您的钱包', verifyPrompt: '输入单词 #', pwdShort: '密码必须至少 8 个字符', pwdMismatch: '密码不匹配', verifyWrong: '验证失败。', copied: '✓ 已复制！', wrongPwdAdd: '密码与现有钱包不匹配' },
+  ar: { back: 'رجوع', loading: 'جاري تحميل مكتبة التشفير...', setPwdTitle: 'تعيين كلمة المرور', setPwdSub: 'افتح محفظتك على هذا الجهاز', warn1Title: 'هام', warn1Body: 'كلمة المرور هذه تفتح محفظتك على هذا الجهاز. إذا نسيتها، ستحتاج إلى عبارة البذور للاسترداد.', genBtn: 'توليد عبارة البذور', seedTitle: 'عبارة البذور الخاصة بك', seedSub: '12 كلمة · اكتبها', warn2Title: 'أمان حرج', warn2Body: 'اكتب هذه الكلمات الـ 12 على ورق واحتفظ بها بدون اتصال. لا تشاركها أبدا. أي شخص يمتلك هذه الكلمات يتحكم في محفظتك للأبد.', copyBtn: '📋 نسخ إلى الحافظة', continueBtn: 'لقد حفظتها · متابعة', verifyTitle: 'تحقق من البذور', verifySub: 'أكد أنك حفظتها', finalizeBtn: 'تأكيد وإنشاء محفظة', reviewBtn: '← مراجعة عبارة البذور', doneTitle: 'جاري التشفير...', doneSub: 'تأمين محفظتك بـ AES-GCM', verifyPrompt: 'أدخل كلمة #', pwdShort: 'كلمة المرور 8+ أحرف', pwdMismatch: 'كلمات المرور غير متطابقة', verifyWrong: 'فشل التحقق.', copied: '✓ تم النسخ!', wrongPwdAdd: 'كلمة المرور لا تطابق المحفظة الحالية' }
+};
+
+let currentLang = localStorage.getItem('gbx_lang') || 'en';
+let generatedWallet = null;
+let verifyIndices = [];
+
+function t(key) {
+  return (T[currentLang] && T[currentLang][key]) || T.en[key] || key;
+}
+
+function applyLang() {
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+  ['backLabel', 'loadingLabel', 'setPwdTitle', 'setPwdSub', 'warn1Title', 'warn1Body', 'genBtn', 'seedTitle', 'seedSub', 'warn2Title', 'warn2Body', 'copyBtn', 'continueBtn', 'verifyTitle', 'verifySub', 'finalizeBtn', 'reviewBtn', 'doneTitle', 'doneSub'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      const map = { backLabel: 'back', loadingLabel: 'loading', setPwdTitle: 'setPwdTitle', setPwdSub: 'setPwdSub', warn1Title: 'warn1Title', warn1Body: 'warn1Body', genBtn: 'genBtn', seedTitle: 'seedTitle', seedSub: 'seedSub', warn2Title: 'warn2Title', warn2Body: 'warn2Body', copyBtn: 'copyBtn', continueBtn: 'continueBtn', verifyTitle: 'verifyTitle', verifySub: 'verifySub', finalizeBtn: 'finalizeBtn', reviewBtn: 'reviewBtn', doneTitle: 'doneTitle', doneSub: 'doneSub' };
+      el.textContent = t(map[id]);
+    }
+  });
+}
+
+function showStep(id) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function togglePwd(id, btn) {
+  const inp = document.getElementById(id);
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+  else { inp.type = 'password'; btn.textContent = '👁'; }
+}
+
+async function waitForCrypto(maxMs = 8000) {
+  const start = Date.now();
+  while (!window.GoldbrixCrypto) {
+    if (Date.now() - start > maxMs) throw new Error('Crypto library timeout');
+    await new Promise(r => setTimeout(r, 100));
+  }
+}
+
+async function goGenerate() {
+  const p1 = document.getElementById('pwd1').value;
+  const p2 = document.getElementById('pwd2').value;
+  if (p1.length < 8) { alert(t('pwdShort')); return; }
+  if (p1 !== p2) { alert(t('pwdMismatch')); return; }
+
+  // Generate real BIP39 wallet
+  try {
+    const wallet = await window.GoldbrixCrypto.generateNewWallet();
+    generatedWallet = { ...wallet, password: p1 };
+
+    const seed = wallet.mnemonic.split(' ');
+    const grid = document.getElementById('seedGrid');
+    grid.innerHTML = seed.map((w, i) =>
+      '<div class="seed-word"><span class="seed-word__n">#' + (i + 1) + '</span><span class="seed-word__w">' + w + '</span></div>'
+    ).join('');
+
+    showStep('step-seed');
+  } catch (e) {
+    alert('Wallet generation failed: ' + e.message);
+  }
+}
+
+function copySeed() {
+  if (!generatedWallet) return;
+  navigator.clipboard.writeText(generatedWallet.mnemonic).then(() => {
+    const btn = document.getElementById('copyBtn');
+    const orig = btn.textContent;
+    btn.textContent = t('copied');
+    setTimeout(() => btn.textContent = orig, 1500);
+  });
+}
+
+function goVerify() {
+  if (!generatedWallet) return;
+  const seed = generatedWallet.mnemonic.split(' ');
+  // Pick 3 random indices
+  verifyIndices = [];
+  while (verifyIndices.length < 3) {
+    const i = Math.floor(Math.random() * 12);
+    if (!verifyIndices.includes(i)) verifyIndices.push(i);
+  }
+  verifyIndices.sort((a, b) => a - b);
+
+  const prompts = document.getElementById('verifyPrompts');
+  prompts.innerHTML = verifyIndices.map(i =>
+    '<div class="verify-input"><label style="font-family: \'JetBrains Mono\', monospace; font-size: 11px; color: var(--text-secondary); letter-spacing: 0.1em;">' + t('verifyPrompt') + (i + 1) + '</label><input type="text" class="v3-input v3-mt-sm" id="verify-' + i + '" autocomplete="off" autocapitalize="off" spellcheck="false"></div>'
+  ).join('');
+
+  showStep('step-verify');
+}
+
+async function finalizeWallet() {
+  if (!generatedWallet) return;
+  const seed = generatedWallet.mnemonic.split(' ');
+  for (const i of verifyIndices) {
+    const inp = document.getElementById('verify-' + i);
+    if (!inp || inp.value.trim().toLowerCase() !== seed[i].toLowerCase()) {
+      alert(t('verifyWrong'));
+      return;
+    }
+  }
+
+  showStep('step-done');
+
+  try {
+    const c = window.GoldbrixCrypto;
+    const walletId = 'w_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    
+    // MULTI-WALLET SUPPORT: detect add mode (SPA-safe: query poate fi in hash, NU in search)
+    const existingRaw = localStorage.getItem('goldbrix_state_v3');
+    let _modeAdd = false;
+    try {
+      const fromSearch = new URLSearchParams(window.location.search).get('mode');
+      let fromHash = null;
+      const h = window.location.hash || '';
+      const qi = h.indexOf('?');
+      if (qi >= 0) fromHash = new URLSearchParams(h.slice(qi+1)).get('mode');
+      _modeAdd = (fromSearch === 'add') || (fromHash === 'add');
+    } catch(_e){}
+    let _hasAccount = false;
+    try {
+      const _st = existingRaw ? JSON.parse(existingRaw) : null;
+      _hasAccount = !!(_st && _st.wallets && _st.wallets.length && _st.salt && _st.pwdHash);
+    } catch(_e){}
+    const addMode = _modeAdd || _hasAccount;
+    
+    let state;
+    if (addMode && existingRaw) {
+      // APPEND mode: add to existing wallets
+      state = JSON.parse(existingRaw);
+      const verifyHash = await c.hashPassword(generatedWallet.password, state.salt);
+      if (verifyHash !== state.pwdHash) {
+        alert(t('wrongPwdAdd'));
+        showStep('step-pwd');
+        return;
+      }
+      const newEnc = await c.encryptString(generatedWallet.mnemonic, generatedWallet.password, state.salt);
+      state.encryptedMnemonics[walletId] = newEnc;
+      state.wallets.push({
+        id: walletId,
+        address: generatedWallet.address,
+        publicKey: generatedWallet.publicKey || null,
+        name: 'Wallet ' + (state.wallets.length + 1)
+      });
+      state.activeWalletId = walletId;
+    } else {
+      // FIRST-TIME mode: new state
+      const salt = c.generateSalt();
+      const encMnemonic = await c.encryptString(generatedWallet.mnemonic, generatedWallet.password, salt);
+      const pwdHash = await c.hashPassword(generatedWallet.password, salt);
+      state = {
+        isOnboarded: true,
+        salt: salt,
+        pwdHash: pwdHash,
+        encryptedMnemonics: { [walletId]: encMnemonic },
+        wallets: [{
+          id: walletId,
+          address: generatedWallet.address,
+          publicKey: generatedWallet.publicKey || null,
+          name: 'Main Wallet'
+        }],
+        activeWalletId: walletId,
+        coins: []
+      };
+    }
+
+    localStorage.setItem('goldbrix_state_v3', JSON.stringify(state));
+    localStorage.setItem('gbx_disclaimer_agreed', 'true');
+
+    
+    
+      // SESSION SINGLE SOURCE: sesiune din state + mnemonic curent (primul create SI add-mode).
+      try {
+        const mById = {}; mById[walletId] = generatedWallet.mnemonic;
+        if (addMode) {
+          const prev = GBXSession.get();
+          if (prev && prev.wallets) { prev.wallets.forEach(function(w){ if (w.mnemonic) mById[w.id] = w.mnemonic; }); }
+        }
+        GBXSession.create(state.wallets, walletId, mById);
+      } catch(e) {}
+
+    setTimeout(() => {
+      window.location.href = '/v3/wallet.html';
+    }, 1200);
+  } catch (e) {
+    alert('Encryption failed: ' + e.message);
+    showStep('step-verify');
+  }
+}
+
+(async () => {
+  applyLang();
+  try {
+    await waitForCrypto();
+    document.getElementById('cryptoLoading').style.display = 'none';
+    showStep('step-pwd');
+  } catch (e) {
+    document.getElementById('cryptoLoading').innerHTML = '<div style="color: var(--red);">❌ Crypto library failed to load. Refresh the page.</div>';
+  }
+})();
+</script>
+<script src="/v3/pwa.js?v=103" defer></script>
+
+
+
+</body>
+</html>

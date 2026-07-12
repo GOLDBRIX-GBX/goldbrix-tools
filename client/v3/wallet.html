@@ -1,0 +1,1829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="prefetch" href="/v3/wallet.html"><link rel="prefetch" href="/v3/trade.html"><link rel="prefetch" href="/v3/launch.html"><link rel="prefetch" href="/v3/burns.html"><link rel="prefetch" href="/v3/settings.html"><link rel="prefetch" href="/v3/favorites.html"><link rel="prefetch" href="/v3/leaderboard.html"><link rel="prefetch" href="/v3/style.css"><link rel="dns-prefetch" href="https://goldbrix.app">
+<link rel="preconnect" href="https://goldbrix.app" crossorigin>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1c1610">
+<title>GoldBrix · Wallet</title>
+<link rel="icon" href="/assets/coin/gbx-coin-32.png">
+<link rel="stylesheet" href="/v3/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  .v3-app { padding-bottom: 90px; }
+
+  /* Compact header */
+  .w-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+    background: var(--bg-primary);
+  }
+  .w-header__brand { display: flex; align-items: center; gap: 8px; }
+  .w-header__brand img { width: 28px; height: 28px; border-radius: 6px; }
+  .w-header__title {
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700;
+    letter-spacing: 0.08em; color: var(--gold);
+  }
+  .w-header__status {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    color: var(--text-muted); display: flex; align-items: center; gap: 6px;
+  }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s infinite; }
+
+  /* Balance card */
+  .balance-card {
+    background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-elevated) 100%);
+    border: 1px solid var(--gold-deep);
+    border-radius: var(--r-lg);
+    padding: 24px 20px;
+    margin: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .balance-card::before {
+    content: ''; position: absolute; top: -50%; right: -30%;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, var(--gold-glow) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .balance-card__label {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 0.18em; color: var(--text-secondary);
+    text-transform: uppercase;
+  }
+  .balance-card__amount {
+    font-family: 'Inter', sans-serif; font-size: 38px; font-weight: 800;
+    color: var(--gold-bright); margin: 6px 0 2px; line-height: 1.1;
+    word-break: break-all;
+  }
+  .balance-card__unit {
+    font-family: 'JetBrains Mono', monospace; font-size: 14px;
+    color: var(--gold); font-weight: 700; margin-left: 4px;
+  }
+  .balance-card__usd {
+    font-family: 'JetBrains Mono', monospace; font-size: 13px;
+    color: var(--text-tertiary); margin-top: 4px;
+  }
+  .balance-card__addr {
+    margin-top: 16px; padding: 10px 14px; background: rgba(0,0,0,0.3);
+    border-radius: 8px; font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--text-secondary);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; cursor: pointer; transition: background var(--t-fast);
+    word-break: break-all;
+  }
+  .balance-card__addr:hover { background: rgba(0,0,0,0.5); }
+  .balance-card__addr span { flex: 1; }
+  .balance-card__copy { color: var(--gold); font-size: 16px; }
+
+  /* 5 action buttons */
+  .actions {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 6px; padding: 0 12px; margin-bottom: 20px;
+  }
+  .action-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 14px 4px; background: var(--bg-card);
+    border: 1px solid var(--border); border-radius: var(--r-md);
+    transition: all var(--t-fast); cursor: pointer; text-align: center;
+  }
+  .action-btn:active { transform: scale(0.96); }
+  .action-btn:hover { border-color: var(--gold-deep); background: var(--bg-elevated); }
+  .action-btn__icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .action-btn--receive .action-btn__icon { background: rgba(122, 184, 255, 0.12); color: var(--blue); }
+  .action-btn--send .action-btn__icon { background: rgba(199, 122, 255, 0.12); color: #c77aff; }
+  .action-btn--buy .action-btn__icon { background: rgba(78, 224, 140, 0.12); color: var(--green); }
+  .action-btn--sell .action-btn__icon { background: rgba(255, 122, 107, 0.12); color: var(--red); }
+  .action-btn--fav .action-btn__icon { background: rgba(245, 204, 117, 0.12); color: var(--gold); }
+  .action-btn--usdc .action-btn__icon { background: rgba(59,130,246,0.14); color: #3b82f6; }
+  .action-btn--convert .action-btn__icon { background: rgba(240,192,96,0.18); color: #F0C060; }
+  .action-btn__label {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    font-weight: 700; letter-spacing: 0.08em;
+    color: var(--text-secondary); text-transform: uppercase;
+    line-height: 1.1;
+  }
+
+  /* primary actions — 4 mari */
+  .actions-primary {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 8px; padding: 0 12px; margin-bottom: 10px;
+  }
+  .actions-primary .action-btn { padding: 16px 4px; }
+  .actions-primary .action-btn__icon { width: 44px; height: 44px; font-size: 20px; }
+  .actions-primary .action-btn__label { font-size: 10px; }
+  /* secondary actions — 4 discrete */
+  .actions-secondary {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 6px; padding: 0 12px; margin-bottom: 20px;
+  }
+  .actions-secondary .action-btn {
+    padding: 10px 4px; background: transparent; border-color: transparent;
+  }
+  .actions-secondary .action-btn:hover { background: var(--bg-card); border-color: var(--border); }
+  .actions-secondary .action-btn__icon { width: 32px; height: 32px; font-size: 15px; }
+  .actions-secondary .action-btn__icon svg { width: 18px; height: 18px; }
+  .actions-secondary .action-btn__label { font-size: 8px; opacity: 0.8; }
+
+  /* Section heading */
+  .section-heading {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 16px; margin: 24px 0 12px;
+  }
+  .section-heading__label {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    font-weight: 700; letter-spacing: 0.15em;
+    color: var(--text-secondary); text-transform: uppercase;
+  }
+  .section-heading::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  /* Tokens list */
+  .token-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px; margin: 0 12px 8px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--r-md); transition: all var(--t-fast);
+    cursor: pointer;
+  }
+  .token-row:hover { background: var(--bg-elevated); border-color: var(--gold-deep); }
+  .token-row__icon {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--bg-elevated); display: flex; align-items: center;
+    justify-content: center; overflow: hidden; flex-shrink: 0;
+  }
+  .token-row__icon img { width: 100%; height: 100%; object-fit: cover; }
+  .token-row__info { flex: 1; min-width: 0; }
+  .token-row__name {
+    font-size: 14px; font-weight: 700; color: var(--text-primary);
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .token-row__balance {
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    color: var(--text-secondary); margin-top: 2px;
+  }
+  .token-row__value { text-align: right; }
+  .token-row__usd {
+    font-family: 'JetBrains Mono', monospace; font-size: 13px;
+    color: var(--gold); font-weight: 700;
+  }
+  .token-row__change {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; margin-top: 2px;
+  }
+  .token-row__change.up { color: var(--green); }
+  .token-row__change.down { color: var(--red); }
+  .token-row__change.flat { color: var(--text-muted); }
+
+  .empty-msg {
+    text-align: center; padding: 30px 20px; color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    letter-spacing: 0.05em;
+  }
+
+  /* Bottom nav */
+  .bnav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--bg-card); border-top: 1px solid var(--border);
+    display: flex; padding: 8px 4px 12px;
+    z-index: 100; padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+  .bnav__item {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; gap: 4px; padding: 6px 2px;
+    color: var(--text-muted); transition: color var(--t-fast);
+    cursor: pointer; text-decoration: none;
+  }
+  .bnav__item.active { color: var(--gold); }
+  .bnav__item:hover { color: var(--gold-bright); }
+  .bnav__icon { font-size: 20px; line-height: 1; }
+  .bnav__label {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    font-weight: 700; letter-spacing: 0.08em;
+  }
+
+  /* Lock check overlay */
+  .lock-overlay {
+    position: fixed; inset: 0; background: var(--bg-primary);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 9999;
+  }
+  .lock-overlay__loader {
+    width: 36px; height: 36px; border: 3px solid var(--border);
+    border-top-color: var(--gold); border-radius: 50%;
+    animation: spin 1s linear infinite; margin-bottom: 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+    background: var(--bg-card); border: 1px solid var(--gold);
+    border-radius: var(--r-md); padding: 10px 18px; font-size: 13px;
+    color: var(--gold); z-index: 1000; box-shadow: var(--shadow-lg);
+    animation: slideUp 250ms;
+    font-family: 'JetBrains Mono', monospace; letter-spacing: 0.08em;
+  }
+
+  .wallet-picker{background:#1a1a1a;border-radius:12px;padding:12px;margin:8px 16px}
+  .wallet-picker__header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;color:#fff;font-size:11px;text-transform:uppercase;letter-spacing:1px}
+  .add-wallet-btn{background:#F0C060;color:#000;padding:4px 10px;border:none;border-radius:6px;font-weight:700;font-size:11px;cursor:pointer}
+  .wallet-picker__list{display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto}
+  .wallet-item{display:flex;justify-content:space-between;align-items:center;background:#0d0d0d;padding:10px 12px;border-radius:8px;cursor:pointer;border:1px solid transparent}
+  .wallet-item:hover{background:#161616}
+  .wallet-item--active{border-color:#F0C060;background:#1a1610}
+  .wallet-item__info{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+  .wallet-item__name{color:#fff;font-weight:600;font-size:14px}
+  .wallet-item__addr{color:#fff;font-size:11px;font-family:monospace;overflow:hidden;text-overflow:ellipsis}
+  .wallet-item__star{color:#F0C060;font-size:14px;margin-left:8px}
+  .add-wallet-modal{position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+  .add-wallet-modal__content{background:#1a1a1a;padding:24px;border-radius:16px;max-width:400px;width:100%;border:1px solid #F0C060}
+  .add-wallet-modal__content h3{color:#F0C060;margin-bottom:8px}
+  .add-wallet-modal__content p{color:#fff;margin-bottom:20px;font-size:13px}
+  .add-wallet-option{display:flex;align-items:center;gap:12px;padding:14px;background:#0d0d0d;border-radius:8px;margin-bottom:8px;text-decoration:none;color:#fff;cursor:pointer}
+  .add-wallet-option:hover{background:#161616}
+  .add-wallet-option__icon{font-size:24px}
+  .add-wallet-option__label{font-weight:600}
+  .add-wallet-cancel{width:100%;background:#333;color:#fff;padding:10px;border:none;border-radius:8px;margin-top:8px;cursor:pointer;font-weight:600}
+
+  /* TX HISTORY SECTION */
+  .tx-history-section{margin:24px 0 20px}
+  .tx-section-title{font-family:JetBrains Mono,monospace;font-size:12px;color:#fff;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #3a3025}
+  #txHistoryList{display:flex;flex-direction:column;gap:8px}
+  .tx-row{background:#1a1410;border:1px solid #3a3025;border-radius:10px;padding:12px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:12px}
+  .tx-row:hover{border-color:#F0C060;background:#221a14}
+  .tx-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+  .tx-icon.received{background:rgba(78,224,140,0.15);color:#eee}
+  .tx-icon.sent{background:rgba(255,122,107,0.15);color:#eee}
+  .tx-info{flex:1;min-width:0}
+  .tx-type{font-family:JetBrains Mono,monospace;font-size:13px;color:#FFE099;font-weight:700;letter-spacing:0.05em}
+  .tx-meta{font-family:JetBrains Mono,monospace;font-size:10px;color:#fff;margin-top:2px;letter-spacing:0.05em}
+  .tx-amount{font-family:JetBrains Mono,monospace;font-size:13px;font-weight:700;text-align:right}
+  .tx-amount.pos{color:#eee}
+  .tx-amount.neg{color:#eee}
+  .tx-status{font-size:9px;margin-top:2px;color:#fff}
+  .tx-status.confirmed{color:#eee}
+  .tx-status.pending{color:#F0C060}
+  .tx-empty{text-align:center;padding:30px 16px;color:#fff;font-family:JetBrains Mono,monospace;font-size:12px}
+  .tx-explorer-link{display:block;text-align:center;margin-top:12px;padding:10px;color:#F0C060;font-family:JetBrains Mono,monospace;font-size:11px;text-decoration:none;border:1px dashed #3a3025;border-radius:8px}
+  .tx-explorer-link:hover{background:#1a1410}
+  /* TX MODAL */
+  #txModal{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1000;display:none;align-items:center;justify-content:center;padding:16px}
+  #txModal.show{display:flex}
+  .tx-modal-content{background:#2a2218;border:1px solid #F0C060;border-radius:14px;padding:20px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto}
+  .tx-modal-title{font-family:JetBrains Mono,monospace;font-size:14px;color:#F0C060;letter-spacing:0.15em;margin-bottom:16px;text-align:center}
+  .tx-modal-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #3a3025;font-family:JetBrains Mono,monospace;font-size:11px;gap:8px}
+  .tx-modal-row:last-child{border:none}
+  .tx-modal-label{color:#fff;flex-shrink:0}
+  .tx-modal-value{color:#FFE099;text-align:right;word-break:break-all}
+  .tx-modal-actions{display:flex;gap:8px;margin-top:16px}
+  .tx-modal-btn{flex:1;padding:12px;border:1px solid #3a3025;background:#1a1410;color:#FFE099;border-radius:8px;cursor:pointer;font-family:JetBrains Mono,monospace;font-size:11px;letter-spacing:0.1em}
+  .tx-modal-btn.primary{background:#F0C060;color:#000;border-color:#F0C060;font-weight:700}
+
+/* V4.9 — Visible placeholders (added 2026-05-27) */
+input::placeholder, textarea::placeholder,
+input::-webkit-input-placeholder, textarea::-webkit-input-placeholder,
+input::-moz-placeholder, textarea::-moz-placeholder {
+  color: #eee !important;
+  opacity: 1 !important;
+}
+
+</style>
+
+<style>
+  /* Silent refresh — prevent visible flicker on innerHTML rebuilds */
+  #tokensList, #favsList, #recentBlocks, #burnList {
+    transition: opacity 0.0s !important;
+  }
+  #tokensList *, #favsList *, #recentBlocks *, #burnList * {
+    animation-duration: 0s !important;
+  }
+  /* Disable any flash/scale animations during refresh */
+  .no-flash {
+    animation: none !important;
+    transition: none !important;
+  }
+</style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#F5CC75">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/goldbrix-brand-180.png">
+    <script src="/gbx-update-check.js" defer></script>
+    <script src="/gbx-native-bridge.js" defer></script>
+      <script src="/v3/gbx-session.js?v=103"></script>
+    <script src="/v3/gbx-read.js?v=103"></script>
+      <script src="/i18n.js?v=103" defer></script>
+  <script src="/promo-banner.js?v=103" defer></script>
+<style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
+<script src="/v3/nav-i18n.js?v=103" defer></script>
+</head>
+<body>
+
+<!-- LOCK CHECK OVERLAY -->
+<div class="lock-overlay" id="lockOverlay">
+  <div class="lock-overlay__loader"></div>
+  <div style="color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size: 11px;" id="lockLabel">Checking wallet...</div>
+</div>
+
+
+<!-- ===== CONVERT MODAL (SPA-safe, stil GoldBrix) ===== -->
+<div id="convertModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9998;display:none;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeConvertModal()">
+  <div style="background:#1a140d;border:1px solid #F0C060;border-radius:18px 18px 0 0;width:100%;max-width:460px;padding:22px 18px 28px;font-family:system-ui,sans-serif;max-height:88vh;overflow-y:auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div style="font-size:16px;font-weight:800;color:#F0C060;" id="cvTitle">Convert</div>
+      <div onclick="closeConvertModal()" style="font-size:22px;color:#888;cursor:pointer;line-height:1;">&times;</div>
+    </div>
+    <!-- SELECTOR RUTE -->
+    <div id="cvRoutes">
+      <div style="font-size:11px;color:#9a8c6f;margin-bottom:10px;font-family:JetBrains Mono,monospace;" id="cvPick">Choose what to convert:</div>
+      <div id="cvRouteList"></div>
+    </div>
+    <!-- ECRAN CONVERSIE (ascuns initial) -->
+    <div id="cvSwap" style="display:none;">
+      <div onclick="cvBackToRoutes()" style="font-size:12px;color:#F0C060;cursor:pointer;margin-bottom:12px;">&larr; <span id="cvBack">Back</span></div>
+      <div style="font-size:13px;color:#fff;font-weight:700;margin-bottom:10px;" id="cvRouteLabel"></div>
+      <label style="display:block;font-size:11px;color:#d4c590;margin-bottom:4px;" id="cvYouPay">You pay</label>
+      <div id="cvBalRow" style="font-size:11px;margin-bottom:6px;font-family:JetBrains Mono,monospace;min-height:18px;"></div>
+      <input id="cvAmount" inputmode="decimal" placeholder="0.00" autocomplete="off" style="width:100%;padding:13px;background:#241d14;border:1px solid #3a3025;border-radius:10px;color:#fff;font-size:16px;font-family:JetBrains Mono,monospace;margin-bottom:12px;">
+      <div style="background:#241d14;border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;font-family:JetBrains Mono,monospace;">
+        <div style="display:flex;justify-content:space-between;color:#e8dcb0;"><span id="cvYouGet">You receive</span><span style="color:#F0C060;font-weight:700;" id="cvOut">—</span></div>
+        <div style="display:flex;justify-content:space-between;color:#c9bd95;margin-top:6px;"><span id="cvMinLbl">Min received</span><span id="cvMin" style="color:#e8dcb0;">—</span></div>
+        <div style="display:flex;justify-content:space-between;color:#c9bd95;margin-top:6px;"><span id="cvViaLbl">Via</span><span id="cvVia" style="color:#e8dcb0;">—</span></div>
+      </div>
+      <div id="cvMsg" style="display:none;font-size:12px;padding:10px;border-radius:8px;margin-bottom:12px;"></div>
+      <button onclick="cvExecute()" style="width:100%;padding:15px;background:linear-gradient(135deg,#F0C060,#c79a1e);border:none;border-radius:12px;color:#0a0a0a;font-size:15px;font-weight:800;cursor:pointer;font-family:system-ui,sans-serif;" id="cvGoBtn">Convert</button>
+    </div>
+  </div>
+</div>
+
+<div class="v3-app" id="app" style="display: none;">
+
+  <!-- HEADER -->
+  <div class="w-header">
+    <div class="w-header__brand">
+      <img src="/assets/coin/gbx-coin-32.png" alt="">
+      <span class="w-header__title">GOLDBRIX</span>
+    </div>
+    <div class="w-header__status">
+      <span class="live-dot"></span>
+      <span id="chainStatus">MAINNET · LIVE</span>
+    </div>
+  </div>
+
+  <!-- BALANCE CARD -->
+  <div class="balance-card" onclick="location.href='/v3/gbx.html'" style="cursor:pointer;position:relative;"><div style="position:absolute;top:12px;right:14px;font-size:11px;color:#F0C060;opacity:.85;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:.05em;pointer-events:none;">📈 GBX ›</div>
+    <div class="balance-card__label" id="balanceLabel">GBX Balance · Main Wallet</div>
+    <div>
+      <span class="balance-card__amount" id="balanceAmount">0.00</span><span class="balance-card__unit">GBX</span>
+    </div>
+    <div class="balance-card__usd" id="balanceUsd">≈ $0.00</div>
+
+    <div class="balance-card__addr" id="addressBox" onclick="event.stopPropagation();copyAddress()">
+      <span id="addressShort">bn1q...</span>
+      <span class="balance-card__copy">📋</span>
+    </div>
+  </div>
+
+  <!-- GBX PORTFOLIO CHART -->
+  <div id="pfChartBox" style="margin:0 0 14px;padding:0 2px;">
+    <div id="pfChange" style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;margin-bottom:6px;"></div>
+    <svg id="pfChart" viewBox="0 0 300 100" preserveAspectRatio="none" style="width:100%;height:100px;display:block;"></svg>
+    <div style="display:flex;gap:6px;margin-top:8px;">
+      <button id="pf7" onclick="pfRange(7)" style="flex:1;padding:7px;background:#F0C060;color:#1a1200;border:none;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;">7D</button>
+      <button id="pf30" onclick="pfRange(30)" style="flex:1;padding:7px;background:#2a2218;color:#aaa;border:1px solid #3a3025;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;">30D</button>
+      <button id="pf365" onclick="pfRange(365)" style="flex:1;padding:7px;background:#2a2218;color:#aaa;border:1px solid #3a3025;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;">1A</button>
+    </div>
+  </div>
+
+  <!-- WALLET PICKER (multi-wallet) -->
+  <div class="wallet-picker" id="walletPicker">
+    <div class="wallet-picker__header">
+      <span id="walletPickerLabel">MY WALLETS</span>
+      <button class="add-wallet-btn" onclick="openAddWalletModal()" id="addWalletBtnLabel">+ ADD</button>
+    </div>
+    <div class="wallet-picker__list" id="walletList"></div>
+  </div>
+
+  <!-- 5 ACTIONS -->
+    <div class="actions-primary">
+    <a class="action-btn action-btn--receive" href="/v3/receive-usdc.html">
+      <div class="action-btn__icon">↓</div>
+      <div class="action-btn__label" id="lblUsdc">RECEIVE</div>
+    </a>
+    <a class="action-btn action-btn--send" href="/v3/send.html?v=103">
+      <div class="action-btn__icon">→</div>
+      <div class="action-btn__label" id="lblSend">SEND</div>
+    </a>
+    <a class="action-btn action-btn--buy" href="/v3/swap.html">
+      <div class="action-btn__icon">↑</div>
+      <div class="action-btn__label" id="lblBuy">BUY GBX</div>
+    </a>
+    <a class="action-btn action-btn--sell" href="/v3/swap.html?dir=sell">
+      <div class="action-btn__icon">↓</div>
+      <div class="action-btn__label" id="lblSell">SELL GBX</div>
+    </a>
+    <a class="action-btn action-btn--convert" href="javascript:void(0)" onclick="openConvertModal()">
+      <div class="action-btn__icon">⇄</div>
+      <div class="action-btn__label" id="lblConvert">CONVERT</div>
+    </a>
+  </div>
+  <div class="actions-secondary">
+    <a class="action-btn action-btn--meme" href="/v3/my-coins.html" onclick="this.href='/v3/my-coins.html?addr='+(window.activeWallet&&window.activeWallet.address?window.activeWallet.address:(JSON.parse(sessionStorage.getItem('gbx_unlocked_wallets')||'{}').wallets||[{}])[0].address||'')">
+      <div class="action-btn__icon"><svg viewBox="0 0 64 64" width="22" height="22" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="gbxM" cx="50%" cy="40%" r="65%"><stop offset="0%" stop-color="#FFE099"/><stop offset="55%" stop-color="#F0C060"/><stop offset="100%" stop-color="#B8860B"/></radialGradient></defs><circle cx="32" cy="32" r="28" fill="url(#gbxM)" stroke="#8B6914" stroke-width="2"/><rect x="12" y="26" width="16" height="9" rx="2" fill="#1a1200"/><rect x="36" y="26" width="16" height="9" rx="2" fill="#1a1200"/><rect x="28" y="29" width="8" height="2.5" fill="#1a1200"/><path d="M 22 42 Q 32 50 42 42" fill="none" stroke="#5a4410" stroke-width="3" stroke-linecap="round"/><text x="32" y="22" font-family="monospace" font-size="9" font-weight="bold" fill="#5a4410" text-anchor="middle">$</text></svg></div>
+      <div class="action-btn__label" id="lblMeme">MEME CREATE</div>
+    </a>
+    <a class="action-btn action-btn--fav" href="/v3/favorites.html">
+      <div class="action-btn__icon">★</div>
+      <div class="action-btn__label" id="lblFav">FAVORITES</div>
+    </a>
+    <a class="action-btn action-btn--followed" onclick="openFollowedModal()" style="cursor:pointer;">
+      <div class="action-btn__icon">👁️</div>
+      <div class="action-btn__label" id="lblFollowed">FOLLOWED</div>
+    </a>
+  </div>
+
+  <!-- TOKENS SECTION -->
+  <div class="section-heading">
+    <span class="section-heading__label" id="tokensLabel" data-t="tokens">Tokens</span>
+  </div>
+  <div id="tokensList">
+    <div class="empty-msg" id="tokensLoading">Loading tokens...</div>
+  </div>
+
+  <!-- MY MEMECOINS — mutat pe /v3/my-coins.html (buton MEME CREATE) -->
+  <div class="section-heading" style="display:none;justify-content:space-between;align-items:center;">
+    <span class="section-heading__label" id="myCoinsLabel">My Memecoins</span>
+    <span id="portfolioTotal" style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;color:#F5CC75;">— GBX</span>
+  </div>
+  <div id="myCoinsList" style="display:none;">
+    <div class="empty-msg" id="myCoinsEmpty">No coins launched yet</div>
+  </div>
+
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bnav" id="bnav" style="display: none;">
+  <a class="bnav__item" href="/">
+    <span class="bnav__icon">🏠</span>
+    <span class="bnav__label" id="navHome" data-t="navHome">HOME</span>
+  </a>
+  <a class="bnav__item active" href="/v3/wallet.html">
+    <span class="bnav__icon">👤</span>
+    <span class="bnav__label" id="navWallet" data-t="navWallet">WALLET</span>
+  </a>
+  <a class="bnav__item" href="/v3/launch.html">
+    <span class="bnav__icon">🚀</span>
+    <span class="bnav__label" id="navLaunch" data-t="navLaunch">LAUNCH</span>
+  </a>
+  <a class="bnav__item" href="/v3/leaderboard.html">
+    <span class="bnav__icon">🔥</span>
+    <span class="bnav__label" id="navBurn" data-t="navBurns">BURNS</span>
+  </a>
+  <a class="bnav__item" href="/v3/settings.html">
+    <span class="bnav__icon">⚙️</span>
+    <span class="bnav__label" id="navSettings" data-t="navSettings">SETTINGS</span>
+  </a>
+</div>
+
+<script>
+const T = {
+  en: { lock: 'Checking wallet...', balance: 'GBX Balance · Main Wallet', tokens: 'Holdings', myCoins: 'Created by Me', noTokens: 'No tokens yet', noCoins: 'No coins launched yet', loading: 'Loading tokens...', copied: '✓ Copied!', receive: 'RECEIVE', usdc: 'RECEIVE', send: 'SEND', buy: 'BUY GBX', sell: 'SELL GBX', fav: 'FAVORITES', meme: 'MY MEMES', followed: 'FOLLOWED', noFollowed: 'No followed wallets', followedTitle: 'Followed Wallets', followedSub: 'Wallets you are tracking', unfollow: 'Unfollow', nav: { home: 'HOME', wallet: 'WALLET', trade: 'TRADE', launch: 'LAUNCH', burn: 'BURNS', settings: 'SETTINGS' }, status: 'LIVE', myWallets: 'MY WALLETS', addWallet: '+ ADD', addWalletTitle: 'Add New Wallet', addWalletSub: 'Choose how to add a wallet', createNew: 'Create New Wallet', importExisting: 'Import Existing Wallet', cancel: 'Cancel' },
+  ro: { lock: 'Se verifică portofelul...', balance: 'Sold GBX · Portofel Principal', tokens: 'Dețineri', myCoins: 'Monede Create de Mine', noTokens: 'Niciun token', noCoins: 'Nicio monedă lansată', loading: 'Se încarcă...', copied: '✓ Copiat!', receive: 'PRIMEȘTE', usdc: 'PRIMEȘTE', send: 'TRIMITE', buy: 'CUMPĂRĂ GBX', sell: 'VINDE GBX', fav: 'FAVORITE', meme: 'MEMELE MELE', followed: 'URMĂRIȚI', noFollowed: 'Niciun wallet urmărit', followedTitle: 'Wallets Urmărite', followedSub: 'Walleturi pe care le urmărești', unfollow: 'Nu mai urmări', nav: { home: 'ACASĂ', wallet: 'PORTOFEL', trade: 'TRADE', launch: 'LANSARE', burn: 'ARDERI', settings: 'SETĂRI' }, status: 'LIVE', myWallets: 'PORTOFELELE MELE', addWallet: '+ ADAUGĂ', addWalletTitle: 'Adaugă Portofel Nou', addWalletSub: 'Alege cum să adaugi un portofel', createNew: 'Creează Portofel Nou', importExisting: 'Importă Portofel Existent', cancel: 'Anulează' },
+  de: { lock: 'Wallet wird geprüft...', balance: 'GBX Saldo · Haupt-Wallet', tokens: 'Bestände', myCoins: 'Von mir erstellt', noTokens: 'Keine Tokens', noCoins: 'Keine Coins gestartet', loading: 'Wird geladen...', copied: '✓ Kopiert!', receive: 'EMPFANGEN', usdc: 'EMPFANGEN', send: 'SENDEN', buy: 'GBX KAUFEN', sell: 'GBX VERKAUFEN', fav: 'FAVORITEN', meme: 'MEINE MEMES', followed: 'GEFOLGT', noFollowed: 'Keine gefolgten Wallets', followedTitle: 'Gefolgte Wallets', followedSub: 'Wallets, denen du folgst', unfollow: 'Entfolgen', nav: { home: 'HOME', wallet: 'WALLET', trade: 'HANDEL', launch: 'STARTEN', burn: 'BURNS', settings: 'EINSTELL.' }, status: 'LIVE', myWallets: 'MEINE WALLETS', addWallet: '+ HINZUFÜGEN', addWalletTitle: 'Neue Wallet hinzufügen', addWalletSub: 'Wähle, wie du eine Wallet hinzufügst', createNew: 'Neue Wallet erstellen', importExisting: 'Bestehende Wallet importieren', cancel: 'Abbrechen' },
+  zh: { lock: '正在检查钱包...', balance: 'GBX 余额 · 主钱包', tokens: '持仓', myCoins: '我创建的', noTokens: '暂无代币', noCoins: '尚未发行', loading: '加载中...', copied: '✓ 已复制!', receive: '接收', usdc: '接收', send: '发送', buy: '购买 GBX', sell: '出售 GBX', fav: '收藏', meme: '我的模因', followed: '关注', noFollowed: '暂无关注的钱包', followedTitle: '关注的钱包', followedSub: '您正在关注的钱包', unfollow: '取消关注', nav: { home: '首页', wallet: '钱包', trade: '交易', launch: '发行', burn: '燃烧', settings: '设置' }, status: '在线', myWallets: '我的钱包', addWallet: '+ 添加', addWalletTitle: '添加新钱包', addWalletSub: '选择如何添加钱包', createNew: '创建新钱包', importExisting: '导入现有钱包', cancel: '取消' },
+  ar: { lock: 'جاري التحقق...', balance: 'رصيد GBX · المحفظة الرئيسية', tokens: 'الحيازات', myCoins: 'التي أنشأتها', noTokens: 'لا توجد رموز', noCoins: 'لم يتم إطلاق عملات', loading: 'جاري التحميل...', copied: '✓ تم النسخ!', receive: 'استقبال', usdc: 'استقبال', send: 'إرسال', buy: 'شراء GBX', sell: 'بيع GBX', fav: 'المفضلة', meme: 'ميماتي', followed: 'متابع', noFollowed: 'لا توجد محافظ متابعة', followedTitle: 'المحافظ المتابعة', followedSub: 'المحافظ التي تتابعها', unfollow: 'إلغاء المتابعة', nav: { home: 'الرئيسية', wallet: 'محفظة', trade: 'تداول', launch: 'إطلاق', burn: 'حرق', settings: 'إعدادات' }, status: 'مباشر', myWallets: 'محافظي', addWallet: '+ إضافة', addWalletTitle: 'إضافة محفظة جديدة', addWalletSub: 'اختر كيفية إضافة محفظة', createNew: 'إنشاء محفظة جديدة', importExisting: 'استيراد محفظة موجودة', cancel: 'إلغاء' }
+};
+
+let currentLang = localStorage.getItem('gbx_lang') || 'en';
+let activeWallet = null;
+let GBX_USD = 0.10;
+let _gbxPricePromise=null;(function(){async function _g(){try{const r=await fetch('https://goldbrix.app/onramp/gbx-price');const d=await r.json();if(d&&d.gbx_price_usd>0)GBX_USD=d.gbx_price_usd;}catch(e){}}_gbxPricePromise=_g();setInterval(_g,30000);})();
+
+function t(k) { return (T[currentLang] && T[currentLang][k]) || T.en[k] || k; }
+
+// Multi-wallet helpers above
+
+// === Multi-wallet management ===
+function openAddWalletModal(){document.getElementById('addWalletModal').style.display='flex';}
+function closeAddWalletModal(){document.getElementById('addWalletModal').style.display='none';}
+function renderWalletList(){
+  const raw=sessionStorage.getItem('gbx_unlocked_wallets');
+  if(!raw) return;
+  const u=JSON.parse(raw);
+  const wallets=u.wallets||[];
+  const activeId=u.activeWalletId;
+  const list=document.getElementById('walletList');
+  if(!list) return;
+  list.innerHTML=wallets.map(w=>{
+    const isActive=w.id===activeId;
+    const short=w.address.slice(0,10)+'...'+w.address.slice(-6);
+    return '<div class="wallet-item '+(isActive?'wallet-item--active':'')+'" onclick="switchActiveWallet(\''+w.id+'\')"><div class="wallet-item__info"><span class="wallet-item__name">'+(w.name||'Wallet')+'</span><span class="wallet-item__addr">'+short+'</span></div>'+(isActive?'<span class="wallet-item__star">★</span>':'')+'</div>';
+  }).join('');
+}
+function switchActiveWallet(id){
+  const raw=sessionStorage.getItem('gbx_unlocked_wallets');
+  if(!raw) return;
+  const u=JSON.parse(raw);
+  u.activeWalletId=id;
+  sessionStorage.setItem('gbx_unlocked_wallets',JSON.stringify(u));
+  const stRaw=localStorage.getItem('goldbrix_state_v3');
+  if(stRaw){const st=JSON.parse(stRaw);st.activeWalletId=id;localStorage.setItem('goldbrix_state_v3',JSON.stringify(st));}
+  location.reload();
+}
+setTimeout(renderWalletList,200);
+
+function applyLang() {
+  const _wpl=document.getElementById('walletPickerLabel'); if(_wpl) _wpl.textContent=t('myWallets');
+  const _awbl=document.getElementById('addWalletBtnLabel'); if(_awbl) _awbl.textContent=t('addWallet');
+  const _awt=document.getElementById('addWalletTitle'); if(_awt) _awt.textContent=t('addWalletTitle');
+  const _aws=document.getElementById('addWalletSub'); if(_aws) _aws.textContent=t('addWalletSub');
+  const _cnl=document.getElementById('createNewLabel'); if(_cnl) _cnl.textContent=t('createNew');
+  const _iel=document.getElementById('importExistingLabel'); if(_iel) _iel.textContent=t('importExisting');
+  const _awcl=document.getElementById('addWalletCancelLabel'); if(_awcl) _awcl.textContent=t('cancel');
+  const tt = T[currentLang] || T.en;
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+  document.getElementById('lockLabel').textContent = tt.lock;
+  document.getElementById('balanceLabel').textContent = tt.balance;
+  document.getElementById('tokensLabel').textContent = tt.tokens;
+  document.getElementById('myCoinsLabel').textContent = tt.myCoins;
+  var _lm=document.getElementById('lblMeme'); if(_lm) _lm.textContent = tt.meme || 'MEMES';
+  document.getElementById('myCoinsEmpty').textContent = tt.noCoins;
+  document.getElementById('tokensLoading').textContent = tt.loading;
+  document.getElementById('chainStatus').textContent = tt.status;
+  { var _r=document.getElementById('lblReceive'); if(_r) _r.textContent = tt.receive; }
+  { var _u=document.getElementById('lblUsdc'); if(_u) _u.textContent = tt.usdc || 'USDC'; }
+  document.getElementById('lblSend').textContent = tt.send;
+  document.getElementById('lblBuy').textContent = tt.buy;
+  document.getElementById('lblSell').textContent = tt.sell;
+  document.getElementById('lblFav').textContent = tt.fav;
+  document.getElementById('navHome').textContent = tt.nav.home;
+  document.getElementById('navWallet').textContent = tt.nav.wallet;
+  document.getElementById('navLaunch').textContent = tt.nav.launch;
+  document.getElementById('navBurn').textContent = tt.nav.burn;
+  document.getElementById('navSettings').textContent = tt.nav.settings;
+}
+
+function shortAddr(a) { return a ? a.slice(0, 8) + '...' + a.slice(-6) : ''; }
+
+function fmtGbx(n) {
+  if (n === null || n === undefined || isNaN(n)) return '0.00';
+  const num = Number(n);
+  if (num >= 1000) return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return num.toFixed(2);
+}
+function fmtUsd(n) {
+  if (n === null || n === undefined || isNaN(n)) return '0.00';
+  return Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function showToast(msg) {
+  const ex = document.querySelector('.toast');
+  if (ex) ex.remove();
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1800);
+}
+
+function copyAddress() {
+  if (!activeWallet || !activeWallet.address) return;
+  navigator.clipboard.writeText(activeWallet.address).then(() => {
+    showToast(t('copied'));
+  });
+}
+
+function checkLock() {
+  // SESSION SINGLE SOURCE: delega la GBXSession (self-healing, acelasi din orice drum)
+  var st = (window.GBXSession && GBXSession.status) ? GBXSession.status() : 'none';
+  if (st === 'none')    { window.location.href = '/v3/welcome.html'; return false; }
+  if (st === 'retry')   { return 'retry'; }                 // sesiune nepropagata inca -> init asteapta
+  if (st === 'expired') { GBXSession.clear(); window.location.href = '/v3/unlock.html'; return false; }
+  activeWallet = GBXSession.activeWallet();
+  if (!activeWallet) { window.location.href = '/v3/unlock.html'; return false; }
+  return true;
+}
+
+
+function toggleHideZero() {
+  const cur = localStorage.getItem('gbx_hide_zero') === 'true';
+  const next = !cur;
+  localStorage.setItem('gbx_hide_zero', next ? 'true' : 'false');
+  updateHideZeroBtn();
+  if (typeof loadMyCoins === 'function') loadMyCoins();
+  if (window.loadChainBalances) { try { window.loadChainBalances(activeWallet); } catch(e){} }
+}
+function updateHideZeroBtn() {
+  if (localStorage.getItem('gbx_hide_zero') === null) {
+    localStorage.setItem('gbx_hide_zero', 'false');
+  }
+  const btn = document.getElementById('hideZeroBtn');
+  if (!btn) return;
+  const hidden = localStorage.getItem('gbx_hide_zero') === 'true';
+  btn.textContent = hidden ? '+ SHOW $0' : 'HIDE $0';
+  btn.style.background = hidden ? 'rgba(245,204,117,0.15)' : 'transparent';
+}
+window.toggleHideZero = toggleHideZero;
+window.updateHideZeroBtn = updateHideZeroBtn;
+
+async function loadMyCoins() {
+  if (!activeWallet || !activeWallet.address) return;
+  const list = document.getElementById('tokensList');
+  const emptyMsg = document.getElementById('myCoinsEmpty');
+  if (!list) return;
+  try {
+    // V5.0 — Holdings din DB (tabela holders = sursa unica de adevar; include si TRANSFERURI, nu doar trades)
+    const API2 = 'https://goldbrix.app';
+    const [hr, cr, tr] = await Promise.all([
+      fetch(API2 + '/launchpad/wallet/' + activeWallet.address + '/holdings'),
+      fetch(API2 + '/v2/memecoin/list?limit=500'),
+      fetch(API2 + '/launchpad/wallet/' + activeWallet.address + '/trades').catch(()=>null)
+    ]);
+    const hd = await hr.json();
+    const dbHoldings = Array.isArray(hd.holdings) ? hd.holdings : [];
+    const allCoins = (await cr.json()).coins || [];
+    const metaById = {};
+    allCoins.forEach(c => { metaById[c.id] = c; });
+    // avg_buy din trades (doar cost-basis, NU pentru sold)
+    const buyGbx = {}, buyCoin = {};
+    try {
+      const td = tr ? await tr.json() : null;
+      const trades = Array.isArray(td) ? td : ((td && td.trades) || []);
+      trades.forEach(t => {
+        if (!t.coin_id || t.side !== 'buy') return;
+        buyGbx[t.coin_id] = (buyGbx[t.coin_id] || 0) + (Number(t.gbx_amount) || 0);
+        buyCoin[t.coin_id] = (buyCoin[t.coin_id] || 0) + (Number(t.coin_amount) || 0);
+      });
+    } catch(_e){}
+    const merged = [];
+    dbHoldings.forEach(h => {
+      const net = Number(h.balance) || 0;
+      if (net <= 1) return;
+      const id = h.coin_id;
+      const m = metaById[id] || {};
+      merged.push({
+        coin_id: id,
+        ticker: h.ticker || m.ticker || '?',
+        name: h.name || m.name || h.ticker || '?',
+        image_url: h.image_url || (API2 + '/launchpad/coin/' + id + '/image'),
+        balance: net,
+        avg_buy: buyCoin[id] > 0 ? buyGbx[id] / buyCoin[id] : 0,
+        market_cap_gbx: Number(m.market_cap_gbx || 0),
+        price_per_token_gbx: 0,
+        value_gbx: 0
+      });
+    });
+    let filtered = merged;
+    // Sort by value_gbx DESC, then balance DESC
+    filtered.sort((a, b) => {
+      if (Number(b.value_gbx) !== Number(a.value_gbx)) return Number(b.value_gbx) - Number(a.value_gbx);
+      return Number(b.balance) - Number(a.balance);
+    });
+    if (filtered.length === 0) {
+      if (emptyMsg) emptyMsg.style.display = 'block';
+      list.querySelectorAll('.my-coin-card').forEach(c => c.remove());
+      return;
+    }
+    if (emptyMsg) emptyMsg.style.display = 'none';
+    // SILENT UPDATE: rebuild only if filtered actually changed
+    const newIds = filtered.map(c => c.coin_id || c.ticker).join(',');
+    const cachedIds = list.dataset.lastIds || '';
+    if (newIds === cachedIds && list.querySelectorAll('.my-coin-card').length > 0) {
+      // No changes, skip rebuild
+      return;
+    }
+    list.dataset.lastIds = newIds;
+    list.querySelectorAll('.my-coin-card').forEach(c => c.remove());
+    // V4.9 PRO — Clean professional render with logo, ticker+name, balance+value, 24h% badge
+    // window._coinMetaCache populated by loadPortfolio (memecoin/list response)
+    filtered.forEach(c => {
+      const tk = String(c.ticker || '?').toUpperCase();
+      const name = (c.name || tk).substring(0, 22);
+      const img = c.image_url || '/assets/coin/gbx-coin-32.png';
+      const id = c.coin_id;
+      const bal = Number(c.balance) || 0;
+      const balStr = bal > 0 ? bal.toLocaleString('en-US', {maximumFractionDigits: 0}) : '0';
+      const card = document.createElement('div');
+      card.className = 'my-coin-card';
+      card.setAttribute('data-coinid', id || '');
+      card.setAttribute('data-bal', bal);
+      card.setAttribute('data-avgbuy', c.avg_buy || 0);
+      card.style.cssText = 'display:flex;align-items:center;gap:10px;padding:12px 14px;background:#2a2218;border-radius:14px;border:1px solid #3a3025;margin-bottom:6px;cursor:pointer;transition:border-color 0.15s;min-height:64px;';
+      card.onmouseover = () => { card.style.borderColor = '#F0C060'; };
+      card.onmouseout = () => { card.style.borderColor = '#3a3025'; };
+      card.onclick = () => { if (id) window.location.href = '/v3/trade.html?coin=' + id; };
+      card.innerHTML =
+        '<img src="' + img + '" loading="lazy" decoding="async" style="width:42px;height:42px;border-radius:50%;object-fit:cover;background:#3a3025;flex-shrink:0;" onerror="this.src=\'/assets/coin/gbx-coin-32.png\'">' +
+        '<div style="flex:1;min-width:0;overflow:hidden;">' +
+          '<div style="display:flex;align-items:center;gap:6px;">' +
+            '<span style="font-family:JetBrains Mono,monospace;font-size:13px;font-weight:800;color:#F5CC75;">$' + tk + '</span>' +
+            '<span class="mc-ch" style="font-size:10px;font-family:JetBrains Mono,monospace;font-weight:700;"></span>' +
+          '</div>' +
+          '<div style="font-size:11px;color:#aaa;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + name + '</div>' +
+        '</div>' +
+        '<div class="mc-spark" style="width:56px;flex-shrink:0;display:flex;align-items:center;justify-content:center;"></div>' +
+        '<div style="text-align:right;font-family:JetBrains Mono,monospace;flex-shrink:0;min-width:74px;">' +
+          '<div class="mc-val" style="font-size:13px;color:#fff;font-weight:700;">…</div>' +
+          '<div style="font-size:10px;color:#888;margin-top:3px;">' + balStr + ' ' + tk + '</div>' +
+        '</div>';
+      list.appendChild(card);
+    });
+    if (window.enrichHoldings) window.enrichHoldings();
+  } catch(e) { console.warn('[loadMyCoins]', e); }
+}
+
+
+async function loadPortfolio() {
+  if (!activeWallet || !activeWallet.address) {
+    document.getElementById('tokensList').innerHTML = '<div class="empty-msg">No active wallet</div>';
+    return;
+  }
+
+  document.getElementById('addressShort').textContent = shortAddr(activeWallet.address);
+
+  let gbxBal = 0;
+  let holdings = [];
+
+  // GBX-PERF-LOCK Strat3 — render instant din cache, apoi refresh tacut
+  try {
+    const _ck = 'gbx_cache_bal_v2_' + activeWallet.address;
+    const _cached = localStorage.getItem(_ck);
+    if (_cached) {
+      const _cv = parseFloat(_cached) || 0;
+      document.getElementById('balanceAmount').textContent = fmtGbx(_cv);
+      document.getElementById('balanceUsd').textContent = '≈ $' + fmtUsd(_cv * GBX_USD);
+    }
+  } catch(_) {}
+
+  try {
+    // REAL chain balance from /api/address (returns spendable + immature)
+    const r = await window.gbxRead('/address/' + activeWallet.address, {quorum:true, field:'spendable_gbx'});
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    console.log('[portfolio]', d);
+
+    gbxBal = parseFloat(d.spendable_gbx) || 0;
+    holdings = [];
+    // Fetch memecoin holdings separately
+    try {
+      const rH = await fetch('https://goldbrix.app/launchpad/wallet/' + activeWallet.address + '/holdings');
+      if (rH.ok) {
+        const dH = await rH.json();
+        holdings = Array.isArray(dH.holdings) ? dH.holdings : (Array.isArray(dH.tokens) ? dH.tokens : []);
+      }
+    } catch (eH) { console.warn('[holdings]', eH); }
+
+    try { if (_gbxPricePromise) await _gbxPricePromise; } catch(_) {}
+    window._gbxBalance = gbxBal;
+    document.getElementById('balanceAmount').textContent = fmtGbx(gbxBal);
+    document.getElementById('balanceUsd').textContent = '≈ $' + fmtUsd(gbxBal * GBX_USD);
+    try { localStorage.setItem('gbx_cache_bal_v2_' + activeWallet.address, String(gbxBal)); } catch(_) {}
+  } catch (e) {
+    console.error('[portfolio fetch]', e);
+    // GBX-PERF-LOCK — pastreaza ultima valoare din cache pe eroare (nu reseta la 0)
+    const _ck = 'gbx_cache_bal_v2_' + activeWallet.address;
+    if (!localStorage.getItem(_ck)) {
+      document.getElementById('balanceAmount').textContent = '0.00';
+      document.getElementById('balanceUsd').textContent = '≈ $0.00';
+    }
+  }
+
+  // Build tokens list (always show GBX even if balance is 0)
+  const list = document.getElementById('tokensList');
+  let html = '';
+
+  // GBX native always shown
+  html += '<div class="token-row" onclick="window.location.href=\'/v3/gbx.html\'">' +
+    '<div class="token-row__icon"><img src="/assets/coin/gbx-coin-128.png" alt=""></div>' +
+    '<div class="token-row__info">' +
+      '<div class="token-row__name">GOLDBRIX</div>' +
+      '<div class="token-row__balance">' + fmtGbx(gbxBal) + ' GBX</div>' +
+    '</div>' +
+    '<div class="token-row__value">' +
+      '<div class="token-row__usd">$' + fmtUsd(gbxBal * GBX_USD) + '</div>' +
+    '</div>' +
+  '</div>';
+
+  // Other holdings (only if any)
+  if (holdings.length > 0) {
+    holdings
+      .filter(h => false)
+      .sort((a, b) => {
+        const va = Number(a.value_usd || (a.value_gbx ? a.value_gbx * GBX_USD : 0)) || 0;
+        const vb = Number(b.value_usd || (b.value_gbx ? b.value_gbx * GBX_USD : 0)) || 0;
+        if (vb !== va) return vb - va;
+        // Tie-break: by balance amount
+        return (Number(b.balance) || 0) - (Number(a.balance) || 0);
+      })
+      .forEach(h => {
+      try {
+        const change = h.change_24h;
+        let changeClass = 'flat', changeStr = '';
+        if (change !== null && change !== undefined && !isNaN(change)) {
+          if (change > 0) { changeClass = 'up'; changeStr = '+' + Number(change).toFixed(2) + '%'; }
+          else if (change < 0) { changeClass = 'down'; changeStr = Number(change).toFixed(2) + '%'; }
+        }
+        const imgSrc = h.image_url || '/assets/coin/gbx-coin-128.png';
+        const ticker = String(h.ticker || h.symbol || 'TOK').toUpperCase();
+        const bal = Number(h.balance) || 0;
+        const val = Number(h.value_usd || (h.value_gbx ? h.value_gbx * GBX_USD : 0)) || 0;
+
+        html += '<div class="token-row" onclick="window.location.href=\'/v3/trade.html?coin=' + (h.coin_id || ticker) + '\'">' +
+          '<div class="token-row__icon"><img src="' + imgSrc + '" alt="" onerror="this.src=\'/assets/coin/gbx-coin-128.png\'"></div>' +
+          '<div class="token-row__info">' +
+            '<div class="token-row__name">$' + ticker + '</div>' +
+            '<div class="token-row__balance">' + fmtGbx(bal) + ' ' + ticker + '</div>' +
+          '</div>' +
+          '<div class="token-row__value">' +
+            '<div class="token-row__usd">' + (val > 0 ? '$' + fmtUsd(val) : '—') + '</div>' +
+            '<div class="token-row__change ' + changeClass + '">' + changeStr + '</div>' +
+          '</div>' +
+        '</div>';
+      } catch (err) {
+        console.error('[holding render]', err, h);
+      }
+    });
+  }
+
+  list.innerHTML = html;
+
+  // GBX-SPLIT — cumparate (loadMyCoins) se adauga in tokensList imediat dupa GBX, fara clipire
+  if (typeof loadMyCoins === 'function') loadMyCoins();
+
+  // GBX-SPLIT — monedele CREATE mutate pe pagina dedicata /v3/my-coins.html (buton MEME CREATE).
+  // Wallet propriu arata DOAR detinute (valoare reala), nu market cap.
+}
+
+window.gbxRefresh_wallet = async function () {
+    applyLang();
+    try{ renderWalletList(); }catch(_e){}
+    try{ var _m=document.getElementById('addWalletModal'); if(_m) _m.style.display='none'; }catch(_e){}
+    var _root = document.querySelector('.spa-viewbox[data-route="wallet"]') || document;
+    if (window.__walletPortfolioTimer) { clearInterval(window.__walletPortfolioTimer); window.__walletPortfolioTimer = null; }
+    // COLD-LOAD FIX: checkLock poate intoarce 'retry' daca sesiunea nu s-a propagat inca (prima intrare post-unlock)
+    let _lk = checkLock();
+    let _tries = 0;
+    while (_lk === 'retry' && _tries < 12) {   // max ~1.8s
+      await new Promise(r => setTimeout(r, 150));
+      _lk = checkLock();
+      _tries++;
+    }
+    if (_lk === 'retry') { window.location.href = '/v3/unlock.html'; return; }
+    if (!_lk) return;
+    _root.querySelector('#lockOverlay').style.display = 'none';
+  _root.querySelector('#app').style.display = 'block';
+  _root.querySelector('#bnav').style.display = 'flex';
+  await loadPortfolio();
+  window.__walletLastRefresh = Date.now();
+  // Refresh every 30s
+  window.__walletPortfolioTimer = setInterval(()=>{ loadPortfolio(); window.__walletLastRefresh=Date.now(); }, 30000);
+  // B.6: refresh-in-background — cand userul REVINE in app (din alt tab/minimizat),
+  // reincarca soldul INSTANT (nu astepta urmatorul interval de 30s). Debounce 5s = nu dubla
+  // daca tocmai a rulat. Ultima valoare apare deja instant din cache (linia ~716).
+  if(!window.__walletVisHooked){
+    window.__walletVisHooked = true;
+    document.addEventListener('visibilitychange', ()=>{
+      if(document.hidden) return;
+      var since = Date.now() - (window.__walletLastRefresh||0);
+      if(since < 5000) return;                    // debounce: rulat recent -> skip
+      window.__walletLastRefresh = Date.now();
+      try{ loadPortfolio(); }catch(_e){}
+    });
+  }
+  updateHideZeroBtn();
+  // GBX-SPLIT — loadMyCoins se cheama acum din loadPortfolio (nu mai separat, evita dubla rulare)
+};
+window.gbxRefresh_wallet_silent = async function(){
+  try{ if(typeof loadPortfolio==='function'){ await loadPortfolio(); window.__walletLastRefresh=Date.now(); } }catch(_e){}
+};
+gbxRefresh_wallet();
+</script>
+
+<script>
+// === V3 FAVORITES: add star button to each memecoin row ===
+(function() {
+  const FAV_KEY = 'gbx_favorites';
+  function getFavs() { try { return JSON.parse(localStorage.getItem(FAV_KEY)||'[]'); } catch(e) { return []; } }
+  function setFavs(a) { localStorage.setItem(FAV_KEY, JSON.stringify(a)); }
+  function isFav(id) { return getFavs().includes(id); }
+  function toggleFav(id, ev) {
+    if (ev) { ev.stopPropagation(); ev.preventDefault(); }
+    const f = getFavs();
+    const i = f.indexOf(id);
+    if (i >= 0) { f.splice(i, 1); showFavToast('Removed from favorites'); }
+    else { f.push(id); showFavToast('Added to favorites'); }
+    setFavs(f);
+    decorateRows();
+  }
+  window.toggleFav = toggleFav;
+  function showFavToast(msg) {
+    const e = document.querySelector('.fav-toast'); if (e) e.remove();
+    const el = document.createElement('div');
+    el.className = 'fav-toast';
+    el.textContent = msg;
+    el.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#2a2218;border:1px solid #F5CC75;border-radius:8px;padding:10px 18px;font-size:13px;color:#F5CC75;z-index:9999;font-family:JetBrains Mono,monospace;letter-spacing:0.08em;box-shadow:0 4px 16px rgba(0,0,0,0.5);';
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(), 1800);
+  }
+  function decorateRows() {
+    // Find every coin row by data-coin-id or by token class
+    const rows = document.querySelectorAll('[data-coin-id], .token-row, .tokens-list > [data-cid]');
+    rows.forEach(row => {
+      const cid = row.dataset.coinId || row.getAttribute('data-coin-id') || row.dataset.cid || '';
+      const tk = (row.dataset.ticker || row.dataset.symbol || '').toUpperCase();
+      // Skip GBX (always shown, no toggle)
+      if (!cid || cid === 'GBX' || cid === 'goldbrix' || tk === 'GBX' || tk === 'GOLDBRIX') return;
+      let star = row.querySelector('.fav-star-btn');
+      if (!star) {
+        star = document.createElement('span');
+        star.className = 'fav-star-btn';
+        star.style.cssText = 'font-size:20px;color:#F5CC75;cursor:pointer;padding:8px;margin-left:6px;flex-shrink:0;transition:transform 0.15s;user-select:none;';
+        star.onmouseover = function() { this.style.transform='scale(1.2)'; };
+        star.onmouseout = function() { this.style.transform='scale(1)'; };
+        star.onclick = function(e) { toggleFav(cid, e); };
+        row.appendChild(star);
+      }
+      star.textContent = isFav(cid) ? '⭐' : '☆';
+    });
+  }
+  const obs = new MutationObserver(decorateRows);
+  obs.observe(document.body, { childList: true, subtree: true });
+  setTimeout(decorateRows, 500);
+  setTimeout(decorateRows, 1500);
+  setTimeout(decorateRows, 3000);
+})();
+</script>
+<script src="/v3/pwa.js?v=103" defer></script>
+
+
+  <!-- RECENT TRANSACTIONS SECTION -->
+  <div class="tx-history-section">
+    <div class="tx-section-title" id="txSectionTitle">RECENT TRANSACTIONS</div>
+    <a id="txExplorerLink" class="tx-explorer-link" target="_blank" rel="noopener">View all on Explorer ↗</a>
+    <div id="txHistoryList">
+      <div class="tx-empty" id="txEmpty">Loading...</div>
+    </div>
+  </div>
+
+  <!-- TX DETAIL MODAL -->
+  <div id="txModal" onclick="if(event.target===this)closeTxModal()">
+    <div class="tx-modal-content">
+      <div class="tx-modal-title" id="txModalTitle">TRANSACTION DETAILS</div>
+      <div id="txModalBody"></div>
+      <div class="tx-modal-actions">
+        <button class="tx-modal-btn" id="txModalCloseBtn" onclick="closeTxModal()">CLOSE</button>
+        <button class="tx-modal-btn primary" id="txModalExpBtn" onclick="openTxInExplorer()">EXPLORER ↗</button>
+      </div>
+    </div>
+  </div>
+
+<nav class="v3-final-nav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:999;">
+  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
+  <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#F5CC75;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:1;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
+  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
+  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
+  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
+  <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">⚙</span><span data-t="navSettings">SETTINGS</span></a>
+</nav>
+<style>body { padding-bottom: 76px !important; }</style>
+
+<script>
+  // === DOM-based Sparkline Injection v2 (permissive, multi-fallback) ===
+  (function() {
+    function renderSpark(prices) {
+      if (!prices || prices.length < 2) return '<span style="color:#fff;font-size:10px;">—</span>';
+      const w = 60, h = 20;
+      const min = Math.min.apply(null, prices);
+      const max = Math.max.apply(null, prices);
+      const range = max - min || 1;
+      const step = w / (prices.length - 1);
+      const pts = prices.map((p, i) => (i * step).toFixed(1) + ',' + (h - ((p - min) / range) * h).toFixed(1)).join(' ');
+      const color = prices[prices.length - 1] >= prices[0] ? '#26a69a' : '#ef5350';
+      return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '"><polyline points="' + pts + '" fill="none" stroke="' + color + '" stroke-width="1.5"/></svg>';
+    }
+    async function attachSparklines() {
+      const rows = document.querySelectorAll('[onclick*="coin="]');
+      console.log('[SPARK-WALLET]', rows.length, 'rows');
+      const tasks = [];
+      rows.forEach(row => {
+        if (row.querySelector('.spark-inj')) return;
+        const onclick = row.getAttribute('onclick') || '';
+        const m = onclick.match(/coin=([^'"&]+)/);
+        if (!m) return;
+        const coinId = m[1];
+        if (coinId === 'GBX' || coinId === 'gbx') return;
+        const target = row.querySelector('.token-row__value')
+                    || row.querySelector('.coin-meta')
+                    || row.querySelector('[class*="__value"]')
+                    || row.querySelector('[class*="__right"]')
+                    || row.lastElementChild;
+        if (!target || target === row) return;
+        const spark = document.createElement('div');
+        spark.className = 'spark-inj';
+        spark.style.cssText = 'min-width:60px;height:20px;margin:0 8px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;';
+        spark.innerHTML = '<span style="color:#fff;font-size:10px;">…</span>';
+        target.parentNode.insertBefore(spark, target);
+        tasks.push((async () => {
+          try {
+            const r = await fetch('https://goldbrix.app/launchpad/coins/' + coinId + '/candles?interval=1h');
+            if (!r.ok) { spark.innerHTML = '<span style="color:#fff;font-size:10px;">—</span>'; return; }
+            const d = await r.json();
+            const candles = d.candles || (Array.isArray(d) ? d : []);
+            const prices = candles.slice(-24).map(c => c.close).filter(v => v != null && !isNaN(v));
+            spark.innerHTML = renderSpark(prices);
+          } catch(e) { spark.innerHTML = '<span style="color:#fff;font-size:10px;">—</span>'; }
+        })());
+      });
+      await Promise.allSettled(tasks);
+    }
+    /* DISABLED: replaced by enrichHoldings */
+    /* DISABLED: attachSparklines 8s loop killed for performance */
+  })();
+</script>
+
+<div id="addWalletModal" class="add-wallet-modal" style="display:none">
+  <div class="add-wallet-modal__content">
+    <h3 id="addWalletTitle">Add New Wallet</h3>
+    <p id="addWalletSub">Choose how to add a wallet</p>
+    <a href="/v3/create-wallet.html?mode=add" class="add-wallet-option">
+      <span class="add-wallet-option__icon">🌱</span>
+      <span class="add-wallet-option__label" id="createNewLabel">Create New Wallet</span>
+    </a>
+    <a href="/v3/import-wallet.html?mode=add" class="add-wallet-option">
+      <span class="add-wallet-option__icon">📥</span>
+      <span class="add-wallet-option__label" id="importExistingLabel">Import Existing Wallet</span>
+    </a>
+    <button onclick="closeAddWalletModal()" class="add-wallet-cancel" id="addWalletCancelLabel">Cancel</button>
+  </div>
+</div>
+
+
+<script>
+// === TX HISTORY (5 langs, mining filtered out) ===
+const _txT={
+  en:{title:'RECENT TRANSACTIONS',loading:'Loading...',empty:'No transactions yet',received:'Received',sent:'Sent',pending:'Pending',confirmed:'Confirmed',justNow:'just now',minAgo:'m ago',hourAgo:'h ago',dayAgo:'d ago',weekAgo:'w ago',viewExp:'View all on Explorer ↗',modalTitle:'TRANSACTION DETAILS',type:'Type',amount:'Amount',block:'Block',confirmations:'Confirmations',status:'Status',txidLbl:'TX ID',close:'CLOSE',openExp:'EXPLORER ↗',copied:'Copied!'},
+  ro:{title:'TRANZACȚII RECENTE',loading:'Se încarcă...',empty:'Nu există tranzacții',received:'Primit',sent:'Trimis',pending:'În așteptare',confirmed:'Confirmat',justNow:'chiar acum',minAgo:' min',hourAgo:' h',dayAgo:' z',weekAgo:' săpt',viewExp:'Toate în Explorer ↗',modalTitle:'DETALII TRANZACȚIE',type:'Tip',amount:'Sumă',block:'Bloc',confirmations:'Confirmări',status:'Status',txidLbl:'TX ID',close:'ÎNCHIDE',openExp:'EXPLORER ↗',copied:'Copiat!'},
+  de:{title:'LETZTE TRANSAKTIONEN',loading:'Lädt...',empty:'Keine Transaktionen',received:'Erhalten',sent:'Gesendet',pending:'Ausstehend',confirmed:'Bestätigt',justNow:'gerade eben',minAgo:' Min',hourAgo:' Std',dayAgo:' T',weekAgo:' W',viewExp:'Alle im Explorer ↗',modalTitle:'TRANSAKTIONSDETAILS',type:'Typ',amount:'Betrag',block:'Block',confirmations:'Bestätigungen',status:'Status',txidLbl:'TX ID',close:'SCHLIESSEN',openExp:'EXPLORER ↗',copied:'Kopiert!'},
+  zh:{title:'最近交易',loading:'加载中...',empty:'暂无交易',received:'已收到',sent:'已发送',pending:'待确认',confirmed:'已确认',justNow:'刚才',minAgo:'分钟前',hourAgo:'小时前',dayAgo:'天前',weekAgo:'周前',viewExp:'在浏览器中查看全部 ↗',modalTitle:'交易详情',type:'类型',amount:'金额',block:'区块',confirmations:'确认数',status:'状态',txidLbl:'TX ID',close:'关闭',openExp:'浏览器 ↗',copied:'已复制!'},
+  ar:{title:'المعاملات الأخيرة',loading:'جار التحميل...',empty:'لا توجد معاملات',received:'مستلم',sent:'مرسل',pending:'قيد الانتظار',confirmed:'مؤكد',justNow:'الآن',minAgo:' د',hourAgo:' س',dayAgo:' ي',weekAgo:' أ',viewExp:'عرض الكل في المستكشف ↗',modalTitle:'تفاصيل المعاملة',type:'النوع',amount:'المبلغ',block:'الكتلة',confirmations:'التأكيدات',status:'الحالة',txidLbl:'معرف TX',close:'إغلاق',openExp:'المستكشف ↗',copied:'تم النسخ!'}
+};
+function _txGet(k){const l=(localStorage.getItem('gbx_lang')||'en');return (_txT[l]&&_txT[l][k])||_txT.en[k]||k;}
+
+function _txTimeAgo(confirmations){
+  const seconds = confirmations * 600;
+  if (seconds < 60) return _txGet('justNow');
+  if (seconds < 3600) return Math.floor(seconds/60) + _txGet('minAgo');
+  if (seconds < 86400) return Math.floor(seconds/3600) + _txGet('hourAgo');
+  if (seconds < 604800) return Math.floor(seconds/86400) + _txGet('dayAgo');
+  return Math.floor(seconds/604800) + _txGet('weekAgo');
+}
+
+window._txCache = {};
+window._txCurrentAddr = null;
+
+async function loadTxHistory(addr){
+  if (!addr) return;
+  window._txCurrentAddr = addr;
+  const expLink = document.getElementById('txExplorerLink');
+  if (expLink) expLink.href = '/v3/explorer.html?addr=' + addr;
+  // activity-pro e <script defer> + SPA: poate nu fi gata inca -> asteapta pana la 5s in loc sa renunte tacut
+  for (let _i=0; _i<50 && !window.gbxRenderActivity; _i++){ await new Promise(r=>setTimeout(r,100)); }
+  if (window.gbxRenderActivity) return window.gbxRenderActivity(addr);
+  // fallback onest daca tot nu s-a incarcat
+  var _l=document.getElementById('txHistoryList'); if(_l && !_l.dataset.loaded) _l.innerHTML='<div class="tx-empty">…</div>';
+}
+
+function _txRowHtml(tx){
+  const amount = parseFloat(tx.amount_gbx || 0).toFixed(2);
+  if (tx._isSent){
+    // SENT TX (from localStorage)
+    const ageMs = Date.now() - tx._sortMs;
+    let timeLbl;
+    if (ageMs < 60000) timeLbl = _txGet('justNow');
+    else if (ageMs < 3600000) timeLbl = Math.floor(ageMs/60000) + _txGet('minAgo');
+    else if (ageMs < 86400000) timeLbl = Math.floor(ageMs/3600000) + _txGet('hourAgo');
+    else if (ageMs < 604800000) timeLbl = Math.floor(ageMs/86400000) + _txGet('dayAgo');
+    else timeLbl = Math.floor(ageMs/604800000) + _txGet('weekAgo');
+    const toShort = (tx._to||'').substring(0,8) + '...' + (tx._to||'').substring((tx._to||'').length-6);
+    return '<div class="tx-row" onclick="openTxModal(\''+tx.txid+'\')">' +
+      '<div class="tx-icon sent">↑</div>' +
+      '<div class="tx-info">' +
+        '<div class="tx-type">'+_txGet('sent')+'</div>' +
+        '<div class="tx-meta">'+timeLbl+' · → '+toShort+'</div>' +
+      '</div>' +
+      '<div>' +
+        '<div class="tx-amount neg">-'+amount+' GBX</div>' +
+        '<div class="tx-status confirmed">'+_txGet('confirmed')+'</div>' +
+      '</div>' +
+    '</div>';
+  }
+  // RECEIVED TX (from API)
+  const conf = tx.confirmations || 0;
+  const isConf = conf >= 6;
+  const statusKey = isConf ? 'confirmed' : 'pending';
+  const statusCls = isConf ? 'confirmed' : 'pending';
+  const time = _txTimeAgo(conf);
+  return '<div class="tx-row" onclick="openTxModal(\''+tx.txid+'\')">' +
+    '<div class="tx-icon received">↓</div>' +
+    '<div class="tx-info">' +
+      '<div class="tx-type">'+_txGet('received')+'</div>' +
+      '<div class="tx-meta">'+time+' · #'+tx.height+'</div>' +
+    '</div>' +
+    '<div>' +
+      '<div class="tx-amount pos">+'+amount+' GBX</div>' +
+      '<div class="tx-status '+statusCls+'">'+_txGet(statusKey)+'</div>' +
+    '</div>' +
+  '</div>';
+}
+
+window.openTxModal = function(txid){
+  const addr = window._txCurrentAddr;
+  const txs = window._txCache[addr] || [];
+  const tx = txs.find(t => t.txid === txid);
+  if (!tx) return;
+  window._txModalTxid = txid;
+  const type = _txGet('received');
+  const amount = parseFloat(tx.amount_gbx || 0).toFixed(8);
+  const conf = tx.confirmations || 0;
+  const isConf = conf >= 6;
+  const statusKey = isConf ? 'confirmed' : 'pending';
+  const body = document.getElementById('txModalBody');
+  body.innerHTML = 
+    '<div class="tx-modal-row"><span class="tx-modal-label">'+_txGet('type')+'</span><span class="tx-modal-value">'+type+'</span></div>' +
+    '<div class="tx-modal-row"><span class="tx-modal-label">'+_txGet('amount')+'</span><span class="tx-modal-value">+'+amount+' GBX</span></div>' +
+    '<div class="tx-modal-row"><span class="tx-modal-label">'+_txGet('block')+'</span><span class="tx-modal-value">#'+tx.height+'</span></div>' +
+    '<div class="tx-modal-row"><span class="tx-modal-label">'+_txGet('confirmations')+'</span><span class="tx-modal-value">'+conf+'</span></div>' +
+    '<div class="tx-modal-row"><span class="tx-modal-label">'+_txGet('status')+'</span><span class="tx-modal-value">'+_txGet(statusKey)+'</span></div>' +
+    '<div class="tx-modal-row" style="flex-direction:column;align-items:flex-start"><span class="tx-modal-label">'+_txGet('txidLbl')+'</span><span class="tx-modal-value" style="font-size:9px;margin-top:4px;cursor:pointer" onclick="_txCopyId()">'+txid+' 📋</span></div>';
+  document.getElementById('txModal').classList.add('show');
+};
+
+window.closeTxModal = function(){ document.getElementById('txModal').classList.remove('show'); };
+window.openTxInExplorer = function(){ if (window._txModalTxid) window.open('/v3/explorer.html?tx=' + window._txModalTxid, '_blank'); };
+window._txCopyId = function(){ if (window._txModalTxid){ navigator.clipboard.writeText(window._txModalTxid).then(() => alert(_txGet('copied'))).catch(()=>{}); }};
+
+function _txApplyLang(){
+  const t1 = document.getElementById('txSectionTitle'); if (t1) t1.textContent = _txGet('title');
+  const t2 = document.getElementById('txModalTitle'); if (t2) t2.textContent = _txGet('modalTitle');
+  const t3 = document.getElementById('txExplorerLink'); if (t3) t3.textContent = _txGet('viewExp');
+  const t4 = document.getElementById('txModalCloseBtn'); if (t4) t4.textContent = _txGet('close');
+  const t5 = document.getElementById('txModalExpBtn'); if (t5) t5.textContent = _txGet('openExp');
+}
+
+function _txInit(){
+  _txApplyLang();
+  try {
+    const sess = JSON.parse(sessionStorage.getItem('gbx_unlocked_wallets')||'null');
+    if (sess && sess.wallets){
+      const active = sess.wallets.find(w => w.id === sess.activeWalletId) || sess.wallets[0];
+      if (active && active.address) loadTxHistory(active.address);
+    }
+  } catch(e) {}
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _txInit);
+else _txInit();
+setTimeout(_txInit, 300);
+setTimeout(_txInit, 1500);
+
+const _origSwitch = window.switchActiveWallet;
+if (typeof _origSwitch === 'function'){
+  window.switchActiveWallet = function(walletId){
+    const result = _origSwitch.apply(this, arguments);
+    setTimeout(() => {
+      try {
+        const sess = JSON.parse(sessionStorage.getItem('gbx_unlocked_wallets')||'null');
+        const active = sess && sess.wallets ? sess.wallets.find(w => w.id === walletId) : null;
+        if (active && active.address) loadTxHistory(active.address);
+      } catch(e){}
+    }, 100);
+    return result;
+  };
+}
+</script>
+
+
+<script>
+// ═══════════════════════════════════════════════════════
+// READ-ONLY WALLET VIEW MODE — Professional v2.2
+// 5 langs · clickable tokens · TX history · hide-if-zero GBX
+// ═══════════════════════════════════════════════════════
+(function(){
+  const urlParams = new URLSearchParams(window.location.search);
+  const roAddr = urlParams.get('ro_addr') || urlParams.get('viewAddr');
+  if (!roAddr || !/^bn1q[a-z0-9]{30,50}$/i.test(roAddr)) return;
+  
+  let GBX_USD = 0.10;
+  let _gbxPriceP=(async function(){try{const r=await fetch('https://goldbrix.app/onramp/gbx-price');const d=await r.json();if(d&&d.gbx_price_usd>0)GBX_USD=d.gbx_price_usd;}catch(e){}})();
+  
+  const _roT={
+    en:{back:'← BACK TO TRADE',live:'LIVE',portfolio:'TOTAL VALUE',readOnly:'READ-ONLY',gbxAsset:'GoldBrix · GBX',gbxBuyHint:'Tap to buy GBX →',tokens:'Token Holdings',noTokens:'No tokens held',copied:'Address copied!',native:'NATIVE',graduated:'GRADUATED',sortValue:'Value',loading:'Loading...',recentTx:'Recent Transactions',noTx:'No transactions yet',received:'Received',confirmed:'Confirmed',pending:'Pending',justNow:'just now',tapToTrade:'Tap to trade'},
+    ro:{back:'← ÎNAPOI LA TRADE',live:'LIVE',portfolio:'VALOARE TOTALĂ',readOnly:'DOAR CITIRE',gbxAsset:'GoldBrix · GBX',gbxBuyHint:'Apasă pentru a cumpăra GBX →',tokens:'Token-uri Deținute',noTokens:'Niciun token',copied:'Adresă copiată!',native:'NATIV',graduated:'GRADUAT',sortValue:'Valoare',loading:'Se încarcă...',recentTx:'Tranzacții Recente',noTx:'Nu există tranzacții',received:'Primit',confirmed:'Confirmat',pending:'În așteptare',justNow:'chiar acum',tapToTrade:'Apasă pentru trade'},
+    de:{back:'← ZURÜCK',live:'LIVE',portfolio:'GESAMTWERT',readOnly:'NUR LESEN',gbxAsset:'GoldBrix · GBX',gbxBuyHint:'Tippen zum GBX kaufen →',tokens:'Token-Bestände',noTokens:'Keine Token',copied:'Adresse kopiert!',native:'NATIV',graduated:'GRADUIERT',sortValue:'Wert',loading:'Lädt...',recentTx:'Letzte Transaktionen',noTx:'Keine Transaktionen',received:'Erhalten',confirmed:'Bestätigt',pending:'Ausstehend',justNow:'gerade eben',tapToTrade:'Zum Handel tippen'},
+    zh:{back:'← 返回交易',live:'实时',portfolio:'总价值',readOnly:'只读',gbxAsset:'GoldBrix · GBX',gbxBuyHint:'点击购买 GBX →',tokens:'代币持仓',noTokens:'无持仓',copied:'地址已复制!',native:'原生',graduated:'毕业',sortValue:'价值',loading:'加载中...',recentTx:'最近交易',noTx:'暂无交易',received:'已收到',confirmed:'已确认',pending:'待确认',justNow:'刚才',tapToTrade:'点击交易'},
+    ar:{back:'← العودة',live:'مباشر',portfolio:'القيمة الإجمالية',readOnly:'للقراءة فقط',gbxAsset:'GoldBrix · GBX',gbxBuyHint:'اضغط لشراء GBX ←',tokens:'الرموز المملوكة',noTokens:'لا توجد رموز',copied:'تم النسخ!',native:'أصلي',graduated:'متخرج',sortValue:'القيمة',loading:'جار التحميل...',recentTx:'المعاملات الأخيرة',noTx:'لا توجد معاملات',received:'مستلم',confirmed:'مؤكد',pending:'قيد الانتظار',justNow:'الآن',tapToTrade:'اضغط للتداول'}
+  };
+  function T(k){const l=(localStorage.getItem('gbx_lang')||'en');return (_roT[l]&&_roT[l][k])||_roT.en[k]||k;}
+  
+  function fmtNum(n,maxDec){if(maxDec==null)maxDec=2;if(n==null||isNaN(n))return '—';return parseFloat(n).toLocaleString('en-US',{maximumFractionDigits:maxDec});}
+  function fmtUSD(n){if(n==null||isNaN(n))return '$0.00';return '$' + parseFloat(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+  function fmtPct(n){if(n==null||isNaN(n))return null;const sign=n>=0?'+':'';return sign+parseFloat(n).toFixed(1)+'%';}
+  function timeAgo(conf){const s=conf*600;if(s<60)return T('justNow');if(s<3600)return Math.floor(s/60)+'m';if(s<86400)return Math.floor(s/3600)+'h';if(s<604800)return Math.floor(s/86400)+'d';return Math.floor(s/604800)+'w';}
+  
+  function renderUI(){
+    const existingNav = document.querySelector('nav.v3-final-nav');
+    const navHtml = existingNav ? existingNav.outerHTML : '';
+    const shortAddr = roAddr.slice(0,8) + '...' + roAddr.slice(-6);
+    document.body.innerHTML = `
+      <style>
+        body{background:#0d0a07!important;color:#FFE099;font-family:Inter,system-ui,sans-serif;margin:0;padding:0;}
+        .ro-wrap{max-width:480px;margin:0 auto;padding:16px;padding-bottom:90px;}
+        .ro-topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+        .ro-back{color:#F0C060;font-family:JetBrains Mono,monospace;font-size:11px;text-decoration:none;letter-spacing:0.1em;}
+        .ro-back:hover{color:#FFE099;}
+        .ro-live{display:flex;align-items:center;gap:6px;font-family:JetBrains Mono,monospace;font-size:9px;color:#eee;letter-spacing:0.15em;}
+        .ro-live::before{content:'';width:6px;height:6px;border-radius:50%;background:#4EE08C;animation:pulse 2s infinite;}
+        @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+        .ro-hero{background:linear-gradient(135deg,#2a2218 0%,#1a140e 100%);border:1px solid #F0C060;border-radius:18px;padding:22px;margin-bottom:14px;box-shadow:0 0 30px rgba(240,192,96,0.08);}
+        .ro-hero-label{font-family:JetBrains Mono,monospace;font-size:10px;color:#fff;letter-spacing:0.2em;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
+        .ro-hero-badge{font-size:8px;color:#F0C060;background:rgba(240,192,96,0.15);padding:3px 8px;border-radius:10px;border:1px solid rgba(240,192,96,0.3);}
+        .ro-hero-amt{font-family:JetBrains Mono,monospace;font-size:32px;color:#F0C060;font-weight:800;letter-spacing:-0.02em;line-height:1;}
+        .ro-hero-change{margin-top:8px;font-family:JetBrains Mono,monospace;font-size:12px;}
+        .ro-pos{color:#eee;}
+        .ro-neg{color:#eee;}
+        .ro-hero-addr{margin-top:14px;padding:10px;background:#0d0a07;border-radius:10px;font-family:JetBrains Mono,monospace;font-size:11px;color:#fff;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
+        .ro-card{background:#1a1410;border:1px solid #3a3025;border-radius:14px;padding:16px;margin-bottom:12px;transition:all 0.2s;}
+        .ro-card-clickable{cursor:pointer;}
+        .ro-card-clickable:hover{border-color:#F0C060;background:#221a14;}
+        .ro-section-title{font-family:JetBrains Mono,monospace;font-size:11px;color:#fff;letter-spacing:0.15em;margin-bottom:12px;display:flex;justify-content:space-between;}
+        .ro-token-row{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #2a2218;border-radius:12px;margin-bottom:8px;transition:all 0.2s;cursor:pointer;}
+        .ro-token-row:hover{border-color:#F0C060;background:#221a14;transform:translateX(2px);}
+        .ro-token-icon{width:42px;height:42px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#3a3025,#2a2218);display:flex;align-items:center;justify-content:center;color:#F0C060;font-weight:700;font-family:JetBrains Mono,monospace;font-size:11px;overflow:hidden;border:1px solid #3a3025;}
+        .ro-token-icon img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+        .ro-token-info{flex:1;min-width:0;}
+        .ro-token-top{display:flex;align-items:center;gap:6px;margin-bottom:2px;}
+        .ro-token-ticker{font-family:JetBrains Mono,monospace;font-size:14px;font-weight:700;color:#FFE099;}
+        .ro-badge{font-family:JetBrains Mono,monospace;font-size:8px;padding:2px 6px;border-radius:6px;letter-spacing:0.1em;font-weight:700;}
+        .ro-badge.native{background:rgba(240,192,96,0.15);color:#F0C060;border:1px solid rgba(240,192,96,0.3);}
+        .ro-badge.graduated{background:rgba(168,85,247,0.15);color:#C084FC;border:1px solid rgba(168,85,247,0.3);}
+        .ro-token-bal{font-family:JetBrains Mono,monospace;font-size:11px;color:#fff;}
+        .ro-token-right{text-align:right;}
+        .ro-token-value{font-family:JetBrains Mono,monospace;font-size:13px;font-weight:700;color:#F0C060;}
+        .ro-token-pct{font-family:JetBrains Mono,monospace;font-size:10px;margin-top:2px;}
+        .ro-tx-row{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #2a2218;border-radius:10px;margin-bottom:6px;cursor:pointer;transition:all 0.2s;}
+        .ro-tx-row:hover{border-color:#F0C060;background:#221a14;}
+        .ro-tx-icon{width:32px;height:32px;border-radius:50%;background:rgba(78,224,140,0.15);display:flex;align-items:center;justify-content:center;color:#eee;flex-shrink:0;font-size:14px;}
+        .ro-tx-info{flex:1;min-width:0;}
+        .ro-tx-type{font-family:JetBrains Mono,monospace;font-size:12px;color:#FFE099;font-weight:700;}
+        .ro-tx-meta{font-family:JetBrains Mono,monospace;font-size:9px;color:#fff;margin-top:1px;}
+        .ro-tx-amt{font-family:JetBrains Mono,monospace;font-size:12px;color:#eee;text-align:right;font-weight:700;}
+        .ro-loading,.ro-empty{text-align:center;padding:30px;color:#fff;font-family:JetBrains Mono,monospace;font-size:11px;}
+        .ro-hint{font-family:JetBrains Mono,monospace;font-size:9px;color:#fff;margin-top:4px;letter-spacing:0.05em;}
+      </style>
+      <div class="ro-wrap">
+        <div class="ro-topbar">
+          <a href="/v3/trade.html" class="ro-back">${T('back')}</a>
+          <div class="ro-live">${T('live')}</div>
+        </div>
+        <div class="ro-hero">
+          <div class="ro-hero-label">
+            <span>${T('portfolio')}</span>
+            <span class="ro-hero-badge">${T('readOnly')}</span>
+          </div>
+          <div class="ro-hero-amt" id="roTotalUsd">$ —</div>
+          <div class="ro-hero-change" id="roTotalGbx">— GBX</div>
+          <div class="ro-hero-addr" onclick="navigator.clipboard.writeText('${roAddr}').then(()=>alert('${T('copied')}'))">
+            <span>${shortAddr}</span><span>📋</span>
+          </div>
+        </div>
+        <div id="roGbxCard" style="display:none;"></div>
+        <div class="ro-card">
+          <div class="ro-section-title">
+            <span id="roTokensTitle">${T('tokens')}</span>
+            <span style="color:#F0C060;">${T('sortValue')} ↓</span>
+          </div>
+          <div id="roTokensList">
+            <div class="ro-loading">${T('loading')}</div>
+          </div>
+        </div>
+        <div class="ro-card">
+          <div class="ro-section-title">
+            <span id="roTxTitle">${T('recentTx')}</span>
+          </div>
+          <div id="roTxList">
+            <div class="ro-loading">${T('loading')}</div>
+          </div>
+        </div>
+      </div>
+    ` + navHtml;
+  }
+  
+  let _coinCache = null;
+  async function getCoinsCache(){
+    if (_coinCache) return _coinCache;
+    try {
+      const r = await fetch('https://goldbrix.app/v2/memecoin/list?limit=2000');
+      const d = await r.json();
+      const coins = d.coins || d || [];
+      _coinCache = {};
+      coins.forEach(c => { if (c.ticker) _coinCache[c.ticker.toUpperCase()] = c; });
+      return _coinCache;
+    } catch(e){ return {}; }
+  }
+  
+  async function loadData(){
+    let gbxBalance = 0;
+    try {
+      const r = await window.gbxRead('/address/' + roAddr, {quorum:true, field:'spendable_gbx'});
+      const d = await r.json();
+      gbxBalance = parseFloat(d.spendable_gbx || d.balance_gbx || d.balance || 0);
+    } catch(e){}
+    
+    let holdings = [];
+    try {
+      const r = await fetch('https://goldbrix.app/launchpad/wallet/' + roAddr + '/holdings');
+      const d = await r.json();
+      holdings = d.holdings || [];
+    } catch(e){}
+    
+    const coins = await getCoinsCache();
+    let totalGbx = gbxBalance;
+    const enriched = holdings.map(h => {
+      const c = coins[(h.ticker||'').toUpperCase()];
+      let price=0, val=0, ch=null, coinUuid=null;
+      if (c){
+        coinUuid = c.id;  // ALWAYS set if coin found in list
+        if (c.supply && c.market_cap_gbx){
+          price = Number(c.price) || 0;  // J3 fix: native bonding-curve price (was mcap/legacy-supply=1M -> ~350x inflated)
+          val = (h.balance||0) * price;
+          ch = c.change_24h_pct;
+        }
+      } else {
+        // Fallback chain: short coin_id → ticker (last resort)
+        coinUuid = h.coin_id || h.ticker || null;
+      }
+      totalGbx += val;
+      return {...h, ...c, _val:val, _change:ch, _coinUuid:coinUuid};
+    });
+    enriched.sort((a,b) => (b._val||0) - (a._val||0));
+    
+    let wChange = 0, wTotal = 0;
+    enriched.forEach(t => {
+      if (t._change != null && t._val > 0){ wChange += t._change * t._val; wTotal += t._val; }
+    });
+    const avgCh = wTotal > 0 ? wChange / wTotal : null;
+    
+    // === HERO update ===
+    try { if (_gbxPriceP) await _gbxPriceP; } catch(_) {}
+    document.getElementById('roTotalUsd').textContent = fmtUSD(totalGbx * GBX_USD);
+    let chHtml = fmtNum(totalGbx) + ' GBX';
+    if (avgCh != null){
+      const cls = avgCh >= 0 ? 'ro-pos' : 'ro-neg';
+      chHtml += ' · <span class="' + cls + '">' + (avgCh >= 0 ? '↗' : '↘') + ' ' + fmtPct(avgCh) + ' 24h</span>';
+    }
+    document.getElementById('roTotalGbx').innerHTML = chHtml;
+    
+    // === GBX CARD: only if balance > 0, with click → buy-gbx ===
+    const gbxCardEl = document.getElementById('roGbxCard');
+    if (gbxBalance > 0){
+      gbxCardEl.style.display = 'block';
+      gbxCardEl.className = 'ro-card ro-card-clickable';
+      gbxCardEl.onclick = () => { window.location.href = '/v3/swap.html'; };
+      gbxCardEl.innerHTML = `
+        <div class="ro-section-title">${T('gbxAsset')}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-family:JetBrains Mono,monospace;font-size:22px;color:#F0C060;font-weight:700;">${fmtNum(gbxBalance)} GBX</div>
+            <div style="font-family:JetBrains Mono,monospace;font-size:11px;color:#fff;margin-top:3px;">${fmtUSD(gbxBalance * GBX_USD)}</div>
+            <div class="ro-hint">${T('gbxBuyHint')}</div>
+          </div>
+          <span class="ro-badge native">${T('native')}</span>
+        </div>`;
+    } else {
+      gbxCardEl.style.display = 'none';
+    }
+    
+    // === TOKEN LIST with click → trade.html?coin={UUID} ===
+    const list = document.getElementById('roTokensList');
+    document.getElementById('roTokensTitle').textContent = T('tokens') + ' (' + enriched.length + ')';
+    if (enriched.length === 0){
+      list.innerHTML = '<div class="ro-empty">' + T('noTokens') + '</div>';
+    } else {
+      list.innerHTML = enriched.map(t => {
+        const ticker = t.ticker || '?';
+        const bal = fmtNum(t.balance);
+        const valGbx = fmtNum(t._val);
+        const valUsd = fmtUSD(t._val * GBX_USD);
+        const pct = totalGbx > 0 ? ((t._val / totalGbx) * 100).toFixed(1) + '%' : '';
+        const isGrad = t.graduated == 1 || t.graduated === true;
+        const badge = isGrad ? '<span class="ro-badge graduated">' + T('graduated') + '</span>' : '<span class="ro-badge native">' + T('native') + '</span>';
+        const iconHtml = t.image_url ? '<img src="' + t.image_url + '" alt="">' : ticker.substring(0,3);
+        let chHtml = '';
+        if (t._change != null){
+          const cls = t._change >= 0 ? 'ro-pos' : 'ro-neg';
+          chHtml = '<div class="ro-token-pct ' + cls + '">' + (t._change >= 0 ? '↗' : '↘') + ' ' + fmtPct(t._change) + '</div>';
+        }
+        const clickUrl = t._coinUuid ? "window.location.href='/v3/trade.html?coin=" + t._coinUuid + "'" : "";
+        return '<div class="ro-token-row" onclick="' + clickUrl + '" title="' + T('tapToTrade') + '">' +
+          '<div class="ro-token-icon">' + iconHtml + '</div>' +
+          '<div class="ro-token-info">' +
+            '<div class="ro-token-top"><span class="ro-token-ticker">' + ticker + '</span>' + badge + '</div>' +
+            '<div class="ro-token-bal">' + bal + ' ' + ticker + ' · ' + pct + '</div>' +
+          '</div>' +
+          '<div class="ro-token-right">' +
+            '<div class="ro-token-value">' + valUsd + '</div>' +
+            (chHtml || '<div class="ro-token-pct" style="color:#fff;">' + valGbx + ' GBX</div>') +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+    
+    // === TX HISTORY (received only, filter coinbase) ===
+    loadTxHistory();
+  }
+  
+  async function loadTxHistory(){
+    const txList = document.getElementById('roTxList');
+    try {
+      const r = await fetch('https://goldbrix.app/launchpad/wallet/' + roAddr + '/trades');
+      const dd = await r.json();
+      let txs = Array.isArray(dd) ? dd : (dd.trades || []);
+      if (!txs.length){
+        txList.innerHTML = '<div class="ro-empty">' + T('noTx') + '</div>';
+        return;
+      }
+      txs.sort((a,b) => (b.created_at||0) - (a.created_at||0));
+      const top = txs.slice(0, 10);
+      txList.innerHTML = top.map(tx => {
+        const amt = parseFloat(tx.gbx_amount||0).toFixed(2);
+        const isBuy = (tx.side||'').toLowerCase() === 'buy';
+        const tk = tx.ticker || '';
+        const ageMs = Date.now() - (tx.created_at||0);
+        let time;
+        if (ageMs < 60000) time = T('justNow');
+        else if (ageMs < 3600000) time = Math.floor(ageMs/60000)+'m';
+        else if (ageMs < 86400000) time = Math.floor(ageMs/3600000)+'h';
+        else time = Math.floor(ageMs/86400000)+'d';
+        return '<div class="ro-tx-row">' +
+          '<div class="ro-tx-icon">' + (isBuy ? '↓' : '↑') + '</div>' +
+          '<div class="ro-tx-info">' +
+            '<div class="ro-tx-type">' + (isBuy?'BUY':'SELL') + ' $' + tk + '</div>' +
+            '<div class="ro-tx-meta">' + time + '</div>' +
+          '</div>' +
+          '<div class="ro-tx-amt">' + (isBuy?'-':'+') + amt + ' GBX</div>' +
+        '</div>';
+      }).join('');
+    } catch(e){
+      txList.innerHTML = '<div class="ro-empty">⚠ Error</div>';
+    }
+  }
+  
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', () => { renderUI(); loadData(); });
+  } else {
+    renderUI(); loadData();
+  }
+  setInterval(loadData, 15000);
+})();
+</script>
+
+
+<!-- FOLLOWED WALLETS MODAL — V4.9 -->
+<div id="followedModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99996;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);" onclick="if(event.target===this)closeFollowedModal()">
+  <div style="background:linear-gradient(180deg,#1c1610 0%,#0f0c08 100%);width:100%;max-width:480px;max-height:80vh;border-radius:20px 20px 0 0;border-top:1px solid #F0C060;padding:20px 16px 80px;overflow-y:auto;animation:slideUpFW 0.3s ease-out;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div>
+        <div id="followedTitleTxt" style="color:#F5CC75;font-size:18px;font-weight:800;letter-spacing:0.05em;">FOLLOWED WALLETS</div>
+        <div id="followedSubTxt" style="color:#aaa;font-size:11px;margin-top:4px;">Wallets you are tracking</div>
+      </div>
+      <button onclick="closeFollowedModal()" style="background:rgba(240,192,96,0.1);border:1px solid #F0C060;border-radius:50%;color:#F0C060;width:36px;height:36px;font-size:18px;cursor:pointer;font-weight:300;line-height:1;display:flex;align-items:center;justify-content:center;">×</button>
+    </div>
+    <div id="followedList" style="display:flex;flex-direction:column;gap:8px;"></div>
+  </div>
+</div>
+<style>@keyframes slideUpFW{from{transform:translateY(100%);}to{transform:translateY(0);}}</style>
+<script>
+function _getFw() { try { return JSON.parse(localStorage.getItem('gbx_followed_wallets')||'[]'); } catch(e) { return []; } }
+function _setFw(a) { localStorage.setItem('gbx_followed_wallets', JSON.stringify(a)); }
+function unfollowWallet(addr, ev) {
+  if (ev) ev.stopPropagation();
+  let list = _getFw();
+  const i = list.indexOf(addr);
+  if (i >= 0) { list.splice(i, 1); _setFw(list); }
+  renderFollowedList();
+}
+function renderFollowedList() {
+  const list = _getFw();
+  const container = document.getElementById('followedList');
+  if (!container) return;
+  const lang = localStorage.getItem('gbx_lang') || localStorage.getItem('goldbrix_lang') || 'en';
+  const t = (T[lang] || T.en);
+  document.getElementById('followedTitleTxt').textContent = t.followedTitle;
+  document.getElementById('followedSubTxt').textContent = t.followedSub;
+  if (list.length === 0) {
+    container.innerHTML = '<div style="text-align:center;color:#888;padding:40px 16px;font-size:13px;">👁️<br><br>' + t.noFollowed + '</div>';
+    return;
+  }
+  container.innerHTML = list.map(a => {
+    const s = a.length > 16 ? (a.slice(0,10) + '...' + a.slice(-6)) : a;
+    return '<div onclick="window.location.href=\'/v3/wallet-detail.html?addr=' + a + '\'" style="background:rgba(240,192,96,0.06);border:1px solid rgba(240,192,96,0.25);border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;cursor:pointer;">' +
+      '<div style="font-size:20px;">👁️</div>' +
+      '<div style="flex:1;min-width:0;">' +
+        '<div style="color:#F5CC75;font-family:JetBrains Mono,monospace;font-size:12px;font-weight:700;">' + s + '</div>' +
+      '</div>' +
+      '<button onclick="unfollowWallet(\'' + a + '\', event)" style="background:rgba(255,100,100,0.1);border:1px solid rgba(255,100,100,0.4);color:#ff6644;border-radius:6px;padding:6px 10px;font-size:10px;font-weight:700;cursor:pointer;">' + t.unfollow + '</button>' +
+    '</div>';
+  }).join('');
+}
+function openFollowedModal() { renderFollowedList(); document.getElementById('followedModal').style.display = 'flex'; }
+function closeFollowedModal() { document.getElementById('followedModal').style.display = 'none'; }
+function updateFollowedLabel() {
+  const lang = localStorage.getItem('gbx_lang') || localStorage.getItem('goldbrix_lang') || 'en';
+  const t = (T[lang] || T.en);
+  const el = document.getElementById('lblFollowed');
+  if (el) el.textContent = t.followed;
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', updateFollowedLabel);
+else setTimeout(updateFollowedLabel, 100);
+window.addEventListener('storage', e => { if (e.key && e.key.indexOf('lang') > -1) updateFollowedLabel(); });
+</script>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- V4.9 PATCH for wallet.html ro_addr mode             -->
+<!-- Follow + P&L + Burns Rank + Fixed TX History        -->
+<!-- 5 langs auto i18n (EN/RO/DE/ZH/AR)                  -->
+<!-- ═══════════════════════════════════════════════════ -->
+<script>
+(function(){
+  const urlParams = new URLSearchParams(window.location.search);
+  const roAddr = urlParams.get('ro_addr') || urlParams.get('viewAddr');
+  if (!roAddr || !/^bn1q[a-z0-9]{30,50}$/i.test(roAddr)) return;
+
+  const API = 'https://goldbrix.app';
+  let GBX_USD = 0.10;
+  let _gbxPriceP=(async function(){try{const r=await fetch('https://goldbrix.app/onramp/gbx-price');const d=await r.json();if(d&&d.gbx_price_usd>0)GBX_USD=d.gbx_price_usd;}catch(e){}})();
+
+  const I18N = {
+    en: { follow:'⭐ FOLLOW', following:'✓ FOLLOWING', pnlTitle:'📊 PORTFOLIO P&L', noTrades:'No trades yet', loadFailed:'Load failed', buy:'BUY', sell:'SELL', tokens:'tokens', rank:'RANK', of:'of', burners:'burners', burnTxs:'burn txs' },
+    ro: { follow:'⭐ URMĂREȘTE', following:'✓ URMĂRIT', pnlTitle:'📊 PROFIT & PIERDERE', noTrades:'Niciun trade', loadFailed:'Eroare încărcare', buy:'CUMPĂRARE', sell:'VÂNZARE', tokens:'tokenuri', rank:'RANG', of:'din', burners:'arzători', burnTxs:'tx arderi' },
+    de: { follow:'⭐ FOLGEN', following:'✓ GEFOLGT', pnlTitle:'📊 PORTFOLIO P&L', noTrades:'Keine Trades', loadFailed:'Ladefehler', buy:'KAUF', sell:'VERKAUF', tokens:'Tokens', rank:'RANG', of:'von', burners:'Brenner', burnTxs:'Brenn-Tx' },
+    zh: { follow:'⭐ 关注', following:'✓ 已关注', pnlTitle:'📊 投资盈亏', noTrades:'暂无交易', loadFailed:'加载失败', buy:'买入', sell:'卖出', tokens:'代币', rank:'排名', of:'/', burners:'燃烧者', burnTxs:'燃烧交易' },
+    ar: { follow:'⭐ متابعة', following:'✓ متابع', pnlTitle:'📊 الربح والخسارة', noTrades:'لا توجد صفقات', loadFailed:'فشل التحميل', buy:'شراء', sell:'بيع', tokens:'رموز', rank:'الترتيب', of:'من', burners:'الحارقون', burnTxs:'صفقات الحرق' }
+  };
+  function L(){ const l = localStorage.getItem('gbx_lang')||localStorage.getItem('goldbrix_lang')||'en'; return I18N[l]||I18N.en; }
+
+  function getFw(){ try{return JSON.parse(localStorage.getItem('gbx_followed_wallets')||'[]');}catch(e){return[];} }
+  function setFw(a){ localStorage.setItem('gbx_followed_wallets', JSON.stringify(a)); }
+  function isFollowed(){ return getFw().includes(roAddr); }
+  function toggleFollow(){
+    let list = getFw();
+    const i = list.indexOf(roAddr);
+    if (i >= 0) list.splice(i,1); else list.push(roAddr);
+    setFw(list);
+    updateFollowBtn();
+  }
+  function updateFollowBtn(){
+    const btn = document.getElementById('v49FollowBtn');
+    if (!btn) return;
+    const t = L();
+    btn.textContent = isFollowed() ? t.following : t.follow;
+    btn.style.background = isFollowed() ? 'rgba(0,200,100,0.15)' : 'rgba(240,192,96,0.1)';
+    btn.style.borderColor = isFollowed() ? '#00C864' : '#F0C060';
+    btn.style.color = isFollowed() ? '#00C864' : '#F0C060';
+  }
+
+  let coinMeta = {};
+  async function loadCoinMeta(){
+    try {
+      const r = await fetch(API + '/v2/memecoin/list?limit=500');
+      const d = await r.json();
+      const arr = Array.isArray(d) ? d : (d.coins||[]);
+      arr.forEach(c => { coinMeta[c.id||c.coin_id] = c; });
+    } catch(e) { console.error('[V49] coinMeta:', e); }
+  }
+
+  function injectUI(){
+    const hero = document.querySelector('.ro-hero') || document.querySelector('[class*="ro-hero"]');
+    if (!hero) return false;
+    if (!document.getElementById('v49FollowBtn')) {
+      const btn = document.createElement('button');
+      btn.id = 'v49FollowBtn';
+      btn.style.cssText = 'margin:12px auto 0;display:block;padding:10px 24px;border:1px solid #F0C060;background:rgba(240,192,96,0.1);color:#F0C060;border-radius:8px;font-family:JetBrains Mono,monospace;font-size:12px;font-weight:700;letter-spacing:0.08em;cursor:pointer;';
+      btn.onclick = toggleFollow;
+      hero.appendChild(btn);
+      updateFollowBtn();
+    }
+    if (!document.getElementById('v49PnlCard')) {
+      const d = document.createElement('div');
+      d.id = 'v49PnlCard';
+      d.style.cssText = 'margin:16px 12px;padding:16px;background:linear-gradient(135deg,rgba(240,192,96,0.05) 0%,rgba(240,192,96,0.02) 100%);border:1px solid rgba(240,192,96,0.3);border-radius:12px;display:none;';
+      hero.parentNode.insertBefore(d, hero.nextSibling);
+    }
+    if (!document.getElementById('v49BurnsRank')) {
+      const b = document.createElement('div');
+      b.id = 'v49BurnsRank';
+      b.style.cssText = 'margin:12px;padding:12px 14px;background:rgba(255,100,60,0.06);border:1px solid rgba(255,100,60,0.3);border-radius:10px;display:none;text-align:center;font-size:12px;color:#FFB088;';
+      const pnl = document.getElementById('v49PnlCard');
+      pnl.parentNode.insertBefore(b, pnl.nextSibling);
+    }
+    return true;
+  }
+
+  async function loadPnL(){
+    try {
+      const [trR, hR] = await Promise.all([
+        fetch(API + '/launchpad/wallet/' + roAddr + '/trades'),
+        fetch(API + '/launchpad/wallet/' + roAddr + '/holdings')
+      ]);
+      const td = await trR.json();
+      const hd = await hR.json();
+      const trades = Array.isArray(td) ? td : (td.trades||[]);
+      const holdings = Array.isArray(hd) ? hd : (hd.holdings||[]);
+      const coinCost = {};
+      trades.forEach(tx => {
+        const c = tx.coin_id;
+        if (!coinCost[c]) coinCost[c] = { spent:0, tokens:0 };
+        const g = parseFloat(tx.gbx_amount||0);
+        const a = parseFloat(tx.coin_amount||0);
+        if ((tx.side||'').toLowerCase() === 'buy') { coinCost[c].spent += g; coinCost[c].tokens += a; }
+        else { coinCost[c].spent -= g; coinCost[c].tokens -= a; }
+      });
+      let totalCost = 0, totalValue = 0;
+      holdings.forEach(h => {
+        const c = h.coin_id||h.id;
+        const bal = parseFloat(h.balance||0);
+        const price = parseFloat(h.price_gbx || (coinMeta[c] && coinMeta[c].price_gbx) || 0);
+        totalValue += bal * price;
+        totalCost += Math.max(0, (coinCost[c]&&coinCost[c].spent)||0);
+      });
+      const pnl = totalValue - totalCost;
+      const pnlPct = totalCost > 0 ? (pnl/totalCost*100) : 0;
+      const color = pnl >= 0 ? '#00C864' : '#FF6644';
+      const sign = pnl >= 0 ? '+' : '';
+      const t = L();
+      try { if (_gbxPriceP) await _gbxPriceP; } catch(_) {}
+      const card = document.getElementById('v49PnlCard');
+      if (card){
+        card.style.display = 'block';
+        card.innerHTML = 
+          '<div style="font-size:11px;color:#aaa;letter-spacing:0.1em;margin-bottom:8px;">' + t.pnlTitle + '</div>' +
+          '<div style="font-size:24px;font-weight:800;color:#F5CC75;">' + totalValue.toFixed(2) + ' GBX</div>' +
+          '<div style="font-size:13px;color:#888;margin-top:2px;">≈ $' + (totalValue*GBX_USD).toFixed(2) + '</div>' +
+          '<div style="font-size:14px;color:' + color + ';margin-top:8px;font-weight:700;">' + sign + pnlPct.toFixed(2) + '%   ' + sign + pnl.toFixed(2) + ' GBX</div>';
+      }
+    } catch(e) { console.error('[V49] P&L:', e); }
+  }
+
+  async function loadBurnsRank(){
+    try {
+      const r = await fetch(API + '/v2/memecoin/leaderboard/burners?period=all&limit=200');
+      const d = await r.json();
+      const arr = Array.isArray(d) ? d : (d.leaderboard||[]);
+      const idx = arr.findIndex(x => x.address === roAddr);
+      if (idx < 0) return;
+      const me = arr[idx];
+      const t = L();
+      const burned = parseFloat(me.total_burned_gbx||0).toFixed(2);
+      const txCnt = me.trade_count||0;
+      const el = document.getElementById('v49BurnsRank');
+      if (el){
+        el.style.display = 'block';
+        el.innerHTML = '🏆 <b>' + t.rank + ' #' + (idx+1) + '</b> ' + t.of + ' ' + arr.length + ' ' + t.burners + ' · ' + burned + ' GBX · ' + txCnt + ' ' + t.burnTxs;
+      }
+    } catch(e) { console.error('[V49] Burns rank:', e); }
+  }
+
+  async function fixTxHistory(){
+    const txList = document.getElementById('roTxList');
+    if (!txList) return;
+    try {
+      const r = await fetch(API + '/launchpad/wallet/' + roAddr + '/trades');
+      const d = await r.json();
+      const trades = Array.isArray(d) ? d : (d.trades||[]);
+      const t = L();
+      if (trades.length === 0){
+        txList.innerHTML = '<div class="ro-empty">' + t.noTrades + '</div>';
+        return;
+      }
+      trades.sort((a,b) => (new Date(b.created_at||0).getTime()) - (new Date(a.created_at||0).getTime()));
+      const top = trades.slice(0,15);
+      txList.innerHTML = top.map(tx => {
+        const side = (tx.side||'').toLowerCase();
+        const isBuy = side === 'buy';
+        const cm = coinMeta[tx.coin_id];
+        const ticker = (cm && cm.ticker) || ('#'+tx.coin_id);
+        const coinAmt = parseFloat(tx.coin_amount||0);
+        const gbxAmt = parseFloat(tx.gbx_amount||0);
+        let timeStr = '';
+        if (tx.created_at) { try { timeStr = new Date(tx.created_at).toLocaleString(); } catch(e){} }
+        return '<div class="ro-tx-row" style="display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid rgba(255,255,255,0.05);">' +
+          '<div style="width:32px;height:32px;border-radius:50%;background:' + (isBuy?'rgba(0,200,100,0.2)':'rgba(255,100,68,0.2)') + ';display:flex;align-items:center;justify-content:center;color:' + (isBuy?'#00C864':'#FF6644') + ';font-weight:700;">' + (isBuy?'↓':'↑') + '</div>' +
+          '<div style="flex:1;min-width:0;">' +
+            '<div style="font-size:13px;color:#F5CC75;font-weight:700;">' + (isBuy?t.buy:t.sell) + ' $' + ticker + '</div>' +
+            '<div style="font-size:11px;color:#888;margin-top:2px;">' + coinAmt.toLocaleString() + ' ' + t.tokens + ' · ' + gbxAmt.toFixed(2) + ' GBX</div>' +
+          '</div>' +
+          '<div style="font-size:10px;color:#666;white-space:nowrap;">' + timeStr.split(',')[0] + '</div>' +
+        '</div>';
+      }).join('');
+    } catch(e) {
+      console.error('[V49] fixTxHistory:', e);
+      txList.innerHTML = '<div class="ro-empty">' + L().loadFailed + '</div>';
+    }
+  }
+
+  async function init(){
+    let tries = 0;
+    while (tries < 50) {
+      if (injectUI()) break;
+      await new Promise(r => setTimeout(r, 100));
+      tries++;
+    }
+    if (tries >= 50) { console.error('[V49] hero not found'); return; }
+    await loadCoinMeta();
+    loadPnL();
+    loadBurnsRank();
+    setTimeout(fixTxHistory, 900);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+
+  window.addEventListener('storage', e => {
+    if (e.key && e.key.indexOf('lang') > -1) {
+      updateFollowBtn(); loadPnL(); loadBurnsRank(); fixTxHistory();
+    }
+  });
+})();
+</script>
+
+<script>
+// V4.9 — Preload coin meta cache for 24h % display
+async function _v49PreloadCoinMeta() {
+  try {
+    const r = await fetch('https://goldbrix.app/v2/memecoin/list?limit=500');
+    const d = await r.json();
+    window._coinMetaCache = {};
+    (d.coins || []).forEach(co => { window._coinMetaCache[co.id] = co; });
+  } catch(e) { console.warn('[v49 preload]', e); }
+}
+_v49PreloadCoinMeta();
+setInterval(_v49PreloadCoinMeta, 30000);
+</script>
+<script src="/v3/wallet-holdings-pro.js?v=103" defer></script>
+<script src="/v3/wallet-activity-pro.js?v=103" defer></script>
+
+<script>
+// GBX — grafic portofoliu (ca wallet-view)
+(function(){
+  var pfDays=7;
+  function getWalletAddr(){
+    try{ if(window.activeWallet&&window.activeWallet.address) return window.activeWallet.address;
+      var w=JSON.parse(sessionStorage.getItem('gbx_unlocked_wallets')||'{}'); return (w.wallets&&w.wallets[0]&&w.wallets[0].address)||null;
+    }catch(e){return null;}
+  }
+  function drawPf(series){
+    var svg=document.getElementById('pfChart'); if(!svg)return;
+    if(!series||series.length<2){svg.innerHTML='';return;}
+    var vals=series.map(function(s){return Number(s.value_gbx)||0;});
+    var min=Math.min.apply(null,vals),max=Math.max.apply(null,vals),rng=(max-min)||1;
+    var W=300,H=100,pad=4;
+    var pts=vals.map(function(v,i){var x=(i/(vals.length-1))*W;var y=H-pad-((v-min)/rng)*(H-pad*2);return x.toFixed(1)+','+y.toFixed(1);});
+    var up=vals[vals.length-1]>=vals[0]; var col=up?'#00C864':'#FF6644';
+    var line=pts.join(' '); var area='0,'+H+' '+line+' '+W+','+H;
+    svg.innerHTML='<defs><linearGradient id="pfg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="'+col+'" stop-opacity="0.25"/><stop offset="100%" stop-color="'+col+'" stop-opacity="0"/></linearGradient></defs><polygon points="'+area+'" fill="url(#pfg)"/><polyline points="'+line+'" fill="none" stroke="'+col+'" stroke-width="2" stroke-linejoin="round"/>';
+    var chg=vals[0]>0?((vals[vals.length-1]/vals[0]-1)*100):0;
+    var el=document.getElementById('pfChange');
+    if(el){el.style.color=chg>=0?'#00C864':'#FF6644';el.textContent=(chg>=0?'+':'')+chg.toFixed(2)+'% ('+pfDays+'D)';}
+  }
+  window.pfRange=function(d){
+    pfDays=d;
+    [['pf7',7],['pf30',30],['pf365',365]].forEach(function(x){var b=document.getElementById(x[0]);if(b){if(x[1]===d){b.style.background='#F0C060';b.style.color='#1a1200';b.style.border='none';}else{b.style.background='#2a2218';b.style.color='#aaa';b.style.border='1px solid #3a3025';}}});
+    loadPfChart();
+  };
+  function loadPfChart(){
+    var a=getWalletAddr(); if(!a)return;
+    fetch('https://goldbrix.app/launchpad/wallet/'+a+'/portfolio-history?days='+pfDays).then(function(r){return r.json();}).then(function(d){drawPf(d.series||[]);}).catch(function(){});
+  }
+  setTimeout(loadPfChart, 1000);
+  setInterval(loadPfChart, 20000);
+})();
+</script>
+
+  <script src="/v3/gbx-autolock.js" defer></script>
+  <script type="module" src="/multichain-utils.js?v=103"></script>
+  <script type="module">
+    import("/evm-tx.mjs").catch(function(e){});
+    import("/evm-send.mjs").catch(function(e){});
+    import("/mod-b-onramp-sol.mjs").then(function(m){ window.GoldbrixOnrampSol=m; }).catch(function(e){});
+    import("/mod-b-onramp-evm.mjs").then(function(m){ window.GoldbrixOnrampEvm=m; }).catch(function(e){});
+  </script>
+  <script src="/v3/convert-ui.js?v=103"></script>
+
+  <script src="/v3/chain-balances.js?v=103" defer></script>
+</body>
+</html>

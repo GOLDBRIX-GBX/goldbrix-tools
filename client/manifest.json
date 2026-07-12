@@ -1,0 +1,27 @@
+{
+  "name": "GoldBrix — Independent L1 Memecoin Launchpad",
+  "short_name": "GoldBrix",
+  "description": "Independent L1 blockchain. Mine, launch, trade memecoins with real burns and bonding curves.",
+  "start_url": "/v3/wallet.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1c1610",
+  "theme_color": "#F5CC75",
+  "lang": "en",
+  "categories": ["finance", "productivity", "social"],
+  "icons": [
+    { "src": "/assets/brand/goldbrix-brand-96.png", "sizes": "96x96", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/brand/goldbrix-brand-120.png", "sizes": "120x120", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/brand/goldbrix-brand-152.png", "sizes": "152x152", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/brand/goldbrix-brand-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/brand/goldbrix-brand-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/assets/brand/goldbrix-brand-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Wallet", "short_name": "Wallet", "description": "Open wallet", "url": "/v3/wallet.html", "icons": [{ "src": "/assets/coin/gbx-coin-96.png", "sizes": "96x96" }] },
+    { "name": "Trade", "short_name": "Trade", "description": "Trade memecoins", "url": "/v3/trade.html", "icons": [{ "src": "/assets/coin/gbx-coin-96.png", "sizes": "96x96" }] },
+    { "name": "Launch", "short_name": "Launch", "description": "Launch memecoin", "url": "/v3/launch.html", "icons": [{ "src": "/assets/coin/gbx-coin-96.png", "sizes": "96x96" }] },
+    { "name": "Burns", "short_name": "Burns", "description": "View burns LIVE", "url": "/v3/burns.html", "icons": [{ "src": "/assets/coin/gbx-coin-96.png", "sizes": "96x96" }] }
+  ]
+}

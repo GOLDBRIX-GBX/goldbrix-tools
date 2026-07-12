@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GoldBrix Reset</title>
+<style>
+body{margin:0;padding:0;background:#1c1610;color:#FFE099;font-family:system-ui,-apple-system,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:20px;box-sizing:border-box}
+.box{max-width:400px}
+h1{font-size:28px;margin-bottom:20px;color:#F5CC75}
+p{font-size:16px;line-height:1.6;margin:10px 0}
+.status{margin:20px 0;padding:15px;background:#2a2218;border-radius:12px;border:1px solid #3a3025;font-family:monospace;font-size:13px;min-height:80px;white-space:pre-line;text-align:left}
+.btn{background:#F5CC75;color:#eee;font-weight:800;border:none;padding:14px 28px;border-radius:12px;font-size:16px;cursor:pointer;margin-top:20px;text-decoration:none;display:inline-block}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid #F5CC75;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;vertical-align:middle;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ok{color:#eee}.err{color:#eee}
+</style>
+    <script src="/gbx-update-check.js" defer></script>
+    <script src="/gbx-native-bridge.js" defer></script>
+      <script src="/i18n.js" defer></script>
+  </head>
+<body>
+<div class="box">
+<h1>🔧 GoldBrix Reset</h1>
+<p>Cleanup cache + service workers pentru performance optimal.</p>
+<div class="status" id="status"><span class="spinner"></span>Pornește reset...</div>
+<a href="/" class="btn" id="goBtn" style="display:none">→ Open Fresh App</a>
+</div>
+<script>
+const s = document.getElementById('status');
+const btn = document.getElementById('goBtn');
+function log(msg, cls){
+  const line = document.createElement('div');
+  line.innerHTML = msg;
+  if(cls) line.className = cls;
+  s.appendChild(line);
+}
+(async () => {
+  s.innerHTML = '';
+  try {
+    log('Step 1: Find service workers...');
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      log('Found ' + regs.length + ' SW(s)');
+      for (const r of regs) {
+        await r.unregister();
+        log('✓ Unregistered ' + (r.scope || 'SW'), 'ok');
+      }
+    } else {
+      log('No SW support');
+    }
+    log('');
+    log('Step 2: Clear all caches...');
+    if ('caches' in window) {
+      const names = await caches.keys();
+      log('Found ' + names.length + ' cache(s)');
+      for (const name of names) {
+        await caches.delete(name);
+        log('✓ Deleted: ' + name, 'ok');
+      }
+    }
+    log('');
+    log('Step 3: Clear storage...');
+    try { localStorage.removeItem('gbx_hide_zero'); } catch(e){}
+    log('✓ Reset complete!', 'ok');
+    log('');
+    log('Press button below ↓');
+    btn.style.display = 'inline-block';
+  } catch(e) {
+    log('Error: ' + e.message, 'err');
+    btn.style.display = 'inline-block';
+  }
+})();
+</script>
+</body>
+</html>
