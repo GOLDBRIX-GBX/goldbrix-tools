@@ -356,7 +356,17 @@ def run_once():
     save_state(st); return st
 def run_loop(interval=5, iters=None):
     i=0
+    _hb_last=0.0
     while True:
+        # HEARTBEAT (1 linie/ora): log mut = ambiguu la diagnoza; dovada de viata ieftina.
+        _now=time.time()
+        if _now-_hb_last>=3600:
+            _hb_last=_now
+            try:
+                _h=gheight()
+            except Exception:
+                _h=-1
+            print(f"  [hb] alive cycles={i} chain_h={_h}", flush=True)
         # REZILIENT: orice eroare tranzitorie (RPC/nod/retea) -> log + continua, NU muri.
         # Un swap reactor de productie nu moare la un hiccup; ramane viu ca sell-urile sa prinda mereu LP-ul.
         try:
