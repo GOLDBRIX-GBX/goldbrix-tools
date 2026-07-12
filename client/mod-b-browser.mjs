@@ -115,6 +115,11 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
     const skU=Uint8Array.from(gk.privateKey), pkU=Uint8Array.from(gk.publicKey);
     let sc = scriptHex ? unhex(String(scriptHex).replace(/^0x/,'')) : null;
     let T1 = Number(t1||0);
+    // s35: script prezent dar t1 lipsa (pending completat de la LP) -> T1 e IN script, parse structural (layout fix HTLC)
+    if(sc && !T1 && sc.length>75 && sc[0]===0x63 && sc[71]===0x67){
+      const n=sc[72];
+      if(n>=1 && n<=5){ let v=0; for(let j=0;j<n;j++) v+=sc[73+j]*Math.pow(256,j); T1=v; }
+    }
     if(!sc || !T1){
       // RECONSTRUCTIE DETERMINISTA (pendinguri vechi fara script/t1):
       // H din arguments.hashlock, lpGbxPub din /lp-info, T1 iterat in [h_fund+100000±30]

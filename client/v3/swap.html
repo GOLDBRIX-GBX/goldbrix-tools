@@ -753,10 +753,11 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
         if(_sdone){ try{ localStorage.removeItem(k); }catch(_e){} continue; }
         // ===== REFUND GBX (sell respins/abandonat): LP nu a livrat -> userul isi ia GBX inapoi dupa T1 =====
         // Conditii: pendingul are datele HTLC (script+t1, fix s33) SI swap-ul la LP e rejected/inexistent/expirat
-        if(p.gbx_txid && p.script && p.t1){
+        if(p.gbx_txid){
           let _rej=false;
           try{ const sw=await GBX_LP_SWAP_STATUS((p.hashlock||'').toLowerCase());
                if(!sw || !sw.status || String(sw.status).startsWith('rejected') || String(sw.status).startsWith('refunded') || sw.status==='expired') _rej=true;
+               // TELEFON PIERDUT (s35): pending minim (doar hashlock+txid) -> completeaza script/gbx_val de la LP; t1 il reconstruieste refundGbxForSell criptografic
                if(sw && sw.script && !p.script){ p.script=sw.script; p.gbx_val=p.gbx_val||sw.gbx_val; try{ localStorage.setItem(k, JSON.stringify(p)); }catch(_e){} } }catch(_e){ _rej=true; }
           if(_rej){
             // TRIERE ON-CHAIN: UTXO cheltuit deja (refundat/claimed) -> cardul dispare
