@@ -421,7 +421,15 @@ def scan_and_lock_usdc(st,fund,ctx):
         evmcli(ctx=ctx,cmd="approve",pk=LP_PK_EVM,token=ctx["usdc"],spender=ctx["htlc"],amount=str(req_usdc))
         T2=int(time.time())+int(intent.get("t2_evm",3600))
         o=evmcli(ctx=ctx,cmd="lock",pk=LP_PK_EVM,htlc=ctx["htlc"],receiver=intent["evm_receiver"],token=ctx["usdc"],amount=req_usdc,hashlock=hl,timelock=T2)
-        st["swaps"][sid]={"direction":"sell","chain":ctx["name"],"hashlock":hl,"usdc_lock_id":o.get("id"),"gbx_txid":intent["gbx_txid"],"gbx_vout":intent["gbx_vout"],"script":intent["gbx_script"],"gbx_val":gbx_val,"status":"usdc_locked","T2_evm":T2}
+        _lid=o.get("id")
+        if not _lid:
+            # LP-17: lock fara id in raspuns (receipt pierdut / tx neminat) -> verifica on-chain, nu minti statusul
+            try: _lid=next((e["id"] for e in evmcli(ctx=ctx,cmd="events",htlc=ctx["htlc"]).get("events",[]) if e["hashlock"].lower()==hl.lower()),None)
+            except Exception: _lid=None
+        if not _lid:
+            st["swaps"][sid]={"direction":"sell","chain":ctx["name"],"hashlock":hl,"status":"rejected_lock_failed","note":"LP-17: no id from lock and no Locked event on-chain; USDC never left LP"}
+            print(f"  [LP-17] REJECT {hl[:14]} lock fara id si fara event on-chain — USDC neblocat, user refund GBX la T1"); continue
+        st["swaps"][sid]={"direction":"sell","chain":ctx["name"],"hashlock":hl,"usdc_lock_id":_lid,"gbx_txid":intent["gbx_txid"],"gbx_vout":intent["gbx_vout"],"script":intent["gbx_script"],"gbx_val":gbx_val,"status":"usdc_locked","T2_evm":T2}
         print(f"  [LOCK USDC] {hl[:14]} -> {intent['evm_receiver'][:10]} amount {req_usdc}")
     save_state(st)
 def scan_and_claim_gbx(st,fund,ctx):
