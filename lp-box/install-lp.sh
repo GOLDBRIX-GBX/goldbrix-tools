@@ -28,7 +28,7 @@ GBX_SOL_CLI=$D/sol-htlc-cli.mjs
 GBX_SOL_IDL=$D/target/idl/htlc.json
 GBX_SELL_GUARD_F=$D/state/sell_guard.json
 GBX_RESERVES_F=$D/state/lp_reserves.json
-GBX_GBX_DATADIR=/root/.bitcoin
+GBX_GBX_DATADIR=/var/lib/goldbrix
 GBX_GBX_WALLET=lp_hot
 ENV
 

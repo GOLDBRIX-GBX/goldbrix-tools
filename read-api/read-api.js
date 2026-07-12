@@ -7,7 +7,7 @@ const gbxIndex = require('./gbx-index-read.js');
 const HOST = '0.0.0.0';
 const PORT = process.env.PORT || 8088;
 
-const CLI = process.env.GBX_CLI || '/root/goldbrix_bin/bitcoin-cli';
+const CLI = process.env.GBX_CLI || '/usr/local/bin/goldbrix-cli';
 const RPC_CONNECT = process.env.GBX_RPC_CONNECT || '127.0.0.1';
 const RPC_PORT = process.env.GBX_RPC_PORT || '8332';
 const DATADIR = process.env.GBX_DATADIR || '/root/goldbrix_mainnet/node2';

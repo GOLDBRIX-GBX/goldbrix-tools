@@ -5,7 +5,7 @@
    Separate process; state = JSON file served by read-api. Keyless, read-only. */
 'use strict';
 const fs = require('fs'); const path = require('path'); const http = require('http');
-const GBX_DATADIR = process.env.GBX_DATADIR || require('os').homedir() + '/.bitcoin';
+const GBX_DATADIR = process.env.GBX_DATADIR || '/var/lib/goldbrix';
 const RPC_PORT = parseInt(process.env.GBX_RPC_PORT || '8332', 10);
 const STATE = process.env.GBX_NODEREG_STATE || '/root/goldbrix-tools/node-registry/node-registry.json';
 const START_HEIGHT = parseInt(process.env.GBX_NODEREG_START || '0', 10);

@@ -8,7 +8,7 @@ const path = require('path');
 const http = require('http');
 const Database = require('better-sqlite3');
 
-const GBX_DATADIR = process.env.GBX_DATADIR || require('os').homedir() + '/.bitcoin';
+const GBX_DATADIR = process.env.GBX_DATADIR || '/var/lib/goldbrix';
 const RPC_HOST = '127.0.0.1';
 const RPC_PORT = parseInt(process.env.GBX_RPC_PORT || '8332', 10);
 const DB_PATH  = process.env.GBX_INDEX_DB || './gbx-index.db';
