@@ -65,7 +65,9 @@ def _amm_sell_out(gbx_in):
 def _price(c):
     floor=float(c.get("price_usd",0.10))
     src=c.get("price_source")
-    if src=="reserve":
+    if src in ("reserve","amm"):
+        # PRICE-1 (s38): "amm" era necunoscut aici -> cadea pe floor => UI/grafic afisau PODEAUA, nu piata.
+        # Mid-price = x_USDC / y_GBX (aceeasi curba x*y=k din care se coteaza buy/sell). Floor = plasa.
         p=_reserve_price()
         return max(floor, p) if p else floor         # PRET AUTONOM din rezerve agregate
     if src=="onramp":
