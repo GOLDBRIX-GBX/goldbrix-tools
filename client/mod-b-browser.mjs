@@ -25,7 +25,51 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
   };
   const htlc=makeEVMHTLC({ rpc, evm:GoldbrixEVM, chainId });
   const post=async(p,b)=>{ const r=await fetch(gatewayBase+p,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b)}); return r.json(); };
-  const gbxBroadcast=async(tx)=>{ const j=await post('/broadcast',{rawtx:tx}); if(!j.txid) throw new Error('broadcast: '+JSON.stringify(j)); return j.txid; };
+  // IDEE S: broadcast-fallback. LP-ul e doar prima incercare; la esec, tx-ul pleaca
+  // spre TOATE nodurile publice din discovery (/api/broadcast = keyless sendrawtransaction).
+  // Scrierea supravietuieste chiar daca LP-ul (sau serverele fondatorului) sunt moarte.
+  // txid = dsha256 pe serializarea FARA witness (BIP144). Segwit: marker 0x00 flag 0x01
+  // dupa version; witness-ul se sare dupa outputs. Parsare structurala, zero ghicit.
+  const _txidOf=(rawtxHex)=>{
+    const b=unhex(rawtxHex); let o=4; const parts=[b.slice(0,4)];
+    const segwit = b[4]===0x00 && b[5]===0x01;
+    if(segwit) o=6;
+    const vi=()=>{ const f=b[o];
+      if(f<0xfd){o+=1; return f;}
+      if(f===0xfd){const v=b[o+1]|(b[o+2]<<8); o+=3; return v;}
+      if(f===0xfe){const v=b[o+1]|(b[o+2]<<8)|(b[o+3]<<16)|(b[o+4]*16777216); o+=5; return v;}
+      let v=0; for(let i=7;i>=0;i--) v=v*256+b[o+1+i]; o+=9; return v; };
+    const start=o;
+    const nIn=vi();
+    for(let i=0;i<nIn;i++){ o+=36; const sl=vi(); o+=sl; o+=4; }
+    const nOut=vi();
+    for(let i=0;i<nOut;i++){ o+=8; const sl=vi(); o+=sl; }
+    parts.push(b.slice(start,o));
+    if(segwit){ for(let i=0;i<nIn;i++){ const items=vi(); for(let k=0;k<items;k++){ const l=vi(); o+=l; } } }
+    parts.push(b.slice(o,o+4)); // nLockTime
+    let tot=0; parts.forEach(x=>tot+=x.length);
+    const flat=new Uint8Array(tot); let q=0; parts.forEach(x=>{flat.set(x,q); q+=x.length;});
+    const h=sha256(sha256(flat)); return hex(h.slice().reverse());
+  };
+  const gbxBroadcast=async(tx)=>{
+    let firstErr=null;
+    try{ const j=await post('/broadcast',{rawtx:tx}); if(j&&j.txid) return j.txid; firstErr=new Error('lp: '+JSON.stringify(j)); }
+    catch(e){ firstErr=e; }
+    const nodes=(typeof window!=='undefined' && window.GBX_NODES) ? window.GBX_NODES.slice() : ['https://goldbrix.app/api'];
+    for(const base of nodes){
+      try{
+        const c=new AbortController(); const t=setTimeout(()=>c.abort(),8000);
+        const r=await fetch(base.replace(/\/+$/,'')+'/broadcast',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({rawtx:tx}),signal:c.signal});
+        clearTimeout(t);
+        const j=await r.json();
+        if(j&&j.txid) return j.txid;
+        // deja in mempool/lant (raspuns pierdut la o incercare anterioara) = SUCCES:
+        // txid-ul se calculeaza local din rawtx (dsha256, little-endian), nu se ghiceste.
+        if(j&&j.error&&/already in block chain|txn-already|already known|already-in-mempool/i.test(JSON.stringify(j.error))) return _txidOf(tx);
+      }catch(_e){}
+    }
+    throw firstErr||new Error('broadcast: all endpoints failed');
+  };
   const submitIntent=async(o)=>{ const j=await post('/intent',o); if(!j.ok) throw new Error('intent: '+JSON.stringify(j)); };
   async function buyGbxInApp({ mnemonic, usdcAmount, onStatus }){
     const gk=await crypto.deriveKeypairFromMnemonic(mnemonic), ek=await multichain.deriveEVM(mnemonic);
