@@ -3,6 +3,10 @@ const fs = require('fs');
 const path = require('path');
 const { execFile } = require('child_process');
 const gbxIndex = require('./gbx-index-read.js');
+// TRADE-1 (s38): keyless market data. Price/volume DERIVED on-chain (L1 HTLC claim x EVM USDC lock,
+// joined on hashlock). No LP is trusted, no private DB, no key. Any node can rebuild it.
+let gbxTrades = null;
+try { gbxTrades = require('./gbx-trade-read.js'); } catch (e) { console.error('[TRADE-1] trade index unavailable:', e.message); }
 
 const HOST = '0.0.0.0';
 const PORT = process.env.PORT || 8088;
@@ -444,6 +448,28 @@ const server = http.createServer(async (req, res) => {
 
     
   
+    // TRADE-1 (s38): /api/gbx/stats · /api/gbx/candles · /api/gbx/trades — on-chain derived, keyless.
+    if (req.method === 'GET' && url.pathname.startsWith('/api/gbx/')) {
+      if (!gbxTrades) return sendJson(res, 503, { error: 'trade_index_unavailable' });
+      const IV = {'1m':60000,'5m':300000,'15m':900000,'1h':3600000,'4h':14400000,'1d':86400000};
+      try {
+        if (url.pathname === '/api/gbx/stats')  return sendJson(res, 200, gbxTrades.stats());
+        if (url.pathname === '/api/gbx/trades') {
+          const lim = Math.min(parseInt(url.searchParams.get('limit') || '50', 10), 500);
+          return sendJson(res, 200, { trades: gbxTrades.trades(lim).reverse(), source: 'onchain-derived' });
+        }
+        if (url.pathname === '/api/gbx/candles') {
+          const iv = url.searchParams.get('interval') || '1d';
+          const ms = IV[iv]; if (!ms) return sendJson(res, 400, { error: 'bad_interval', allowed: Object.keys(IV) });
+          const lim = Math.min(parseInt(url.searchParams.get('limit') || '200', 10), 500);
+          return sendJson(res, 200, { candles: gbxTrades.candles(ms, lim), interval: iv, source: 'onchain-derived' });
+        }
+      } catch (e) {
+        console.error('[TRADE-1] route error:', e.message);
+        return sendJson(res, 503, { error: 'trade_index_error' });
+      }
+    }
+
     // STEP46_UTXOS_ENDPOINT — direct scantxoutset with addr() descriptor
     {
       const utxosMatch = url.pathname.match(/^\/api\/utxos\/([^/]+)$/);
