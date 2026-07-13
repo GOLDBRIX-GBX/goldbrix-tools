@@ -27,7 +27,7 @@ function _runCliOnce(argv) {
   // argv = ARRAY de argumente (fara shell). Imun la shell-injection.
   return new Promise((resolve, reject) => {
     const base = [`-rpcconnect=${RPC_CONNECT}`, `-rpcport=${RPC_PORT}`, `-datadir=${DATADIR}`];
-    execFile(CLI, base.concat(argv), { maxBuffer: 512 * 1024 * 1024 }, (error, stdout, stderr) => {
+    execFile(CLI, base.concat(argv), { maxBuffer: 32 * 1024 * 1024 }, (error, stdout, stderr) => {
       if (error) { reject(new Error((stderr || error.message).trim())); return; }
       resolve(stdout.trim());
     });
@@ -172,10 +172,9 @@ async function scanAddress(address) {
   if (c && Date.now() - c.ts < UTXO_CACHE_TTL) {
     return { info, scan: c.data };
   }
-  const scanRaw = await runScanSerialized(`["raw(${_assertHex(info.scriptPubKey,"scriptPubKey")})"]`);
-  const scan = JSON.parse(scanRaw);
-  UTXO_CACHE.set(ck, { ts: Date.now(), data: scan });
-  return { info, scan };
+  // RA-1 (s38): scantxoutset scos de pe ruta publica (2.5G RSS -> OOM). Index miss = 503 onest.
+  console.error('[RA-1] index miss /api/address addr-spk=' + String(info.scriptPubKey).slice(0,16));
+  const _e = new Error('indexing'); _e.gbxIndexing = true; throw _e;
 }
 
 function summarizeUnspents(unspents) {
@@ -459,7 +458,11 @@ const server = http.createServer(async (req, res) => {
         }
         try {
           const ixU = gbxIndex.scanLikeIndex(address);
-          const scan = ixU ? ixU : JSON.parse(await runScanSerialized(`[{"desc":"addr(${_assertAddr(address)})"}]`));
+          if (!ixU) {
+            console.error('[RA-1] index miss /api/utxos ' + String(address).slice(0,24));
+            return sendJson(res, 503, { error: 'indexing', tip: gbxIndex.tipHeight ? gbxIndex.tipHeight() : null, retry_after_s: 5 });
+          }
+          const scan = ixU;
           let rawUnspents = scan.unspents || [];
           const totalCount = rawUnspents.length;
           // GBX — daca limit cerut: sorteaza desc dupa amount + ia primele N (BUY/SELL rapid pe adrese cu multe UTXO)

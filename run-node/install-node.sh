@@ -78,6 +78,8 @@ Requires=goldbrixd.service
 User=gbx
 Environment=GBX_CLI=/usr/local/bin/goldbrix-cli GBX_RPC_PORT=8332 GBX_DATADIR=${DATADIR} PORT=8088
 Environment=GBX_NODEREG_STATE=${TOOLSDIR}/node-registry/node-registry.json
+# RA-1 (s38): read-api MUST read the local index; without it, address/utxo routes fall back to a full UTXO scan (2.5G RSS -> OOM).
+Environment=GBX_INDEX_DB=${DATADIR}/index/gbx-index.db
 WorkingDirectory=${TOOLSDIR}/read-api
 ExecStart=/usr/bin/node read-api.js
 Restart=always

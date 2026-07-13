@@ -25,6 +25,12 @@ grep -q CHANGE_ME $D/lp.env && { echo "EDIT $D/lp.env + $D/chains.json (FILL_YOU
 grep -q FILL_YOUR_OWN $D/chains.json && { echo "EDIT $D/chains.json (FILL_YOUR_OWN), then re-run"; exit 2; }
 
 # env overrides -> own paths, own state, own node
+# LP-19 (s38): datadir din nodul VIU, nu presupus. Indexul local inlocuieste scanul global (OOM).
+GBX_NODE_DATADIR=$(systemctl cat goldbrixd 2>/dev/null | grep -oE '\-datadir=[^ ]+' | head -1 | cut -d= -f2)
+[ -n "$GBX_NODE_DATADIR" ] || GBX_NODE_DATADIR=/var/lib/goldbrix
+[ -d "$GBX_NODE_DATADIR" ] || { echo "FAIL: node datadir $GBX_NODE_DATADIR not found"; exit 1; }
+echo "OK: node datadir = $GBX_NODE_DATADIR"
+
 cat > $D/gbx-lp.env <<ENV
 GBX_ENV_F=$D/lp.env
 GBX_CHAINS_F=$D/chains.json
@@ -36,8 +42,9 @@ GBX_SOL_CLI=$D/sol-htlc-cli.mjs
 GBX_SOL_IDL=$D/target/idl/htlc.json
 GBX_SELL_GUARD_F=$D/state/sell_guard.json
 GBX_RESERVES_F=$D/state/lp_reserves.json
-GBX_GBX_DATADIR=/var/lib/goldbrix
+GBX_GBX_DATADIR=${GBX_NODE_DATADIR}
 GBX_GBX_WALLET=lp_hot
+GBX_INDEX_DB=${GBX_NODE_DATADIR}/index/gbx-index.db
 ENV
 
 [ -f $D/lp_config.json ] || echo '{"price_usd": 0.1, "spread_bps": 50, "burn_bps": 0, "price_source": "reserve"}' > $D/lp_config.json

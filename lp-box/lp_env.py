@@ -15,5 +15,15 @@ _D = {
  "SOL_IDL":   "/root/gbx-solana-htlc/htlc/target/idl/htlc.json",
  "SELL_GUARD_F":"/root/goldbrix-onramp/sell_guard.json",
  "RESERVES_F":"/root/lp_reserves.json",
+ "INDEX_DB":  "",
 }
+# LP-19 (s38): index DB auto-detect daca nu e dat prin GBX_INDEX_DB
+def _autodb():
+    import os as _o
+    for c in ("/root/goldbrix-one/server/gbx-index.db",
+              "/var/lib/goldbrix/index/gbx-index.db",
+              "/opt/goldbrix-tools/read-api/gbx-index.db"):
+        if _o.path.exists(c): return c
+    return ""
 E = {k: os.environ.get("GBX_"+k, v) for k, v in _D.items()}
+if not E.get("INDEX_DB"): E["INDEX_DB"] = _autodb()

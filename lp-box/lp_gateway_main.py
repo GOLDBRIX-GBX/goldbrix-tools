@@ -17,6 +17,25 @@ def _lp_evm_addr():
         raise RuntimeError("chains.json unreadable - refusing to serve wrong LP address")
 LP_EVM_ADDR=_lp_evm_addr()
 GCLI=[E["GCLI_BIN"],"-datadir="+E["GBX_DATADIR"]]
+
+# LP-19 (s38): UTXO din indexul local (SQLite read-only). Inlocuieste scanul global (2.5G RSS -> OOM).
+def _index_utxos(addr):
+    dbp=E.get("INDEX_DB") or ""
+    if not dbp: return None
+    try:
+        import sqlite3
+        cx=sqlite3.connect("file:%s?mode=ro"%dbp, uri=True, timeout=5)
+        try:
+            tip=cx.execute("SELECT MAX(height) FROM blocks").fetchone()[0]
+            if tip is None: return None
+            rows=cx.execute("SELECT txid,vout,sats,spk FROM utxos WHERE address=? AND spent_height IS NULL",(addr,)).fetchall()
+        finally:
+            cx.close()
+        return [{"txid":r[0],"vout":r[1],"amount":r[2]/1e8,"scriptPubKey":r[3] or ""} for r in rows]
+    except Exception as _e:
+        sys.stderr.write("[LP-19] index read FAIL %s: %s\n"%(dbp,_e)); sys.stderr.flush()
+        return None
+
 CHAINS_F=E["CHAINS_F"]
 SOL_CLI=E["SOL_CLI"]
 _SOL_SECRET_CACHE=None
@@ -248,11 +267,13 @@ class H(BaseHTTPRequestHandler):
                             _used_scan=True
                 except Exception:
                     pass
-                # FALLBACK: scantxoutset doar daca user_scan nu are adresa (useri noi neindexati)
+                # LP-19 (s38): index local in loc de scan global. Miss = raspuns onest, NU scan.
                 if not _used_scan:
-                    rr=subprocess.run(GCLI+["scantxoutset","start",json.dumps([{"desc":"addr("+addr+")"}])],capture_output=True,text=True,timeout=150)
-                    dd=json.loads(rr.stdout) if rr.stdout.strip() else {}
-                    allu=dd.get("unspents",[])
+                    _ix=_index_utxos(addr)
+                    if _ix is None:
+                        return self._s(503,{"unspents":[],"error":"indexing","retry_after_s":5})
+                    allu=_ix
+                    _used_scan=True
                 if target>0:
                     allu=sorted(allu,key=lambda u:-float(u["amount"]))
                     sel=[]; acc=0.0; need=target+0.01
