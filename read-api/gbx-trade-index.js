@@ -152,6 +152,26 @@ async function evmLocked(rpcs, htlc, fromBlock) {
   return { events: out, latest };
 }
 
+// Solana has no eth_getLogs: HTLCs are Anchor accounts. Same hashlock, same join, same keyless proof.
+// Uses the LP-box CLI (read-only, no key needed for a listing).
+async function syncSOL(c) {
+  const { execFile } = require('child_process');
+  const cli = process.env.GBX_SOL_CLI || '/opt/gbx-lp/sol-htlc-cli.mjs';
+  const idl = c.idl || '/opt/gbx-lp/target/idl/htlc.json';
+  if (!fs.existsSync(cli) || !fs.existsSync(idl)) { log('[TRADE] solana: CLI/IDL missing, skipped'); return; }
+  const arg = JSON.stringify({ cmd:'all-swaps', program:c.program, idl, rpc:c.rpc });
+  const outStr = await new Promise((res, rej) => {
+    execFile('/usr/bin/node', [cli, arg], { maxBuffer: 32*1024*1024, timeout: 90000 },
+      (e, so) => e ? rej(e) : res(so));
+  });
+  const swaps = (JSON.parse(outStr).swaps) || [];
+  const rows = swaps.filter(x => x.claimed && Number(x.amount) > 0);
+  if (rows.length) db.transaction(rs => {
+    for (const r of rs) Q.addUsdc.run(r.hashlock, 'solana', Number(r.amount), 0);
+  })(rows);
+  log(`[TRADE] solana: ${rows.length} settled locks (of ${swaps.length} swaps)`);
+}
+
 async function syncEVM() {
   let chains;
   try { chains = (JSON.parse(fs.readFileSync(CHAINS_F,'utf8')).chains) || {}; }
@@ -166,6 +186,11 @@ async function syncEVM() {
       if (latest) metaSet(key, latest);
       if (events.length) log(`[TRADE] ${name}: +${events.length} USDC locks (through block ${latest})`);
     } catch(e) { log(`[TRADE] ${name} getLogs FAIL:`, String(e.message).slice(0,120)); }
+  }
+  const sol = chains.solana;
+  if (sol && sol.enabled && sol.program) {
+    try { await syncSOL(sol); }
+    catch(e) { log('[TRADE] solana FAIL:', String(e.message).slice(0,120)); }
   }
 }
 
