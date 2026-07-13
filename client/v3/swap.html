@@ -7,6 +7,30 @@
 <script>window.__gbxErr=[];addEventListener("error",function(e){window.__gbxErr.push((e.message||e.type)+" @ "+((e.filename||"").split("/").pop())+":"+(e.lineno||""));},true);</script>
 <script>
 window.GBX_API_BASE='https://goldbrix.app/api'; window.GBX_LP_BASE='https://goldbrix.app/lp';
+// IDEE Q (client): LP discovery — lps.json + registrul ON-CHAIN (GBX:LP via /lp-registry).
+// Merge dedup pe base_url; intrarile on-chain = minime (health-check /lp-info decide). Failure = silent.
+window.GBX_LPS = async function(){
+  if(window.__GBX_LPS_C && (Date.now()-window.__GBX_LPS_C.ts)<60000) return window.__GBX_LPS_C.lps;
+  var lps=[]; var seen={};
+  try{ var d=await (await fetch('/lps.json',{cache:'no-store'})).json();
+       (d.lps||[]).forEach(function(l){ if(l&&l.base_url&&!seen[l.base_url]){seen[l.base_url]=1;lps.push(l);} }); }catch(_e){}
+  var bases=(window.GBX_NODES||['https://goldbrix.app/api']).slice(0,2);
+  for(var i=0;i<bases.length;i++){
+    try{
+      var c=new AbortController(); var t=setTimeout(function(){c.abort();},4000);
+      var r=await fetch(bases[i].replace(/\/+$/,'')+'/lp-registry',{cache:'no-store',signal:c.signal}); clearTimeout(t);
+      if(!r.ok) continue;
+      var j=await r.json();
+      Object.keys((j&&j.lps)||{}).forEach(function(u){
+        if(u.indexOf('https://')===0 && !seen[u]){ seen[u]=1;
+          lps.push({name:'onchain-lp', base_url:u, chains:['base','arbitrum','solana'], fee_bps:null, onchain:true}); }
+      });
+      break;
+    }catch(_e){}
+  }
+  window.__GBX_LPS_C={ts:Date.now(), lps:lps};
+  return lps;
+};
 // IDEE S (partea client): failover PER-REQUEST intre LP-uri. Orice fetch spre gateway
 // esuat -> re-selectie LP sanatos din lps.json pentru lantul respectiv -> retry o data.
 window.GBX_LP_FETCH = async function(C, pathq){
@@ -18,7 +42,7 @@ window.GBX_LP_FETCH = async function(C, pathq){
   }
   try{ return await tryOne(C.gateway); }catch(e0){}
   try{
-    var d=await (await fetch('/lps.json',{cache:'no-store'})).json();
+    var d={lps: await window.GBX_LPS()};
     var ch=Object.keys(window.GBX_CHAINS).find(function(k){return window.GBX_CHAINS[k]===C;});
     for(var i=0;i<d.lps.length;i++){
       var lp=d.lps[i];
@@ -45,7 +69,7 @@ window.GBX_LP_ENSURE = async function(C){
 window.GBX_LP_SWAP_STATUS = async function(hl){
   var TERM=function(st){ st=String(st||''); return st.indexOf('rejected')===0 || st.indexOf('refunded')===0 || st==='expired' || st==='completed' || st==='archived'; };
   var bases=[];
-  try{ var d=await (await fetch('/lps.json',{cache:'no-store'})).json(); bases=(d.lps||[]).map(function(x){return x.base_url;}); }catch(_e){}
+  try{ var d={lps: await window.GBX_LPS()}; bases=(d.lps||[]).map(function(x){return x.base_url;}); }catch(_e){}
   var best=null;
   for(var i=0;i<bases.length;i++){
     try{
@@ -65,7 +89,7 @@ window.GBX_LP_ROUTE = (async function(){
   try{
     for(var w=0; w<100 && !window.GBX_CHAINS; w++) await new Promise(function(r){setTimeout(r,50);});
     if(!window.GBX_CHAINS) return null;
-    var d = await (await fetch('/lps.json',{cache:'no-store'})).json();
+    var d = {lps: await window.GBX_LPS()};
     if(!d || !Array.isArray(d.lps) || !d.lps.length) return null;
     async function ok(lp){
       try{
