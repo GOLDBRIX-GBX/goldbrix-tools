@@ -32,11 +32,13 @@ function save(s){ const tmp=STATE+'.tmp'; fs.writeFileSync(tmp,JSON.stringify(s,
 function decode(hexasm){ // scriptPubKey.asm: "OP_RETURN <hex>"
   if(!hexasm||!hexasm.startsWith('OP_RETURN '))return null;
   try{ const t=Buffer.from(hexasm.slice(10).trim(),'hex').toString('utf8');
-    return t.startsWith('GBX:NODE:')?t.slice(9):null; }catch(e){return null;}
+    if(t.startsWith('GBX:NODE:'))return {kind:'nodes',url:t.slice(9)};
+    if(t.startsWith('GBX:LP:'))return {kind:'lps',url:t.slice(7)};
+    return null; }catch(e){return null;}
 }
 const VALID = /^https:\/\/[a-z0-9.-]+(:\d+)?(\/[a-zA-Z0-9._\/-]*)?$/;
 (async()=>{
-  const st = load();
+  const st = load(); st.lps = st.lps || {};
   if (!st.scanned_height) {
     // First run, no state: only the liveness window matters — older announces are expired anyway.
     st.scanned_height = START_HEIGHT || Math.max(0, (await rpc('getblockcount')) - WINDOW);
@@ -52,8 +54,8 @@ const VALID = /^https:\/\/[a-z0-9.-]+(:\d+)?(\/[a-zA-Z0-9._\/-]*)?$/;
         const blk = await rpc('getblock',[hash,2]);
         for (const tx of blk.tx) for (const v of (tx.vout||[])) {
           if (!v.scriptPubKey || v.scriptPubKey.type!=='nulldata') continue;
-          const url = decode(v.scriptPubKey.asm);
-          if (url && VALID.test(url)) { st.nodes[url] = {height:h, txid:tx.txid}; log('ANNOUNCE',url,'@',h); }
+          const a = decode(v.scriptPubKey.asm);
+          if (a && VALID.test(a.url)) { (st[a.kind]=st[a.kind]||{})[a.url] = {height:h, txid:tx.txid}; log('ANNOUNCE',a.kind,a.url,'@',h); }
         }
         st.scanned_height = h;
         if (h % 5000 === 0) { prune(st, tip); save(st); }
@@ -62,6 +64,6 @@ const VALID = /^https:\/\/[a-z0-9.-]+(:\d+)?(\/[a-zA-Z0-9._\/-]*)?$/;
     }catch(e){ log('err',e.message); }
     await sleep(POLL_MS);
   }
-  function prune(s,tip){ for(const u of Object.keys(s.nodes))
-    if (s.nodes[u].height < tip - WINDOW) { log('EXPIRE',u); delete s.nodes[u]; } }
+  function prune(s,tip){ for(const k of ['nodes','lps']) for(const u of Object.keys(s[k]||{}))
+    if (s[k][u].height < tip - WINDOW) { log('EXPIRE',k,u); delete s[k][u]; } }
 })();
