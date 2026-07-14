@@ -40,7 +40,12 @@ function parseIntent(tx){
     if (!hex.startsWith('6a')) continue;
     let data;
     try { [data] = readPush(Buffer.from(hex,'hex'), 1); } catch { continue; }
-    if (data.length !== 88 || !data.subarray(0,6).equals(Buffer.from('GBX:C:'))) continue;
+    if (!data.subarray(0,6).equals(Buffer.from('GBX:C:'))) continue;
+    // IDEE W: a CREATE carries its 80-byte proof of work right after the 88-byte
+    // intent (168 total). Every other op is exactly 88. The proof itself is
+    // consensus's job; the intent bytes we read are the same either way.
+    const isCreate = data.length >= 7 && data[6] === 0x43;
+    if (!(data.length === 88 || (isCreate && data.length === 168))) continue;
     return {
       op: String.fromCharCode(data[6]),
       cid: data.subarray(7,39),

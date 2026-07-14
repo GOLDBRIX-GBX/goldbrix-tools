@@ -45,3 +45,7 @@ export function verifyOwnTx(decodedVout, expect){
   return null;   // null = OK
 }
 export { setWitness };
+
+// IDEE W — MANDATORY guard for CREATE: never broadcast a proof the consensus
+// would reject. Re-checks the client's own 80 bytes exactly like CheckCreatePoW.
+export { verifyPow as verifyOwnPow, minePow, CREATE_POW_LEN } from '/gbx-pow.mjs';
