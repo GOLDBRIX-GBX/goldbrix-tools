@@ -391,6 +391,15 @@ const server = http.createServer(async (req, res) => {
 
     const url = new URL(req.url, `http://${req.headers.host}`);
 
+    if (req.method === 'GET' && url.pathname === '/api/htlc-registry') {
+      // GBX on-chain HTLC contract registry (GBX:HTLC: OP_RETURN). Read-only, keyless.
+      try {
+        const regPath = process.env.GBX_NODEREG_STATE || '/root/goldbrix-tools/node-registry/node-registry.json';
+        const reg = JSON.parse(fs.readFileSync(regPath,'utf8'));
+        res.writeHead(200, {'Content-Type':'application/json'});
+        return res.end(JSON.stringify({updated_height: reg.scanned_height, htlcs: reg.htlcs||{}}));
+      } catch(e){ res.writeHead(200,{'Content-Type':'application/json'}); return res.end('{"updated_height":0,"htlcs":{}}'); }
+    }
     if (req.method === 'GET' && url.pathname === '/api/lp-registry') {
       // GBX on-chain LP registry (GBX:LP: OP_RETURN). Read-only, keyless.
       try {

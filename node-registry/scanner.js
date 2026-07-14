@@ -34,9 +34,11 @@ function decode(hexasm){ // scriptPubKey.asm: "OP_RETURN <hex>"
   try{ const t=Buffer.from(hexasm.slice(10).trim(),'hex').toString('utf8');
     if(t.startsWith('GBX:NODE:'))return {kind:'nodes',url:t.slice(9)};
     if(t.startsWith('GBX:LP:'))return {kind:'lps',url:t.slice(7)};
+    if(t.startsWith('GBX:HTLC:')){const p=t.slice(9); if(HTLC_VALID.test(p)) return {kind:'htlcs',url:p}; return null;}
     return null; }catch(e){return null;}
 }
 const VALID = /^https:\/\/[a-z0-9.-]+(:\d+)?(\/[a-zA-Z0-9._\/-]*)?$/;
+const HTLC_VALID = /^[a-z0-9]{2,16}:(0x[0-9a-fA-F]{40}|[1-9A-HJ-NP-Za-km-z]{32,44})(:[0-9]{1,12})?$/;
 (async()=>{
   const st = load(); st.lps = st.lps || {};
   if (!st.scanned_height) {
@@ -55,7 +57,7 @@ const VALID = /^https:\/\/[a-z0-9.-]+(:\d+)?(\/[a-zA-Z0-9._\/-]*)?$/;
         for (const tx of blk.tx) for (const v of (tx.vout||[])) {
           if (!v.scriptPubKey || v.scriptPubKey.type!=='nulldata') continue;
           const a = decode(v.scriptPubKey.asm);
-          if (a && VALID.test(a.url)) { (st[a.kind]=st[a.kind]||{})[a.url] = {height:h, txid:tx.txid}; log('ANNOUNCE',a.kind,a.url,'@',h); }
+          if (a && (a.kind==='htlcs' || VALID.test(a.url))) { (st[a.kind]=st[a.kind]||{})[a.url] = {height:h, txid:tx.txid}; log('ANNOUNCE',a.kind,a.url,'@',h); }
         }
         st.scanned_height = h;
         if (h % 5000 === 0) { prune(st, tip); save(st); }

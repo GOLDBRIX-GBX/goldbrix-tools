@@ -176,15 +176,36 @@ async function syncEVM() {
   let chains;
   try { chains = (JSON.parse(fs.readFileSync(CHAINS_F,'utf8')).chains) || {}; }
   catch(e) { log('[TRADE] chains.json unreadable:', e.message); return; }
+  // ETAPA 4.9: merge HTLC contracts announced on-chain (GBX:HTLC) — autonomous discovery.
+  let annHtlcs = {};
+  try {
+    const regPath = process.env.GBX_NODEREG_STATE || '/root/goldbrix-tools/node-registry/node-registry.json';
+    const reg = JSON.parse(fs.readFileSync(regPath,'utf8'));
+    for (const key of Object.keys(reg.htlcs||{})) {
+      const m = key.match(/^([a-z0-9]{2,16}):(0x[0-9a-fA-F]{40}|[1-9A-HJ-NP-Za-km-z]{32,44})(?::([0-9]{1,12}))?$/);
+      if (!m) continue;
+      (annHtlcs[m[1]] = annHtlcs[m[1]] || []).push({ addr: m[2], from: parseInt(m[3]||'0',10), h: (reg.htlcs[key].height||0) });
+    }
+    for (const ch of Object.keys(annHtlcs)) annHtlcs[ch] = annHtlcs[ch].sort((a,b)=>b.h-a.h).slice(0,20); // cap 20, newest first
+  } catch(e) { /* registry unreadable -> hardcoded fallback only */ }
   for (const [name,c] of Object.entries(chains)) {
     if (!c.enabled || c.kind === 'solana' || !c.HTLC || !Array.isArray(c.rpcs)) continue;
     const key = 'evm_block_' + name;
     const from = parseInt(metaGet(key) || String(c.from_block || 0), 10);
     try {
-      const { events, latest } = await evmLocked(c.rpcs, c.HTLC, from);
-      if (events.length) db.transaction(es => { for (const e of es) Q.addUsdc.run(e.hashlock, name, e.amount, e.block); })(events);
-      if (latest) metaSet(key, latest);
-      if (events.length) log(`[TRADE] ${name}: +${events.length} USDC locks (through block ${latest})`);
+      const contracts = [{ addr: c.HTLC, from: c.from_block||0, mkey: key }];
+      for (const a of (annHtlcs[name]||[])) {
+        if (a.addr.toLowerCase() === String(c.HTLC).toLowerCase()) continue; // already covered by hardcoded fallback
+        contracts.push({ addr: a.addr, from: a.from, mkey: 'evm_block_'+name+'_'+a.addr.toLowerCase() });
+      }
+      for (const ct of contracts) {
+        const fromC = ct.mkey===key ? from : parseInt(metaGet(ct.mkey) || String(ct.from||0), 10);
+        if (!fromC && ct.mkey!==key) { log(`[TRADE] ${name} announced HTLC ${ct.addr} has no from_block — skipped (announce with :from_block)`); continue; }
+        const { events, latest } = await evmLocked(c.rpcs, ct.addr, fromC);
+        if (events.length) db.transaction(es => { for (const e of es) Q.addUsdc.run(e.hashlock, name, e.amount, e.block); })(events);
+        if (latest) metaSet(ct.mkey, latest);
+        if (events.length) log(`[TRADE] ${name} ${ct.addr.slice(0,10)}: +${events.length} USDC locks (through block ${latest})`);
+      }
     } catch(e) { log(`[TRADE] ${name} getLogs FAIL:`, String(e.message).slice(0,120)); }
   }
   const sol = chains.solana;
