@@ -95,7 +95,7 @@ const applyBlock = db.transaction((h, blk) => {
     for (const vin of (tx.vin || []))
       if (vin.txid !== undefined) q.spend.run(h, vin.txid, vin.vout);
     const it = parseIntent(tx);
-    if (!it || !'CBP'.includes(it.op) || it.tokensOut <= 0n) continue;
+    if (!it || !'CBPSR'.includes(it.op) || it.tokensOut <= 0n) continue;  // C,B,P mint tokens; S,R return change — every one of them creates a token UTXO
     const spk = p2wsh(tokenWS(it.cid, it.tokensOut, it.pk));
     for (const o of tx.vout)
       if (o.scriptPubKey.hex === spk)
