@@ -56,6 +56,7 @@ Description=GoldBrix LP-in-a-box ($1)
 After=network-online.target
 Wants=network-online.target
 [Service]
+Environment=MALLOC_ARENA_MAX=2
 WorkingDirectory=$D
 EnvironmentFile=$D/gbx-lp.env
 Environment=PYTHONUNBUFFERED=1

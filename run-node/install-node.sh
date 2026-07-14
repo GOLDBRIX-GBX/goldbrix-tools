@@ -65,6 +65,9 @@ After=network-online.target
 Wants=network-online.target
 [Service]
 User=gbx
+# glibc arena fragmentation: 16 arenas balloon a long-running node's heap.
+# Proven on a live node: 3.85 GB RSS -> 1.07 GB with 2 arenas, no perf loss.
+Environment=MALLOC_ARENA_MAX=2
 ExecStart=/usr/local/bin/goldbrixd -datadir=${DATADIR} -conf=goldbrix.conf
 Restart=always
 RestartSec=10
