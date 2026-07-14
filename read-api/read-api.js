@@ -391,6 +391,29 @@ const server = http.createServer(async (req, res) => {
 
     const url = new URL(req.url, `http://${req.headers.host}`);
 
+    // IDEE V token-index (guarded: served only when GBX_TOKENIDX_DB is set)
+    if (req.method === 'GET' && url.pathname === '/api/token-registry') {
+      const dbp = process.env.GBX_TOKENIDX_DB;
+      if (!dbp) { res.writeHead(404); return res.end('not enabled'); }
+      try {
+        const { openTokenIndex } = require('./gbx-token-read.js');
+        if (!global.__gbxTokenIdx) global.__gbxTokenIdx = openTokenIndex(dbp);
+        res.writeHead(200, {'Content-Type':'application/json'});
+        return res.end(JSON.stringify(global.__gbxTokenIdx.registry()));
+      } catch (e) { res.writeHead(500); return res.end('token-index error'); }
+    }
+    if (req.method === 'GET' && url.pathname.startsWith('/api/token/')) {
+      const dbp = process.env.GBX_TOKENIDX_DB;
+      if (!dbp) { res.writeHead(404); return res.end('not enabled'); }
+      try {
+        const { openTokenIndex } = require('./gbx-token-read.js');
+        if (!global.__gbxTokenIdx) global.__gbxTokenIdx = openTokenIndex(dbp);
+        const out = global.__gbxTokenIdx.coin(url.pathname.slice('/api/token/'.length));
+        if (!out) { res.writeHead(404); return res.end('unknown coin'); }
+        res.writeHead(200, {'Content-Type':'application/json'});
+        return res.end(JSON.stringify(out));
+      } catch (e) { res.writeHead(500); return res.end('token-index error'); }
+    }
     if (req.method === 'GET' && url.pathname === '/api/htlc-registry') {
       // GBX on-chain HTLC contract registry (GBX:HTLC: OP_RETURN). Read-only, keyless.
       try {

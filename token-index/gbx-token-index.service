@@ -1,0 +1,23 @@
+# IDEE V token-index scanner — DISABLED by default.
+# Enable only when nLaunchpadHeight is activated on mainnet.
+# Reads token holdings purely from chain (keyless, reorg-safe, SQLite).
+[Unit]
+Description=GBX token index (IDEE V: on-chain token holdings, keyless)
+After=goldbrixd.service
+Wants=goldbrixd.service
+
+[Service]
+Environment=GBX_BIN=/usr/local/bin/goldbrix-cli
+Environment=GBX_DATADIR=/root/.bitcoin
+Environment=GBX_CHAIN=main
+Environment=GBX_RPC_PORT=8332
+Environment=GBX_TOKENIDX_DB=/root/goldbrix-tools/token-index/token-index.db
+Environment=GBX_TOKENIDX_START=0
+Environment=GBX_SQLITE_MOD=/root/goldbrix-tools/read-api/node_modules/better-sqlite3
+ExecStart=/usr/bin/node /root/goldbrix-tools/token-index/scanner.js --loop
+Restart=always
+RestartSec=10
+MemoryMax=1024M
+
+[Install]
+WantedBy=multi-user.target
