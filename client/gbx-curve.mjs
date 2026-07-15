@@ -12,6 +12,11 @@ export const GRADUATION_SAT = 80000n * COIN;
 export const CURVE_FEE_BPS = 50n;
 export const POOL_FEE_BPS  = 30n;
 export const MIN_DEV_BUY_SAT = 1n; // IDEE W: no minimum in money — the barrier is WORK
+// ── IDEE X: graduation by the coin's OWN activity — no absolute money value ──
+export const GRAD_DEPTH_N   = 20n;              // pool >= N x largest recent trade -> slippage <= 1/N
+export const GRAD_MIN_SAT   = 2000n * COIN;     // absolute floor, anti-degenerate only
+export const GRAD_WINDOW_MAIN = 201600;         // ~7 days @3s (regtest: 30) — Consensus::Params mirror
+export const HM_MAX_AGE = 100;                  // stamp freshness slack = CREATE_POW_MAX_AGE
 export const DUST_SAT = 546n;
 export const REFUND_IDLE_BLOCKS = 864000;
 export const MAX_MONEY = 15000000n * COIN;
@@ -46,11 +51,47 @@ function push(data){ const n=data.length;
   throw new Error('push too large'); }
 const cat=(...a)=>{ const t=new Uint8Array(a.reduce((s,x)=>s+x.length,0));
   let o=0; for(const x of a){t.set(x,o);o+=x.length;} return t; };
+export const be4 = v => { const b=new Uint8Array(4); new DataView(b.buffer).setUint32(0, Number(v)); return b; };
 export const be8 = v => { const b=new Uint8Array(8); new DataView(b.buffer).setBigUint64(0, BigInt(v)); return b; };
 export const hex = b => Array.from(b,x=>x.toString(16).padStart(2,'0')).join('');
 export const unhex = s => Uint8Array.from(s.match(/../g)??[], x=>parseInt(x,16));
 
-export function curveWitnessScript(cid){ return cat(push(cid), Uint8Array.of(OP.DROP, OP.TRUE)); }
+// IDEE X format: <cid:32> <M:8> <h_M:4> OP_2DROP OP_DROP OP_TRUE — byte-identical
+// to consensus CurveWitnessScript. The curve address MOVES with (M, h_M).
+export function curveWitnessScript(cid, m, hM){
+  if (m===undefined || hM===undefined) throw new Error('IDEE X: curveWitnessScript(cid, M, h_M) — old single-arg format is gone');
+  return cat(push(cid), push(be8(m)), push(be4(hM)), Uint8Array.of(OP.DROP2, OP.DROP, OP.TRUE)); }
+// Mirror of consensus ParseCurveWitnessScript: read (M, h_M) out of a revealed script.
+export function parseCurveWitnessScript(wsBytes, cidHex){
+  const b=wsBytes; let i=0;
+  const rd=n=>{ if(b[i]!==n) return null; const d=b.subarray(i+1,i+1+n); i+=1+n; return d; };
+  const id=rd(32); if(!id) return null;
+  const m=rd(8);  if(!m)  return null;
+  const h=rd(4);  if(!h)  return null;
+  if(b[i++]!==OP.DROP2||b[i++]!==OP.DROP||b[i++]!==OP.TRUE||i!==b.length) return null;
+  if(cidHex && hex(id)!==cidHex) return null;
+  return { m:new DataView(m.buffer,m.byteOffset).getBigUint64(0),
+           hM:new DataView(h.buffer,h.byteOffset).getUint32(0), cid:hex(id) }; }
+// IDEE X — the market-memory transition, mirror of consensus (gbx_launchpad.cpp).
+// trade: net GBX into the curve (CREATE/BUY: gross - fee; SELL: gross out; REFUND: 0n).
+// When M updates, h_M is the stamp the client DECLARES (its best tip height);
+// consensus demands only freshness <= HM_MAX_AGE.
+export function nextMarketMemory(mIn, hmIn, trade, spendHeight, gradWindow, declareHeight){
+  mIn=BigInt(mIn); trade=BigInt(trade);
+  let m=mIn, hM=Number(hmIn), updated=false;
+  if (trade>0n){
+    const expired = hM!==0 && (spendHeight - hM) > gradWindow;
+    if (expired || trade>m){ m=trade; hM=declareHeight??spendHeight; updated=true; }
+  }
+  return { m, hM, updated }; }
+// IDEE X — graduation legality, mirror of consensus: full curve OR R >= max(N*M_live, R_MIN).
+export function canGraduate(reserve, mIn, hmIn, spendHeight, gradWindow){
+  reserve=BigInt(reserve); mIn=BigInt(mIn);
+  const full = curveTokensSold(reserve) >= CURVE_TOKENS;
+  const mLive = Number(hmIn)!==0 && (spendHeight-Number(hmIn)) <= gradWindow;
+  const mEff = mLive ? mIn : 0n;
+  const deep = reserve >= GRAD_MIN_SAT && reserve >= mEff*GRAD_DEPTH_N;
+  return full || deep; }
 export function tokenWitnessScript(cid, amount, pk){
   return cat(push(cid), push(be8(amount)), Uint8Array.of(OP.DROP2), push(pk), Uint8Array.of(OP.CHECKSIG)); }
 export function poolWitnessScript(cid, tokens){
