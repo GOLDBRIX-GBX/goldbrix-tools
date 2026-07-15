@@ -41,6 +41,45 @@ export function curveSell(reserve, tokensIn){ reserve=BigInt(reserve); tokensIn=
   if (gbxOut>reserve) gbxOut=reserve;
   return { gbxOut, newReserve: reserve-gbxOut }; }
 
+// ── honest quote with REAL price impact (pure curve math, no server) ──────────
+// Spot price of 1 token in GBX-sat = dGBX/dTokens = K/(V_GBX_SAT+R)^2 (x*y=k).
+// All BigInt in sats; ratios returned as JS numbers only for display.
+export function spotPriceSat(reserve){
+  // marginal GBX-sat paid for the next token = dGBX/dTokens.
+  // tokens(R) = V_TOKENS - K/(V_GBX_SAT+R)  =>  dTokens/dR = K/cur^2
+  // so price-per-token in GBX = dR/dTokens = cur^2/K. Rises as R grows (buy).
+  const cur = V_GBX_SAT + BigInt(reserve);
+  return Number(cur*cur) / Number(K);
+}
+// BUY quote for gbxInSat (gross, before fee). Returns tokensOut, avg & impact.
+export function quoteBuy(reserve, gbxInSat){
+  reserve = BigInt(reserve); gbxInSat = BigInt(gbxInSat);
+  const fee = curveFee(gbxInSat);
+  const net = gbxInSat - fee;
+  const rc = curveBuy(reserve, net);
+  if (rc === null) return { ok:false, reason:'exhausted_or_invalid' };
+  const pBefore = spotPriceSat(reserve);
+  const pAfter  = spotPriceSat(rc.newReserve);
+  const avg = Number(net) / Number(rc.tokensOut); // GBX-sat paid per token (net)
+  return { ok:true, side:'buy',
+    tokensOut: rc.tokensOut, newReserve: rc.newReserve, feeSat: fee, netSat: net,
+    priceBefore: pBefore, priceAfter: pAfter, avgPrice: avg,
+    impactPct: pBefore>0 ? (pAfter - pBefore)/pBefore*100 : 0 };
+}
+// SELL quote for tokensIn. Returns gbxOut (before fee), avg & impact.
+export function quoteSell(reserve, tokensIn){
+  reserve = BigInt(reserve); tokensIn = BigInt(tokensIn);
+  const rc = curveSell(reserve, tokensIn);
+  if (rc === null) return { ok:false, reason:'invalid' };
+  const fee = curveFee(rc.gbxOut);
+  const pBefore = spotPriceSat(reserve);
+  const pAfter  = spotPriceSat(rc.newReserve);
+  const avg = Number(rc.gbxOut) / Number(tokensIn);
+  return { ok:true, side:'sell',
+    gbxOut: rc.gbxOut, netOut: rc.gbxOut - fee, feeSat: fee, newReserve: rc.newReserve,
+    priceBefore: pBefore, priceAfter: pAfter, avgPrice: avg,
+    impactPct: pBefore>0 ? (pAfter - pBefore)/pBefore*100 : 0 };
+}
 // ── scripts (byte-identical to consensus) ──────────────────────────────────
 const sha256 = async b => new Uint8Array(await crypto.subtle.digest('SHA-256', b));
 const OP={DROP:0x75,TRUE:0x51,DROP2:0x6d,CHECKSIG:0xac,RETURN:0x6a,ZERO:0x00};
