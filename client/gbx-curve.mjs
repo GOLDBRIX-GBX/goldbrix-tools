@@ -8,7 +8,6 @@ export const V_GBX_SAT   = 30000n * COIN;
 export const V_TOKENS    = 1073000000n;
 export const CURVE_TOKENS= 800000000n;
 export const LP_TOKENS   = 200000000n;
-export const GRADUATION_SAT = 80000n * COIN;
 export const CURVE_FEE_BPS = 50n;
 export const POOL_FEE_BPS  = 30n;
 export const MIN_DEV_BUY_SAT = 1n; // IDEE W: no minimum in money — the barrier is WORK
@@ -118,6 +117,46 @@ export function intentPayload(op, cid, amount, tokensOut, pk){
 
 // Self-verify: parse an OP_RETURN scriptPubKey hex exactly like the indexer/consensus.
 // A client MUST call this on its own tx before broadcast. Returns intent or null.
+// ── coin metadata on chain: 'GBX:M:'+ver(1)+cid(32)+tLen(1)+ticker+nLen(1)+name.
+// Indexers accept it ONLY when the tx is signed by the creator pk from the
+// CREATE intent (P2WPKH witness reveals it). First on chain wins the ticker.
+export const META_VER = 1;
+export const META_TICKER_MAX = 10;
+export const META_NAME_MAX = 50;
+export function metaPayload(cid, ticker, name){
+  const t = new TextEncoder().encode(ticker);
+  const n = new TextEncoder().encode(name);
+  if (cid.length !== 32) throw new Error('cid must be 32 bytes');
+  if (t.length < 1 || t.length > META_TICKER_MAX) throw new Error('ticker 1-10 bytes');
+  if (/[^A-Z0-9]/.test(ticker)) throw new Error('ticker A-Z 0-9 only');
+  if (n.length < 1 || n.length > META_NAME_MAX) throw new Error('name 1-50 bytes');
+  const tag = new TextEncoder().encode('GBX:M:');
+  const raw = cat(tag, Uint8Array.of(META_VER), cid, Uint8Array.of(t.length), t, Uint8Array.of(n.length), n);
+  const script = cat(Uint8Array.of(OP.RETURN), push(raw));
+  return { raw, script };
+}
+// Self-verify mirror: parse an OP_RETURN spk exactly like the indexer. null = not meta.
+export function parseMetaFromScriptHex(spkHex){
+  const b = unhex(spkHex);
+  if (b.length < 2 || b[0] !== OP.RETURN) return null;
+  let d;
+  if (b[1] <= 75) d = b.subarray(2);
+  else if (b[1] === 0x4c) d = b.subarray(3);
+  else return null;
+  const tag = new TextEncoder().encode('GBX:M:');
+  if (d.length < 42) return null;
+  for (let i = 0; i < 6; i++) if (d[i] !== tag[i]) return null;
+  if (d[6] !== META_VER) return null;
+  const cid = d.subarray(7, 39);
+  const tLen = d[39];
+  if (tLen < 1 || tLen > META_TICKER_MAX || d.length < 41 + tLen) return null;
+  const ticker = new TextDecoder().decode(d.subarray(40, 40 + tLen));
+  if (/[^A-Z0-9]/.test(ticker)) return null;
+  const nLen = d[40 + tLen];
+  if (nLen < 1 || nLen > META_NAME_MAX || d.length !== 41 + tLen + nLen) return null;
+  const name = new TextDecoder().decode(d.subarray(41 + tLen));
+  return { cid: hex(cid), ticker, name };
+}
 export function parseIntentFromScriptHex(spkHex){
   const b=unhex(spkHex);
   if(b[0]!==OP.RETURN) return null;

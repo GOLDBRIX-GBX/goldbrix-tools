@@ -56,6 +56,37 @@ function parseIntent(tx){
   }
   return null;
 }
+// ── coin metadata (name/ticker) from the chain alone: 'GBX:M:'+ver(1)+cid(32)+
+// tLen(1)+ticker+nLen(1)+name. Valid ONLY if the tx is signed by the creator pk
+// from the CREATE intent (P2WPKH witness reveals it). First on chain wins.
+function parseMeta(tx){
+  for (const o of tx.vout){
+    const hex = (o.scriptPubKey && o.scriptPubKey.hex) || '';
+    if (!hex.startsWith('6a')) continue;
+    let data;
+    try { [data] = readPush(Buffer.from(hex,'hex'), 1); } catch { continue; }
+    if (!data.subarray(0,6).equals(Buffer.from('GBX:M:'))) continue;
+    if (data.length < 42 || data[6] !== 0x01) continue;
+    const cid = data.subarray(7,39);
+    const tLen = data[39];
+    if (tLen < 1 || tLen > 10 || data.length < 41+tLen) continue;
+    const ticker = data.subarray(40, 40+tLen).toString('utf8');
+    if (/[^A-Z0-9]/.test(ticker)) continue;
+    const nLen = data[40+tLen];
+    if (nLen < 1 || nLen > 50 || data.length !== 41+tLen+nLen) continue;
+    const name = data.subarray(41+tLen).toString('utf8');
+    return { cid: cid.toString('hex'), ticker, name };
+  }
+  return null;
+}
+function witnessPks(tx){
+  const out = new Set();
+  for (const vin of (tx.vin||[])){
+    const w = vin.txinwitness;
+    if (w && w.length === 2 && (w[1].length === 66)) out.add(w[1]); // P2WPKH: [sig, pk33]
+  }
+  return out;
+}
 // ── IDEE X: curve state (reserve, M, h_M) tracked from the chain alone ──────
 const COIN=100000000n, V_GBX=30000n*COIN, V_TOK=1073000000n, CURVE_TOKENS=800000000n;
 const KCURVE=V_GBX*V_TOK, FEE_BPS=50n;
@@ -102,8 +133,11 @@ CREATE TABLE IF NOT EXISTS token_utxos(
   height INTEGER NOT NULL, spent_height INTEGER,
   PRIMARY KEY(txid, vout));
 CREATE INDEX IF NOT EXISTS tu_live ON token_utxos(coin_id, pk) WHERE spent_height IS NULL;
+CREATE TABLE IF NOT EXISTS coin_meta(
+  coin_id TEXT PRIMARY KEY, ticker TEXT NOT NULL, name TEXT NOT NULL,
+  txid TEXT NOT NULL, height INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS curves(
-  coin_id TEXT PRIMARY KEY,
+  coin_id TEXT PRIMARY KEY, creator_pk TEXT NOT NULL DEFAULT '',
   txid TEXT NOT NULL, vout INTEGER NOT NULL,
   reserve TEXT NOT NULL, m TEXT NOT NULL, h_m INTEGER NOT NULL,
   height INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'live');
@@ -113,6 +147,7 @@ CREATE TABLE IF NOT EXISTS curve_log(
   reserve TEXT NOT NULL, m TEXT NOT NULL, h_m INTEGER NOT NULL, status TEXT NOT NULL);
 CREATE INDEX IF NOT EXISTS cl_h ON curve_log(height);
 `);
+try{ db.exec("ALTER TABLE curves ADD COLUMN creator_pk TEXT NOT NULL DEFAULT ''"); }catch(_e){}
 const q = {
   getMeta:  db.prepare('SELECT v FROM meta WHERE k=?'),
   setMeta:  db.prepare('INSERT INTO meta(k,v) VALUES(?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v'),
@@ -128,6 +163,12 @@ const q = {
                         FROM token_utxos WHERE spent_height IS NULL GROUP BY coin_id, pk`),
   cGet:     db.prepare('SELECT * FROM curves WHERE coin_id=?'),
   cByOut:   db.prepare('SELECT * FROM curves WHERE txid=? AND vout=?'),
+  mGet:     db.prepare('SELECT ticker,name FROM coin_meta WHERE coin_id=?'),
+  mTicker:  db.prepare('SELECT coin_id FROM coin_meta WHERE ticker=?'),
+  mPut:     db.prepare('INSERT OR IGNORE INTO coin_meta(coin_id,ticker,name,txid,height) VALUES(?,?,?,?,?)'),
+  mRb:      db.prepare('DELETE FROM coin_meta WHERE height>?'),
+  cPk:      db.prepare('SELECT creator_pk FROM curves WHERE coin_id=?'),
+  cSetPk:   db.prepare('UPDATE curves SET creator_pk=? WHERE coin_id=?'),
   cPut:     db.prepare(`INSERT INTO curves(coin_id,txid,vout,reserve,m,h_m,height,status)
                         VALUES(?,?,?,?,?,?,?,?)
                         ON CONFLICT(coin_id) DO UPDATE SET txid=excluded.txid, vout=excluded.vout,
@@ -158,6 +199,7 @@ const scanned = () => parseInt(q.getMeta.get('scanned')?.v ?? String(START - 1),
 const rollbackTo = db.transaction(h => {
   q.rbNew.run(h); q.rbSpent.run(h); q.rbBlk.run(h);
   q.cRb.run(h);
+  q.mRb.run(h);
   for (const {coin_id} of q.cAllIds.all()){
     const last = q.cLast.get(coin_id);
     if (last) q.cPut.run(coin_id, last.txid, last.vout, last.reserve, last.m, last.h_m, last.height, last.status);
@@ -186,6 +228,7 @@ const applyBlock = db.transaction((h, blk) => {
             for (let d=0; d<=100 && h-d>=0; d++){
               if (hexs === p2wsh(curveWS(it.cid, net, h-d))){
                 q.cPut.run(cidHex, tx.txid, o.n, born.reserve.toString(), net.toString(), h-d, h, 'live');
+                q.cSetPk.run(it.pk.toString('hex'), cidHex);
                 q.cLog.run(h, cidHex, tx.txid, o.n, born.reserve.toString(), net.toString(), h-d, 'live');
                 d=101; break;
               }
@@ -230,6 +273,13 @@ const applyBlock = db.transaction((h, blk) => {
           break;
         }
       }
+    }
+    const meta = parseMeta(tx);
+    if (meta){
+      const row = q.cPk.get(meta.cid);
+      if (row && row.creator_pk && witnessPks(tx).has(row.creator_pk)
+          && !q.mGet.get(meta.cid) && !q.mTicker.get(meta.ticker))
+        q.mPut.run(meta.cid, meta.ticker, meta.name, tx.txid, h);
     }
     if (!it || !'CBPSR'.includes(it.op) || it.tokensOut <= 0n) continue;  // C,B,P mint tokens; S,R return change — every one of them creates a token UTXO
     const spk = p2wsh(tokenWS(it.cid, it.tokensOut, it.pk));
@@ -285,7 +335,9 @@ function dump(){
     const sold = tokensSold(R);
     const pctR = bar>0n ? Number(R*10000n/bar)/100 : 0;
     const pctT = Number(sold*10000n/CURVE_TOKENS)/100;
-    console.log(`  curve=${c.coin_id.slice(0,16)}.. status=${c.status} R=${(Number(R)/1e8).toFixed(2)} GBX`+
+    const md = q.mGet.get(c.coin_id);
+    const lbl = md ? ` $${md.ticker} "${md.name}"` : '';
+    console.log(`  curve=${c.coin_id.slice(0,16)}..${lbl} status=${c.status} R=${(Number(R)/1e8).toFixed(2)} GBX`+
       ` M=${(Number(m)/1e8).toFixed(2)}${mLive?'(live)':'(expired)'} bar=${(Number(bar)/1e8).toFixed(2)}`+
       ` progress=${Math.min(pctR,100).toFixed(1)}% sold=${pctT.toFixed(2)}%`);
   }
