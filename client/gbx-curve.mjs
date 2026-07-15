@@ -165,8 +165,11 @@ export function parseIntentFromScriptHex(spkHex){
   else if(b[1]===0x4c){ len=b[2]; i=3; }
   else return null;
   const data=b.subarray(i,i+len);
-  if(data.length!==88) return null;
   if(hex(data.subarray(0,6))!==hex(new TextEncoder().encode('GBX:C:'))) return null;
+  // mirror of the indexer/consensus: a CREATE carries its 80-byte proof right
+  // after the 88-byte intent (168 total); every other op is exactly 88.
+  const isCreate = data.length>=7 && data[6]===0x43;
+  if(!(data.length===88 || (isCreate && data.length===168))) return null;
   const dv=new DataView(data.buffer,data.byteOffset);
   return { op:String.fromCharCode(data[6]), cid:hex(data.subarray(7,39)),
            amount:dv.getBigUint64(39), tokensOut:dv.getBigUint64(47), pk:hex(data.subarray(55,88)) }; }
