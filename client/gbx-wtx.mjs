@@ -1,6 +1,6 @@
 // Minimal segwit tx surgery: set the witness stack of one input.
 // The curve/pool inputs are anyone-can-spend: witness = [witnessScript] only.
-import { unhex, hex } from '/gbx-curve.mjs';
+import { unhex, hex } from './gbx-curve.mjs';
 function rdVarint(b,i){ const n=b[i];
   if(n<0xfd) return [BigInt(n),i+1];
   if(n===0xfd) return [BigInt(b[i+1]|(b[i+2]<<8)),i+3];

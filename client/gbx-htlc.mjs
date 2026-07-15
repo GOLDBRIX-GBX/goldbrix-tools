@@ -73,3 +73,6 @@ export function buildFundTx(p, signDigest){
   for(let i=0;i<utxos.length;i++) tx = concatBytes([tx, varint(2), serStr(wit[i]), serStr(userPubkey)]);
   return concatBytes([tx, u32le(nLockTime)]);
 }
+
+// re-exported primitives for the mixed-input curve tx builder (flow)
+export { u32le, u64le };
