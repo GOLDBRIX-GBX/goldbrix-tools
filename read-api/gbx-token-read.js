@@ -19,11 +19,56 @@ function openTokenIndex(dbPath){
                          GROUP BY pk ORDER BY amount DESC LIMIT ?`),
     holderCount: db.prepare(`SELECT COUNT(DISTINCT pk) n FROM token_utxos
                              WHERE coin_id=? AND spent_height IS NULL`),
+    // IDEE X: curves live from the chain (rule X scanner tables)
+    curves: db.prepare(`SELECT c.coin_id, c.txid, c.vout, c.reserve, c.m, c.h_m, c.height, c.status,
+                               m.ticker, m.name,
+                               (SELECT COUNT(DISTINCT pk) FROM token_utxos t
+                                 WHERE t.coin_id=c.coin_id AND t.spent_height IS NULL) holders
+                        FROM curves c LEFT JOIN coin_meta m ON m.coin_id=c.coin_id
+                        ORDER BY c.height DESC`),
+    curveOne: db.prepare(`SELECT c.coin_id, c.txid, c.vout, c.reserve, c.m, c.h_m, c.height, c.status,
+                                 m.ticker, m.name
+                          FROM curves c LEFT JOIN coin_meta m ON m.coin_id=c.coin_id
+                          WHERE c.coin_id=?`),
+    curveLog: db.prepare(`SELECT height, reserve, m, h_m, status FROM curve_log
+                          WHERE coin_id=? ORDER BY height ASC LIMIT ?`),
   };
+  // honest graduation math — mirror of the scanner/consensus (BigInt, sats)
+  const N=20n, R_MIN=200000000000n, K=201600, V_GBX=3000000000000n, KCURVE=V_GBX*80000000000000000n, CURVE_TOKENS=800000000n;
+  function curveView(r, tip){
+    const R=BigInt(r.reserve), M=BigInt(r.m);
+    const mLive = r.h_m!==0 && (tip - r.h_m) <= K;
+    const bar = mLive ? (M*N > R_MIN ? M*N : R_MIN) : R_MIN;
+    const soldTok = CURVE_TOKENS - (KCURVE/(V_GBX+R));
+    return { coin_id:r.coin_id, ticker:r.ticker||null, name:r.name||null, status:r.status,
+             curve_txid:r.txid, curve_vout:r.vout, height:r.height,
+             reserve_sat:R.toString(), m_sat:M.toString(), h_m:r.h_m, m_live:mLive,
+             bar_sat:bar.toString(),
+             progress_pct: bar>0n ? Number(R*10000n/bar)/100 : 0,
+             sold_tokens: soldTok.toString(),
+             sold_pct: Number(soldTok*10000n/CURVE_TOKENS)/100,
+             holders: r.holders };
+  }
   return {
     registry(){
       return { scanned: parseInt(q.meta.get('scanned')?.v ?? '-1', 10),
                coins: q.coins.all() };
+    },
+    curvesAll(){
+      const tip = parseInt(q.meta.get('scanned')?.v ?? '0', 10);
+      return { scanned: tip, curves: q.curves.all().map(r => curveView(r, tip)) };
+    },
+    curveDetail(coinId, logLimit = 2000){
+      if (!/^[0-9a-f]{64}$/.test(coinId)) return null;
+      const r = q.curveOne.get(coinId);
+      if (!r) return null;
+      const tip = parseInt(q.meta.get('scanned')?.v ?? '0', 10);
+      const out = curveView({...r, holders: q.holderCount.get(coinId).n}, tip);
+      out.scanned = tip;
+      out.log = q.curveLog.all(coinId, Math.min(logLimit, 5000))
+                 .map(l => ({height:l.height, reserve_sat:l.reserve, m_sat:l.m, h_m:l.h_m, status:l.status}));
+      out.holders_list = q.holders.all(coinId, 100);
+      return out;
     },
     coin(coinId, limit = 100){
       if (!/^[0-9a-f]{64}$/.test(coinId)) return null;

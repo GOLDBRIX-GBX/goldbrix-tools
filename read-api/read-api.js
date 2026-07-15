@@ -414,6 +414,21 @@ const server = http.createServer(async (req, res) => {
         return res.end(JSON.stringify(out));
       } catch (e) { res.writeHead(500); return res.end('token-index error'); }
     }
+    // IDEE X: curves live from the chain — list + detail (guarded by GBX_TOKENIDX_DB)
+    if (req.method === 'GET' && (url.pathname === '/api/curves' || url.pathname.startsWith('/api/curves/'))) {
+      const dbp = process.env.GBX_TOKENIDX_DB;
+      if (!dbp) { res.writeHead(404); return res.end('not enabled'); }
+      try {
+        const { openTokenIndex } = require('./gbx-token-read.js');
+        if (!global.__gbxTokenIdx) global.__gbxTokenIdx = openTokenIndex(dbp);
+        let out;
+        if (url.pathname === '/api/curves') out = global.__gbxTokenIdx.curvesAll();
+        else out = global.__gbxTokenIdx.curveDetail(url.pathname.slice('/api/curves/'.length));
+        if (!out) { res.writeHead(404); return res.end('unknown curve'); }
+        res.writeHead(200, {'Content-Type':'application/json'});
+        return res.end(JSON.stringify(out));
+      } catch (e) { res.writeHead(500); return res.end('curve-index error'); }
+    }
     if (req.method === 'GET' && url.pathname === '/api/htlc-registry') {
       // GBX on-chain HTLC contract registry (GBX:HTLC: OP_RETURN). Read-only, keyless.
       try {
