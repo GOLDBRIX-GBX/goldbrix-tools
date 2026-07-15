@@ -1,3 +1,6 @@
 *.bak*
 read-api/node_modules/
 node-registry/node-registry.json
+token-index/*.db
+token-index/*.db-shm
+token-index/*.db-wal
