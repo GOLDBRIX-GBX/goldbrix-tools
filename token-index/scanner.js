@@ -19,7 +19,7 @@ const MODE    = process.argv[2] || '--loop';                // --oneshot | --dum
 
 function cli(...args){
   const base = [`-datadir=${DATADIR}`, `-rpcport=${RPCPORT}`];
-  if (CHAIN === 'main') base.unshift('-regtest');
+  if (CHAIN !== 'main') base.unshift('-regtest');
   const out = execFileSync(BIN, [...base, ...args.map(String)],
                            { encoding:'utf8', maxBuffer: 64*1024*1024 });
   const s = out.trim();
