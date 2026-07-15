@@ -108,7 +108,7 @@ export function buildMetaTx({ cidHex, ticker, name, utxos, pkU,
 }
 
 // ── on-device BUY / SELL / REFUND (mirror of consensus + x_lib proven layouts) ──
-import { quoteBuy, quoteSell, curveSell, parseCurveWitnessScript as _pcws,
+import { quoteBuy, quoteSell, curveSell, curveTokensSold, parseCurveWitnessScript as _pcws,
          curveWitnessScript as _cws } from './gbx-curve.mjs';
 
 export const TRADE_FEE_SAT = 50000n; // flat network fee, paid from user funds
@@ -156,7 +156,9 @@ export async function buildSellTx({ curve, holding, tokensInSat, utxos, pkU, K,
   const spendH = curve.tipHeight + 1;
   const t = nextM({ m: BigInt(curve.m), hM: curve.hM }, q.gbxOut, spendH, K);
   const newWs = _cws(curve.cid, t.m, t.hM);
-  const it = intentPayload('S', curve.cid, q.gbxOut, BigInt(tokensInSat), pkU);
+  // consensus: SELL intent = (amount=tokens sold, tokens_out=TOKEN CHANGE left to the seller)
+  const tokenRestI = BigInt(holding.amount) - BigInt(tokensInSat);
+  const it = intentPayload('S', curve.cid, BigInt(tokensInSat), tokenRestI, pkU);
   const tokenRest = BigInt(holding.amount) - BigInt(tokensInSat);
   if (tokenRest < 0n) throw new Error('not enough tokens');
   const { ins, sum } = selectUtxos(utxos, TRADE_FEE_SAT);
@@ -179,18 +181,27 @@ export async function buildSellTx({ curve, holding, tokensInSat, utxos, pkU, K,
 
 // REFUND: THE LAW — the user's own money comes home, NO fee burned, (M,h_M) untouched.
 export async function buildRefundTx({ curve, holding, utxos, pkU, p2wpkhSpkOf }){
-  const rc = curveSell(curve.reserve, BigInt(holding.amount));
-  if (rc === null) throw new Error('refund math failed');
+  // consensus REFUND (THE LAW): pro-rata — out = reserve*amount/sold (floor), no fee,
+  // intent = (amount=tokens returned, tokens_out=token change). (M,h_M) untouched.
+  const R = BigInt(curve.reserve);
+  const sold = curveTokensSold(R);
+  const amount = BigInt(holding.amount);           // full refund of this holding
+  if (sold <= 0n || amount <= 0n || amount > sold) throw new Error('refund math failed');
+  const out = (R * amount) / sold;                 // 128-bit floor mirror (BigInt exact)
+  const newReserve = R - out;
   const sameWs = _cws(curve.cid, BigInt(curve.m), curve.hM); // UNCHANGED
-  const it = intentPayload('R', curve.cid, rc.gbxOut, BigInt(holding.amount), pkU);
+  const it = intentPayload('R', curve.cid, amount, 0n, pkU); // change_r = 0 (full holding)
   const { ins, sum } = selectUtxos(utxos, TRADE_FEE_SAT);
   const change = sum - TRADE_FEE_SAT;
   const outs = [];
   if (change > DUST_SAT) outs.push({ spk: p2wpkhSpkOf(pkU), value8: Number(change) });
-  outs.push({ spk: await p2wsh(sameWs), value8: Number(rc.newReserve) });
-  outs.push({ spk: p2wpkhSpkOf(pkU),    value8: Number(rc.gbxOut) }); // full, no fee
-  outs.push({ spk: opReturn(it.raw),    value8: 0 });
-  return { gbxOut: rc.gbxOut,
+  // last-holder-out: if the reserve would fall to dust, it is burned and the curve closes
+  const dustClose = newReserve <= DUST_SAT;
+  if (dustClose === false) outs.push({ spk: await p2wsh(sameWs), value8: Number(newReserve) });
+  outs.push({ spk: p2wpkhSpkOf(pkU), value8: Number(out) }); // full, no fee
+  if (dustClose === true && newReserve > 0n) outs.push({ spk: burnScript(), value8: Number(newReserve) });
+  outs.push({ spk: opReturn(it.raw), value8: 0 });
+  return { gbxOut: out,
            oldWsHex: hex(sameWs),
            tokenWsHex: hex(tokenWitnessScript(curve.cid, BigInt(holding.amount), pkU)),
            inputs: [{txid: curve.txid, vout: curve.vout, value8: Number(curve.reserve)},
@@ -215,7 +226,7 @@ export function buildCurveTx(inputs, outs, pkU, signDigest, nLockTime = 0){
     if (u.kind === 'token') scriptCode = serStr(u.ws);               // the token witness script
     else scriptCode = concatBytes([Uint8Array.of(0x19,0x76,0xa9,0x14), hash160(pkU), Uint8Array.of(0x88,0xac)]);
     const outpoint = concatBytes([_uh(u.txid).reverse(), u32le(u.vout)]);
-    const pre = concatBytes([u32le(1), prevouts, seqs, outpoint, scriptCode,
+    const pre = concatBytes([u32le(2), prevouts, seqs, outpoint, scriptCode,
                              u64le(u.value8), u32le(nSeq), houts, u32le(nLockTime), u32le(1)]);
     const sig = concatBytes([signDigest(dsha256(pre)), Uint8Array.of(0x01)]);
     wit.push(u.kind === 'token' ? [sig, u.ws] : [sig, pkU]);
@@ -229,4 +240,23 @@ export function buildCurveTx(inputs, outs, pkU, signDigest, nLockTime = 0){
     for (const item of w) tx = concatBytes([tx, serStr(item)]);
   }
   return concatBytes([tx, u32le(nLockTime)]);
+}
+
+// ── GRADUATE: curve full OR R >= max(N*M_live, R_MIN) — checked by consensus.
+// Pool gets the ENTIRE reserve (fee comes from a separate user input). Anyone can call it.
+export function poolWitnessScript(cid){
+  // <push32 cid> OP_DROP OP_TRUE — mirror of consensus BuildPoolScript
+  const o = new Uint8Array(35); o[0]=32; o.set(cid,1); o[33]=0x75; o[34]=0x51; return o;
+}
+export async function buildGraduateTx({ curve, utxos, pkU, p2wpkhSpkOf }){
+  const it = intentPayload('G', curve.cid, BigInt(curve.reserve), 0n, pkU);
+  const { ins, sum } = selectUtxos(utxos, TRADE_FEE_SAT);
+  const change = sum - TRADE_FEE_SAT;
+  const outs = [];
+  if (change > DUST_SAT) outs.push({ spk: p2wpkhSpkOf(pkU), value8: Number(change) });
+  outs.push({ spk: await p2wsh(poolWitnessScript(curve.cid)), value8: Number(curve.reserve) });
+  outs.push({ spk: opReturn(it.raw), value8: 0 });
+  return { oldWsHex: hex(curveWitnessScript(curve.cid, BigInt(curve.m), curve.hM)),
+           inputs: [{txid: curve.txid, vout: curve.vout, value8: Number(curve.reserve)}, ...ins],
+           outs };
 }
