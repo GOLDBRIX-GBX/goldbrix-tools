@@ -54,10 +54,10 @@ input::-moz-placeholder, textarea::-moz-placeholder {
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/goldbrix-brand-180.png">
     <script src="/gbx-update-check.js" defer></script>
     <script src="/gbx-native-bridge.js" defer></script>
-      <script src="/i18n.js?v=103" defer></script>
-  <script src="/promo-banner.js?v=103" defer></script>
+      <script src="/i18n.js?v=104" defer></script>
+  <script src="/promo-banner.js?v=104" defer></script>
 <style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
-<script src="/v3/nav-i18n.js?v=103" defer></script>
+<script src="/v3/nav-i18n.js?v=104" defer></script>
 </head>
 <body>
 <div class="v3-app">
@@ -73,7 +73,7 @@ input::-moz-placeholder, textarea::-moz-placeholder {
   </div>
   <div class="wp-sect" style="text-align:center;">
     <div class="wp-sect__title" id="sFounder" style="justify-content:center;">The Founder</div>
-    <img src="/assets/brand/goldbrix-founder-512.png?v=103" alt="Gideon Brick" style="width:150px;height:150px;border-radius:50%;margin:6px auto 12px;display:block;box-shadow:0 0 22px rgba(201,162,39,0.45);">
+    <img src="/assets/brand/goldbrix-founder-512.png?v=104" alt="Gideon Brick" style="width:150px;height:150px;border-radius:50%;margin:6px auto 12px;display:block;box-shadow:0 0 22px rgba(201,162,39,0.45);">
     <div style="font-size:17px;font-weight:800;color:#e8c455;margin:0 0 10px;letter-spacing:0.5px;">Gideon Brick</div>
     <div class="wp-sect__body" id="bFounder"></div>
   </div>
@@ -137,7 +137,7 @@ const T = {
     sFounder:'The Founder', bFounder:'GoldBrix was built by <strong>Gideon Brick</strong> — an anonymous founder who laid it brick by brick, then walked away. No CEO. No company. No key. The founder mines like anyone else and keeps no privileged control. <strong>Real chain. Real burn. Real fairness.</strong>',
     sTokenomics:'Tokenomics', bTokenomics:'GBX is the native token. Pure proof-of-work emission. No premine. No founder allocation. Capped supply: 15,000,000 GBX. Dual-phase emission: bootstrap phase issues 50 GBX per 10-minute block until block 20,000, then production phase activates with 3-second blocks via LWMA-3 difficulty algorithm and 0.25 GBX subsidy with stepped deflationary schedule (subsidy halves every 28,000,000 blocks).',
     sLaunchpad:'Memecoin Launchpad', bLaunchpad:'Anyone can launch memecoins backed by GBX via bonding curve. Curve auto-prices coin. No liquidity pools needed. Each coin has its own OP_RETURN registry on-chain.',
-    sFees:'Fee Structure', bFees:'<ul><li>Launch: dev buy 0.5% &rarr; burn</li><li>Trade: 0.5% buy + 0.5% sell &rarr; 100% burn</li><li>AMM (post-graduation): 0.3% &rarr; burn</li><li>Graduation: 80,000 GBX &rarr; liquidity pool LOCKED permanently</li><li>No team allocation &mdash; all fees burned</li></ul>',
+    sFees:'Fee Structure', bFees:'<ul><li>Launch: dev buy 0.5% &rarr; burn</li><li>Trade: 0.5% buy + 0.5% sell &rarr; 100% burn</li><li>AMM (post-graduation): 0.3% &rarr; burn</li><li>Graduation: reserve &ge; 20&times; the coin&rsquo;s own largest recent trade (min 2,000 GBX) &rarr; liquidity pool LOCKED permanently</li><li>No team allocation &mdash; all fees burned</li></ul>',
     p1Title:'Phase 1.5 — Mainnet Launch', p2Title:'Phase 2 — Public Launch & Liquidity', p3Title:'Phase 3 — Open Source Release', p4Title:'Phase 4 — Full Decentralization',
     sDecent:'Decentralization', bDecent:'No central server. No admin keys. Source code release Phase 3. Mining open to all. Treasury auto-managed via on-chain rules.',
     sRisks:'⚠ Risks', bRisks:'<ul><li>Crypto is extremely volatile — you can lose 100%</li><li>Bonding curves have no minimum price</li><li>No recovery if you lose seed phrase</li><li>Not financial advice</li><li>Comply with your local crypto regulations</li></ul>',
@@ -147,7 +147,7 @@ const T = {
     sFounder:'Fondatorul', bFounder:'GoldBrix a fost construit de <strong>Gideon Brick</strong> — un fondator anonim care l-a zidit cărămidă cu cărămidă, apoi a plecat. Fără CEO. Fără companie. Fără cheie. Fondatorul minează ca oricine altcineva şi nu păstrează niciun control privilegiat. <strong>Lanț real. Burn real. Corectitudine reală.</strong>',
     sTokenomics:'Tokenomics', bTokenomics:'GBX este token-ul nativ. Emisie pură proof-of-work. Fără premine. Fără alocare fondatori. Ofertă maximă: 15.000.000 GBX. Emisie în două faze: faza bootstrap emite 50 GBX pe bloc de 10 minute până la blocul 20.000, apoi faza de producție se activează cu blocuri de 3 secunde prin algoritmul LWMA-3 și subvenție 0,25 GBX cu schemă deflaționistă în trepte (subvenția se înjumătățește la fiecare 28.000.000 blocuri).',
     sLaunchpad:'Lansator Memecoins', bLaunchpad:'Oricine poate lansa memecoins susținute de GBX prin bonding curve. Curve auto-stabilește prețul. Fără pool-uri de lichiditate. Fiecare monedă are registru on-chain OP_RETURN.',
-    sFees:'Structură Comisioane', bFees:'<ul><li>Lansare: dev buy 0.5% &rarr; ardere</li><li>Trade: 0.5% cumpărare + 0.5% vânzare &rarr; 100% ardere</li><li>AMM (post-graduație): 0.3% &rarr; ardere</li><li>Graduație: 80.000 GBX &rarr; pool lichiditate BLOCAT permanent</li><li>Fără alocare echipă &mdash; toate taxele arse</li></ul>',
+    sFees:'Structură Comisioane', bFees:'<ul><li>Lansare: dev buy 0.5% &rarr; ardere</li><li>Trade: 0.5% cumpărare + 0.5% vânzare &rarr; 100% ardere</li><li>AMM (post-graduație): 0.3% &rarr; ardere</li><li>Graduație: rezervă &ge; 20&times; cel mai mare trade recent al monedei (min 2.000 GBX) &rarr; pool lichiditate BLOCAT permanent</li><li>Fără alocare echipă &mdash; toate taxele arse</li></ul>',
     p1Title:'Faza 1.5 — Lansare Mainnet', p2Title:'Faza 2 — Lansare Publică & Lichiditate', p3Title:'Faza 3 — Cod Sursă Public', p4Title:'Faza 4 — Descentralizare Totală',
     sDecent:'Descentralizare', bDecent:'Fără server central. Fără chei admin. Cod sursă Faza 3. Mining deschis. Trezorerie auto-gestionată.',
     sRisks:'⚠ Riscuri', bRisks:'<ul><li>Crypto este extrem de volatil — poți pierde 100%</li><li>Bonding curves nu au preț minim</li><li>Nicio recuperare dacă pierzi seed</li><li>Nu este sfat financiar</li><li>Respectă regulile crypto locale</li></ul>',
@@ -157,7 +157,7 @@ const T = {
     sFounder:'Der Gründer', bFounder:'GoldBrix wurde von <strong>Gideon Brick</strong> erbaut — einem anonymen Gründer, der es Stein für Stein aufbaute und dann fortging. Kein CEO. Keine Firma. Kein Schlüssel. Der Gründer schürft wie jeder andere und behält keine privilegierte Kontrolle. <strong>Echte Chain. Echtes Burning. Echte Fairness.</strong>',
     sTokenomics:'Tokenomics', bTokenomics:'GBX ist der native Token. Reine Proof-of-Work-Emission. Kein Premine. Keine Gründer-Allokation. Maximalversorgung: 15.000.000 GBX. Zweiphasige Emission: Bootstrap-Phase gibt 50 GBX pro 10-Minuten-Block bis Block 20.000 aus, dann aktiviert die Produktionsphase 3-Sekunden-Blöcke via LWMA-3 Difficulty-Algorithmus und 0,25 GBX Subvention mit gestufter deflationärer Schema (Subvention halbiert sich alle 28.000.000 Blöcke).',
     sLaunchpad:'Memecoin-Plattform', bLaunchpad:'Jeder kann GBX-gestützte Memecoins per Bonding Curve starten.',
-    sFees:'Gebührenstruktur', bFees:'<ul><li>Start: Dev-Buy 0.5% &rarr; Burn</li><li>Handel: 0.5% Kauf + 0.5% Verkauf &rarr; 100% Burn</li><li>AMM (nach Graduierung): 0.3% &rarr; Burn</li><li>Graduierung: 80.000 GBX &rarr; Liquiditätspool DAUERHAFT gesperrt</li><li>Keine Team-Zuteilung</li></ul>',
+    sFees:'Gebührenstruktur', bFees:'<ul><li>Start: Dev-Buy 0.5% &rarr; Burn</li><li>Handel: 0.5% Kauf + 0.5% Verkauf &rarr; 100% Burn</li><li>AMM (nach Graduierung): 0.3% &rarr; Burn</li><li>Graduierung: Reserve &ge; 20&times; der größte aktuelle Trade der Münze (min. 2.000 GBX) &rarr; Liquiditätspool DAUERHAFT gesperrt</li><li>Keine Team-Zuteilung</li></ul>',
     p1Title:'Phase 1.5 — Mainnet-Start', p2Title:'Phase 2 — Öffentlicher Start', p3Title:'Phase 3 — Open Source', p4Title:'Phase 4 — Volle Dezentralisierung',
     sDecent:'Dezentralisierung', bDecent:'Kein zentraler Server. Keine Admin-Schlüssel. Quellcode Phase 3.',
     sRisks:'⚠ Risiken', bRisks:'<ul><li>Krypto ist extrem volatil — 100% Verlust möglich</li><li>Bonding Curves haben keinen Mindestpreis</li><li>Keine Wiederherstellung</li><li>Keine Finanzberatung</li></ul>',
@@ -167,7 +167,7 @@ const T = {
     sFounder:'创始人', bFounder:'GoldBrix 由 <strong>Gideon Brick</strong> 打造——一位匿名创始人，一砖一瓦地建立了它，然后默默离去。没有 CEO，没有公司，没有密钥。创始人像其他人一样挖矿，不保留任何特权控制。<strong>真实的链。真实的销毁。真实的公平。</strong>',
     sTokenomics:'代币经济学', bTokenomics:'GBX 是原生代币。纯工作量证明发行。无预挖。无创始人分配。最大供应量：15,000,000 GBX。双阶段发行：引导阶段每个 10 分钟区块发放 50 GBX，直到第 20,000 区块，然后生产阶段激活，采用 LWMA-3 难度算法的 3 秒区块和 0.25 GBX 奖励，按阶梯式通缩计划（奖励每 28,000,000 区块减半）。',
     sLaunchpad:'模因币平台', bLaunchpad:'任何人都可以通过联合曲线推出 GBX 支持的模因币。',
-    sFees:'费用结构', bFees:'<ul><li>发行: 开发者买入 0.5% &rarr; 销毁</li><li>交易: 买入 0.5% + 卖出 0.5% &rarr; 100% 销毁</li><li>AMM(毕业后): 0.3% &rarr; 销毁</li><li>毕业: 80,000 GBX &rarr; 流动性池永久锁定</li><li>无团队分配</li></ul>',
+    sFees:'费用结构', bFees:'<ul><li>发行: 开发者买入 0.5% &rarr; 销毁</li><li>交易: 买入 0.5% + 卖出 0.5% &rarr; 100% 销毁</li><li>AMM(毕业后): 0.3% &rarr; 销毁</li><li>毕业: 储备 &ge; 该币最近最大交易的20倍（最低 2,000 GBX）&rarr; 流动性池永久锁定</li><li>无团队分配</li></ul>',
     p1Title:'第1.5阶段 — 主网启动', p2Title:'第2阶段 — 公开启动', p3Title:'第3阶段 — 开源发布', p4Title:'第4阶段 — 完全去中心化',
     sDecent:'去中心化', bDecent:'无中央服务器。无管理员密钥。第3阶段发布源代码。',
     sRisks:'⚠ 风险', bRisks:'<ul><li>加密货币极易波动 — 您可能损失 100%</li><li>联合曲线没有最低价格</li><li>无法恢复</li><li>非财务建议</li></ul>',
@@ -177,7 +177,7 @@ const T = {
     sFounder:'المؤسس', bFounder:'بُني GoldBrix على يد <strong>Gideon Brick</strong> — مؤسس مجهول بناه لبنة لبنة ثم رحل. لا رئيس تنفيذي. لا شركة. لا مفتاح. المؤسس يُعدّن مثل أي شخص آخر ولا يحتفظ بأي تحكم مميز. <strong>سلسلة حقيقية. حرق حقيقي. عدالة حقيقية.</strong>',
     sTokenomics:'اقتصاديات الرمز', bTokenomics:'GBX هو الرمز الأصلي. إصدار خالص لإثبات العمل. لا تعدين مسبق. لا توجد مخصصات للمؤسسين. الإمداد الأقصى: 15,000,000 GBX. إصدار ثنائي المراحل: مرحلة التشغيل تصدر 50 GBX لكل كتلة مدتها 10 دقائق حتى الكتلة 20,000، ثم تنشط مرحلة الإنتاج بكتل مدتها 3 ثوان عبر خوارزمية صعوبة LWMA-3 ومكافأة 0.25 GBX وفق جدول انكماشي تدريجي (المكافأة تنخفض إلى النصف كل 28,000,000 كتلة).',
     sLaunchpad:'منصة عملات الميم', bLaunchpad:'يمكن لأي شخص إطلاق عملات ميم مدعومة من GBX عبر منحنى السندات.',
-    sFees:'هيكل الرسوم', bFees:'<ul><li>الإطلاق: شراء المطور 0.5% &rarr; حرق</li><li>التداول: 0.5% شراء + 0.5% بيع &rarr; 100% حرق</li><li>AMM (بعد التخرج): 0.3% &rarr; حرق</li><li>التخرج: 80,000 GBX &rarr; مجمع سيولة مقفل دائمًا</li><li>بدون تخصيص للفريق</li></ul>',
+    sFees:'هيكل الرسوم', bFees:'<ul><li>الإطلاق: شراء المطور 0.5% &rarr; حرق</li><li>التداول: 0.5% شراء + 0.5% بيع &rarr; 100% حرق</li><li>AMM (بعد التخرج): 0.3% &rarr; حرق</li><li>التخرج: الاحتياطي &ge; 20&times; أكبر صفقة حديثة للعملة (بحد أدنى 2,000 GBX) &rarr; مجمع سيولة مقفل دائمًا</li><li>بدون تخصيص للفريق</li></ul>',
     p1Title:'المرحلة 1.5 — إطلاق الشبكة الرئيسية', p2Title:'المرحلة 2 — الإطلاق العام', p3Title:'المرحلة 3 — إصدار مفتوح المصدر', p4Title:'المرحلة 4 — اللامركزية الكاملة',
     sDecent:'اللامركزية', bDecent:'لا خادم مركزي. لا مفاتيح مسؤول.',
     sRisks:'⚠ المخاطر', bRisks:'<ul><li>التشفير شديد التقلب — يمكن أن تفقد 100%</li><li>منحنيات السندات ليس لها سعر أدنى</li><li>لا يوجد استرداد</li></ul>',
@@ -207,7 +207,7 @@ function applyLang() {
 }
 applyLang();
 </script>
-<script src="/v3/pwa.js?v=103" defer></script>
+<script src="/v3/pwa.js?v=104" defer></script>
 
 <nav class="v3-final-nav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:999;">
   <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>

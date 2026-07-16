@@ -16,8 +16,8 @@
 <meta property="og:title" content="GoldBrix — Autonomous Memecoin Launchpad">
 <meta property="og:description" content="Launch, trade and burn on an independent Proof-of-Work L1. Every fee burned, 100%. No company, no CEO.">
 <meta property="og:url" content="https://goldbrix.app/">
-<meta property="og:image" content="https://goldbrix.app/assets/brand/goldbrix-brand-512.png?v=103">
-<meta property="og:image:secure_url" content="https://goldbrix.app/assets/brand/goldbrix-brand-512.png?v=103">
+<meta property="og:image" content="https://goldbrix.app/assets/brand/goldbrix-brand-512.png?v=104">
+<meta property="og:image:secure_url" content="https://goldbrix.app/assets/brand/goldbrix-brand-512.png?v=104">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="512">
 <meta property="og:image:height" content="512">
@@ -25,7 +25,7 @@
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="GoldBrix — Autonomous Memecoin Launchpad">
 <meta name="twitter:description" content="Launch, trade and burn on an independent L1. Every fee burned, 100%.">
-<meta name="twitter:image" content="https://goldbrix.app/assets/brand/goldbrix-brand-512.png?v=103">
+<meta name="twitter:image" content="https://goldbrix.app/assets/brand/goldbrix-brand-512.png?v=104">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   body { background: #1c1610; color: #fff; font-family: 'Inter', -apple-system, sans-serif; min-height: 100vh; padding-bottom: 80px; }
@@ -158,8 +158,8 @@
     <script src="/gbx-update-check.js" defer></script>
     <script src="/gbx-native-bridge.js" defer></script>
     <script src="/gbx-chat-notify.js" defer></script>
-      <script src="/i18n.js?v=103" defer></script>
-  <script src="/promo-banner.js?v=103" defer></script>
+      <script src="/i18n.js?v=104" defer></script>
+  <script src="/promo-banner.js?v=104" defer></script>
 <style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
 </head>
 <body>
@@ -243,13 +243,13 @@
 <div class="bubble-wrap" id="gradBubbleWrap" style="display:none;"><div class="loading">...</div></div>
 <script>
 (function(){
-  var API='https://goldbrix.app'; var TARGET=80000;
+  var API='https://goldbrix.app';
   var L=(localStorage.getItem('gbx_lang')||'en');
   var GT={en:'ROAD TO GRADUATION',ro:'DRUM SPRE ABSOLVIRE',de:'WEG ZUR GRADUIERUNG',zh:'毕业之路',ar:'الطريق إلى التخرج'};
   function renderGradBubbles(coins){
     var wrap=document.getElementById('gradBubbleWrap'); if(!wrap||typeof d3==='undefined') return;
     var cl=coins.filter(function(c){ return !c.graduated && (c.reserve_gbx||0)>0; });
-    cl.forEach(function(c){ c._pct=Math.min(100,(c.reserve_gbx||0)/TARGET*100); });
+    var _maxR=Math.max.apply(null,cl.map(function(c){return c.reserve_gbx||0;}))||1; cl.forEach(function(c){ c._pct=(c.reserve_gbx||0)/_maxR*100; c._res=(c.reserve_gbx||0); });
     cl.sort(function(a,b){ return b._pct-a._pct; }); cl=cl.slice(0,18);
     var maxPct=Math.max.apply(null, cl.map(function(c){ return c._pct||0.001; })); if(maxPct<=0)maxPct=1;
     var W=wrap.clientWidth||350, H=240, rMin=18, rMax=42;
@@ -257,7 +257,7 @@
       var ratio=Math.sqrt((c._pct||0.001)/maxPct); var r=rMin+(rMax-rMin)*ratio;
       var hot=c._pct>=90; var color=hot?'#4EE08C':'#F5CC75';
       var fill=hot?'rgba(78,224,140,0.18)':'rgba(245,204,117,0.18)';
-      return { id:c.id, ticker:c.ticker, image_url:c.image_url, radius:r, color:color, fill:fill, pct:c._pct };
+      return { id:c.id, ticker:c.ticker, image_url:c.image_url, radius:r, color:color, fill:fill, pct:c._pct, res:c._res };
     });
     wrap.innerHTML='';
     var svg=d3.select(wrap).append('svg').attr('width','100%').attr('height',H).style('display','block').style('user-select','none');
@@ -267,7 +267,7 @@
     g.filter(function(d){return d.image_url;}).each(function(d){ var sel=d3.select(this); var cid='gclip-'+(d.id||Math.random().toString(36).slice(2)); sel.append('clipPath').attr('id',cid).append('circle').attr('r',d.radius); sel.append('image').attr('href',d.image_url).attr('x',-d.radius).attr('y',-d.radius).attr('width',d.radius*2).attr('height',d.radius*2).attr('preserveAspectRatio','xMidYMid slice').attr('clip-path','url(#'+cid+')').style('pointer-events','none'); });
     g.append('rect').attr('x',function(d){return -d.radius;}).attr('y',function(d){return d.radius*0.18;}).attr('width',function(d){return d.radius*2;}).attr('height',function(d){return d.radius*0.82;}).attr('clip-path',function(d){return 'url(#gclip-'+(d.id||'')+')';}).attr('fill','rgba(0,0,0,0.55)').style('pointer-events','none');
     g.append('text').text(function(d){return '$'+d.ticker;}).attr('text-anchor','middle').attr('dy','0.35em').style('font-size',function(d){return Math.max(9,d.radius*0.28)+'px';}).style('font-weight','800').style('fill','#fff').style('text-shadow','0 1px 3px #000').style('pointer-events','none');
-    g.append('text').text(function(d){return d.pct.toFixed(2)+'%';}).attr('text-anchor','middle').attr('dy',function(d){return d.radius*0.55+'px';}).style('font-size',function(d){return Math.max(7,d.radius*0.22)+'px';}).style('font-weight','700').style('fill',function(d){return d.color;}).style('text-shadow','0 1px 2px #000').style('pointer-events','none');
+    g.append('text').text(function(d){var r=d.res||0;return (r>=1000?(r/1000).toFixed(1)+'k':r.toFixed(1))+' GBX';}).attr('text-anchor','middle').attr('dy',function(d){return d.radius*0.55+'px';}).style('font-size',function(d){return Math.max(7,d.radius*0.22)+'px';}).style('font-weight','700').style('fill',function(d){return d.color;}).style('text-shadow','0 1px 2px #000').style('pointer-events','none');
     g.on('click',function(e,d){ if(!dragState.dragging) window.location.href='/v3/trade.html?coin='+d.id; });
     if(window._gradSim) window._gradSim.stop();
     window._gradSim=d3.forceSimulation(nodes)
@@ -536,7 +536,7 @@
       if (currentSort === 'graduated') {
         var grads = (allCoins||[]).filter(function(c){ return c.graduated; });
         if (!grads.length) {
-          box.innerHTML = '<div class="empty" style="text-align:center;padding:34px 18px;color:#8a8170;line-height:1.7;">\uD83C\uDF93<br>' + ((function(){var _l=localStorage.getItem('gbx_lang')||'en';var _m={en:'No coin has graduated yet. First at 80,000 GBX reserve!',ro:'Nicio monedă absolvită încă. Prima la 80.000 GBX rezervă!',de:'Noch keine Münze graduiert. Erste bei 80.000 GBX Reserve!',zh:'还没有币毕业。首个在80,000 GBX储备时毕业！',ar:'لا توجد عملة متخرجة بعد. الأولى عند 80,000 GBX احتياطي!'};return _m[_l]||_m.en;})()) + '</div>';
+          box.innerHTML = '<div class="empty" style="text-align:center;padding:34px 18px;color:#8a8170;line-height:1.7;">\uD83C\uDF93<br>' + ((function(){var _l=localStorage.getItem('gbx_lang')||'en';var _m={en:'No coin has graduated yet. A coin graduates when its reserve reaches 20x its own largest recent trade (min 2,000 GBX).',ro:'Nicio monedă absolvită încă. O monedă absolvă când rezerva atinge 20× cel mai mare trade recent propriu (min 2.000 GBX).',de:'Noch keine Münze graduiert. Eine Münze graduiert, wenn ihre Reserve das 20-fache ihres größten aktuellen Trades erreicht (min. 2.000 GBX).',zh:'还没有币毕业。当储备达到该币最近最大交易的20倍（最低 2,000 GBX）时毕业。',ar:'لا توجد عملة متخرجة بعد. تتخرج العملة عندما يصل احتياطيها إلى 20× أكبر صفقة حديثة لها (بحد أدنى 2,000 GBX).'};return _m[_l]||_m.en;})()) + '</div>';
           box.dataset.loaded='1';
           return;
         }
@@ -745,7 +745,7 @@
   setInterval(function(){ renderNewLaunches(); renderGraduated(); renderBubbles(); }, 30000);
 })();
 </script>
-<script src="/v3/pwa.js?v=103" defer></script>
+<script src="/v3/pwa.js?v=104" defer></script>
 
 
 
