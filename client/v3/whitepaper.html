@@ -184,7 +184,8 @@ const T = {
     nav:{h:'الرئيسية',w:'محفظة',l:'إطلاق',b:'حرق',s:'إعدادات'} }
 };
 
-let currentLang = localStorage.getItem('gbx_lang') || 'en';
+let currentLang = localStorage.getItem('gbx_lang') || localStorage.getItem('goldbrix_lang') || 'en';
+window.addEventListener('pageshow', function(e){ if (e.persisted) location.reload(); });
 
 function applyLang() {
   const tt = T[currentLang] || T.en;
