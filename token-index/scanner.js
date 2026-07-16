@@ -14,6 +14,7 @@ const RPCPORT = process.env.GBX_RPC_PORT|| '8332';
 const DB_PATH = process.env.GBX_TOKENIDX_DB || '/root/goldbrix-tools/token-index/token-index.db';
 const START   = parseInt(process.env.GBX_TOKENIDX_START || '0', 10);
 const POLL_MS = parseInt(process.env.GBX_POLL_MS || '3000', 10);
+const LAUNCH_H= parseInt(process.env.GBX_LAUNCHPAD_HEIGHT || '0', 10); // consensus nLaunchpadHeight mirror; 0 = index everything (pre-activation / regtest)
 const KEEP    = 220;                                        // > reorg finality (100)
 const MODE    = process.argv[2] || '--loop';                // --oneshot | --dump | --loop
 
@@ -213,7 +214,7 @@ const applyBlock = db.transaction((h, blk) => {
       if (vin.txid !== undefined) q.spend.run(h, vin.txid, vin.vout);
     const it = parseIntent(tx);
     // ── curve tracking (IDEE X) — runs for EVERY curve op, tokensOut or not ──
-    if (it && 'CBSRG'.includes(it.op)){
+    if (it && 'CBSRG'.includes(it.op) && !(LAUNCH_H > 0 && h < LAUNCH_H)){ // pre-activation X ops are NOT consensus-guarded -> never indexed
       const cidHex = it.cid.toString('hex');
       if (it.op === 'C'){
         const net = it.amount - (it.amount*FEE_BPS)/10000n;
@@ -282,6 +283,7 @@ const applyBlock = db.transaction((h, blk) => {
         q.mPut.run(meta.cid, meta.ticker, meta.name, tx.txid, h);
     }
     if (!it || !'CBPSR'.includes(it.op) || it.tokensOut <= 0n) continue;  // C,B,P mint tokens; S,R return change — every one of them creates a token UTXO
+    if (LAUNCH_H > 0 && h < LAUNCH_H) continue; // pre-activation X ops are NOT consensus-guarded -> never minted
     const spk = p2wsh(tokenWS(it.cid, it.tokensOut, it.pk));
     for (const o of tx.vout)
       if (o.scriptPubKey.hex === spk)
