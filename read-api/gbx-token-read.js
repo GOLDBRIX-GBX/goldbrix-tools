@@ -44,12 +44,12 @@ function openTokenIndex(dbPath){
                           WHERE coin_id=? ORDER BY height ASC LIMIT ?`),
   };
   // honest graduation math — mirror of the scanner/consensus (BigInt, sats)
-  const N=20n, R_MIN=200000000000n, K=201600, V_GBX=3000000000000n, KCURVE=V_GBX*80000000000000000n, CURVE_TOKENS=800000000n;
+  const N=20n, R_MIN=200000000000n, K=201600, V_GBX=3000000000000n, V_TOKENS=1073000000n, KCURVE=V_GBX*V_TOKENS, CURVE_TOKENS=800000000n;
   function curveView(r, tip){
     const R=BigInt(r.reserve), M=BigInt(r.m);
     const mLive = r.h_m!==0 && (tip - r.h_m) <= K;
     const bar = mLive ? (M*N > R_MIN ? M*N : R_MIN) : R_MIN;
-    const soldTok = CURVE_TOKENS - (KCURVE/(V_GBX+R));
+    const soldTok = V_TOKENS - (KCURVE/(V_GBX+R));
     return { coin_id:r.coin_id, ticker:r.ticker||null, name:r.name||null, status:r.status,
              curve_txid:r.txid, curve_vout:r.vout, height:r.height,
              reserve_sat:R.toString(), m_sat:M.toString(), h_m:r.h_m, m_live:mLive,
