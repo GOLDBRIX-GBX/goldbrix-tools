@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GoldBrix · My Coins</title>
+<link rel="icon" href="/favicon.ico">
+<script type="module" src="/crypto-utils-v2.js?v=105"></script>
+<script src="/i18n.js?v=105" defer></script>
+<script src="/v3/nav-i18n.js?v=105" defer></script>
+<style>
+:root{--bg:#1c1610;--card:#2a2218;--card2:#241d13;--line:#3a3025;--gold:#F5CC75;
+--gold-soft:#FFE099;--ink:#eee;--dim:#8a8170;--green:#4EE08C;--red:#FF7A6B;--ember:#e8843a;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{margin:0;background:var(--bg);color:var(--ink);
+ font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-size:13px;padding-bottom:86px;}
+body[dir="rtl"]{direction:rtl;}
+.wrap{max-width:560px;margin:0 auto;padding:14px;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;}
+.sect{color:var(--gold);font-weight:800;font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 10px;}
+.pgtitle{color:var(--gold);font-weight:800;font-size:17px;letter-spacing:.06em;margin:4px 0 12px;}
+.sub{color:var(--dim);font-size:11px;line-height:1.6;margin-bottom:12px;}
+.coin{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);cursor:pointer;}
+.coin:last-child{border-bottom:none;}
+.coin .logo{width:42px;height:42px;border-radius:50%;background:var(--card2);border:1px solid var(--line);
+ display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--gold);font-weight:800;flex-shrink:0;}
+.coin .mid{flex:1;min-width:0;}
+.coin .tick{color:var(--gold);font-weight:800;font-size:14px;letter-spacing:.05em;}
+.coin .nm{color:var(--dim);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.coin .amt{text-align:end;font-weight:800;font-size:13px;color:var(--ink);}
+.coin .amt small{display:block;color:var(--dim);font-weight:400;font-size:10px;}
+.badge{font-size:9px;font-weight:800;letter-spacing:.12em;padding:3px 7px;border-radius:6px;}
+.badge.live{color:var(--green);border:1px solid var(--green);}
+.badge.grad{color:var(--gold);border:1px solid var(--gold);}
+.gbar{height:10px;background:var(--card2);border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-top:6px;}
+.gbar>i{display:block;height:100%;background:linear-gradient(90deg,#F5CC75,#d9a53f);width:0%;transition:width .5s;}
+.gnote{color:var(--dim);font-size:10px;margin-top:6px;line-height:1.55;}
+.empty{text-align:center;color:var(--dim);padding:26px 12px;line-height:1.7;font-size:12px;}
+.err{color:var(--red);text-align:center;padding:18px 12px;font-size:12px;line-height:1.6;}
+.btn{display:block;text-align:center;background:linear-gradient(135deg,#F5CC75,#d9a53f);color:#1c1610;
+ font-weight:800;border:none;border-radius:12px;padding:13px;font-size:13px;text-decoration:none;margin-top:10px;}
+.scanline{color:var(--dim);font-size:10px;text-align:center;margin-top:4px;}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--gold);
+ border-radius:50%;animation:sp 0.8s linear infinite;vertical-align:middle;}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="pgtitle" id="tTitle"></div>
+  <div class="sub" id="tSub"></div>
+
+  <div class="card">
+    <div class="sect" id="tHeld"></div>
+    <div id="heldBox"><div class="empty"><span class="spin"></span></div></div>
+  </div>
+
+  <div class="card">
+    <div class="sect" id="tCreated"></div>
+    <div id="createdBox"><div class="empty"><span class="spin"></span></div></div>
+  </div>
+
+  <div class="scanline" id="scanLine"></div>
+</div>
+
+<script type="module">
+/* ── i18n (5 languages, self-contained like coin-x) ── */
+const TT={
+en:{title:'MY COINS',sub:'Everything below is read straight from the chain via the public token index — no account, no database of yours anywhere.',
+ held:'Coins I hold',created:'Coins I created',tokens:'tokens',holdEmpty:'You hold no launchpad coins yet.',
+ createEmpty:'You have not created a coin yet.',create:'Forge a new coin',
+ gnote:'A coin graduates when its reserve reaches 20\u00d7 its own largest recent trade (min 2,000 GBX) \u2014 never a fixed amount.',
+ nowallet:'No unlocked wallet found. Unlock your wallet first.',unlock:'Unlock wallet',
+ err:'Could not reach the token index. Try again.',scanned:'Chain scanned up to block ',
+ grad:'GRADUATED',live:'LIVE',reserve:'reserve'},
+ro:{title:'MONEDELE MELE',sub:'Tot ce vezi mai jos e citit direct din lan\u021b prin indexul public de tokenuri \u2014 f\u0103r\u0103 cont, f\u0103r\u0103 nicio baz\u0103 de date a ta undeva.',
+ held:'Monede pe care le de\u021bin',created:'Monede create de mine',tokens:'tokenuri',holdEmpty:'Nu de\u021bii \u00eenc\u0103 monede din launchpad.',
+ createEmpty:'Nu ai creat \u00eenc\u0103 o moned\u0103.',create:'Forjeaz\u0103 o moned\u0103 nou\u0103',
+ gnote:'O moned\u0103 absolv\u0103 c\u00e2nd rezerva atinge 20\u00d7 cel mai mare trade recent propriu (min 2.000 GBX) \u2014 niciodat\u0103 o sum\u0103 fix\u0103.',
+ nowallet:'Niciun portofel deblocat. Deblocheaz\u0103 portofelul \u00eent\u00e2i.',unlock:'Deblocheaz\u0103 portofelul',
+ err:'Indexul de tokenuri nu r\u0103spunde. \u00cencearc\u0103 din nou.',scanned:'Lan\u021b scanat p\u00e2n\u0103 la blocul ',
+ grad:'ABSOLVIT\u0102',live:'LIVE',reserve:'rezerv\u0103'},
+de:{title:'MEINE M\u00dcNZEN',sub:'Alles unten wird direkt aus der Chain \u00fcber den \u00f6ffentlichen Token-Index gelesen \u2014 kein Konto, keine Datenbank von dir irgendwo.',
+ held:'M\u00fcnzen, die ich halte',created:'Von mir erstellte M\u00fcnzen',tokens:'Tokens',holdEmpty:'Du h\u00e4ltst noch keine Launchpad-M\u00fcnzen.',
+ createEmpty:'Du hast noch keine M\u00fcnze erstellt.',create:'Neue M\u00fcnze schmieden',
+ gnote:'Eine M\u00fcnze graduiert, wenn ihre Reserve das 20-fache ihres gr\u00f6\u00dften aktuellen Trades erreicht (min. 2.000 GBX) \u2014 nie ein fester Betrag.',
+ nowallet:'Kein entsperrtes Wallet gefunden. Entsperre zuerst dein Wallet.',unlock:'Wallet entsperren',
+ err:'Token-Index nicht erreichbar. Versuche es erneut.',scanned:'Chain gescannt bis Block ',
+ grad:'GRADUIERT',live:'LIVE',reserve:'Reserve'},
+zh:{title:'\u6211\u7684\u4ee3\u5e01',sub:'\u4ee5\u4e0b\u5185\u5bb9\u5168\u90e8\u901a\u8fc7\u516c\u5f00\u4ee3\u5e01\u7d22\u5f15\u76f4\u63a5\u4ece\u94fe\u4e0a\u8bfb\u53d6\u2014\u2014\u65e0\u9700\u8d26\u6237\uff0c\u4e5f\u6ca1\u6709\u4efb\u4f55\u5c5e\u4e8e\u4f60\u7684\u6570\u636e\u5e93\u3002',
+ held:'\u6211\u6301\u6709\u7684\u4ee3\u5e01',created:'\u6211\u521b\u5efa\u7684\u4ee3\u5e01',tokens:'\u4ee3\u5e01',holdEmpty:'\u4f60\u8fd8\u672a\u6301\u6709\u4efb\u4f55\u542f\u52a8\u677f\u4ee3\u5e01\u3002',
+ createEmpty:'\u4f60\u8fd8\u672a\u521b\u5efa\u4ee3\u5e01\u3002',create:'\u953b\u9020\u65b0\u4ee3\u5e01',
+ gnote:'\u5f53\u50a8\u5907\u8fbe\u5230\u8be5\u5e01\u6700\u8fd1\u6700\u5927\u4ea4\u6613\u768420\u500d\uff08\u6700\u4f4e 2,000 GBX\uff09\u65f6\u6bd5\u4e1a\u2014\u2014\u6c38\u8fdc\u4e0d\u662f\u56fa\u5b9a\u91d1\u989d\u3002',
+ nowallet:'\u672a\u627e\u5230\u5df2\u89e3\u9501\u7684\u94b1\u5305\u3002\u8bf7\u5148\u89e3\u9501\u94b1\u5305\u3002',unlock:'\u89e3\u9501\u94b1\u5305',
+ err:'\u65e0\u6cd5\u8fde\u63a5\u4ee3\u5e01\u7d22\u5f15\u3002\u8bf7\u91cd\u8bd5\u3002',scanned:'\u94fe\u5df2\u626b\u63cf\u81f3\u533a\u5757 ',
+ grad:'\u5df2\u6bd5\u4e1a',live:'\u8fdb\u884c\u4e2d',reserve:'\u50a8\u5907'},
+ar:{title:'\u0639\u0645\u0644\u0627\u062a\u064a',sub:'\u0643\u0644 \u0645\u0627 \u062a\u0631\u0627\u0647 \u0623\u062f\u0646\u0627\u0647 \u064a\u064f\u0642\u0631\u0623 \u0645\u0628\u0627\u0634\u0631\u0629 \u0645\u0646 \u0627\u0644\u0633\u0644\u0633\u0644\u0629 \u0639\u0628\u0631 \u0641\u0647\u0631\u0633 \u0627\u0644\u0631\u0645\u0648\u0632 \u0627\u0644\u0639\u0627\u0645 \u2014 \u0628\u062f\u0648\u0646 \u062d\u0633\u0627\u0628\u060c \u0648\u0628\u062f\u0648\u0646 \u0623\u064a \u0642\u0627\u0639\u062f\u0629 \u0628\u064a\u0627\u0646\u0627\u062a \u062a\u062e\u0635\u0643.',
+ held:'\u0627\u0644\u0639\u0645\u0644\u0627\u062a \u0627\u0644\u062a\u064a \u0623\u0645\u0644\u0643\u0647\u0627',created:'\u0627\u0644\u0639\u0645\u0644\u0627\u062a \u0627\u0644\u062a\u064a \u0623\u0646\u0634\u0623\u062a\u0647\u0627',tokens:'\u0631\u0645\u0632',holdEmpty:'\u0644\u0627 \u062a\u0645\u0644\u0643 \u0623\u064a \u0639\u0645\u0644\u0627\u062a \u0645\u0646 \u0645\u0646\u0635\u0629 \u0627\u0644\u0625\u0637\u0644\u0627\u0642 \u0628\u0639\u062f.',
+ createEmpty:'\u0644\u0645 \u062a\u064f\u0646\u0634\u0626 \u0639\u0645\u0644\u0629 \u0628\u0639\u062f.',create:'\u0627\u0635\u0646\u0639 \u0639\u0645\u0644\u0629 \u062c\u062f\u064a\u062f\u0629',
+ gnote:'\u062a\u062a\u062e\u0631\u062c \u0627\u0644\u0639\u0645\u0644\u0629 \u0639\u0646\u062f\u0645\u0627 \u064a\u0635\u0644 \u0627\u062d\u062a\u064a\u0627\u0637\u064a\u0647\u0627 \u0625\u0644\u0649 20\u00d7 \u0623\u0643\u0628\u0631 \u0635\u0641\u0642\u0629 \u062d\u062f\u064a\u062b\u0629 \u0644\u0647\u0627 (\u0628\u062d\u062f \u0623\u062f\u0646\u0649 2,000 GBX) \u2014 \u0648\u0644\u064a\u0633 \u0645\u0628\u0644\u063a\u064b\u0627 \u062b\u0627\u0628\u062a\u064b\u0627 \u0623\u0628\u062f\u064b\u0627.',
+ nowallet:'\u0644\u0627 \u062a\u0648\u062c\u062f \u0645\u062d\u0641\u0638\u0629 \u0645\u0641\u062a\u0648\u062d\u0629. \u0627\u0641\u062a\u062d \u0645\u062d\u0641\u0638\u062a\u0643 \u0623\u0648\u0644\u0627\u064b.',unlock:'\u0641\u062a\u062d \u0627\u0644\u0645\u062d\u0641\u0638\u0629',
+ err:'\u062a\u0639\u0630\u0631 \u0627\u0644\u0648\u0635\u0648\u0644 \u0625\u0644\u0649 \u0641\u0647\u0631\u0633 \u0627\u0644\u0631\u0645\u0648\u0632. \u062d\u0627\u0648\u0644 \u0645\u062c\u062f\u062f\u064b\u0627.',scanned:'\u062a\u0645 \u0645\u0633\u062d \u0627\u0644\u0633\u0644\u0633\u0644\u0629 \u062d\u062a\u0649 \u0627\u0644\u0643\u062a\u0644\u0629 ',
+ grad:'\u0645\u062a\u062e\u0631\u062c\u0629',live:'\u0646\u0634\u0637\u0629',reserve:'\u0627\u0644\u0627\u062d\u062a\u064a\u0627\u0637\u064a'}
+};
+let L=localStorage.getItem('gbx_lang')||localStorage.getItem('goldbrix_lang')||'en';
+if(!TT[L])L='en';
+const T=k=>TT[L][k]||TT.en[k]||k;
+if(L==='ar')document.body.setAttribute('dir','rtl');
+window.addEventListener('pageshow',e=>{if(e.persisted)location.reload();});
+
+const API='https://goldbrix.app';
+const $=id=>document.getElementById(id);
+$('tTitle').textContent=T('title');
+$('tSub').textContent=T('sub');
+$('tHeld').textContent=T('held');
+$('tCreated').textContent=T('created');
+
+function fmt(nStr){
+  const n=BigInt(nStr||'0');
+  return n.toLocaleString('en-US');
+}
+function fmtGbx(sat){
+  const s=BigInt(sat||'0');
+  const g=Number(s)/1e8;
+  return (g>=1000?(g/1000).toFixed(1)+'k':g.toFixed(2))+' GBX';
+}
+function esc(x){return String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+function loadWallet(){try{const raw=sessionStorage.getItem('gbx_unlocked_wallets');if(raw===null)return null;
+ const s=JSON.parse(raw);if(s&&s.wallets&&s.wallets.length>0){const w=s.wallets.find(x=>x.id===s.activeWalletId)||s.wallets[0];
+ if(w&&w.mnemonic&&w.address&&String(w.mnemonic).trim().split(/\s+/).length===12)return w;}}catch(e){}return null;}
+
+function renderHeld(held){
+  const box=$('heldBox');
+  if(!held.length){box.innerHTML='<div class="empty">'+esc(T('holdEmpty'))+'</div>';return;}
+  box.innerHTML=held.map(c=>{
+    const tk=c.ticker?('$'+esc(c.ticker)):esc(c.coin_id.slice(0,8))+'\u2026';
+    return '<div class="coin" data-cid="'+esc(c.coin_id)+'">'+
+      '<div class="logo">'+esc((c.ticker||'?').slice(0,2))+'</div>'+
+      '<div class="mid"><div class="tick">'+tk+'</div>'+
+      '<div class="nm">'+esc(c.name||'')+'</div></div>'+
+      '<div class="amt">'+fmt(c.amount)+'<small>'+esc(T('tokens'))+'</small></div></div>';
+  }).join('');
+  box.querySelectorAll('.coin').forEach(el=>el.addEventListener('click',()=>{
+    location.href='/v3/coin-x.html?coin='+el.dataset.cid;}));
+}
+
+function renderCreated(created){
+  const box=$('createdBox');
+  if(!created.length){
+    box.innerHTML='<div class="empty">'+esc(T('createEmpty'))+'</div>'+
+      '<a class="btn" href="/v3/launch-x.html">'+esc(T('create'))+'</a>';
+    return;
+  }
+  box.innerHTML=created.map(c=>{
+    const tk=c.ticker?('$'+esc(c.ticker)):esc(c.coin_id.slice(0,8))+'\u2026';
+    const grad=c.status!=='live';
+    const pct=Math.min(100,Number(c.progress_pct||0));
+    return '<div class="coin" data-cid="'+esc(c.coin_id)+'" style="display:block;">'+
+      '<div style="display:flex;align-items:center;gap:12px;">'+
+      '<div class="logo">'+esc((c.ticker||'?').slice(0,2))+'</div>'+
+      '<div class="mid"><div class="tick">'+tk+'</div>'+
+      '<div class="nm">'+esc(c.name||'')+' \u00b7 '+esc(T('reserve'))+' '+fmtGbx(c.reserve_sat)+'</div></div>'+
+      '<span class="badge '+(grad?'grad':'live')+'">'+esc(grad?T('grad'):T('live'))+'</span></div>'+
+      (grad?'':'<div class="gbar"><i style="width:'+pct.toFixed(1)+'%"></i></div>')+
+      '</div>';
+  }).join('')+'<div class="gnote">'+esc(T('gnote'))+'</div>';
+  box.querySelectorAll('.coin').forEach(el=>el.addEventListener('click',()=>{
+    location.href='/v3/coin-x.html?coin='+el.dataset.cid;}));
+}
+
+async function main(){
+  const w=loadWallet();
+  if(!w){
+    $('heldBox').innerHTML='<div class="err">'+esc(T('nowallet'))+'</div>'+
+      '<a class="btn" href="/v3/unlock.html?next='+encodeURIComponent('/v3/my-coins.html')+'">'+esc(T('unlock'))+'</a>';
+    $('createdBox').innerHTML='<div class="empty">\u2014</div>';
+    return;
+  }
+  try{
+    const k=await window.GoldbrixCrypto.deriveKeypairFromMnemonic(w.mnemonic);
+    const pkHex=Array.from(new Uint8Array(k.keypair?k.keypair.publicKey:k.publicKey),x=>x.toString(16).padStart(2,'0')).join('');
+    const r=await fetch(API+'/api/my-coins/'+pkHex);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    renderHeld(d.held||[]);
+    renderCreated(d.created||[]);
+    $('scanLine').textContent=T('scanned')+(d.scanned||0);
+  }catch(e){
+    console.error('[my-coins]',e);
+    $('heldBox').innerHTML='<div class="err">'+esc(T('err'))+'</div>';
+    $('createdBox').innerHTML='<div class="empty">\u2014</div>';
+  }
+}
+main();
+</script>
+</body>
+</html>

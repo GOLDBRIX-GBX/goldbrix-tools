@@ -414,6 +414,19 @@ const server = http.createServer(async (req, res) => {
         return res.end(JSON.stringify(out));
       } catch (e) { res.writeHead(500); return res.end('token-index error'); }
     }
+    // IDEE X: my-coins — held + created for a pubkey (guarded by GBX_TOKENIDX_DB)
+    if (req.method === 'GET' && url.pathname.startsWith('/api/my-coins/')) {
+      const dbp = process.env.GBX_TOKENIDX_DB;
+      if (!dbp) { res.writeHead(404); return res.end('not enabled'); }
+      try {
+        const { openTokenIndex } = require('./gbx-token-read.js');
+        if (!global.__gbxTokenIdx) global.__gbxTokenIdx = openTokenIndex(dbp);
+        const out = global.__gbxTokenIdx.myCoins(url.pathname.slice('/api/my-coins/'.length).toLowerCase());
+        if (!out) { res.writeHead(404); return res.end('bad pk'); }
+        res.writeHead(200, {'Content-Type':'application/json'});
+        return res.end(JSON.stringify(out));
+      } catch (e) { res.writeHead(500); return res.end('my-coins error'); }
+    }
     // IDEE X: curves live from the chain — list + detail (guarded by GBX_TOKENIDX_DB)
     if (req.method === 'GET' && (url.pathname === '/api/curves' || url.pathname.startsWith('/api/curves/'))) {
       const dbp = process.env.GBX_TOKENIDX_DB;

@@ -30,6 +30,16 @@ function openTokenIndex(dbPath){
                                  m.ticker, m.name
                           FROM curves c LEFT JOIN coin_meta m ON m.coin_id=c.coin_id
                           WHERE c.coin_id=?`),
+    // IDEE X my-coins: what a pubkey holds / created — straight from the chain
+    heldBy: db.prepare(`SELECT t.coin_id, SUM(CAST(t.amount AS INTEGER)) amount, COUNT(*) utxos,
+                               m.ticker, m.name
+                        FROM token_utxos t LEFT JOIN coin_meta m ON m.coin_id=t.coin_id
+                        WHERE t.pk=? AND t.spent_height IS NULL
+                        GROUP BY t.coin_id ORDER BY amount DESC LIMIT 500`),
+    createdBy: db.prepare(`SELECT c.coin_id, c.reserve, c.m, c.h_m, c.height, c.status,
+                                  m.ticker, m.name
+                           FROM curves c LEFT JOIN coin_meta m ON m.coin_id=c.coin_id
+                           WHERE c.creator_pk=? ORDER BY c.height DESC LIMIT 500`),
     curveLog: db.prepare(`SELECT height, reserve, m, h_m, status FROM curve_log
                           WHERE coin_id=? ORDER BY height ASC LIMIT ?`),
   };
@@ -69,6 +79,15 @@ function openTokenIndex(dbPath){
                  .map(l => ({height:l.height, reserve_sat:l.reserve, m_sat:l.m, h_m:l.h_m, status:l.status}));
       out.holders_list = q.holders.all(coinId, 100);
       return out;
+    },
+    myCoins(pkHex){
+      if (!/^[0-9a-f]{66}$/.test(pkHex)) return null;
+      const tip = parseInt(q.meta.get('scanned')?.v ?? '0', 10);
+      const held = q.heldBy.all(pkHex).map(r => ({
+        coin_id:r.coin_id, ticker:r.ticker||null, name:r.name||null,
+        amount:String(r.amount), utxos:r.utxos }));
+      const created = q.createdBy.all(pkHex).map(r => curveView({...r, txid:null, vout:null, holders:undefined}, tip));
+      return { scanned: tip, pk: pkHex, held, created };
     },
     coin(coinId, limit = 100){
       if (!/^[0-9a-f]{64}$/.test(coinId)) return null;
