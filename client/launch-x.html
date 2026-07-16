@@ -503,7 +503,7 @@ async function forge(){
     $('doneTx').textContent='coin '+plan.cidHex+' · create '+txid+' · name '+metaTxid;
     $('doneCard').classList.add('on');
     $('btnGo').style.display='none'; $('btnStop').style.display='none';
-    $('btnTrade').onclick=()=>location.href='/v3/trade.html?coin='+plan.cidHex;
+    $('btnTrade').onclick=()=>location.href='/v3/coin-x.html?coin='+plan.cidHex;
   }catch(e){
     if (e && e.message==='BAL'){ toast(tt('e.bal')+' '+(e.needGbx||'').toLocaleString('en-US')+' GBX'); }
     else if (e && (e.message==='NET'||e.message==='LP_UNAVAILABLE'||e.message==='NO_UTXO')){ toast(tt('e.net')); }

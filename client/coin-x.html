@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GoldBrix · Coin</title>
+<link rel="icon" href="/favicon.ico">
+<script type="module" src="/crypto-utils-v2.js?v=105"></script>
+<script src="/i18n.js?v=105" defer></script>
+<script src="/v3/nav-i18n.js?v=105" defer></script>
+<style>
+:root{--bg:#1c1610;--card:#2a2218;--card2:#241d13;--line:#3a3025;--gold:#F5CC75;
+--gold-soft:#FFE099;--ink:#eee;--dim:#8a8170;--green:#4EE08C;--red:#FF7A6B;--ember:#e8843a;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{margin:0;background:var(--bg);color:var(--ink);
+ font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-size:13px;padding-bottom:86px;}
+body[dir="rtl"]{direction:rtl;}
+.wrap{max-width:560px;margin:0 auto;padding:14px;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;}
+.sect{color:var(--gold);font-weight:800;font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 10px;}
+.hdr{display:flex;align-items:center;gap:12px;}
+.hdr .logo{width:52px;height:52px;border-radius:50%;background:var(--card2);border:1px solid var(--line);
+ display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--gold);font-weight:800;overflow:hidden;}
+.hdr .logo img{width:100%;height:100%;object-fit:cover;}
+.hdr .tick{color:var(--gold);font-weight:800;font-size:18px;letter-spacing:.06em;}
+.hdr .nm{color:var(--dim);font-size:11px;}
+.badge{margin-inline-start:auto;font-size:9px;font-weight:800;letter-spacing:.12em;padding:4px 8px;border-radius:6px;}
+.badge.live{color:var(--green);border:1px solid var(--green);}
+.badge.grad{color:var(--gold);border:1px solid var(--gold);}
+.rows{margin-top:10px;}
+.row{display:flex;justify-content:space-between;padding:5px 0;font-size:12px;}
+.row .k{color:var(--gold-soft);}
+.row .v{font-weight:700;}
+.row .v.gold{color:var(--gold);} .row .v.green{color:var(--green);} .row .v.red{color:var(--red);}
+/* honest graduation bar */
+.gbarwrap{margin-top:8px;}
+.gbar{height:14px;background:var(--card2);border:1px solid var(--line);border-radius:7px;overflow:hidden;}
+.gbar>i{display:block;height:100%;background:linear-gradient(90deg,#F5CC75,#d9a53f);width:0%;transition:width .5s;}
+.gnote{color:var(--dim);font-size:10px;margin-top:6px;line-height:1.55;}
+canvas{width:100%;height:150px;background:var(--card2);border:1px solid var(--line);border-radius:10px;}
+/* trade */
+.tabs{display:flex;gap:8px;margin-bottom:10px;}
+.tab{flex:1;text-align:center;padding:10px;border-radius:10px;border:1px solid var(--line);
+ color:var(--dim);font-weight:800;letter-spacing:.1em;cursor:pointer;font-size:12px;}
+.tab.buy.on{color:#1c1610;background:var(--green);border-color:var(--green);}
+.tab.sell.on{color:#1c1610;background:var(--red);border-color:var(--red);}
+.inp{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:9px;
+ color:var(--ink);padding:11px 12px;font:inherit;outline:none;}
+.inp:focus{border-color:var(--gold);}
+.lbl{display:flex;justify-content:space-between;color:var(--gold-soft);font-size:11px;margin:8px 0 5px;}
+/* the impact card — the honest mirror */
+.impact{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:10px;}
+.impact .big{display:flex;justify-content:space-between;align-items:baseline;}
+.impact .pct{font-size:16px;font-weight:800;}
+.impact .pct.hot{color:var(--red);} .impact .pct.warm{color:var(--ember);} .impact .pct.cool{color:var(--green);}
+.impact .arrow{color:var(--dim);font-size:10px;margin-top:4px;}
+.warn{display:none;color:var(--ember);font-size:10px;margin-top:6px;line-height:1.5;}
+.warn.on{display:block;}
+.btn{width:100%;border:0;border-radius:12px;padding:14px;font:inherit;font-weight:800;letter-spacing:.08em;
+ cursor:pointer;margin-top:12px;}
+.btn:disabled{opacity:.45;cursor:default;}
+.btn.b{background:var(--green);color:#1c1610;}
+.btn.s{background:var(--red);color:#1c1610;}
+.btn.g{background:linear-gradient(90deg,#F5CC75,#d9a53f);color:#241d13;}
+.btn.ghost{background:var(--card2);color:var(--gold-soft);border:1px solid var(--line);}
+.law{color:var(--dim);font-size:10px;line-height:1.6;margin-top:8px;}
+.holders .h{display:flex;justify-content:space-between;font-size:11px;padding:4px 0;color:var(--dim);}
+.holders .h b{color:var(--ink);font-weight:700;}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:#111;color:var(--gold-soft);
+ border:1px solid var(--line);border-radius:10px;padding:10px 16px;font-size:12px;opacity:0;pointer-events:none;
+ transition:opacity .25s;max-width:90%;z-index:300;}
+.toast.show{opacity:1;}
+.steps{margin-top:10px;}
+.step{display:flex;gap:8px;align-items:center;padding:3px 0;font-size:11px;color:var(--dim);}
+.step.ok{color:var(--green);} .step.run{color:var(--gold-soft);}
+.step .dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+.step.ok .dot{background:var(--green);} .step.run .dot{background:var(--gold);}
+.skel{color:var(--dim);text-align:center;padding:30px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="loading" class="skel" data-x="loading">reading the chain…</div>
+  <div id="page" style="display:none">
+
+  <!-- HEADER -->
+  <div class="card">
+    <div class="hdr">
+      <div class="logo" id="cLogo">?</div>
+      <div>
+        <div class="tick" id="cTick">$—</div>
+        <div class="nm" id="cName">—</div>
+      </div>
+      <span class="badge live" id="cBadge">LIVE</span>
+    </div>
+    <div class="rows">
+      <div class="row"><span class="k" data-x="r.price">Price</span><span class="v gold" id="rPrice">—</span></div>
+      <div class="row"><span class="k" data-x="r.liq">Curve liquidity</span><span class="v" id="rLiq">—</span></div>
+      <div class="row"><span class="k" data-x="r.sold">Tokens sold</span><span class="v" id="rSold">—</span></div>
+      <div class="row"><span class="k" data-x="r.holders">Holders</span><span class="v" id="rHolders">—</span></div>
+    </div>
+  </div>
+
+  <!-- HONEST GRADUATION -->
+  <div class="card">
+    <div class="sect" data-x="s.grad">Graduation · honest</div>
+    <div class="gbarwrap">
+      <div class="gbar"><i id="gFill"></i></div>
+      <div class="row" style="margin-top:6px">
+        <span class="k" id="gNums">—</span><span class="v gold" id="gPct">—</span>
+      </div>
+    </div>
+    <div class="gnote" data-x="g.note">The target is alive: it is 20× the largest trade of the last ~7 days (never less than 2,000 GBX). A whale raising the price raises its own bar. No fixed sum, ever.</div>
+    <div class="gnote" id="gGraduated" style="display:none;color:var(--gold)" data-x="g.done">Graduated — the liquidity moved to the open pool. This history is the curve's life.</div>
+  </div>
+
+  <!-- CHART -->
+  <div class="card">
+    <div class="sect" data-x="s.chart">Curve history</div>
+    <canvas id="chart" width="520" height="150"></canvas>
+    <div class="gnote" data-x="c.note">Reserve over time, read from the chain alone.</div>
+  </div>
+
+  <!-- TRADE -->
+  <div class="card" id="tradeCard">
+    <div class="tabs">
+      <div class="tab buy on" id="tabBuy" data-x="t.buy">BUY</div>
+      <div class="tab sell" id="tabSell" data-x="t.sell">SELL</div>
+    </div>
+    <div class="lbl"><span id="amtLbl" data-x="a.buy">Amount (GBX)</span><span id="balLbl">—</span></div>
+    <input class="inp" id="amt" inputmode="decimal" placeholder="1.0" autocomplete="off">
+
+    <!-- THE IMPACT CARD -->
+    <div class="impact" id="impactCard" style="display:none">
+      <div class="big">
+        <span data-x="i.title">Your position moves the price</span>
+        <span class="pct cool" id="iPct">+0.00%</span>
+      </div>
+      <div class="arrow" id="iArrow">— → —</div>
+      <div class="row"><span class="k" id="iGetLbl" data-x="i.get">You receive</span><span class="v green" id="iGet">—</span></div>
+      <div class="row"><span class="k" data-x="i.avg">Average execution price</span><span class="v" id="iAvg">—</span></div>
+      <div class="row"><span class="k" data-x="i.fee">0.5% burned forever</span><span class="v" id="iFee">—</span></div>
+      <div class="warn" id="iWarn" data-x="i.warn">Large impact: you are moving this market noticeably. The curve charges you for your own size — that is the honest math.</div>
+    </div>
+
+    <div class="steps" id="steps" style="display:none">
+      <div class="step" id="stTx"><span class="dot"></span><span data-x="st.tx">Transaction verified against the rules</span></div>
+      <div class="step" id="stCast"><span class="dot"></span><span data-x="st.cast">Broadcast to the network</span></div>
+    </div>
+
+    <button class="btn b" id="btnTrade" disabled data-x="b.buy">BUY</button>
+  </div>
+
+  <!-- REFUND — THE LAW -->
+  <div class="card" id="refundCard" style="display:none">
+    <div class="sect" data-x="s.refund">Refund · the law</div>
+    <div class="law" data-x="rf.note">If nobody trades this coin for ~30 days, every holder can take their share of the reserve back — in full, no fee. The user never loses money. Enforced by the chain, not by anyone's promise.</div>
+    <div class="row"><span class="k" data-x="rf.yours">Your share today</span><span class="v gold" id="rfShare">—</span></div>
+    <button class="btn ghost" id="btnRefund" data-x="b.refund">TAKE MY MONEY HOME</button>
+  </div>
+
+  <!-- GRADUATE -->
+  <div class="card" id="gradCard" style="display:none">
+    <div class="sect" data-x="s.gradcall">Graduate</div>
+    <div class="law" data-x="gc.note">The threshold is met. Anyone may call it: the entire reserve moves into the open pool, permanently. No one owns this button.</div>
+    <button class="btn g" id="btnGrad" data-x="b.grad">GRADUATE THE COIN</button>
+  </div>
+
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import * as F from '/gbx-launchpad-flow.mjs';
+import * as C from '/gbx-curve.mjs';
+
+/* ── i18n ── */
+const L=(()=>{try{return localStorage.getItem('gbx_lang')||localStorage.getItem('goldbrix_lang')||'en';}catch(e){return 'en';}})();
+const T={
+en:{loading:'reading the chain…','r.price':'Price','r.liq':'Curve liquidity','r.sold':'Tokens sold','r.holders':'Holders',
+ 's.grad':'Graduation · honest',
+ 'g.note':'The target is alive: it is 20× the largest trade of the last ~7 days (never less than 2,000 GBX). A whale raising the price raises its own bar. No fixed sum, ever.',
+ 'g.done':'Graduated — the liquidity moved to the open pool. This history is the curve\u2019s life.',
+ 's.chart':'Curve history','c.note':'Reserve over time, read from the chain alone.',
+ 't.buy':'BUY','t.sell':'SELL','a.buy':'Amount (GBX)','a.sell':'Amount (tokens)',
+ 'i.title':'Your position moves the price','i.get':'You receive','i.avg':'Average execution price',
+ 'i.fee':'0.5% burned forever',
+ 'i.warn':'Large impact: you are moving this market noticeably. The curve charges you for your own size — that is the honest math.',
+ 'st.tx':'Transaction verified against the rules','st.cast':'Broadcast to the network',
+ 'b.buy':'BUY','b.sell':'SELL','s.refund':'Refund · the law',
+ 'rf.note':'If nobody trades this coin for ~30 days, every holder can take their share of the reserve back — in full, no fee. The user never loses money. Enforced by the chain, not by anyone\u2019s promise.',
+ 'rf.yours':'Your share today','b.refund':'TAKE MY MONEY HOME','s.gradcall':'Graduate',
+ 'gc.note':'The threshold is met. Anyone may call it: the entire reserve moves into the open pool, permanently. No one owns this button.',
+ 'b.grad':'GRADUATE THE COIN','e.amt':'Enter a valid amount','e.net':'Network unavailable. Nothing was sent. Try again.',
+ 'e.wallet':'Wallet locked — unlocking…','e.notlive':'Test mode: the launchpad rules are not active on the network yet. Nothing was sent.',
+ 'e.notoken':'You hold no tokens of this coin on this device.','sent':'Sent. The chain will confirm in seconds.'},
+ro:{loading:'citesc lanțul…','r.price':'Preț','r.liq':'Lichiditatea curbei','r.sold':'Tokens vânduți','r.holders':'Deținători',
+ 's.grad':'Graduare · onestă',
+ 'g.note':'Ținta e vie: e 20× cel mai mare trade din ultimele ~7 zile (niciodată sub 2.000 GBX). Balena care urcă prețul își urcă propriul prag. Nicio sumă fixă, niciodată.',
+ 'g.done':'Graduat — lichiditatea s-a mutat în pool-ul deschis. Istoricul de aici e viața curbei.',
+ 's.chart':'Istoricul curbei','c.note':'Rezerva în timp, citită doar din lanț.',
+ 't.buy':'CUMPĂRĂ','t.sell':'VINDE','a.buy':'Sumă (GBX)','a.sell':'Sumă (tokens)',
+ 'i.title':'Poziția ta mișcă prețul','i.get':'Primești','i.avg':'Preț mediu de execuție',
+ 'i.fee':'0,5% ars pentru totdeauna',
+ 'i.warn':'Impact mare: miști vizibil această piață. Curba te taxează pentru propria mărime — asta e matematica onestă.',
+ 'st.tx':'Tranzacția verificată după reguli','st.cast':'Difuzată în rețea',
+ 'b.buy':'CUMPĂRĂ','b.sell':'VINDE','s.refund':'Refund · legea',
+ 'rf.note':'Dacă nimeni nu tranzacționează acest coin ~30 de zile, fiecare deținător își poate lua partea din rezervă înapoi — integral, fără fee. Userul nu pierde niciodată bani. Impus de lanț, nu de promisiunea cuiva.',
+ 'rf.yours':'Partea ta azi','b.refund':'IA-MI BANII ACASĂ','s.gradcall':'Graduare',
+ 'gc.note':'Pragul e atins. Oricine poate apăsa: toată rezerva se mută permanent în pool-ul deschis. Nimeni nu deține acest buton.',
+ 'b.grad':'GRADUEAZĂ MONEDA','e.amt':'Introdu o sumă validă','e.net':'Rețea indisponibilă. Nu s-a trimis nimic. Încearcă din nou.',
+ 'e.wallet':'Portofel blocat — deblocare…','e.notlive':'Mod de test: regulile launchpad-ului nu sunt încă active în rețea. Nu s-a trimis nimic.',
+ 'e.notoken':'Nu deții tokens ai acestui coin pe acest dispozitiv.','sent':'Trimis. Lanțul confirmă în câteva secunde.'},
+de:{loading:'lese die Chain…','r.price':'Preis','r.liq':'Kurven-Liquidität','r.sold':'Verkaufte Tokens','r.holders':'Halter',
+ 's.grad':'Graduierung · ehrlich',
+ 'g.note':'Das Ziel lebt: es ist 20× der größte Trade der letzten ~7 Tage (nie unter 2.000 GBX). Ein Wal, der den Preis hebt, hebt seine eigene Latte. Nie eine feste Summe.',
+ 'g.done':'Graduiert — die Liquidität ist in den offenen Pool gewandert. Diese Historie ist das Leben der Kurve.',
+ 's.chart':'Kurven-Historie','c.note':'Reserve über die Zeit, allein von der Chain gelesen.',
+ 't.buy':'KAUFEN','t.sell':'VERKAUFEN','a.buy':'Betrag (GBX)','a.sell':'Betrag (Tokens)',
+ 'i.title':'Deine Position bewegt den Preis','i.get':'Du erhältst','i.avg':'Durchschnittlicher Ausführungspreis',
+ 'i.fee':'0,5% für immer verbrannt',
+ 'i.warn':'Großer Impact: du bewegst diesen Markt spürbar. Die Kurve berechnet dir deine eigene Größe — das ist die ehrliche Mathematik.',
+ 'st.tx':'Transaktion gegen die Regeln geprüft','st.cast':'Ins Netzwerk gesendet',
+ 'b.buy':'KAUFEN','b.sell':'VERKAUFEN','s.refund':'Erstattung · das Gesetz',
+ 'rf.note':'Handelt ~30 Tage niemand diese Münze, kann jeder Halter seinen Anteil der Reserve zurücknehmen — vollständig, ohne Gebühr. Der Nutzer verliert nie Geld. Von der Chain erzwungen, nicht von einem Versprechen.',
+ 'rf.yours':'Dein Anteil heute','b.refund':'MEIN GELD NACH HAUSE','s.gradcall':'Graduieren',
+ 'gc.note':'Die Schwelle ist erreicht. Jeder darf es auslösen: die gesamte Reserve wandert dauerhaft in den offenen Pool. Niemand besitzt diesen Knopf.',
+ 'b.grad':'MÜNZE GRADUIEREN','e.amt':'Gültigen Betrag eingeben','e.net':'Netzwerk nicht erreichbar. Nichts wurde gesendet.',
+ 'e.wallet':'Wallet gesperrt — entsperren…','e.notlive':'Testmodus: Die Launchpad-Regeln sind im Netzwerk noch nicht aktiv. Nichts wurde gesendet.',
+ 'e.notoken':'Du hältst keine Tokens dieser Münze auf diesem Gerät.','sent':'Gesendet. Die Chain bestätigt in Sekunden.'},
+zh:{loading:'正在读取链…','r.price':'价格','r.liq':'曲线流动性','r.sold':'已售代币','r.holders':'持有者',
+ 's.grad':'毕业 · 诚实',
+ 'g.note':'目标是活的：为最近约7天最大交易的20倍（绝不低于2,000 GBX）。鲸鱼抬价即抬高自己的门槛。永无固定金额。',
+ 'g.done':'已毕业——流动性已进入开放池。这段历史是曲线的一生。',
+ 's.chart':'曲线历史','c.note':'储备随时间变化，仅从链上读取。',
+ 't.buy':'买入','t.sell':'卖出','a.buy':'金额 (GBX)','a.sell':'数量（代币）',
+ 'i.title':'你的仓位会移动价格','i.get':'你将获得','i.avg':'平均成交价',
+ 'i.fee':'0.5% 永久销毁',
+ 'i.warn':'冲击较大：你正在明显移动这个市场。曲线按你的规模收费——这就是诚实的数学。',
+ 'st.tx':'交易已按规则验证','st.cast':'已广播到网络',
+ 'b.buy':'买入','b.sell':'卖出','s.refund':'退款 · 法则',
+ 'rf.note':'若约30天无人交易此币，每位持有者都可全额取回自己那份储备——无手续费。用户永不亏钱。由链强制执行，而非任何人的承诺。',
+ 'rf.yours':'你今天的份额','b.refund':'把我的钱带回家','s.gradcall':'毕业',
+ 'gc.note':'门槛已达。任何人都可触发：全部储备将永久进入开放池。无人拥有这个按钮。',
+ 'b.grad':'让币毕业','e.amt':'请输入有效金额','e.net':'网络不可用。未发送任何内容。',
+ 'e.wallet':'钱包已锁定——正在解锁…','e.notlive':'测试模式：启动板规则尚未在网络上激活。未发送任何内容。',
+ 'e.notoken':'此设备上没有该币的代币。','sent':'已发送。链将在数秒内确认。'},
+ar:{loading:'قراءة السلسلة…','r.price':'السعر','r.liq':'سيولة المنحنى','r.sold':'الرموز المباعة','r.holders':'الحائزون',
+ 's.grad':'التخرج · بأمانة',
+ 'g.note':'الهدف حي: إنه 20× أكبر صفقة في آخر ~7 أيام (لا يقل أبداً عن 2,000 GBX). الحوت الذي يرفع السعر يرفع عتبته. لا مبلغ ثابت أبداً.',
+ 'g.done':'تخرجت — انتقلت السيولة إلى المجمع المفتوح. هذا التاريخ هو حياة المنحنى.',
+ 's.chart':'تاريخ المنحنى','c.note':'الاحتياطي عبر الزمن، يُقرأ من السلسلة وحدها.',
+ 't.buy':'شراء','t.sell':'بيع','a.buy':'المبلغ (GBX)','a.sell':'الكمية (رموز)',
+ 'i.title':'مركزك يحرك السعر','i.get':'ستستلم','i.avg':'متوسط سعر التنفيذ',
+ 'i.fee':'0.5% تُحرق للأبد',
+ 'i.warn':'تأثير كبير: أنت تحرك هذا السوق بوضوح. المنحنى يحاسبك على حجمك — هذه هي الرياضيات الأمينة.',
+ 'st.tx':'تم التحقق من المعاملة وفق القواعد','st.cast':'تم البث إلى الشبكة',
+ 'b.buy':'شراء','b.sell':'بيع','s.refund':'الاسترداد · القانون',
+ 'rf.note':'إذا لم يتداول أحد هذه العملة ~30 يوماً، يمكن لكل حائز استرداد حصته من الاحتياطي كاملة، بلا رسوم. المستخدم لا يخسر ماله أبداً. تفرضه السلسلة، لا وعد أحد.',
+ 'rf.yours':'حصتك اليوم','b.refund':'أعد أموالي إلى البيت','s.gradcall':'التخرج',
+ 'gc.note':'بلغت العتبة. يمكن لأي شخص الضغط: كل الاحتياطي ينتقل نهائياً إلى المجمع المفتوح. لا أحد يملك هذا الزر.',
+ 'b.grad':'خرّج العملة','e.amt':'أدخل مبلغاً صالحاً','e.net':'الشبكة غير متاحة. لم يُرسل شيء.',
+ 'e.wallet':'المحفظة مقفلة — جارٍ الفتح…','e.notlive':'وضع الاختبار: قواعد منصة الإطلاق ليست نشطة بعد. لم يُرسل شيء.',
+ 'e.notoken':'لا تحمل رموز هذه العملة على هذا الجهاز.','sent':'أُرسلت. ستؤكد السلسلة خلال ثوانٍ.'}
+};
+const tt=k=>(T[L]&&T[L][k])||T.en[k]||k;
+if(L==='ar')document.body.setAttribute('dir','rtl');
+function applyLang(){for(const el of document.querySelectorAll('[data-x]'))el.innerHTML=tt(el.getAttribute('data-x'));}
+applyLang();
+window.addEventListener('pageshow',ev=>{if(ev.persisted)location.reload();});
+
+/* ── helpers ── */
+const $=id=>document.getElementById(id);
+const COIN=100000000n;
+const LAUNCHPAD_LIVE_HEIGHT=0; // set at activation; 0 = pre-activation, no broadcast
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');
+ clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),3500);}
+const fmt=(sat,dec=4)=>(Number(sat)/1e8).toLocaleString('en-US',{maximumFractionDigits:dec});
+const fmtT=t=>Number(t).toLocaleString('en-US');
+function gbxToSat(v){v=String(v).trim().replace(',','.');
+ if(/^\d*(\.\d{0,8})?$/.test(v)===false||v===''||v==='.')return null;
+ const[a,b='']=v.split('.');return BigInt(a||'0')*COIN+BigInt((b+'00000000').slice(0,8));}
+function derSig(c){const tr=x=>{let i=0;while(i<31&&x[i]===0)i++;let v=x.subarray(i);if(v[0]&0x80)v=Uint8Array.of(0,...v);return v;};
+ const r=tr(c.subarray(0,32)),s=tr(c.subarray(32,64));
+ return Uint8Array.of(0x30,4+r.length+s.length,0x02,r.length,...r,0x02,s.length,...s);}
+let _bases=null;
+async function bases(){if(_bases)return _bases;const out=[];
+ try{const j=await(await fetch('/lps.json',{cache:'no-store'})).json();
+  for(const x of(j.lps||j||[])){const b=x.base_url||x.base||x.gateway||x.url;if(b&&out.indexOf(b)<0)out.push(b);}}catch(e){}
+ if(out.indexOf('https://goldbrix.app/lp')<0)out.push('https://goldbrix.app/lp');_bases=out;return out;}
+async function gwGet(p){let last=null;for(const b of await bases()){try{const r=await fetch(b+p);if(r.ok)return await r.json();last=new Error('HTTP '+r.status);}catch(e){last=e;}}throw last||new Error('LP_UNAVAILABLE');}
+async function gwBroadcast(rawtx){let last=null;for(const b of await bases()){
+ try{const r=await fetch(b+'/broadcast',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({rawtx})});
+  const j=await r.json();if(j&&j.txid)return j.txid;last=new Error(JSON.stringify(j).slice(0,100));}catch(e){last=e;}}
+ throw last||new Error('LP_UNAVAILABLE');}
+function loadWallet(){try{const raw=sessionStorage.getItem('gbx_unlocked_wallets');if(raw===null)return null;
+ const s=JSON.parse(raw);if(s&&s.wallets&&s.wallets.length>0){const w=s.wallets.find(x=>x.id===s.activeWalletId)||s.wallets[0];
+ if(w&&w.mnemonic&&w.address&&String(w.mnemonic).trim().split(/\s+/).length===12)return w;}}catch(e){}return null;}
+
+/* ── state ── */
+const cid=new URLSearchParams(location.search).get('coin')||'';
+let D=null, side='buy', wallet=null, keys=null, spkU=null, secp=null, myHolding=null;
+
+async function loadCurve(){
+  const r=await fetch('/api/curves/'+cid);
+  if(r.ok===false)throw new Error('unknown coin');
+  return await r.json();
+}
+function priceOf(reserveSat){ return C.spotPriceSat(BigInt(reserveSat)); }
+
+function render(){
+  $('cTick').textContent='$'+(D.ticker||cid.slice(0,8).toUpperCase());
+  $('cName').textContent=D.name||('coin '+cid.slice(0,16)+'…');
+  $('cLogo').textContent=(D.ticker||'?').slice(0,1);
+  try{const lg=localStorage.getItem('gbx_logo_'+cid);if(lg)$('cLogo').innerHTML='<img src="'+lg+'">';}catch(e){}
+  const grad=D.status==='graduated';
+  $('cBadge').textContent=grad?'GRADUATED':'LIVE';
+  $('cBadge').className='badge '+(grad?'grad':'live');
+  $('rPrice').textContent=priceOf(D.reserve_sat).toFixed(8)+' GBX';
+  $('rLiq').textContent=fmt(D.reserve_sat,2)+' GBX';
+  $('rSold').textContent=fmtT(D.sold_tokens)+' ('+D.sold_pct+'%)';
+  $('rHolders').textContent=D.holders;
+  // honest bar
+  $('gFill').style.width=Math.min(100,D.progress_pct)+'%';
+  $('gNums').textContent=fmt(D.reserve_sat,0)+' / '+fmt(D.bar_sat,0)+' GBX';
+  $('gPct').textContent=D.progress_pct.toFixed(1)+'%';
+  if(grad){$('gGraduated').style.display='block';$('tradeCard').style.display='none';}
+  drawChart();
+}
+function drawChart(){
+  const cv=$('chart'),ctx=cv.getContext('2d');
+  const log=(D.log||[]).filter(l=>l.status!=='rolled_back');
+  ctx.clearRect(0,0,cv.width,cv.height);
+  if(log.length<2)return;
+  const xs=log.map(l=>l.height), ys=log.map(l=>Number(l.reserve_sat)/1e8);
+  const x0=Math.min(...xs),x1=Math.max(...xs),y1=Math.max(...ys)*1.08||1;
+  ctx.strokeStyle='#F5CC75';ctx.lineWidth=2;ctx.beginPath();
+  log.forEach((l,i)=>{
+    const x=8+(cv.width-16)*((l.height-x0)/Math.max(1,x1-x0));
+    const y=cv.height-8-(cv.height-16)*(Number(l.reserve_sat)/1e8/y1);
+    if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  ctx.fillStyle='rgba(245,204,117,.12)';ctx.lineTo(cv.width-8,cv.height-8);ctx.lineTo(8,cv.height-8);ctx.fill();
+}
+
+/* ── quote + impact card (REAL, local math) ── */
+function refreshQuote(){
+  const v=$('amt').value;
+  $('impactCard').style.display='none';$('btnTrade').disabled=true;
+  if(D===null)return;
+  if(side==='buy'){
+    const sat=gbxToSat(v); if(sat===null||sat<1n)return;
+    const q=C.quoteBuy(BigInt(D.reserve_sat),sat);
+    if(q.ok===false)return;
+    showImpact(q, fmtT(q.tokensOut)+' tokens', fmt(q.feeSat)+' GBX');
+  }else{
+    const tok=/^\d+$/.test(v.trim())?BigInt(v.trim()):null;
+    if(tok===null||tok<1n)return;
+    if(myHolding===null||tok>BigInt(myHolding.amount)){toast(tt('e.notoken'));return;}
+    const q=C.quoteSell(BigInt(D.reserve_sat),tok);
+    if(q.ok===false)return;
+    showImpact(q, fmt(q.netOut)+' GBX', fmt(q.feeSat)+' GBX');
+  }
+}
+function showImpact(q,getStr,feeStr){
+  const p=q.impactPct;
+  $('iPct').textContent=(p>=0?'+':'')+p.toFixed(2)+'%';
+  $('iPct').className='pct '+(Math.abs(p)>=10?'hot':Math.abs(p)>=2?'warm':'cool');
+  $('iArrow').textContent=q.priceBefore.toFixed(8)+' → '+q.priceAfter.toFixed(8)+' GBX/token';
+  $('iGet').textContent=getStr;
+  $('iAvg').textContent=q.avgPrice.toFixed(8)+' GBX/token';
+  $('iFee').textContent=feeStr;
+  $('iWarn').className='warn'+(Math.abs(p)>=10?' on':'');
+  $('impactCard').style.display='block';
+  $('btnTrade').disabled=false;
+}
+$('amt').addEventListener('input',refreshQuote);
+$('tabBuy').onclick=()=>{side='buy';$('tabBuy').classList.add('on');$('tabSell').classList.remove('on');
+ $('amtLbl').textContent=tt('a.buy');$('btnTrade').textContent=tt('b.buy');$('btnTrade').className='btn b';refreshQuote();};
+$('tabSell').onclick=()=>{side='sell';$('tabSell').classList.add('on');$('tabBuy').classList.remove('on');
+ $('amtLbl').textContent=tt('a.sell');$('btnTrade').textContent=tt('b.sell');$('btnTrade').className='btn s';refreshQuote();};
+
+/* ── keys + holdings ── */
+async function ensureKeys(){
+  if(keys)return;
+  const k=await window.GoldbrixCrypto.deriveKeypairFromMnemonic(wallet.mnemonic);
+  keys=k; secp=(await import('/vendor/secp256k1.mjs')).default;
+  const hm=await import('/vendor/gbx-h160.mjs');
+  const pk=new Uint8Array(k.publicKey);
+  const h=hm.ripemd160(hm.sha256(pk));
+  spkU=new Uint8Array(22);spkU[1]=0x14;spkU.set(h,2);
+}
+async function findMyHolding(){
+  // my token UTXO for this coin, from the read-api holders list (pk match)
+  if(keys===null)return null;
+  const pkHex=Array.from(new Uint8Array(keys.publicKey),x=>x.toString(16).padStart(2,'0')).join('');
+  const mine=(D.holders_list||[]).find(h=>h.pk===pkHex);
+  return mine?{txid:mine.txid,vout:mine.vout,amount:BigInt(mine.amount)}:null;
+}
+
+/* ── execute (guarded) ── */
+async function execute(){
+  wallet=loadWallet();
+  if(wallet===null){toast(tt('e.wallet'));
+    setTimeout(()=>location.href='/v3/unlock.html?return='+encodeURIComponent(location.pathname+location.search),1200);return;}
+  $('btnTrade').disabled=true;$('steps').style.display='block';
+  try{
+    await ensureKeys();
+    const pkU=new Uint8Array(keys.publicKey);
+    const sign=d=>derSig(secp.sign(d,new Uint8Array(keys.privateKey)));
+    const tpl=await gwGet('/powtpl');
+    if(LAUNCHPAD_LIVE_HEIGHT===0||tpl.height<LAUNCHPAD_LIVE_HEIGHT){toast(tt('e.notlive'));cleanup();return;}
+    const raw=await window.GoldbrixCrypto.fetchUtxos(wallet.address, 1);
+    const utxos=raw.filter(u=>u.spendable!==false).map(u=>({txid:u.txid,vout:u.vout,value8:Math.round(u.amount*1e8)}));
+    const curve={cid:C.unhex(cid),cidHex:cid,txid:D.curve_txid,vout:D.curve_vout,
+      reserve:BigInt(D.reserve_sat),m:BigInt(D.m_sat),hM:D.h_m,tipHeight:tpl.height};
+    let built,inputsTyped;
+    if(side==='buy'){
+      const sat=gbxToSat($('amt').value);
+      built=await F.buildBuyTx({curve,gbxInSat:sat,utxos,pkU,K:201600,p2wpkhSpkOf:()=>spkU});
+      inputsTyped=built.inputsCurveFirst.map((u,i)=>i===0?{...u,kind:'curve',ws:C.unhex(built.oldWsHex)}:{...u,kind:'p2wpkh'});
+    }else{
+      myHolding=await findMyHolding();
+      if(myHolding===null){toast(tt('e.notoken'));cleanup();return;}
+      const tok=BigInt($('amt').value.trim());
+      built=await F.buildSellTx({curve,holding:myHolding,tokensInSat:tok,utxos,pkU,K:201600,p2wpkhSpkOf:()=>spkU});
+      inputsTyped=built.inputs.map((u,i)=>i===0?{...u,kind:'curve',ws:C.unhex(built.oldWsHex)}
+        :(i===1?{...u,kind:'token',ws:C.unhex(built.tokenWsHex)}:{...u,kind:'p2wpkh'}));
+    }
+    $('stTx').className='step ok';$('stCast').className='step run';
+    const txBytes=F.buildCurveTx(inputsTyped,built.outs,pkU,sign);
+    const txid=await gwBroadcast(C.hex(txBytes));
+    $('stCast').className='step ok';
+    toast(tt('sent'));
+    setTimeout(()=>location.reload(),4000);
+  }catch(e){
+    toast(String(e&&e.message?e.message:e).slice(0,90));cleanup();
+  }
+}
+function cleanup(){$('btnTrade').disabled=false;$('steps').style.display='none';
+ $('stTx').className='step';$('stCast').className='step';}
+$('btnTrade').onclick=execute;
+
+/* ── refund + graduate cards ── */
+async function maybeCards(){
+  // GRADUATE: honest — visible only when the live threshold is met
+  if(D.status==='live'&&BigInt(D.reserve_sat)>=BigInt(D.bar_sat))$('gradCard').style.display='block';
+  // REFUND: visible if the user holds tokens; share = reserve*held/sold (pro-rata)
+  wallet=loadWallet();
+  if(wallet){await ensureKeys();myHolding=await findMyHolding();
+    if(myHolding){const sold=C.curveTokensSold(BigInt(D.reserve_sat));
+      if(sold>0n){const share=BigInt(D.reserve_sat)*myHolding.amount/sold;
+        $('rfShare').textContent=fmt(share)+' GBX';$('refundCard').style.display='block';}}}
+}
+$('btnRefund').onclick=async()=>{
+  try{
+    await ensureKeys();
+    const pkU=new Uint8Array(keys.publicKey);
+    const sign=d=>derSig(secp.sign(d,new Uint8Array(keys.privateKey)));
+    const tpl=await gwGet('/powtpl');
+    if(LAUNCHPAD_LIVE_HEIGHT===0||tpl.height<LAUNCHPAD_LIVE_HEIGHT){toast(tt('e.notlive'));return;}
+    const raw=await window.GoldbrixCrypto.fetchUtxos(wallet.address,0.001);
+    const utxos=raw.filter(u=>u.spendable!==false).map(u=>({txid:u.txid,vout:u.vout,value8:Math.round(u.amount*1e8)}));
+    const curve={cid:C.unhex(cid),cidHex:cid,txid:D.curve_txid,vout:D.curve_vout,
+      reserve:BigInt(D.reserve_sat),m:BigInt(D.m_sat),hM:D.h_m,tipHeight:tpl.height};
+    const rf=await F.buildRefundTx({curve,holding:myHolding,utxos,pkU,p2wpkhSpkOf:()=>spkU});
+    const ins=rf.inputs.map((u,i)=>i===0?{...u,kind:'curve',ws:C.unhex(rf.oldWsHex)}
+      :(i===1?{...u,kind:'token',ws:C.unhex(rf.tokenWsHex)}:{...u,kind:'p2wpkh'}));
+    const txid=await gwBroadcast(C.hex(F.buildCurveTx(ins,rf.outs,pkU,sign)));
+    toast(tt('sent'));setTimeout(()=>location.reload(),4000);
+  }catch(e){toast(String(e&&e.message?e.message:e).slice(0,90));}
+};
+$('btnGrad').onclick=async()=>{
+  try{
+    wallet=loadWallet();if(wallet===null){toast(tt('e.wallet'));return;}
+    await ensureKeys();
+    const pkU=new Uint8Array(keys.publicKey);
+    const sign=d=>derSig(secp.sign(d,new Uint8Array(keys.privateKey)));
+    const tpl=await gwGet('/powtpl');
+    if(LAUNCHPAD_LIVE_HEIGHT===0||tpl.height<LAUNCHPAD_LIVE_HEIGHT){toast(tt('e.notlive'));return;}
+    const raw=await window.GoldbrixCrypto.fetchUtxos(wallet.address,0.001);
+    const utxos=raw.filter(u=>u.spendable!==false).map(u=>({txid:u.txid,vout:u.vout,value8:Math.round(u.amount*1e8)}));
+    const curve={cid:C.unhex(cid),cidHex:cid,txid:D.curve_txid,vout:D.curve_vout,
+      reserve:BigInt(D.reserve_sat),m:BigInt(D.m_sat),hM:D.h_m,tipHeight:tpl.height};
+    const g=await F.buildGraduateTx({curve,utxos,pkU,p2wpkhSpkOf:()=>spkU});
+    const ins=g.inputs.map((u,i)=>i===0?{...u,kind:'curve',ws:C.unhex(g.oldWsHex)}:{...u,kind:'p2wpkh'});
+    const txid=await gwBroadcast(C.hex(F.buildCurveTx(ins,g.outs,pkU,sign)));
+    toast(tt('sent'));setTimeout(()=>location.reload(),4000);
+  }catch(e){toast(String(e&&e.message?e.message:e).slice(0,90));}
+};
+
+/* ── init ── */
+(async function init(){
+  try{
+    D=await loadCurve();
+    $('loading').style.display='none';$('page').style.display='block';
+    render();
+    await maybeCards();
+    refreshQuote();
+  }catch(e){$('loading').textContent=String(e&&e.message?e.message:e);}
+})();
+</script>
+<nav style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:200;">
+  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
+  <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
+  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#F5CC75;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:1;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
+  <a href="/v3/launch-x.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🧱</span><span data-t="navLaunch">LAUNCH</span></a>
+  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
+  <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">⚙</span><span data-t="navSettings">SETTINGS</span></a>
+</nav>
+<script src="/v3/pwa.js?v=105" defer></script>
+<script src="/v3/gbx-autolock.js" defer></script>
+</body>
+</html>
