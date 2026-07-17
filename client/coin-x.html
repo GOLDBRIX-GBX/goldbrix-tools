@@ -299,6 +299,7 @@ function loadWallet(){try{const raw=sessionStorage.getItem('gbx_unlocked_wallets
 
 /* ── state ── */
 const cid=new URLSearchParams(location.search).get('coin')||'';
+if(!cid){location.replace('/v3/coins-x.html');}
 let D=null, side='buy', wallet=null, keys=null, spkU=null, secp=null, myHolding=null;
 
 async function loadCurve(){
