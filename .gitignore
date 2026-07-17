@@ -4,3 +4,5 @@ node-registry/node-registry.json
 token-index/*.db
 token-index/*.db-shm
 token-index/*.db-wal
+node-registry/announce.json
+node-registry/announce-state.json

@@ -1,0 +1,8 @@
+[Unit]
+Description=GBX Announce (keyless periodic NODE/LP re-announce on-chain)
+After=goldbrixd.service
+[Service]
+Type=oneshot
+Environment=GBX_CLI=goldbrix-cli
+Environment=GBX_NODEREG_WINDOW=200000
+ExecStart=/usr/bin/env bash /opt/goldbrix-tools/node-registry/gbx-announce.sh

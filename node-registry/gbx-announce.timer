@@ -1,0 +1,8 @@
+[Unit]
+Description=GBX Announce timer (re-announce presence well within the liveness window)
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=6h
+Persistent=true
+[Install]
+WantedBy=timers.target
