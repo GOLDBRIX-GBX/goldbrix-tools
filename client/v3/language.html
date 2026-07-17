@@ -164,9 +164,9 @@ function pickLang(lang) {
   // Redirect back to where user came from (or welcome by default)
   const ref = document.referrer;
   if (ref && ref.includes('/v3/') && !ref.includes('language.html')) {
-    window.location.href = ref;
+    window.location.replace(ref); setTimeout(function(){ try{ location.reload(); }catch(e){} }, 60);
   } else {
-    window.location.href = '/v3/welcome.html';
+    window.location.replace('/v3/welcome.html'); setTimeout(function(){ try{ location.reload(); }catch(e){} }, 60);
   }
 }
 

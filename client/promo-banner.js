@@ -6,11 +6,11 @@
   let lastFingerprint = '';
 
   const I18N = {
-    en:{promoted:'PROMOTED',top:'TOP',neu:'NEW',upd:'🚀 NEW VERSION · tap or go to Settings'},
-    ro:{promoted:'PROMOVAT',top:'TOP',neu:'NOU',upd:'🚀 VERSIUNE NOUĂ · click sau Setări'},
-    de:{promoted:'BEWORBEN',top:'TOP',neu:'NEU',upd:'🚀 NEUE VERSION · tippen oder Einstellungen'},
-    zh:{promoted:'推广',top:'热门',neu:'新',upd:'🚀 新版本 · 点击或前往设置'},
-    ar:{promoted:'مُروّج',top:'الأعلى',neu:'جديد',upd:'🚀 إصدار جديد · انقر أو الإعدادات'}
+    en:{join:'JOIN THE FEDERATION',promoted:'PROMOTED',top:'TOP',neu:'NEW',upd:'🚀 NEW VERSION · tap or go to Settings'},
+    ro:{join:'AL\u0102TUR\u0102-TE FEDERA\u021aIEI',promoted:'PROMOVAT',top:'TOP',neu:'NOU',upd:'🚀 VERSIUNE NOUĂ · click sau Setări'},
+    de:{join:'TRITT DER F\u00d6DERATION BEI',promoted:'BEWORBEN',top:'TOP',neu:'NEU',upd:'🚀 NEUE VERSION · tippen oder Einstellungen'},
+    zh:{join:'\u52a0\u5165\u8054\u90a6',promoted:'推广',top:'热门',neu:'新',upd:'🚀 新版本 · 点击或前往设置'},
+    ar:{join:'\u0627\u0646\u0636\u0645 \u0625\u0644\u0649 \u0627\u0644\u0627\u062a\u062d\u0627\u062f',promoted:'مُروّج',top:'الأعلى',neu:'جديد',upd:'🚀 إصدار جديد · انقر أو الإعدادات'}
   };
   function lang(){ try{ return localStorage.getItem('gbx_lang')||localStorage.getItem('goldbrix_lang')||'en'; }catch(e){ return 'en'; } }
   function t(k){ const l=lang(); return (I18N[l]&&I18N[l][k])||I18N.en[k]||k; }
@@ -44,6 +44,7 @@
     lastFingerprint=fp;
     const itemHtml=i=>{
       let badge,color,metric=i.metric||'';
+      if(i.cat==='join'){ return `<span class="gbx-promo-item" data-cat="join"><span class="gbx-promo-badge" style="color:#F0C060">\ud83e\udd1d ${t('join')}</span><span class="gbx-promo-metric" style="color:#FFE099">${i.metric||''}</span><span class="gbx-promo-sep">\u2022</span></span>`; }
       if(i.cat==='update'){ return `<span class="gbx-promo-item" data-cat="update"><span class="gbx-promo-ticker" style="color:#F0C060">${t('upd')}</span><span class="gbx-promo-sep">•</span></span>`; }
       if(i.cat==='promoted'){ badge='🔥 '+t('promoted'); color='#F0C060'; metric='⏱ '+fmtTime(i.ends_at); }
       else if(i.cat==='top'){ badge='📈 '+t('top'); color='#5cd68b'; }
@@ -57,7 +58,7 @@
       var ABS='https://goldbrix.app/downloads/android/latest.apk';
       try{ var P=window.Capacitor&&window.Capacitor.Plugins; if(P&&P.Browser){ P.Browser.open({url:ABS}); return; } }catch(_){}
       window.open(ABS,'_system')||(window.location.href=ABS);
-    } else { window.location.href='/v3/trade.html?coin='+el.dataset.coin; } }; });
+    } else { if(el.dataset.cat==='join'){window.location.href='/v3/join.html';}else{window.location.href='/v3/coin-x.html?coin='+el.dataset.coin;} } }; });
     const track=bannerEl.querySelector('.gbx-promo-track');
     if(track){ const dur=Math.max(25,Math.min(95,items.length*6)); track.style.animationDuration=dur+'s'; }
   }
@@ -70,19 +71,23 @@
 
   async function refresh(){
     try{
-      const [promoR,listR]=await Promise.all([
-        fetch(API+'/launchpad/promote/active').then(r=>r.json()).catch(()=>({})),
-        fetch(API+'/v2/memecoin/list?limit=100').then(r=>r.json()).catch(()=>({}))
+      // GBX s49: live sources only - consensus launchpad index + on-chain registries.
+      const [curvesR,nodesR,lpsR]=await Promise.all([
+        fetch('/api/curves').then(r=>r.json()).catch(()=>({})),
+        fetch('/api/node-registry').then(r=>r.json()).catch(()=>({})),
+        fetch('/api/lp-registry').then(r=>r.json()).catch(()=>({}))
       ]);
-      const promoted=(promoR.active||[]).map(c=>({cat:'promoted',coin_id:c.coin_id,ticker:c.ticker||'?',ends_at:c.ends_at}));
-      const all=(listR.coins||[]);
-      const newest=all.slice(0,5).map(c=>({cat:'new',coin_id:c.id,ticker:c.ticker||'?'}));
-      const top=all.slice().sort((a,b)=>(b.change_24h_pct||0)-(a.change_24h_pct||0)).slice(0,10).map(c=>({cat:'top',coin_id:c.id,ticker:c.ticker||'?',metric:pct(c.change_24h_pct)}));
-      // GBX — item update PRIMUL, doar daca e update real disponibil
+      const nN=nodesR.nodes?Object.keys(nodesR.nodes).length:0;
+      const nL=lpsR.lps?Object.keys(lpsR.lps).length:0;
+      const join={cat:'join',metric:nN+'\u26d3 '+nL+'\ud83d\udca7'};
+      const all=(curvesR.curves||[]);
+      const newest=all.slice().sort((a,b)=>(b.created_height||0)-(a.created_height||0)).slice(0,5)
+        .map(c=>({cat:'new',coin_id:c.coin_id,ticker:c.ticker||'?'}));
+      const top=all.slice().sort((a,b)=>(Number(b.reserve_sat)||0)-(Number(a.reserve_sat)||0)).slice(0,10)
+        .map(c=>({cat:'top',coin_id:c.coin_id,ticker:c.ticker||'?'}));
       const us=window.__GBX_UPDATE_STATE__||{};
-      const others=[...promoted,...top,...newest];
+      const others=[join,...top,...newest];
       if(us.available && us.remote){
-        // GBX — insereaza update-ul la inceput SI la fiecare 4 items (circula des, mai vizibil)
         const out=[{cat:'update'}]; let c=0;
         for(const it of others){ out.push(it); c++; if(c%4===0) out.push({cat:'update'}); }
         items=out;
@@ -92,16 +97,7 @@
       render();
     }catch(e){}
   }
-  async function recoverPending(){
-    try{
-      const p=JSON.parse(localStorage.getItem('gbx_pending_promo')||'{}');
-      if(!p.promo_id||!p.tx_hash)return;
-      if(Date.now()-(p.timestamp||0)<30000)return;
-      const r=await fetch(API+'/launchpad/promote/confirm',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({promo_id:p.promo_id,tx_hash:p.tx_hash})});
-      const d=await r.json();
-      if(d.success){ localStorage.removeItem('gbx_pending_promo'); refresh(); }
-    }catch(e){}
-  }
+  async function recoverPending(){ /* retired with custodial launchpad (s47) */ }
   function start(){
     refresh(); recoverPending();
     setInterval(refresh,30000);
