@@ -16,7 +16,13 @@ DISK_GB=$(df -BG --output=avail /opt | tail -1 | tr -dc '0-9')
 [ "$DISK_GB" -ge 30 ] || { echo "FAIL: ${DISK_GB}GB free on /opt < 30GB"; exit 1; }
 
 mkdir -p $D/keys $D/state $D/vendor $D/target/idl
-tar xzf "$(dirname "$0")/../gbx-lp-box.tar.gz" -C $D 2>/dev/null || tar xzf gbx-lp-box.tar.gz -C $D
+SRC="$(cd "$(dirname "$0")" && pwd)"  # sources = public repo lp-box/, no tarball, no founder server
+mkdir -p $D/vendor $D/target/idl $D/lp-box
+cp $SRC/lp_daemon_main.py $SRC/lp_gateway_main.py $SRC/lp_solana.py $SRC/lp_pricing.py $SRC/_sol_key.py $SRC/lp_env.py $SRC/evm-htlc-cli.mjs $D/
+cp $SRC/vendor/*.mjs $D/vendor/
+cp $SRC/sol/sol-htlc-cli.mjs $D/
+cp $SRC/sol/htlc.idl.json $D/target/idl/htlc.json
+cp $SRC/lp.env.template $SRC/chains.json.template $SRC/package.json $SRC/install-lp.sh $SRC/lp-watchdog.sh $D/lp-box/
 cd $D && cp lp-box/package.json . && npm install --omit=dev
 
 [ -f $D/lp.env ] || cp $D/lp-box/lp.env.template $D/lp.env
