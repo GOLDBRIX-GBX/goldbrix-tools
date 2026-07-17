@@ -430,7 +430,7 @@ function minePowInWorker(coinIdHex, prevHash, nBits, onTick, signal){
   });
 }
 
-const LAUNCHPAD_LIVE_HEIGHT = 0; // set at activation (nLaunchpadHeight); 0 = pre-activation, no broadcast
+const LAUNCHPAD_LIVE_HEIGHT = 2720000; // nLaunchpadHeight — guard auto-lifts at activation height
 async function forge(){
   if (mining) return;
   const name=$('lName').value.trim();

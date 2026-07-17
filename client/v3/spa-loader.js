@@ -31,7 +31,7 @@
 
   var MAP = {
     home:'/home.html', wallet:'/v3/wallet.html', explorer:'/v3/explorer.html',
-    trade:'/v3/frozen.html', launch:'/v3/frozen.html', /* s47 frozen; restore at activation */ burns:'/v3/burns.html',
+    trade:'/v3/coin-x.html', launch:'/v3/launch-x.html', /* s48: consensus launchpad X pages; on-page guard until height 2720000 */ burns:'/v3/burns.html',
     settings:'/v3/settings.html', gbx:'/v3/gbx.html',
     receive:'/v3/receive-usdc.html', favorites:'/v3/favorites.html',
     leaderboard:'/v3/leaderboard.html',
