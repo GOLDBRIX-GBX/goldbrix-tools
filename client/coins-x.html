@@ -3,142 +3,44 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<script src="/v3/nav-i18n.js?v=105" defer></script>
 <title>GoldBrix — Living Markets</title>
+<script src="/v3/nav-i18n.js?v=105" defer></script>
 <style>
-:root{--bg:#171310;--card:#221c16;--line:#3a3128;--gold:#e8c476;--dim:#c9bfa8;--sub:#c9bfa8;--green:#7dc98a;--red:#d98a7d;}
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--dim);font-family:'Courier New',ui-monospace,monospace;padding:14px 12px 90px;min-height:100vh}
-h1{color:var(--gold);font-size:1.35rem;letter-spacing:.14em;text-align:center;margin:18px 0 6px;text-transform:uppercase}
-.sub{color:var(--sub);text-align:center;font-size:.8rem;margin-bottom:16px}
-.banner{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:.8rem;color:var(--sub);text-align:center;margin:0 auto 14px;max-width:560px}
-.banner b{color:var(--gold)}
-.list{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;transition:border-color .15s}
-.card:active{border-color:var(--gold)}
-.row{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-.tick{color:var(--gold);font-weight:bold;font-size:1.02rem;letter-spacing:.05em}
-.name{color:var(--sub);font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:55%}
-.res{color:var(--dim);font-size:.85rem}
-.meta{display:flex;justify-content:space-between;color:var(--sub);font-size:.72rem;margin-top:8px}
-.barwrap{background:#0f0c09;border-radius:6px;height:8px;margin-top:10px;overflow:hidden}
-.bar{background:linear-gradient(90deg,#8a6a2f,var(--gold));height:100%;border-radius:6px;transition:width .3s}
-.grad{color:var(--green);font-size:.72rem;letter-spacing:.1em}
-.empty{max-width:560px;margin:40px auto;text-align:center;color:var(--sub);font-size:.86rem;line-height:1.7}
-.empty .big{color:var(--gold);font-size:1rem;margin-bottom:10px;letter-spacing:.08em}
-.scanned{text-align:center;color:var(--sub);font-size:.7rem;margin-top:18px}
-.spin{text-align:center;color:var(--sub);margin:50px 0;font-size:.85rem}
-.err{text-align:center;color:var(--red);margin:40px 0;font-size:.82rem}
-[dir="rtl"] .name{text-align:left}
+.cx-root{background:#171310;color:#e6ddc8;font-family:'Courier New',ui-monospace,monospace;padding:14px 12px 90px;min-height:100vh;box-sizing:border-box}
+.cx-root *{box-sizing:border-box;margin:0;padding:0}
+.cx-root h1{color:#e8c476;font-size:1.35rem;letter-spacing:.14em;text-align:center;margin:18px 0 6px;text-transform:uppercase}
+.cx-root .cx-sub{color:#d9d0ba;text-align:center;font-size:.82rem;margin-bottom:16px}
+.cx-root .cx-banner{background:#221c16;border:1px solid #3a3128;border-radius:12px;padding:12px 14px;font-size:.82rem;color:#d9d0ba;text-align:center;margin:0 auto 14px;max-width:560px}
+.cx-root .cx-banner b{color:#e8c476}
+.cx-root .cx-list{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.cx-root .cx-card{background:#221c16;border:1px solid #3a3128;border-radius:14px;padding:14px;cursor:pointer}
+.cx-root .cx-card:active{border-color:#e8c476}
+.cx-root .cx-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.cx-root .cx-tick{color:#e8c476;font-weight:bold;font-size:1.02rem;letter-spacing:.05em}
+.cx-root .cx-name{color:#d9d0ba;font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:55%}
+.cx-root .cx-res{color:#e6ddc8;font-size:.85rem}
+.cx-root .cx-meta{display:flex;justify-content:space-between;color:#d9d0ba;font-size:.74rem;margin-top:8px}
+.cx-root .cx-barwrap{background:#0f0c09;border-radius:6px;height:8px;margin-top:10px;overflow:hidden}
+.cx-root .cx-bar{background:linear-gradient(90deg,#8a6a2f,#e8c476);height:100%;border-radius:6px}
+.cx-root .cx-grad{color:#7dc98a;font-size:.74rem;letter-spacing:.1em}
+.cx-root .cx-empty{max-width:560px;margin:40px auto;text-align:center;color:#d9d0ba;font-size:.88rem;line-height:1.7}
+.cx-root .cx-empty .cx-big{color:#e8c476;font-size:1rem;margin-bottom:10px;letter-spacing:.08em}
+.cx-root .cx-scanned{text-align:center;color:#bdb49c;font-size:.72rem;margin-top:18px}
+.cx-root .cx-spin{text-align:center;color:#d9d0ba;margin:50px 0;font-size:.85rem}
+.cx-root .cx-err{text-align:center;color:#d98a7d;margin:40px 0;font-size:.82rem}
+[dir="rtl"] .cx-root .cx-name{text-align:left}
 </style>
 </head>
 <body>
-<h1 data-i>t.title</h1>
-<div class="sub" data-i>t.sub</div>
-<div id="actBanner" class="banner" style="display:none"></div>
-<div id="state" class="spin" data-i>t.loading</div>
-<div id="list" class="list"></div>
-<div id="scanned" class="scanned"></div>
-<script>
-'use strict';
-/* GBX coins-x: living markets list — keyless read-only over /api/curves.
-   Truth from the chain only. No broadcast on this page -> no activation guard needed. */
-const ACTIVATION_HEIGHT = 2720000; // nLaunchpadHeight (informational only on this page)
-const I18N = {
- en:{ 't.title':'Living Markets', 't.sub':'every coin born of WORK · graduation by its own depth',
-      't.loading':'reading the chain…', 't.err':'Index unreachable. The chain itself is unaffected — try again.',
-      't.empty1':'THE CHAIN IS CLEAN', 't.empty2':'No coin exists yet. The first one will be born of WORK — forged on a phone, accepted by consensus.',
-      't.act':'The launchpad activates at block <b>2,720,000</b> — about {d} left. Forging works now; broadcasting opens at activation.',
-      't.holders':'holders', 't.reserve':'reserve', 't.graduated':'GRADUATED — free market', 't.closed':'CLOSED',
-      't.scanned':'chain scanned to block {n}', 't.days':'{x} days', 't.hours':'{x} hours' },
- ro:{ 't.title':'Piețe vii', 't.sub':'fiecare monedă se naște din MUNCĂ · graduarea prin propria adâncime',
-      't.loading':'citesc lanțul…', 't.err':'Indexul nu răspunde. Lanțul în sine e neatins — încearcă din nou.',
-      't.empty1':'LANȚUL E CURAT', 't.empty2':'Nicio monedă încă. Prima se va naște din MUNCĂ — forjată pe telefon, acceptată de consens.',
-      't.act':'Launchpad-ul se activează la blocul <b>2.720.000</b> — mai sunt circa {d}. Forjarea merge de acum; difuzarea se deschide la activare.',
-      't.holders':'deținători', 't.reserve':'rezervă', 't.graduated':'GRADUAT — piață liberă', 't.closed':'ÎNCHIS',
-      't.scanned':'lanț scanat până la blocul {n}', 't.days':'{x} zile', 't.hours':'{x} ore' },
- de:{ 't.title':'Lebendige Märkte', 't.sub':'jede Münze entsteht aus ARBEIT · Graduierung durch eigene Tiefe',
-      't.loading':'lese die Kette…', 't.err':'Index nicht erreichbar. Die Kette selbst ist unberührt — bitte erneut versuchen.',
-      't.empty1':'DIE KETTE IST SAUBER', 't.empty2':'Noch keine Münze. Die erste wird aus ARBEIT geboren — am Telefon geschmiedet, vom Konsens akzeptiert.',
-      't.act':'Das Launchpad aktiviert sich bei Block <b>2.720.000</b> — noch etwa {d}. Schmieden geht jetzt; Senden öffnet zur Aktivierung.',
-      't.holders':'Halter', 't.reserve':'Reserve', 't.graduated':'GRADUIERT — freier Markt', 't.closed':'GESCHLOSSEN',
-      't.scanned':'Kette gescannt bis Block {n}', 't.days':'{x} Tage', 't.hours':'{x} Stunden' },
- zh:{ 't.title':'活跃市场', 't.sub':'每枚币都诞生于工作 · 以自身深度毕业',
-      't.loading':'正在读取链…', 't.err':'索引无法访问。链本身不受影响——请重试。',
-      't.empty1':'链是干净的', 't.empty2':'尚无任何币。第一枚将由工作诞生——在手机上锻造，由共识接受。',
-      't.act':'启动台将在区块 <b>2,720,000</b> 激活——还剩约 {d}。现在即可锻造；广播在激活时开放。',
-      't.holders':'持有者', 't.reserve':'储备', 't.graduated':'已毕业 — 自由市场', 't.closed':'已关闭',
-      't.scanned':'链已扫描至区块 {n}', 't.days':'{x} 天', 't.hours':'{x} 小时' },
- ar:{ 't.title':'أسواق حيّة', 't.sub':'كل عملة تولد من العمل · التخرّج بعمقها الخاص',
-      't.loading':'جارٍ قراءة السلسلة…', 't.err':'الفهرس غير متاح. السلسلة نفسها سليمة — حاول مجددًا.',
-      't.empty1':'السلسلة نظيفة', 't.empty2':'لا توجد أي عملة بعد. الأولى ستولد من العمل — تُصاغ على الهاتف ويقبلها الإجماع.',
-      't.act':'تتفعّل منصة الإطلاق عند الكتلة <b>2,720,000</b> — بقي نحو {d}. الصياغة تعمل الآن؛ البث يُفتح عند التفعيل.',
-      't.holders':'حاملون', 't.reserve':'احتياطي', 't.graduated':'تخرّج — سوق حرّة', 't.closed':'مغلق',
-      't.scanned':'تم مسح السلسلة حتى الكتلة {n}', 't.days':'{x} يومًا', 't.hours':'{x} ساعة' }
-};
-const lang = (localStorage.getItem('gbx_lang') || localStorage.getItem('goldbrix_lang') || 'en').slice(0,2);
-const T = I18N[lang] || I18N.en;
-const tt = (k,vars) => { let s = T[k] || I18N.en[k] || k;
-  if (vars) for (const v in vars) s = s.replace('{'+v+'}', vars[v]); return s; };
-if (lang === 'ar') document.documentElement.dir = 'rtl';
-document.querySelectorAll('[data-i]').forEach(el => { el.textContent = tt(el.textContent.trim()); });
-window.addEventListener('pageshow', ev => { if (ev.persisted) location.reload(); });
-
-const $ = id => document.getElementById(id);
-const fmtGBX = sat => { const n = Number(BigInt(sat)) / 1e8;
-  return n.toLocaleString(lang==='ar'?'ar':lang, {maximumFractionDigits: n<1?8:2}) + ' GBX'; };
-
-async function load(){
-  let d;
-  try {
-    const r = await fetch('/api/curves');
-    if (!r.ok) throw new Error('http '+r.status);
-    d = await r.json();
-  } catch(e) {
-    $('state').className='err'; $('state').textContent = tt('t.err'); return;
-  }
-  const tip = d.scanned || 0;
-  let tipReal = 0;
-  try { const h = await fetch('/api/lp-registry').then(r=>r.json()); tipReal = h.height||0; } catch(e){}
-  const near = tipReal>0 ? (tipReal - tip) < 2000 : true;
-  if (tip > 0 && tip < ACTIVATION_HEIGHT && near){
-    const blocksLeft = ACTIVATION_HEIGHT - tip, hrs = blocksLeft*3/3600;
-    const left = hrs >= 48 ? tt('t.days',{x:Math.round(hrs/24)}) : tt('t.hours',{x:Math.round(hrs)});
-    $('actBanner').innerHTML = tt('t.act',{d:left}); $('actBanner').style.display='block';
-  }
-  const cs = d.curves || [];
-  if (!cs.length){
-    $('state').className='empty';
-    $('state').innerHTML = '<div class="big">'+tt('t.empty1')+'</div>'+tt('t.empty2');
-  } else {
-    $('state').style.display='none';
-    const list = $('list');
-    for (const c of cs){
-      const el = document.createElement('div'); el.className='card';
-      const tick = '$'+(c.ticker || c.coin_id.slice(0,8).toUpperCase());
-      const name = c.name || ('coin '+c.coin_id.slice(0,16)+'…');
-      const pct = Math.min(100, c.progress_pct || 0);
-      let bottom;
-      if (c.status === 'live')
-        bottom = '<div class="barwrap"><div class="bar" style="width:'+pct+'%"></div></div>'+
-                 '<div class="meta"><span>'+pct.toFixed(2)+'%</span><span>'+(c.holders||0)+' '+tt('t.holders')+'</span></div>';
-      else if (c.status === 'graduated')
-        bottom = '<div class="meta"><span class="grad">'+tt('t.graduated')+'</span><span>'+(c.holders||0)+' '+tt('t.holders')+'</span></div>';
-      else
-        bottom = '<div class="meta"><span>'+tt('t.closed')+'</span></div>';
-      el.innerHTML = '<div class="row"><span class="tick"></span><span class="name"></span></div>'+
-                     '<div class="meta"><span>'+tt('t.reserve')+'</span><span class="res">'+fmtGBX(c.reserve_sat||'0')+'</span></div>'+bottom;
-      el.querySelector('.tick').textContent = tick;   /* textContent: chain data is untrusted */
-      el.querySelector('.name').textContent = name;
-      el.addEventListener('click', () => { location.href = '/v3/coin-x.html?coin='+encodeURIComponent(c.coin_id); });
-      list.appendChild(el);
-    }
-  }
-  if (tip) $('scanned').textContent = tt('t.scanned',{n: tip.toLocaleString(lang==='ar'?'ar':lang)});
-}
-load();
-</script>
-<nav style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:200;">
+<div class="cx-root">
+  <h1 id="cxTitle">t.title</h1>
+  <div class="cx-sub" id="cxSub">t.sub</div>
+  <div id="cxBanner" class="cx-banner" style="display:none"></div>
+  <div id="cxState" class="cx-spin">t.loading</div>
+  <div id="cxList" class="cx-list"></div>
+  <div id="cxScanned" class="cx-scanned"></div>
+</div>
+<nav id="cxNav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:200;">
   <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
   <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
   <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#F5CC75;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:1;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
@@ -146,5 +48,121 @@ load();
   <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
   <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">⚙</span><span data-t="navSettings">SETTINGS</span></a>
 </nav>
+<script>
+(function(){
+  'use strict';
+  /* GBX coins-x v2: living markets list — keyless read over /api/curves.
+     Whole script lives in this IIFE: the SPA loader rewrites only column-0
+     const/let/var, so nothing here collides with global i18n.js. */
+  var ACTIVATION_HEIGHT = 2720000; // nLaunchpadHeight (informational only; no broadcast on this page)
+  var DICT = {
+   en:{ title:'Living Markets', sub:'every coin born of WORK · graduation by its own depth',
+        loading:'reading the chain…', err:'Index unreachable. The chain itself is unaffected — try again.',
+        empty1:'THE CHAIN IS CLEAN', empty2:'No coin exists yet. The first one will be born of WORK — forged on a phone, accepted by consensus.',
+        act:'The launchpad activates at block <b>2,720,000</b>{left}. Forging works now; broadcasting opens at activation.',
+        actleft:' — about {d} left', holders:'holders', reserve:'reserve',
+        graduated:'GRADUATED — free market', closed:'CLOSED',
+        scanned:'chain scanned to block {n}', days:'{x} days', hours:'{x} hours' },
+   ro:{ title:'Piețe vii', sub:'fiecare monedă se naște din MUNCĂ · graduarea prin propria adâncime',
+        loading:'citesc lanțul…', err:'Indexul nu răspunde. Lanțul în sine e neatins — încearcă din nou.',
+        empty1:'LANȚUL E CURAT', empty2:'Nicio monedă încă. Prima se va naște din MUNCĂ — forjată pe telefon, acceptată de consens.',
+        act:'Launchpad-ul se activează la blocul <b>2.720.000</b>{left}. Forjarea merge de acum; difuzarea se deschide la activare.',
+        actleft:' — mai sunt circa {d}', holders:'deținători', reserve:'rezervă',
+        graduated:'GRADUAT — piață liberă', closed:'ÎNCHIS',
+        scanned:'lanț scanat până la blocul {n}', days:'{x} zile', hours:'{x} ore' },
+   de:{ title:'Lebendige Märkte', sub:'jede Münze entsteht aus ARBEIT · Graduierung durch eigene Tiefe',
+        loading:'lese die Kette…', err:'Index nicht erreichbar. Die Kette selbst ist unberührt — bitte erneut versuchen.',
+        empty1:'DIE KETTE IST SAUBER', empty2:'Noch keine Münze. Die erste wird aus ARBEIT geboren — am Telefon geschmiedet, vom Konsens akzeptiert.',
+        act:'Das Launchpad aktiviert sich bei Block <b>2.720.000</b>{left}. Schmieden geht jetzt; Senden öffnet zur Aktivierung.',
+        actleft:' — noch etwa {d}', holders:'Halter', reserve:'Reserve',
+        graduated:'GRADUIERT — freier Markt', closed:'GESCHLOSSEN',
+        scanned:'Kette gescannt bis Block {n}', days:'{x} Tage', hours:'{x} Stunden' },
+   zh:{ title:'活跃市场', sub:'每枚币都诞生于工作 · 以自身深度毕业',
+        loading:'正在读取链…', err:'索引无法访问。链本身不受影响——请重试。',
+        empty1:'链是干净的', empty2:'尚无任何币。第一枚将由工作诞生——在手机上锻造，由共识接受。',
+        act:'启动台将在区块 <b>2,720,000</b> 激活{left}。现在即可锻造；广播在激活时开放。',
+        actleft:'——还剩约 {d}', holders:'持有者', reserve:'储备',
+        graduated:'已毕业 — 自由市场', closed:'已关闭',
+        scanned:'链已扫描至区块 {n}', days:'{x} 天', hours:'{x} 小时' },
+   ar:{ title:'أسواق حيّة', sub:'كل عملة تولد من العمل · التخرّج بعمقها الخاص',
+        loading:'جارٍ قراءة السلسلة…', err:'الفهرس غير متاح. السلسلة نفسها سليمة — حاول مجددًا.',
+        empty1:'السلسلة نظيفة', empty2:'لا توجد أي عملة بعد. الأولى ستولد من العمل — تُصاغ على الهاتف ويقبلها الإجماع.',
+        act:'تتفعّل منصة الإطلاق عند الكتلة <b>2,720,000</b>{left}. الصياغة تعمل الآن؛ البث يُفتح عند التفعيل.',
+        actleft:' — بقي نحو {d}', holders:'حاملون', reserve:'احتياطي',
+        graduated:'تخرّج — سوق حرّة', closed:'مغلق',
+        scanned:'تم مسح السلسلة حتى الكتلة {n}', days:'{x} يومًا', hours:'{x} ساعة' }
+  };
+  var L = (function(){ try { return (localStorage.getItem('gbx_lang') || localStorage.getItem('goldbrix_lang') || 'en').slice(0,2); } catch(e){ return 'en'; } })();
+  var D = DICT[L] || DICT.en;
+  function tr(k, vars){ var s = D[k] || DICT.en[k] || k;
+    if (vars) for (var v in vars) s = s.split('{'+v+'}').join(vars[v]); return s; }
+  if (L === 'ar') document.documentElement.dir = 'rtl';
+  window.addEventListener('pageshow', function(ev){ if (ev.persisted) location.reload(); });
+
+  function el(id){ return document.getElementById(id); }
+  el('cxTitle').textContent = tr('title');
+  el('cxSub').textContent = tr('sub');
+  el('cxState').textContent = tr('loading');
+  if (window.__SPA_PATH2ROUTE && el('cxNav')) el('cxNav').style.display = 'none'; // inside SPA the shell owns the nav
+
+  function fmtGBX(sat){ var n = Number(BigInt(sat)) / 1e8;
+    return n.toLocaleString(L==='ar'?'ar':L, {maximumFractionDigits: n<1?8:2}) + ' GBX'; }
+
+  async function cxLoad(){
+    var d, tipReal = 0;
+    try {
+      var r = await fetch('/api/curves');
+      if (!r.ok) throw new Error('http '+r.status);
+      d = await r.json();
+    } catch(e) {
+      el('cxState').className='cx-err'; el('cxState').textContent = tr('err'); return;
+    }
+    try { var lr = await fetch('/api/lp-registry').then(function(x){return x.json();});
+          tipReal = lr.updated_height || 0; } catch(e){}
+    if (tipReal > 0 && tipReal < ACTIVATION_HEIGHT){
+      // countdown ONLY from the real chain tip — never from a syncing index
+      var hrs = (ACTIVATION_HEIGHT - tipReal)*3/3600;
+      var left = hrs >= 48 ? tr('days',{x:Math.round(hrs/24)}) : tr('hours',{x:Math.round(hrs)});
+      el('cxBanner').innerHTML = tr('act',{left: tr('actleft',{d:left})});
+      el('cxBanner').style.display='block';
+    } else if (tipReal === 0 && (d.scanned||0) < ACTIVATION_HEIGHT){
+      el('cxBanner').innerHTML = tr('act',{left:''}); // tip unknown -> no number, no lie
+      el('cxBanner').style.display='block';
+    }
+    var cs = d.curves || [];
+    if (!cs.length){
+      el('cxState').className='cx-empty';
+      el('cxState').innerHTML = '<div class="cx-big"></div>';
+      el('cxState').querySelector('.cx-big').textContent = tr('empty1');
+      el('cxState').appendChild(document.createTextNode(tr('empty2')));
+    } else {
+      el('cxState').style.display='none';
+      var list = el('cxList');
+      cs.forEach(function(c){
+        var card = document.createElement('div'); card.className='cx-card';
+        var tick = '$'+(c.ticker || c.coin_id.slice(0,8).toUpperCase());
+        var name = c.name || ('coin '+c.coin_id.slice(0,16)+'…');
+        var pct = Math.min(100, c.progress_pct || 0);
+        var bottom;
+        if (c.status === 'live')
+          bottom = '<div class="cx-barwrap"><div class="cx-bar" style="width:'+pct+'%"></div></div>'+
+                   '<div class="cx-meta"><span>'+pct.toFixed(2)+'%</span><span>'+(c.holders||0)+' '+tr('holders')+'</span></div>';
+        else if (c.status === 'graduated')
+          bottom = '<div class="cx-meta"><span class="cx-grad">'+tr('graduated')+'</span><span>'+(c.holders||0)+' '+tr('holders')+'</span></div>';
+        else
+          bottom = '<div class="cx-meta"><span>'+tr('closed')+'</span></div>';
+        card.innerHTML = '<div class="cx-row"><span class="cx-tick"></span><span class="cx-name"></span></div>'+
+                         '<div class="cx-meta"><span>'+tr('reserve')+'</span><span class="cx-res">'+fmtGBX(c.reserve_sat||'0')+'</span></div>'+bottom;
+        card.querySelector('.cx-tick').textContent = tick;   /* textContent: chain data is untrusted */
+        card.querySelector('.cx-name').textContent = name;
+        card.addEventListener('click', function(){ location.href = '/v3/coin-x.html?coin='+encodeURIComponent(c.coin_id); });
+        list.appendChild(card);
+      });
+    }
+    if (d.scanned) el('cxScanned').textContent = tr('scanned',{n: d.scanned.toLocaleString(L==='ar'?'ar':L)});
+  }
+  cxLoad();
+})();
+</script>
 </body>
 </html>
