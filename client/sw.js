@@ -1,6 +1,6 @@
 /* GoldBrix SW v6 — HTML network-first (cod mereu proaspat), assets SWR, API network-only.
  * Fix 4 Iun 2026: stale-while-revalidate pe HTML servea cod vechi. */
-const CACHE = 'gbx-shell-v88-20260717-coins-x-v2';
+const CACHE = 'gbx-shell-v89-20260717-bright-text';
 
 function isNetworkOnly(url) {
   // s29: /lp/ + lps.json + ORICE cross-origin = network-only. Quote/pret STALE din cache = interzis (LEGEA).
