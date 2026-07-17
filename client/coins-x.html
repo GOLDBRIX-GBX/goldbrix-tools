@@ -3,9 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="/v3/nav-i18n.js?v=105" defer></script>
 <title>GoldBrix — Living Markets</title>
 <style>
-:root{--bg:#171310;--card:#221c16;--line:#3a3128;--gold:#e8c476;--dim:#c9bfa8;--sub:#8a8170;--green:#7dc98a;--red:#d98a7d;}
+:root{--bg:#171310;--card:#221c16;--line:#3a3128;--gold:#e8c476;--dim:#c9bfa8;--sub:#c9bfa8;--green:#7dc98a;--red:#d98a7d;}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--dim);font-family:'Courier New',ui-monospace,monospace;padding:14px 12px 90px;min-height:100vh}
 h1{color:var(--gold);font-size:1.35rem;letter-spacing:.14em;text-align:center;margin:18px 0 6px;text-transform:uppercase}
@@ -97,7 +98,10 @@ async function load(){
     $('state').className='err'; $('state').textContent = tt('t.err'); return;
   }
   const tip = d.scanned || 0;
-  if (tip > 0 && tip < ACTIVATION_HEIGHT){
+  let tipReal = 0;
+  try { const h = await fetch('/api/lp-registry').then(r=>r.json()); tipReal = h.height||0; } catch(e){}
+  const near = tipReal>0 ? (tipReal - tip) < 2000 : true;
+  if (tip > 0 && tip < ACTIVATION_HEIGHT && near){
     const blocksLeft = ACTIVATION_HEIGHT - tip, hrs = blocksLeft*3/3600;
     const left = hrs >= 48 ? tt('t.days',{x:Math.round(hrs/24)}) : tt('t.hours',{x:Math.round(hrs)});
     $('actBanner').innerHTML = tt('t.act',{d:left}); $('actBanner').style.display='block';
@@ -134,5 +138,13 @@ async function load(){
 }
 load();
 </script>
+<nav style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:200;">
+  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
+  <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
+  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#F5CC75;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:1;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
+  <a href="/v3/launch-x.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🧱</span><span data-t="navLaunch">LAUNCH</span></a>
+  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
+  <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">⚙</span><span data-t="navSettings">SETTINGS</span></a>
+</nav>
 </body>
 </html>
