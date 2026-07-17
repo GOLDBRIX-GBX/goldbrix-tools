@@ -127,9 +127,38 @@ UNIT
 
 systemctl enable --now goldbrixd gbx-read-api gbx-indexer gbx-node-registry
 
+# federation announce — OPT-IN, keyless by default.
+# A plain node holds NO funds. To be discoverable on-chain it must pay a dust fee,
+# which needs a local wallet. Config-driven (no prompt): fill node.env to opt in.
+NODE_ENV="${TOOLSDIR}/run-node/node.env"
+[ -f "$NODE_ENV" ] || cat > "$NODE_ENV" <<'NENV'
+# Federation announce (optional). Leave blank to stay unlisted (default, keyless).
+# To be discoverable: set your public HTTPS endpoint AND a wallet that holds a few brix.
+NODE_PUBLIC_URL=
+ANNOUNCE_WALLET=
+NENV
+NODE_URL=$(grep -E '^NODE_PUBLIC_URL=' "$NODE_ENV" | cut -d= -f2-)
+AWALLET=$(grep -E '^ANNOUNCE_WALLET=' "$NODE_ENV" | cut -d= -f2-)
+if [ -n "$NODE_URL" ] && [ -n "$AWALLET" ]; then
+  NREG=${TOOLSDIR}/node-registry
+  python3 - "$NREG/announce.json" "$NODE_URL" "$AWALLET" <<'PYJSON'
+import json,sys
+f,node,w=sys.argv[1],sys.argv[2],sys.argv[3]
+json.dump({"node":node,"wallet":w},open(f,"w"),indent=2)
+PYJSON
+  cp $NREG/gbx-announce.service /etc/systemd/system/
+  cp $NREG/gbx-announce.timer   /etc/systemd/system/
+  install -d /etc/systemd/system/gbx-announce.service.d
+  printf '[Service]\nEnvironment=GBX_DATADIR=%s\n' "$DATADIR" > /etc/systemd/system/gbx-announce.service.d/datadir.conf
+  systemctl daemon-reload && systemctl enable --now gbx-announce.timer
+  GBX_DATADIR=$DATADIR bash $NREG/gbx-announce.sh || true
+  echo "ANNOUNCE: node listed on-chain (re-announces autonomously)"
+fi
+
 echo "[6/6] done"
 echo "Sync from genesis starts now (headers via fixed seeds baked in the binary — no central server needed)."
 echo "Check:   goldbrix-cli -datadir=${DATADIR} getblockchaininfo | grep -e blocks -e verificationprogress"
 echo "Status:  curl -s http://127.0.0.1:8088/api/status"
-echo "When fully synced: expose :8088 behind HTTPS (Caddy/nginx), then submit your endpoint"
-echo "for inclusion in https://goldbrix.app/nodes.json — wallets add you via quorum, no app rebuild."
+echo "When fully synced: expose :8088 behind HTTPS (Caddy/nginx)."
+echo "To be discovered by wallets: set NODE_PUBLIC_URL + ANNOUNCE_WALLET in ${TOOLSDIR}/run-node/node.env"
+echo "and re-run this script. Discovery is 100% on-chain (GBX:NODE) — no central list, no app rebuild."

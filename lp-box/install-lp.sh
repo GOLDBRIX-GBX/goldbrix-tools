@@ -99,6 +99,31 @@ WantedBy=timers.target
 UNIT
 systemctl daemon-reload && systemctl enable --now gbx-lp-watchdog.timer
 
+# federation announce (config-driven, opt-in via LP_PUBLIC_URL; keyless timer, dust fee from lp_hot)
+LP_URL=$(grep -E '^LP_PUBLIC_URL=' $D/lp.env | cut -d= -f2-)
+NODE_URL=$(grep -E '^NODE_PUBLIC_URL=' $D/lp.env | cut -d= -f2-)
+if [ -n "$LP_URL" ] && [ "$LP_URL" != "FILL_YOUR_OWN" ]; then
+  NREG=/opt/goldbrix-tools/node-registry
+  [ -d "$NREG" ] || NREG="$SRC/../node-registry"
+  python3 - "$NREG/announce.json" "$NODE_URL" "$LP_URL" <<'PYJSON'
+import json,sys
+f,node,lp=sys.argv[1],sys.argv[2],sys.argv[3]
+c={"wallet":"lp_hot"}
+if node: c["node"]=node
+if lp:   c["lp"]=lp
+json.dump(c,open(f,"w"),indent=2)
+PYJSON
+  cp $NREG/gbx-announce.service /etc/systemd/system/
+  cp $NREG/gbx-announce.timer   /etc/systemd/system/
+  install -d /etc/systemd/system/gbx-announce.service.d
+  printf '[Service]\nEnvironment=GBX_DATADIR=%s\n' "$GBX_NODE_DATADIR" > /etc/systemd/system/gbx-announce.service.d/datadir.conf
+  systemctl daemon-reload && systemctl enable --now gbx-announce.timer
+  GBX_DATADIR=$GBX_NODE_DATADIR bash $NREG/gbx-announce.sh || true
+  echo "ANNOUNCE: LP listed on-chain (re-announces autonomously)"
+else
+  echo "ANNOUNCE: skipped (LP_PUBLIC_URL blank) — LP runs unlisted"
+fi
+
 # self-test — verdict, not hope
 sleep 3; OK=1
 J(){ curl -s -m 10 "http://127.0.0.1:18099$1" | python3 -c "import json,sys;print(json.load(sys.stdin)['$2'])" 2>/dev/null; }
