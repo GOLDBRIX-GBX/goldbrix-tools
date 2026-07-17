@@ -38,7 +38,7 @@
     'my-coins':'/v3/my-coins.html', chat:'/v3/chat.html', 'wallet-view':'/v3/wallet-view.html',
     transparency:'/v3/transparency.html', whitepaper:'/v3/whitepaper.html',
     unlock:'/v3/unlock.html', welcome:'/v3/welcome.html', disclaimer:'/v3/disclaimer.html',
-    'create-wallet':'/v3/create-wallet.html', 'import-wallet':'/v3/import-wallet.html', swap:'/v3/swap.html', 'buy-gbx':'/v3/buy-gbx.html', 'sell-gbx':'/v3/swap.html', 'run-node':'/v3/run-node.html', protocol:'/v3/protocol.html', send:'/v3/send.html', 'wallet-detail':'/v3/wallet-detail.html'
+    'create-wallet':'/v3/create-wallet.html', 'import-wallet':'/v3/import-wallet.html', swap:'/v3/swap.html', 'buy-gbx':'/v3/buy-gbx.html', 'sell-gbx':'/v3/swap.html', 'run-node':'/v3/run-node.html', join:'/v3/join.html', protocol:'/v3/protocol.html', send:'/v3/send.html', 'wallet-detail':'/v3/wallet-detail.html'
   };
   var PATH2ROUTE = {};
   Object.keys(MAP).forEach(function(k){ PATH2ROUTE[MAP[k]]=k; });
