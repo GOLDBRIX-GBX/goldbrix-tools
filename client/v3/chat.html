@@ -1,191 +1,31 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#1a140d">
-<title>Community Chat · GoldBrix</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GoldBrix</title>
 <style>
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;padding:0;background:#0d0a06;color:#f4e9d0;font-family:system-ui,-apple-system,sans-serif;min-height:100vh}
-body{background:#0d0a06;background-image:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(240,192,96,0.18),transparent 60%),radial-gradient(circle at 100% 100%,rgba(240,192,96,0.05),transparent 45%),linear-gradient(180deg,#15100a 0%,#0d0a06 100%);background-attachment:fixed;}
-body{padding-bottom:calc(140px + env(safe-area-inset-bottom))}
-.c-header{padding:18px 16px 16px;border-bottom:1px solid rgba(240,192,96,0.22);background:linear-gradient(180deg,rgba(240,192,96,0.12),rgba(13,10,6,0.4));backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);display:flex;align-items:center;gap:12px}
-.c-header__back{color:#F5CC75;font-size:20px;cursor:pointer;padding:4px 8px;text-decoration:none}
-.c-header__title{font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.08em;}
-.c-rules{padding:7px 16px;background:rgba(34,170,100,0.08);border-bottom:1px solid rgba(34,170,100,0.2);color:#88cc88;font-size:9px;letter-spacing:0.06em;text-align:center;font-family:'JetBrains Mono',monospace}
-.c-messages{padding:14px 12px;display:flex;flex-direction:column;gap:10px;min-height:60vh}
-.c-empty{text-align:center;color:#998a72;padding:50px 20px;font-size:14px}
-.c-msg{max-width:78%;display:flex;flex-direction:column;gap:3px}
-.c-msg--mine{align-self:flex-end;align-items:flex-end}
-.c-msg--them{align-self:flex-start;align-items:flex-start}
-.c-msg__meta{font-size:10px;color:#998a72;display:flex;gap:8px;padding:0 8px;font-family:'JetBrains Mono',monospace}
-.c-msg__bubble{padding:9px 13px;border-radius:14px;font-size:14px;line-height:1.45;word-wrap:break-word;white-space:pre-wrap}
-.c-msg--mine .c-msg__bubble{background:linear-gradient(135deg,#F0C060,#D9A838);color:#1a1200;font-weight:600;border-bottom-right-radius:4px;box-shadow:0 2px 10px rgba(240,192,96,0.25)}
-.c-msg--them .c-msg__bubble{background:rgba(35,28,18,0.85);border:1px solid rgba(240,192,96,0.18);color:#f4e9d0;border-bottom-left-radius:4px;backdrop-filter:blur(8px)}
-.c-msg__toggle{font-size:9px;color:#998a72;padding:0 8px;cursor:pointer;text-decoration:underline;opacity:0.7}
-.c-inputbar{position:fixed;bottom:calc(64px + env(safe-area-inset-bottom));left:0;right:0;padding:10px 12px;background:rgba(13,10,6,0.92);border-top:1px solid rgba(240,192,96,0.2);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid #3a3025;display:flex;gap:8px;align-items:flex-end;z-index:99}
-.c-input{flex:1;min-height:40px;max-height:100px;padding:10px 12px;background:rgba(35,28,18,0.9);border:1px solid rgba(240,192,96,0.25);border-radius:20px;color:#f4e9d0;font-size:14px;font-family:system-ui,sans-serif;resize:none;outline:none}
-.c-input:focus{border-color:#F5CC75}
-.c-send{width:46px;height:40px;background:linear-gradient(135deg,#F5CC75,#E0A845);border:none;border-radius:20px;color:#1a140d;font-size:18px;font-weight:800;cursor:pointer;flex-shrink:0}
-.c-send:disabled{opacity:0.5;cursor:not-allowed}
-.bnav{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;background:#1a140d;border-top:1px solid #3a3025;padding:6px 0;z-index:100}
-.bnav__item{display:flex;flex-direction:column;align-items:center;gap:2px;color:#998a72;text-decoration:none;padding:4px 8px;font-size:9px;font-family:'JetBrains Mono',monospace}
-.bnav__icon{font-size:18px}
-.toast{position:fixed;bottom:calc(150px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#241d14;border:1px solid #F5CC75;color:#F5CC75;padding:10px 16px;border-radius:10px;font-size:13px;z-index:200;max-width:90%;text-align:center;opacity:0;transition:opacity .2s;pointer-events:none;font-weight:600}
-.toast.show{opacity:1}
-[dir="rtl"] .c-msg--mine{align-self:flex-start;align-items:flex-start}
-[dir="rtl"] .c-msg--them{align-self:flex-end;align-items:flex-end}
-</style>
-<script src="/gbx-chat-notify.js" defer></script>
-</head>
-<body>
-<div class="c-header" style="flex-direction:column;gap:10px;">
-  <div style="display:flex;align-items:center;width:100%;gap:10px;">
-    <a class="c-header__back" onclick="history.back()" style="color:#F0C060;font-size:22px;">←</a>
-    <div style="flex:1;"></div>
-    <span id="gbxMuteBtn" onclick="gbxToggleMute()" style="cursor:pointer;font-size:18px;user-select:none;" title="Sound">🔔</span>
-    <span style="color:#F0C060;font-size:16px;opacity:0.8;" title="Auto-moderated">🛡</span>
-  </div>
-  <img src="/assets/coin/gbx-coin-256.png" alt="GoldBrix" style="width:84px;height:84px;border-radius:22px;box-shadow:0 0 32px rgba(240,192,96,0.45),0 6px 20px rgba(0,0,0,0.5);animation:gbxLogoFloat 4s ease-in-out infinite;">
-  <div style="text-align:center;line-height:1.3;">
-    <div style="font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:800;letter-spacing:0.12em;background:linear-gradient(135deg,#FFF0D0,#F0C060);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">GOLDBRIX</div>
-    <div id="hdrTitle" style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:0.3em;color:#bfa878;margin-top:3px;text-transform:uppercase;">COMMUNITY CHAT</div>
-  </div>
-</div>
-<style>@keyframes gbxLogoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}</style>
+.gbxfed{min-height:80vh;display:flex;align-items:center;justify-content:center;text-align:center;background:#120e08;color:#c9bfa8;font-family:system-ui,sans-serif}
+.gbxfed .w{max-width:420px;padding:24px 24px 120px}
+.gbxfed h2{color:#f0c060;font-size:22px;margin:16px 0 10px}
+.gbxfed p{line-height:1.5;margin:0 0 8px}
+.gbxfed .f{font-size:56px}
+</style></head><body style="margin:0;background:#120e08">
+<div class="gbxfed"><div class="w">
+ <div class="f">📡</div>
+ <h2 id="fedT"></h2><p id="fedB"></p><p id="fedC"></p>
+</div></div>
 <script>
-function gbxToggleMute(){
-  var m=localStorage.getItem('gbx_chat_muted')==='1';
-  m=!m; localStorage.setItem('gbx_chat_muted', m?'1':'0');
-  gbxRenderMute();
-}
-function gbxRenderMute(){
-  var m=localStorage.getItem('gbx_chat_muted')==='1';
-  var b=document.getElementById('gbxMuteBtn');
-  if(b){ b.textContent=m?'🔕':'🔔'; b.style.opacity=m?'0.55':'1'; }
-}
-gbxRenderMute();
-</script>
-<div class="c-rules" id="rulesBanner">🛡 NO LINKS · NO SCAMS · NO ABUSE — AUTO-MODERATED</div>
-<div class="c-messages" id="messages"><div class="c-empty" id="emptyState">Loading...</div></div>
-<div class="c-inputbar">
-  <textarea class="c-input" id="msgInput" maxlength="280" rows="1" placeholder="Message..."></textarea>
-  <button class="c-send" id="sendBtn" onclick="sendMessage()">▶</button>
-</div>
-<div class="toast" id="toast"></div>
-<nav class="v3-final-nav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:999;">
-  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🏠</span><span id="navHome">HOME</span></a>
-  <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">👤</span><span id="navWallet">WALLET</span></a>
-  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">📊</span><span id="navTrade">TRADE</span></a>
-  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🚀</span><span id="navLaunch">LAUNCH</span></a>
-  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🔥</span><span id="navBurn">BURNS</span></a>
-  <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">⚙</span><span id="navSet">SETTINGS</span></a>
-</nav>
-<script>
-const T={
-en:{hdr:'COMMUNITY CHAT',rules:'🛡 NO LINKS · NO SCAMS · NO ABUSE — AUTO-MODERATED',placeholder:'Message...',empty:'Be the first to say hi 👋',noWallet:'Create a wallet first to chat',showOriginal:'show original',showTranslation:'show translation',justNow:'now',mAgo:'m',hAgo:'h',dAgo:'d',you:'You',blocked_html_blocked:'⚠ HTML not allowed',blocked_code_blocked:'⚠ Code not allowed',blocked_link_blocked:'⚠ Links not allowed',blocked_address_blocked:'⚠ Crypto addresses not allowed',blocked_contact_blocked:'⚠ Contact info not allowed',blocked_scam_blocked:'⚠ Scam pattern detected',blocked_profanity_blocked:'⚠ Profanity not allowed',blocked_caps_blocked:'⚠ Too many caps',blocked_repeat_blocked:'⚠ Too many repeated chars',blocked_rate_limit:'⚠ Slow down — wait 3s',blocked_too_long:'⚠ Message too long',blocked_empty:'⚠ Empty',sendError:'Send failed',seedWarn:'⚠ NEVER share your seed phrase or private key. Nobody will ever legitimately ask for it.',home:'HOME',wallet:'WALLET',launch:'LAUNCH',burn:'BURNS',trade:'TRADE',set:'SETTINGS'},
-ro:{hdr:'CHAT COMUNITATE',rules:'🛡 FĂRĂ LINKURI · FĂRĂ SCAM · FĂRĂ JIGNIRI — AUTO-MODERAT',placeholder:'Mesaj...',empty:'Fii primul care salută 👋',noWallet:'Creează un portofel mai întâi',showOriginal:'arată originalul',showTranslation:'arată traducerea',justNow:'acum',mAgo:'m',hAgo:'h',dAgo:'z',you:'Tu',blocked_html_blocked:'⚠ HTML interzis',blocked_code_blocked:'⚠ Cod interzis',blocked_link_blocked:'⚠ Linkurile nu sunt permise',blocked_address_blocked:'⚠ Adresele crypto nu sunt permise',blocked_contact_blocked:'⚠ Contact interzis',blocked_scam_blocked:'⚠ Tipar scam detectat',blocked_profanity_blocked:'⚠ Jigniri interzise',blocked_caps_blocked:'⚠ Prea multe majuscule',blocked_repeat_blocked:'⚠ Prea multe repetări',blocked_rate_limit:'⚠ Încet — așteaptă 3s',blocked_too_long:'⚠ Mesaj prea lung',blocked_empty:'⚠ Gol',sendError:'Eroare trimitere',seedWarn:'⚠ NU împărtăși NICIODATĂ fraza de recuperare sau cheia privată. Nimeni serios nu îți cere asta.',home:'ACASĂ',wallet:'PORTOFEL',launch:'LANSARE',burn:'ARDERI',trade:'TRADE',set:'SETĂRI'},
-de:{hdr:'COMMUNITY-CHAT',rules:'🛡 KEINE LINKS · KEIN SCAM · KEINE BELEIDIGUNG — AUTO-MODERIERT',placeholder:'Nachricht...',empty:'Sei der Erste 👋',noWallet:'Erstelle zuerst eine Wallet',showOriginal:'Original',showTranslation:'Übersetzung',justNow:'jetzt',mAgo:'m',hAgo:'h',dAgo:'t',you:'Du',blocked_html_blocked:'⚠ HTML nicht erlaubt',blocked_code_blocked:'⚠ Code nicht erlaubt',blocked_link_blocked:'⚠ Links nicht erlaubt',blocked_address_blocked:'⚠ Krypto-Adressen nicht erlaubt',blocked_contact_blocked:'⚠ Kontaktdaten nicht erlaubt',blocked_scam_blocked:'⚠ Scam-Muster erkannt',blocked_profanity_blocked:'⚠ Beleidigungen nicht erlaubt',blocked_caps_blocked:'⚠ Zu viel Großschreibung',blocked_repeat_blocked:'⚠ Zu viele Wiederholungen',blocked_rate_limit:'⚠ Langsamer — 3s warten',blocked_too_long:'⚠ Zu lang',blocked_empty:'⚠ Leer',sendError:'Senden fehlgeschlagen',seedWarn:'⚠ Teile NIEMALS deine Wiederherstellungsphrase oder deinen privaten Schlüssel.',home:'HOME',wallet:'WALLET',launch:'LAUNCH',burn:'BURNS',trade:'TRADE',set:'EINST'},
-zh:{hdr:'社区聊天',rules:'🛡 无链接 · 无骗局 · 无辱骂 — 自动审核',placeholder:'消息...',empty:'第一个打招呼吧 👋',noWallet:'请先创建钱包',showOriginal:'显示原文',showTranslation:'显示翻译',justNow:'刚刚',mAgo:'分',hAgo:'时',dAgo:'天',you:'我',blocked_html_blocked:'⚠ 不允许HTML',blocked_code_blocked:'⚠ 不允许代码',blocked_link_blocked:'⚠ 不允许链接',blocked_address_blocked:'⚠ 不允许加密地址',blocked_contact_blocked:'⚠ 不允许联系方式',blocked_scam_blocked:'⚠ 检测到骗局',blocked_profanity_blocked:'⚠ 不允许粗话',blocked_caps_blocked:'⚠ 大写过多',blocked_repeat_blocked:'⚠ 重复过多',blocked_rate_limit:'⚠ 请等3秒',blocked_too_long:'⚠ 过长',blocked_empty:'⚠ 空',sendError:'发送失败',seedWarn:'⚠ 切勿分享您的助记词或私钥。',home:'首页',wallet:'钱包',launch:'发射',burn:'销毁',trade:'交易',set:'设置'},
-ar:{hdr:'دردشة المجتمع',rules:'🛡 لا روابط · لا احتيال · لا إساءة — مدير تلقائي',placeholder:'رسالة...',empty:'كن أول من يقول مرحباً 👋',noWallet:'أنشئ محفظة أولاً',showOriginal:'الأصلي',showTranslation:'الترجمة',justNow:'الآن',mAgo:'د',hAgo:'س',dAgo:'ي',you:'أنا',blocked_html_blocked:'⚠ HTML غير مسموح',blocked_code_blocked:'⚠ الكود غير مسموح',blocked_link_blocked:'⚠ الروابط غير مسموحة',blocked_address_blocked:'⚠ عناوين العملات غير مسموحة',blocked_contact_blocked:'⚠ معلومات الاتصال غير مسموحة',blocked_scam_blocked:'⚠ نمط احتيال',blocked_profanity_blocked:'⚠ الإساءة غير مسموحة',blocked_caps_blocked:'⚠ أحرف كبيرة كثيرة',blocked_repeat_blocked:'⚠ تكرار زائد',blocked_rate_limit:'⚠ انتظر 3 ثوان',blocked_too_long:'⚠ طويل',blocked_empty:'⚠ فارغ',sendError:'فشل الإرسال',seedWarn:'⚠ لا تشارك أبداً عبارة الاسترداد.',home:'الرئيسية',wallet:'المحفظة',launch:'إطلاق',burn:'حرق',trade:'تداول',set:'إعدادات'}
-};
-var CURRENT_LANG=localStorage.getItem('gbx_lang')||'en';
-function t(k){return (T[CURRENT_LANG]||T.en)[k]||k}
-function applyLang(){
-  var tt=T[CURRENT_LANG]||T.en;
-  document.getElementById('hdrTitle').textContent=tt.hdr;
-  document.getElementById('rulesBanner').textContent=tt.rules;
-  document.getElementById('msgInput').placeholder=tt.placeholder;
-  document.getElementById('navHome').textContent=tt.home;
-  document.getElementById('navWallet').textContent=tt.wallet;
-  document.getElementById('navLaunch').textContent=tt.launch;
-  document.getElementById('navTrade').textContent=tt.trade;
-  document.getElementById('navBurn').textContent=tt.burn;
-  document.getElementById('navSet').textContent=tt.set;
-  document.body.dir=(CURRENT_LANG==='ar')?'rtl':'ltr';
-}
-function getActiveAddress(){
-  try{var s=sessionStorage.getItem('gbx_unlocked_wallets');if(s){var u=JSON.parse(s);var w=(u.wallets||[]).find(function(x){return x.id===u.activeWalletId})||(u.wallets||[])[0];if(w&&w.address)return w.address}}catch(e){}
-  try{var r=localStorage.getItem('goldbrix_state_v3');if(r){var st=JSON.parse(r);return st.activeAddress||(st.wallets&&st.wallets[0]&&st.wallets[0].address)||null}}catch(e){}
-  return null;
-}
-function shortAddr(a){if(!a)return '';return a.slice(0,6)+'…'+a.slice(-4)}
-function timeAgo(ts){var s=Math.floor((Date.now()-ts)/1000);if(s<60)return t('justNow');if(s<3600)return Math.floor(s/60)+t('mAgo');if(s<86400)return Math.floor(s/3600)+t('hAgo');return Math.floor(s/86400)+t('dAgo')}
-function showToast(msg){var el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(function(){el.classList.remove('show')},2600)}
-function renderMessage(m,myAddr){
-  var mine=m.address===myAddr;
-  var wrap=document.createElement('div');
-  wrap.className='c-msg '+(mine?'c-msg--mine':'c-msg--them');
-  wrap.dataset.id=m.id;
-  var meta=document.createElement('div');meta.className='c-msg__meta';
-  var who=document.createElement('span');who.textContent=mine?t('you'):shortAddr(m.address);
-  if(!mine){who.style.cursor='pointer';who.style.color='#5cc8e8';who.style.textDecoration='underline';who.title='View wallet';who.onclick=function(ev){ev.stopPropagation();var _u='/v3/wallet-view.html?addr='+encodeURIComponent(m.address); if(!(window.__spaNavTo&&window.__spaNavTo(_u))) window.location.href=_u;};}
-  var when=document.createElement('span');when.textContent=timeAgo(m.created_at);
-  meta.appendChild(who);meta.appendChild(when);wrap.appendChild(meta);
-  var bubble=document.createElement('div');bubble.className='c-msg__bubble';
-  // 🛡 ANTI-XSS: textContent NU innerHTML — codul/HTML din mesaj NU se va executa
-  bubble.textContent=(m.translated&&!mine)?m.translated:m.message;
-  wrap.appendChild(bubble);
-  if(m.translated&&m.translated!==m.message&&!mine){
-    var toggle=document.createElement('div');toggle.className='c-msg__toggle';toggle.textContent=t('showOriginal');
-    var showingT=true;
-    toggle.onclick=function(){showingT=!showingT;bubble.textContent=showingT?m.translated:m.message;toggle.textContent=showingT?t('showOriginal'):t('showTranslation')};
-    wrap.appendChild(toggle);
-  }
-  return wrap;
-}
-var lastTs=0,myAddr=null,pollTimer=null,initialLoad=true;
-async function fetchMessages(){
-  try{
-    var url='https://goldbrix.app/launchpad/chat/messages?lang='+CURRENT_LANG+'&since='+lastTs+'&limit=100';
-    var res=await fetch(url);var data=await res.json();
-    if(!data.ok||!data.messages)return;
-    var list=document.getElementById('messages');
-    if(initialLoad){list.innerHTML=''}
-    var emptyEl=document.getElementById('emptyState');if(emptyEl&&data.messages.length>0){emptyEl.remove()}
-    data.messages.forEach(function(m){
-      if(list.querySelector('[data-id="'+m.id+'"]'))return;
-      list.appendChild(renderMessage(m,myAddr));
-      if(m.created_at>lastTs)lastTs=m.created_at;
-    });
-    if(list.children.length===0){
-      list.innerHTML='<div class="c-empty">'+t('empty')+'</div>';
-    }
-    if(initialLoad||(window.innerHeight+window.scrollY)>=document.body.offsetHeight-300){
-      window.scrollTo({top:document.body.scrollHeight,behavior:initialLoad?'auto':'smooth'});
-    }
-    initialLoad=false;
-  }catch(e){console.error('[chat]',e)}
-}
-async function sendMessage(){
-  var input=document.getElementById('msgInput');var btn=document.getElementById('sendBtn');
-  var txt=input.value.trim();if(!txt)return;
-  if(!myAddr){showToast(t('noWallet'));return}
-  // Client-side warning special pt seed/private key — userul vede de ce nu trimite
-  if(/seed phrase|private key|fraza recuperare|cheie privata|cheia privata/i.test(txt)){showToast(t('seedWarn'));return}
-  btn.disabled=true;
-  try{
-    var res=await fetch('https://goldbrix.app/launchpad/chat/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({address:myAddr,message:txt})});
-    var data=await res.json();
-    if(data.ok){input.value='';input.style.height='auto';setTimeout(fetchMessages,250)}
-    else if(data.blocked){showToast(t('blocked_'+data.reason)||('⚠ '+data.reason))}
-    else{showToast(t('sendError'))}
-  }catch(e){showToast(t('sendError'))}
-  finally{btn.disabled=false}
-}
-window.addEventListener('DOMContentLoaded',function(){
-  applyLang();myAddr=getActiveAddress();fetchMessages();
-  pollTimer=setInterval(fetchMessages,4000);
-  var input=document.getElementById('msgInput');
-  input.addEventListener('input',function(){input.style.height='auto';input.style.height=Math.min(input.scrollHeight,100)+'px'});
-  input.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});
-});
-window.addEventListener('beforeunload',function(){if(pollTimer)clearInterval(pollTimer)});
-</script>
-  <script src="/v3/gbx-autolock.js" defer></script>
-<script src="/v3/pwa.js?v=103"></script>
-</body>
-</html>
+(function(){
+ var L={
+  en:{t:'Chat moves to the federation',b:'The central chat server has been retired — a central server fails the test of autonomy.',c:'Chat returns as a federated service after activation: ephemeral messages between nodes, no central server, no stored history.'},
+  ro:{t:'Chatul se mută pe federație',b:'Serverul central de chat a fost retras — un server central pică testul autonomiei.',c:'Chatul revine ca serviciu federat după activare: mesaje efemere între noduri, fără server central, fără istoric stocat.'},
+  de:{t:'Der Chat zieht in die Föderation',b:'Der zentrale Chat-Server wurde stillgelegt — ein zentraler Server besteht den Autonomie-Test nicht.',c:'Der Chat kehrt nach der Aktivierung als föderierter Dienst zurück: flüchtige Nachrichten zwischen Nodes, ohne zentralen Server, ohne gespeicherten Verlauf.'},
+  zh:{t:'聊天迁移至联邦网络',b:'中心化聊天服务器已退役——中心服务器无法通过自治测试。',c:'激活后聊天将以联邦服务回归：节点之间的临时消息，无中心服务器，不存储历史。'},
+  ar:{t:'الدردشة تنتقل إلى الاتحاد',b:'تم إيقاف خادم الدردشة المركزي — الخادم المركزي لا يجتاز اختبار الاستقلالية.',c:'تعود الدردشة كخدمة اتحادية بعد التفعيل: رسائل مؤقتة بين العقد، بدون خادم مركزي، وبدون سجل محفوظ.'}
+ };
+ var g=localStorage.getItem('gbx_lang')||localStorage.getItem('goldbrix_lang')||'en';
+ var t=L[g]||L.en;
+ if(g==='ar'){var r=document.querySelector('.gbxfed');if(r)r.dir='rtl';}
+ document.getElementById('fedT').textContent=t.t;
+ document.getElementById('fedB').textContent=t.b;
+ document.getElementById('fedC').textContent=t.c;
+})();
+</script></body></html>
