@@ -531,14 +531,16 @@ $('btnGo').onclick=forge;
 </script>
 <script src="/v3/gbx-read.js?v=105"></script>
 <script src="/v3/pwa.js?v=105" defer></script>
-<nav style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:200;">
+<nav id="pgNav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:200;">
   <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
   <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
   <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
-  <a href="/v3/launch-x.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#F5CC75;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:1;"><span style="font-size:18px;">🧱</span><span data-t="navLaunch">LAUNCH</span></a>
-  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
-  <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">⚙</span><span data-t="navSettings">SETTINGS</span></a>
+  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#F5CC75;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:1;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
+  <a href="/v3/leaderboard.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
+  <a href="/v3/explorer.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🔍</span><span data-t="navExplorer">EXPLORER</span></a>
+  <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">⚙️</span><span data-t="navSettings">SETTINGS</span></a>
 </nav>
+<script>if(window.__SPA_PATH2ROUTE){var _n=document.getElementById("pgNav");if(_n)_n.style.display="none";}</script>
 <script src="/v3/gbx-autolock.js" defer></script>
 </body>
 </html>
