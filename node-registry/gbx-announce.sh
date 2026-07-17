@@ -24,7 +24,8 @@ WALLET=$(python3 -c "import json,sys;print(json.load(open('$CFG')).get('wallet',
 [ -f "$STATE" ] || echo '{}' > "$STATE"
 
 announce_role(){
-  local role="$1" url="$2" script="announce-$role.js"
+  local role="$1" url="$2"
+  local script="announce-$role.js"
   [ -n "$url" ] || return 0
   local last
   last=$(python3 -c "import json;print(json.load(open('$STATE')).get('$role',0))" 2>/dev/null || echo 0)
