@@ -66,6 +66,6 @@ const HTLC_VALID = /^[a-z0-9]{2,16}:(0x[0-9a-fA-F]{40}|[1-9A-HJ-NP-Za-km-z]{32,4
     }catch(e){ log('err',e.message); }
     await sleep(POLL_MS);
   }
-  function prune(s,tip){ for(const k of ['nodes','lps']) for(const u of Object.keys(s[k]||{}))
+  function prune(s,tip){ for(const k of ['nodes','lps','htlcs']) for(const u of Object.keys(s[k]||{}))
     if (s[k][u].height < tip - WINDOW) { log('EXPIRE',k,u); delete s[k][u]; } }
 })();
