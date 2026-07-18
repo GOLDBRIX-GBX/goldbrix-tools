@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>GoldBrix · Launch</title>
 <link rel="icon" href="/favicon.ico">
-<script type="module" src="/crypto-utils-v2.js?v=105"></script>
+<script type="module" src="/crypto-utils-v2.js?v=107"></script>
 <script src="/gbx-update-check.js" defer></script>
 <script src="/gbx-native-bridge.js" defer></script>
-<script src="/i18n.js?v=105" defer></script>
-<script src="/v3/nav-i18n.js?v=105" defer></script>
+<script src="/i18n.js?v=107" defer></script>
+<script src="/v3/nav-i18n.js?v=107" defer></script>
 <style>
 :root{
   --bg:#1c1610; --card:#2a2218; --card2:#241d13; --line:#3a3025;
@@ -103,8 +103,8 @@ body[dir="rtl"]{direction:rtl;}
   <!-- IDENTITY -->
   <div class="card" id="formCard">
     <div class="sect" data-x="s.identity">Coin identity</div>
-    <div class="logoBox" id="logoBox"><span data-x="logo.tap">tap to add a logo<br>(optional)</span></div>
-    <input type="file" id="logoFile" accept="image/*" style="display:none">
+    <label for="logoFile" class="logoBox" id="logoBox" style="display:flex;cursor:pointer"><span data-x="logo.tap">tap to add a logo<br>(optional)</span></label>
+    <input type="file" id="logoFile" accept="image/*" style="position:absolute;left:-9999px;width:1px;height:1px">
     <div class="hint" style="text-align:center" data-x="logo.hint">The logo stays on this device. Name and ticker live on the chain, forever.</div>
 
     <div class="lbl"><span data-x="f.name">Name</span><span id="nameCount">0/50</span></div>
@@ -305,7 +305,7 @@ let _bases=null;
 async function bases(){
   if (_bases) return _bases;
   const out=[];
-  try{ const j=await (await fetch('/lps.json',{cache:'no-store'})).json();
+  try{ const j=await (await fetch('https://goldbrix.app/lps.json',{cache:'no-store'})).json();
     for (const x of (j.lps||j||[])){ const b=x.base_url||x.base||x.gateway||x.url; if(b&&out.indexOf(b)<0) out.push(b); } }catch(e){}
   if (out.indexOf('https://goldbrix.app/lp')<0) out.push('https://goldbrix.app/lp');
   _bases=out; return out;
@@ -349,7 +349,7 @@ let wallet=null, keys=null, spkU=null, secp=null;
 let mining=false, worker=null, logoData=null;
 
 /* ── logo (device-only, honest) ── */
-$('logoBox').onclick=()=>$('logoFile').click();
+
 $('logoFile').onchange=e=>{
   const f=e.target.files[0]; if(f===undefined) return;
   if (f.size>3*1024*1024){ toast('max 3MB'); return; }
@@ -529,8 +529,8 @@ $('btnGo').onclick=forge;
   refreshPreview();
 })();
 </script>
-<script src="/v3/gbx-read.js?v=105"></script>
-<script src="/v3/pwa.js?v=105" defer></script>
+<script src="/v3/gbx-read.js?v=107"></script>
+<script src="/v3/pwa.js?v=107" defer></script>
 <nav id="pgNav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:200;">
   <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
   <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
