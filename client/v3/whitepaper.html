@@ -12,26 +12,26 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   .v3-app { padding-bottom:90px; }
-  .back-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-secondary); background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--r-full); margin:12px 0 8px 16px; }
+  .back-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-secondary); background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--r-full); margin:12px 0 8px 16px; }
   .wp-hero { text-align:center; padding:16px; }
   .wp-hero__title { font-size:28px; font-weight:800; color:var(--gold); margin-bottom:4px; }
-  .wp-hero__sub { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.12em; color:var(--text-secondary); }
+  .wp-hero__sub { font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.12em; color:var(--text-secondary); }
   .wp-sect { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--r-md); margin:12px; padding:18px; }
-  .wp-sect__title { font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:0.12em; color:var(--gold); text-transform:uppercase; margin-bottom:10px; }
+  .wp-sect__title { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; letter-spacing:0.12em; color:var(--gold); text-transform:uppercase; margin-bottom:10px; }
   .wp-sect__body { font-size:14px; line-height:1.7; color:var(--text-primary); }
   .wp-sect__body ul { margin:8px 0; padding-left:20px; }
   .wp-sect__body li { margin:4px 0; }
-  .wp-sect__body code { background:var(--bg-elevated); padding:2px 6px; border-radius:4px; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--gold); }
+  .wp-sect__body code { background:var(--bg-elevated); padding:2px 6px; border-radius:4px; font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--gold); }
   .wp-stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px; }
   .wp-stat { background:var(--bg-elevated); padding:10px; border-radius:var(--r-md); text-align:center; }
   .wp-stat__val { font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:700; color:var(--gold); }
-  .wp-stat__lbl { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-muted); letter-spacing:0.08em; margin-top:2px; }
+  .wp-stat__lbl { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-muted); letter-spacing:0.08em; margin-top:2px; }
   .phase-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); }
   .phase-row:last-child { border-bottom:none; }
   .phase-row__num { width:32px; height:32px; border-radius:50%; background:var(--bg-elevated); display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--gold); flex-shrink:0; }
   .phase-row__info { flex:1; }
   .phase-row__title { font-weight:600; }
-  .phase-row__status { font-family:'JetBrains Mono',monospace; font-size:10px; padding:3px 8px; border-radius:var(--r-full); }
+  .phase-row__status { font-family:'JetBrains Mono',monospace; font-size:11px; padding:3px 8px; border-radius:var(--r-full); }
   .phase-row__status--live { background:rgba(78,224,140,0.15); color:var(--green); }
   .phase-row__status--soon { background:rgba(245,204,117,0.1); color:var(--gold); }
   .phase-row__status--future { background:var(--bg-elevated); color:var(--text-muted); }
@@ -54,10 +54,11 @@ input::-moz-placeholder, textarea::-moz-placeholder {
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/goldbrix-brand-180.png">
     <script src="/gbx-update-check.js" defer></script>
     <script src="/gbx-native-bridge.js" defer></script>
-      <script src="/i18n.js?v=104" defer></script>
-  <script src="/promo-banner.js?v=105" defer></script>
+      <script src="/i18n.js?v=111" defer></script>
+  <script src="/v3/gbx-read.js?v=112" defer></script>
+  <script src="/promo-banner.js?v=113" defer></script>
 <style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
-<script src="/v3/nav-i18n.js?v=104" defer></script>
+<script src="/v3/nav-i18n.js?v=111" defer></script>
 </head>
 <body>
 <div class="v3-app">
@@ -73,7 +74,7 @@ input::-moz-placeholder, textarea::-moz-placeholder {
   </div>
   <div class="wp-sect" style="text-align:center;">
     <div class="wp-sect__title" id="sFounder" style="justify-content:center;">The Founder</div>
-    <img src="/assets/brand/goldbrix-founder-512.png?v=104" alt="Gideon Brick" style="width:150px;height:150px;border-radius:50%;margin:6px auto 12px;display:block;box-shadow:0 0 22px rgba(201,162,39,0.45);">
+    <img src="/assets/brand/goldbrix-founder-512.png?v=111" alt="Gideon Brick" style="width:150px;height:150px;border-radius:50%;margin:6px auto 12px;display:block;box-shadow:0 0 22px rgba(201,162,39,0.45);">
     <div style="font-size:17px;font-weight:800;color:#e8c455;margin:0 0 10px;letter-spacing:0.5px;">Gideon Brick</div>
     <div class="wp-sect__body" id="bFounder"></div>
   </div>
@@ -208,14 +209,14 @@ function applyLang() {
 }
 applyLang();
 </script>
-<script src="/v3/pwa.js?v=104" defer></script>
+<script src="/v3/pwa.js?v=111" defer></script>
 
 <nav class="v3-final-nav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:999;">
-  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
-  <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
-  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
-  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
-  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
+  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
+  <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
+  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
+  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
+  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
   <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#F5CC75;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:1;"><span style="font-size:18px;">⚙</span><span data-t="navSettings">SETTINGS</span></a>
 </nav>
 <style>body { padding-bottom: 76px !important; }</style>

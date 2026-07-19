@@ -32,7 +32,7 @@
   /* Text - warm whites */
   --text-primary: #FFF5E0;
   --text-secondary: #FFFFFF;
-  --text-muted: #FFE099;
+  --text-muted: #FFFDF7;
   --text-tertiary: #EBDFC6;
 
   /* Spacing */
@@ -128,14 +128,14 @@ a { color: inherit; text-decoration: none; }
 .v3-pwa-banner__icon img { width: 26px; height: 26px; border-radius: 5px; display: block; }
 .v3-pwa-banner__text { flex: 1; min-width: 0; }
 .v3-pwa-banner__title {
-  font-size: 12px;
+  font-size:13px;
   font-weight: 700;
   letter-spacing: 0.02em;
   color: #1c1610 !important;
   line-height: 1.2;
 }
 .v3-pwa-banner__sub {
-  font-size: 10px;
+  font-size:11px;
   opacity: 0.7;
   font-family: 'JetBrains Mono', monospace;
   color: #1c1610 !important;
@@ -147,7 +147,7 @@ a { color: inherit; text-decoration: none; }
   background: #1c1610 !important;
   color: var(--gold) !important;
   border-radius: 8px;
-  font-size: 11px;
+  font-size:12px;
   font-weight: 700;
   letter-spacing: 0.08em;
   font-family: 'JetBrains Mono', monospace;
@@ -200,7 +200,7 @@ a { color: inherit; text-decoration: none; }
 }
 .v3-card__title {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
+  font-size:12px;
   font-weight: 700;
   letter-spacing: 0.12em;
   color: var(--gold);
@@ -320,7 +320,7 @@ a { color: inherit; text-decoration: none; }
 .v3-footer {
   text-align: center;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
+  font-size:11px;
   color: var(--text-muted);
   letter-spacing: 0.12em;
   /* GBX — safe-area: footer-ul nu se incaleca cu bara de navigare a telefonului */
@@ -351,7 +351,7 @@ a { color: inherit; text-decoration: none; }
 }
 .v3-hero__subtitle {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
+  font-size:12px;
   letter-spacing: 0.2em;
   color: var(--text-secondary);
   text-transform: uppercase;
@@ -376,7 +376,7 @@ a { color: inherit; text-decoration: none; }
 .v3-lang-row__flag { font-size: 26px; }
 .v3-lang-row__info { flex: 1; }
 .v3-lang-row__name { font-size: 16px; font-weight: 600; color: var(--text-primary); }
-.v3-lang-row__code { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted); letter-spacing: 0.1em; }
+.v3-lang-row__code { font-family: 'JetBrains Mono', monospace; font-size:12px; color: var(--text-muted); letter-spacing: 0.1em; }
 .v3-lang-row__arrow { color: var(--gold); font-size: 18px; }
 
 /* ═══ Animations ═══ */
@@ -391,7 +391,7 @@ a { color: inherit; text-decoration: none; }
 .v3-toast {
   position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
   background: var(--bg-card); border: 1px solid var(--gold); border-radius: var(--r-md);
-  padding: 12px 20px; font-size: 13px; color: var(--text-primary);
+  padding: 12px 20px; font-size:14px; color: var(--text-primary);
   z-index: 1000; animation: slideUp var(--t-base); box-shadow: var(--shadow-lg);
 }
 

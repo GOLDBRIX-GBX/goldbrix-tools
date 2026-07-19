@@ -14,7 +14,7 @@
 <style>
   .back-btn {
     display: inline-flex; align-items: center; gap: 6px;
-    padding: 8px 14px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    padding: 8px 14px; font-family: 'JetBrains Mono', monospace; font-size:12px;
     letter-spacing: 0.1em; color: var(--text-secondary);
     background: var(--bg-elevated); border: 1px solid var(--border);
     border-radius: var(--r-full); transition: all var(--t-fast); margin: 12px 0 16px;
@@ -27,7 +27,7 @@
     color: var(--gold); margin-bottom: 6px;
   }
   .recv-hero__sub {
-    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    font-family: 'JetBrains Mono', monospace; font-size:12px;
     letter-spacing: 0.15em; color: var(--text-secondary);
   }
 
@@ -41,7 +41,7 @@
   .addr-display {
     background: var(--bg-elevated); border: 1px solid var(--gold-deep);
     border-radius: var(--r-md); padding: 14px;
-    font-family: 'JetBrains Mono', monospace; font-size: 13px;
+    font-family: 'JetBrains Mono', monospace; font-size:14px;
     color: var(--gold); word-break: break-all; line-height: 1.5;
     text-align: center; margin-bottom: 16px;
   }
@@ -54,7 +54,7 @@
     border-radius: var(--r-md); padding: 14px; margin-top: 16px;
   }
   .warn-box__title {
-    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    font-family: 'JetBrains Mono', monospace; font-size:12px;
     color: var(--orange); letter-spacing: 0.12em; font-weight: 700;
     margin-bottom: 6px; text-transform: uppercase;
   }
@@ -63,7 +63,7 @@
   .toast {
     position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
     background: var(--bg-card); border: 1px solid var(--gold);
-    border-radius: var(--r-md); padding: 10px 18px; font-size: 13px;
+    border-radius: var(--r-md); padding: 10px 18px; font-size:14px;
     color: var(--gold); z-index: 1000; box-shadow: var(--shadow-lg);
     animation: slideUp 250ms;
     font-family: 'JetBrains Mono', monospace; letter-spacing: 0.08em;
@@ -88,10 +88,11 @@ input::-moz-placeholder, textarea::-moz-placeholder {
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/goldbrix-brand-180.png">
     <script src="/gbx-update-check.js" defer></script>
     <script src="/gbx-native-bridge.js" defer></script>
-      <script src="/i18n.js?v=103" defer></script>
-  <script src="/promo-banner.js?v=105" defer></script>
+      <script src="/i18n.js?v=111" defer></script>
+  <script src="/v3/gbx-read.js?v=112" defer></script>
+  <script src="/promo-banner.js?v=113" defer></script>
 <style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
-<script src="/v3/nav-i18n.js?v=103" defer></script>
+<script src="/v3/nav-i18n.js?v=111" defer></script>
 </head>
 <body>
 
@@ -221,15 +222,15 @@ function renderQR() {
   renderQR();
 })();
 </script>
-<script src="/v3/pwa.js?v=103" defer></script>
+<script src="/v3/pwa.js?v=111" defer></script>
 
 <nav class="v3-final-nav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:999;">
-  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
+  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
   <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#F5CC75;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:1;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
-  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
-  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
-  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
-  <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">⚙</span><span data-t="navSettings">SETTINGS</span></a>
+  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
+  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
+  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
+  <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">⚙</span><span data-t="navSettings">SETTINGS</span></a>
 </nav>
 <style>body { padding-bottom: 76px !important; }</style>
 

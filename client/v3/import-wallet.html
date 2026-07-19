@@ -31,20 +31,20 @@
   .pwd-eye:hover { color: var(--gold); }
   .back-btn {
     display: inline-flex; align-items: center; gap: 6px;
-    padding: 8px 14px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    padding: 8px 14px; font-family: 'JetBrains Mono', monospace; font-size:12px;
     letter-spacing: 0.1em; color: var(--text-secondary);
     background: var(--bg-elevated); border: 1px solid var(--border);
     border-radius: var(--r-full); transition: all var(--t-fast); margin-bottom: 16px;
   }
   .back-btn:hover { color: var(--gold); border-color: var(--gold-deep); }
   .word-count {
-    text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    text-align: right; font-family: 'JetBrains Mono', monospace; font-size:12px;
     color: var(--text-muted); margin-top: 6px;
   }
   .word-count.ok { color: var(--green); }
   .loader { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; margin: 0 auto 12px; animation: spin 1s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .crypto-loading { text-align: center; padding: 40px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .crypto-loading { text-align: center; padding: 40px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size:13px; }
   .step { display: none; }
   .step.active { display: block; animation: fadeIn 0.4s; }
 
@@ -62,8 +62,8 @@ input::-moz-placeholder, textarea::-moz-placeholder {
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/goldbrix-brand-180.png">
     <script src="/gbx-update-check.js" defer></script>
     <script src="/gbx-native-bridge.js" defer></script>
-      <script src="/v3/gbx-session.js?v=103"></script>
-      <script src="/i18n.js?v=103" defer></script>
+      <script src="/v3/gbx-session.js?v=111"></script>
+      <script src="/i18n.js?v=111" defer></script>
 <style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
 </head>
 <body>
@@ -81,23 +81,23 @@ input::-moz-placeholder, textarea::-moz-placeholder {
       <div class="v3-text-center" style="padding: 16px 0 24px;">
         <img src="/assets/coin/gbx-coin-128.png" style="width: 72px; height: 72px; filter: drop-shadow(0 0 24px var(--gold-glow-strong));">
         <h2 style="margin-top: 16px; font-size: 22px; font-weight: 800; color: var(--gold);" id="importTitle" data-i18n="importTitle">Import Wallet</h2>
-        <p style="margin-top: 6px; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.15em; color: var(--text-secondary);" id="importSub">ENTER YOUR 12 WORD SEED PHRASE</p>
+        <p style="margin-top: 6px; font-family: 'JetBrains Mono', monospace; font-size:12px; letter-spacing: 0.15em; color: var(--text-secondary);" id="importSub">ENTER YOUR 12 WORD SEED PHRASE</p>
       </div>
 
-      <div id="importExplainer" style="background:rgba(245,204,117,.05);border:1px solid #3a3020;border-radius:12px;padding:13px 14px;margin-bottom:18px;font-size:12px;line-height:1.65;color:var(--text-secondary);">
+      <div id="importExplainer" style="background:rgba(245,204,117,.05);border:1px solid #3a3020;border-radius:12px;padding:13px 14px;margin-bottom:18px;font-size:13px;line-height:1.65;color:var(--text-secondary);">
         <span id="expBody"></span>
         <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:11px;">
-          <span style="font-size:11px;background:#221a11;border:1px solid #2e2619;border-radius:999px;padding:5px 10px;">🦊 MetaMask</span>
-          <span style="font-size:11px;background:#221a11;border:1px solid #2e2619;border-radius:999px;padding:5px 10px;">👻 Phantom</span>
-          <span style="font-size:11px;background:#221a11;border:1px solid #2e2619;border-radius:999px;padding:5px 10px;">🛡️ Trust</span>
-          <span style="font-size:11px;background:#221a11;border:1px solid #2e2619;border-radius:999px;padding:5px 10px;">🔷 GoldBrix</span>
+          <span style="font-size:12px;background:#221a11;border:1px solid #2e2619;border-radius:999px;padding:5px 10px;">🦊 MetaMask</span>
+          <span style="font-size:12px;background:#221a11;border:1px solid #2e2619;border-radius:999px;padding:5px 10px;">👻 Phantom</span>
+          <span style="font-size:12px;background:#221a11;border:1px solid #2e2619;border-radius:999px;padding:5px 10px;">🛡️ Trust</span>
+          <span style="font-size:12px;background:#221a11;border:1px solid #2e2619;border-radius:999px;padding:5px 10px;">🔷 GoldBrix</span>
         </div>
       </div>
-      <label style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-secondary); letter-spacing: 0.12em; text-transform: uppercase;" id="seedLabel">Seed Phrase (12 words separated by spaces)</label>
+      <label style="font-family: 'JetBrains Mono', monospace; font-size:12px; color: var(--text-secondary); letter-spacing: 0.12em; text-transform: uppercase;" id="seedLabel">Seed Phrase (12 words separated by spaces)</label>
       <textarea class="seed-textarea v3-mt-sm" id="importSeed" placeholder="word1 word2 word3 ... word12" autocomplete="off" autocapitalize="off" spellcheck="false" oninput="updateCount()"></textarea>
       <div class="word-count" id="wordCount">0 / 12</div>
 
-      <label style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-secondary); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 20px; display: block;" id="pwdLabel" data-i18n="setPassword">Set Password</label>
+      <label style="font-family: 'JetBrains Mono', monospace; font-size:12px; color: var(--text-secondary); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 20px; display: block;" id="pwdLabel" data-i18n="setPassword">Set Password</label>
       <div class="pwd-wrap v3-mt-sm">
         <input type="password" class="v3-input" id="importPwd1" placeholder="Password (8+ chars)" data-i18n-placeholder="passwordPh" autocomplete="new-password">
         <button class="pwd-eye" onclick="togglePwd('importPwd1', this)">👁</button>
@@ -116,14 +116,14 @@ input::-moz-placeholder, textarea::-moz-placeholder {
       <div class="v3-text-center" style="padding: 40px 0;">
         <div class="loader"></div>
         <h2 style="margin-top: 16px; font-size: 22px; font-weight: 800; color: var(--gold);" id="doneTitle">Importing...</h2>
-        <p style="margin-top: 8px; color: var(--text-secondary); font-size: 13px;" id="doneSub">Deriving address & encrypting</p>
+        <p style="margin-top: 8px; color: var(--text-secondary); font-size:14px;" id="doneSub">Deriving address & encrypting</p>
       </div>
     </div>
     <div class="step" id="step-result">
       <div class="v3-text-center" style="padding: 16px 0;">
         <div style="width:54px;height:54px;border-radius:50%;background:rgba(52,211,153,.14);color:#34d399;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 10px;">✓</div>
         <h2 style="font-size:22px;font-weight:800;color:var(--gold);" id="resTitle">Portofel importat</h2>
-        <p style="margin-top:6px;font-size:12px;color:var(--text-secondary);" id="resSub">Adresele tale pe fiecare rețea</p>
+        <p style="margin-top:6px;font-size:13px;color:var(--text-secondary);" id="resSub">Adresele tale pe fiecare rețea</p>
       </div>
       <div id="resGbx"></div>
       <div id="resEvm"></div>
@@ -136,8 +136,8 @@ input::-moz-placeholder, textarea::-moz-placeholder {
   </div>
 </div>
 
-<script type="module" src="/crypto-utils-v2.js?v=103"></script>
-<script type="module" src="/multichain-utils.js?v=103"></script>
+<script type="module" src="/crypto-utils-v2.js?v=111"></script>
+<script type="module" src="/multichain-utils.js?v=111"></script>
 
 <script>
 const T = {
@@ -173,7 +173,7 @@ async function showImportResult(gbxAddr, mnemonic){
     ar:{title:'تم استيراد المحفظة',sub:'عناوينك على كل شبكة',match:'✓ نفس العناوين كما في MetaMask / Phantom',btn:'افتح المحفظة',gbx:'GoldBrix',evm:'Ethereum و EVM',sol:'Solana'}
   };
   var t=R[L]||R.en;
-  function row(name,addr){return '<div style="display:flex;align-items:center;gap:11px;background:#1a1510;border:1px solid #2e2619;border-radius:14px;padding:13px 14px;margin-top:10px;"><div style="flex:1;min-width:0;"><div style="font-size:13.5px;font-weight:800;color:var(--gold);">'+name+'</div><div style="font-size:11px;color:var(--text-secondary);margin-top:3px;word-break:break-all;">'+addr+'</div></div></div>';}
+  function row(name,addr){return '<div style="display:flex;align-items:center;gap:11px;background:#1a1510;border:1px solid #2e2619;border-radius:14px;padding:13px 14px;margin-top:10px;"><div style="flex:1;min-width:0;"><div style="font-size:13.5px;font-weight:800;color:var(--gold);">'+name+'</div><div style="font-size:12px;color:var(--text-secondary);margin-top:3px;word-break:break-all;">'+addr+'</div></div></div>';}
   document.getElementById('resTitle').textContent=t.title;
   document.getElementById('resSub').textContent=t.sub;
   document.getElementById('resBtn').textContent=t.btn;
@@ -334,8 +334,24 @@ async function doImport() {
     document.getElementById('cryptoLoading').innerHTML = '<div style="color: var(--red);">❌ Crypto library failed. Refresh.</div>';
   }
 })();
+
+// SPA-1 (s38): the SPA re-enters this page WITHOUT reloading it, so the DOM keeps whatever step was
+// last shown. After an import, 'step-result' stayed .active forever: tapping "add wallet" showed the
+// old success screen and only a manual restart fixed it. The loader calls window['gbxRefresh_'+route]
+// on every entry (spa-loader.js) — reset to the first step and clear any secret left in the DOM.
+window['gbxRefresh_import-wallet'] = function(){
+  try{
+    ['importPwd1','importPwd2'].forEach(function(id){
+      var el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    document.querySelectorAll('#step-main textarea, #step-main input[type=text]').forEach(function(el){ el.value = ''; });
+    applyLang();
+    showStep('step-main');
+  }catch(_e){}
+};
 </script>
-<script src="/v3/pwa.js?v=103" defer></script>
+<script src="/v3/pwa.js?v=111" defer></script>
 
 
 

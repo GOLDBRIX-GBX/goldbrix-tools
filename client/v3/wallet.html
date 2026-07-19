@@ -22,11 +22,11 @@
   .w-header__brand { display: flex; align-items: center; gap: 8px; }
   .w-header__brand img { width: 28px; height: 28px; border-radius: 6px; }
   .w-header__title {
-    font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700;
+    font-family: 'JetBrains Mono', monospace; font-size:13px; font-weight: 700;
     letter-spacing: 0.08em; color: var(--gold);
   }
   .w-header__status {
-    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    font-family: 'JetBrains Mono', monospace; font-size:11px;
     color: var(--text-muted); display: flex; align-items: center; gap: 6px;
   }
   .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s infinite; }
@@ -48,7 +48,7 @@
     pointer-events: none;
   }
   .balance-card__label {
-    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    font-family: 'JetBrains Mono', monospace; font-size:11px;
     letter-spacing: 0.18em; color: var(--text-secondary);
     text-transform: uppercase;
   }
@@ -62,13 +62,13 @@
     color: var(--gold); font-weight: 700; margin-left: 4px;
   }
   .balance-card__usd {
-    font-family: 'JetBrains Mono', monospace; font-size: 13px;
+    font-family: 'JetBrains Mono', monospace; font-size:14px;
     color: var(--text-tertiary); margin-top: 4px;
   }
   .balance-card__addr {
     margin-top: 16px; padding: 10px 14px; background: rgba(0,0,0,0.3);
     border-radius: 8px; font-family: 'JetBrains Mono', monospace;
-    font-size: 11px; color: var(--text-secondary);
+    font-size:12px; color: var(--text-secondary);
     display: flex; align-items: center; justify-content: space-between;
     gap: 8px; cursor: pointer; transition: background var(--t-fast);
     word-break: break-all;
@@ -116,7 +116,7 @@
   }
   .actions-primary .action-btn { padding: 16px 4px; }
   .actions-primary .action-btn__icon { width: 44px; height: 44px; font-size: 20px; }
-  .actions-primary .action-btn__label { font-size: 10px; }
+  .actions-primary .action-btn__label { font-size:11px; }
   /* secondary actions — 4 discrete */
   .actions-secondary {
     display: grid; grid-template-columns: repeat(4, 1fr);
@@ -136,7 +136,7 @@
     padding: 0 16px; margin: 24px 0 12px;
   }
   .section-heading__label {
-    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    font-family: 'JetBrains Mono', monospace; font-size:12px;
     font-weight: 700; letter-spacing: 0.15em;
     color: var(--text-secondary); text-transform: uppercase;
   }
@@ -165,16 +165,16 @@
     text-transform: uppercase; letter-spacing: 0.04em;
   }
   .token-row__balance {
-    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    font-family: 'JetBrains Mono', monospace; font-size:13px;
     color: var(--text-secondary); margin-top: 2px;
   }
   .token-row__value { text-align: right; }
   .token-row__usd {
-    font-family: 'JetBrains Mono', monospace; font-size: 13px;
+    font-family: 'JetBrains Mono', monospace; font-size:14px;
     color: var(--gold); font-weight: 700;
   }
   .token-row__change {
-    font-family: 'JetBrains Mono', monospace; font-size: 11px; margin-top: 2px;
+    font-family: 'JetBrains Mono', monospace; font-size:12px; margin-top: 2px;
   }
   .token-row__change.up { color: var(--green); }
   .token-row__change.down { color: var(--red); }
@@ -182,7 +182,7 @@
 
   .empty-msg {
     text-align: center; padding: 30px 20px; color: var(--text-muted);
-    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    font-family: 'JetBrains Mono', monospace; font-size:13px;
     letter-spacing: 0.05em;
   }
 
@@ -224,27 +224,27 @@
   .toast {
     position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
     background: var(--bg-card); border: 1px solid var(--gold);
-    border-radius: var(--r-md); padding: 10px 18px; font-size: 13px;
+    border-radius: var(--r-md); padding: 10px 18px; font-size:14px;
     color: var(--gold); z-index: 1000; box-shadow: var(--shadow-lg);
     animation: slideUp 250ms;
     font-family: 'JetBrains Mono', monospace; letter-spacing: 0.08em;
   }
 
   .wallet-picker{background:#1a1a1a;border-radius:12px;padding:12px;margin:8px 16px}
-  .wallet-picker__header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;color:#fff;font-size:11px;text-transform:uppercase;letter-spacing:1px}
-  .add-wallet-btn{background:#F0C060;color:#000;padding:4px 10px;border:none;border-radius:6px;font-weight:700;font-size:11px;cursor:pointer}
+  .wallet-picker__header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;color:#fff;font-size:12px;text-transform:uppercase;letter-spacing:1px}
+  .add-wallet-btn{background:#F0C060;color:#000;padding:4px 10px;border:none;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer}
   .wallet-picker__list{display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto}
   .wallet-item{display:flex;justify-content:space-between;align-items:center;background:#0d0d0d;padding:10px 12px;border-radius:8px;cursor:pointer;border:1px solid transparent}
   .wallet-item:hover{background:#161616}
   .wallet-item--active{border-color:#F0C060;background:#1a1610}
   .wallet-item__info{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
   .wallet-item__name{color:#fff;font-weight:600;font-size:14px}
-  .wallet-item__addr{color:#fff;font-size:11px;font-family:monospace;overflow:hidden;text-overflow:ellipsis}
+  .wallet-item__addr{color:#fff;font-size:12px;font-family:monospace;overflow:hidden;text-overflow:ellipsis}
   .wallet-item__star{color:#F0C060;font-size:14px;margin-left:8px}
   .add-wallet-modal{position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
   .add-wallet-modal__content{background:#1a1a1a;padding:24px;border-radius:16px;max-width:400px;width:100%;border:1px solid #F0C060}
   .add-wallet-modal__content h3{color:#F0C060;margin-bottom:8px}
-  .add-wallet-modal__content p{color:#fff;margin-bottom:20px;font-size:13px}
+  .add-wallet-modal__content p{color:#fff;margin-bottom:20px;font-size:14px}
   .add-wallet-option{display:flex;align-items:center;gap:12px;padding:14px;background:#0d0d0d;border-radius:8px;margin-bottom:8px;text-decoration:none;color:#fff;cursor:pointer}
   .add-wallet-option:hover{background:#161616}
   .add-wallet-option__icon{font-size:24px}
@@ -253,7 +253,7 @@
 
   /* TX HISTORY SECTION */
   .tx-history-section{margin:24px 0 20px}
-  .tx-section-title{font-family:JetBrains Mono,monospace;font-size:12px;color:#fff;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #3a3025}
+  .tx-section-title{font-family:JetBrains Mono,monospace;font-size:13px;color:#fff;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #3a3025}
   #txHistoryList{display:flex;flex-direction:column;gap:8px}
   .tx-row{background:#1a1410;border:1px solid #3a3025;border-radius:10px;padding:12px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:12px}
   .tx-row:hover{border-color:#F0C060;background:#221a14}
@@ -261,28 +261,28 @@
   .tx-icon.received{background:rgba(78,224,140,0.15);color:#eee}
   .tx-icon.sent{background:rgba(255,122,107,0.15);color:#eee}
   .tx-info{flex:1;min-width:0}
-  .tx-type{font-family:JetBrains Mono,monospace;font-size:13px;color:#FFE099;font-weight:700;letter-spacing:0.05em}
-  .tx-meta{font-family:JetBrains Mono,monospace;font-size:10px;color:#fff;margin-top:2px;letter-spacing:0.05em}
-  .tx-amount{font-family:JetBrains Mono,monospace;font-size:13px;font-weight:700;text-align:right}
+  .tx-type{font-family:JetBrains Mono,monospace;font-size:14px;color:#FFFDF7;font-weight:700;letter-spacing:0.05em}
+  .tx-meta{font-family:JetBrains Mono,monospace;font-size:11px;color:#fff;margin-top:2px;letter-spacing:0.05em}
+  .tx-amount{font-family:JetBrains Mono,monospace;font-size:14px;font-weight:700;text-align:right}
   .tx-amount.pos{color:#eee}
   .tx-amount.neg{color:#eee}
   .tx-status{font-size:9px;margin-top:2px;color:#fff}
   .tx-status.confirmed{color:#eee}
   .tx-status.pending{color:#F0C060}
-  .tx-empty{text-align:center;padding:30px 16px;color:#fff;font-family:JetBrains Mono,monospace;font-size:12px}
-  .tx-explorer-link{display:block;text-align:center;margin-top:12px;padding:10px;color:#F0C060;font-family:JetBrains Mono,monospace;font-size:11px;text-decoration:none;border:1px dashed #3a3025;border-radius:8px}
+  .tx-empty{text-align:center;padding:30px 16px;color:#fff;font-family:JetBrains Mono,monospace;font-size:13px}
+  .tx-explorer-link{display:block;text-align:center;margin-top:12px;padding:10px;color:#F0C060;font-family:JetBrains Mono,monospace;font-size:12px;text-decoration:none;border:1px dashed #3a3025;border-radius:8px}
   .tx-explorer-link:hover{background:#1a1410}
   /* TX MODAL */
   #txModal{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1000;display:none;align-items:center;justify-content:center;padding:16px}
   #txModal.show{display:flex}
   .tx-modal-content{background:#2a2218;border:1px solid #F0C060;border-radius:14px;padding:20px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto}
   .tx-modal-title{font-family:JetBrains Mono,monospace;font-size:14px;color:#F0C060;letter-spacing:0.15em;margin-bottom:16px;text-align:center}
-  .tx-modal-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #3a3025;font-family:JetBrains Mono,monospace;font-size:11px;gap:8px}
+  .tx-modal-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #3a3025;font-family:JetBrains Mono,monospace;font-size:12px;gap:8px}
   .tx-modal-row:last-child{border:none}
   .tx-modal-label{color:#fff;flex-shrink:0}
-  .tx-modal-value{color:#FFE099;text-align:right;word-break:break-all}
+  .tx-modal-value{color:#FFFDF7;text-align:right;word-break:break-all}
   .tx-modal-actions{display:flex;gap:8px;margin-top:16px}
-  .tx-modal-btn{flex:1;padding:12px;border:1px solid #3a3025;background:#1a1410;color:#FFE099;border-radius:8px;cursor:pointer;font-family:JetBrains Mono,monospace;font-size:11px;letter-spacing:0.1em}
+  .tx-modal-btn{flex:1;padding:12px;border:1px solid #3a3025;background:#1a1410;color:#FFFDF7;border-radius:8px;cursor:pointer;font-family:JetBrains Mono,monospace;font-size:12px;letter-spacing:0.1em}
   .tx-modal-btn.primary{background:#F0C060;color:#000;border-color:#F0C060;font-weight:700}
 
 /* V4.9 — Visible placeholders (added 2026-05-27) */
@@ -326,7 +326,7 @@ input::-moz-placeholder, textarea::-moz-placeholder {
 <!-- LOCK CHECK OVERLAY -->
 <div class="lock-overlay" id="lockOverlay">
   <div class="lock-overlay__loader"></div>
-  <div style="color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size: 11px;" id="lockLabel">Checking wallet...</div>
+  <div style="color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size:12px;" id="lockLabel">Checking wallet...</div>
 </div>
 
 
@@ -339,22 +339,22 @@ input::-moz-placeholder, textarea::-moz-placeholder {
     </div>
     <!-- SELECTOR RUTE -->
     <div id="cvRoutes">
-      <div style="font-size:11px;color:#9a8c6f;margin-bottom:10px;font-family:JetBrains Mono,monospace;" id="cvPick">Choose what to convert:</div>
+      <div style="font-size:12px;color:#9a8c6f;margin-bottom:10px;font-family:JetBrains Mono,monospace;" id="cvPick">Choose what to convert:</div>
       <div id="cvRouteList"></div>
     </div>
     <!-- ECRAN CONVERSIE (ascuns initial) -->
     <div id="cvSwap" style="display:none;">
-      <div onclick="cvBackToRoutes()" style="font-size:12px;color:#F0C060;cursor:pointer;margin-bottom:12px;">&larr; <span id="cvBack">Back</span></div>
-      <div style="font-size:13px;color:#fff;font-weight:700;margin-bottom:10px;" id="cvRouteLabel"></div>
-      <label style="display:block;font-size:11px;color:#d4c590;margin-bottom:4px;" id="cvYouPay">You pay</label>
-      <div id="cvBalRow" style="font-size:11px;margin-bottom:6px;font-family:JetBrains Mono,monospace;min-height:18px;"></div>
+      <div onclick="cvBackToRoutes()" style="font-size:13px;color:#F0C060;cursor:pointer;margin-bottom:12px;">&larr; <span id="cvBack">Back</span></div>
+      <div style="font-size:14px;color:#fff;font-weight:700;margin-bottom:10px;" id="cvRouteLabel"></div>
+      <label style="display:block;font-size:12px;color:#d4c590;margin-bottom:4px;" id="cvYouPay">You pay</label>
+      <div id="cvBalRow" style="font-size:12px;margin-bottom:6px;font-family:JetBrains Mono,monospace;min-height:18px;"></div>
       <input id="cvAmount" inputmode="decimal" placeholder="0.00" autocomplete="off" style="width:100%;padding:13px;background:#241d14;border:1px solid #3a3025;border-radius:10px;color:#fff;font-size:16px;font-family:JetBrains Mono,monospace;margin-bottom:12px;">
-      <div style="background:#241d14;border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;font-family:JetBrains Mono,monospace;">
+      <div style="background:#241d14;border-radius:10px;padding:12px;margin-bottom:14px;font-size:13px;font-family:JetBrains Mono,monospace;">
         <div style="display:flex;justify-content:space-between;color:#e8dcb0;"><span id="cvYouGet">You receive</span><span style="color:#F0C060;font-weight:700;" id="cvOut">—</span></div>
         <div style="display:flex;justify-content:space-between;color:#c9bd95;margin-top:6px;"><span id="cvMinLbl">Min received</span><span id="cvMin" style="color:#e8dcb0;">—</span></div>
         <div style="display:flex;justify-content:space-between;color:#c9bd95;margin-top:6px;"><span id="cvViaLbl">Via</span><span id="cvVia" style="color:#e8dcb0;">—</span></div>
       </div>
-      <div id="cvMsg" style="display:none;font-size:12px;padding:10px;border-radius:8px;margin-bottom:12px;"></div>
+      <div id="cvMsg" style="display:none;font-size:13px;padding:10px;border-radius:8px;margin-bottom:12px;"></div>
       <button onclick="cvExecute()" style="width:100%;padding:15px;background:linear-gradient(135deg,#F0C060,#c79a1e);border:none;border-radius:12px;color:#0a0a0a;font-size:15px;font-weight:800;cursor:pointer;font-family:system-ui,sans-serif;" id="cvGoBtn">Convert</button>
     </div>
   </div>
@@ -375,7 +375,7 @@ input::-moz-placeholder, textarea::-moz-placeholder {
   </div>
 
   <!-- BALANCE CARD -->
-  <div class="balance-card" onclick="location.href='/v3/gbx.html'" style="cursor:pointer;position:relative;"><div style="position:absolute;top:12px;right:14px;font-size:11px;color:#F0C060;opacity:.85;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:.05em;pointer-events:none;">📈 GBX ›</div>
+  <div class="balance-card" onclick="location.href='/v3/gbx.html'" style="cursor:pointer;position:relative;"><div style="position:absolute;top:12px;right:14px;font-size:12px;color:#F0C060;opacity:.85;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:.05em;pointer-events:none;">📈 GBX ›</div>
     <div class="balance-card__label" id="balanceLabel">GBX Balance · Main Wallet</div>
     <div>
       <span class="balance-card__amount" id="balanceAmount">0.00</span><span class="balance-card__unit">GBX</span>
@@ -390,12 +390,12 @@ input::-moz-placeholder, textarea::-moz-placeholder {
 
   <!-- GBX PORTFOLIO CHART -->
   <div id="pfChartBox" style="margin:0 0 14px;padding:0 2px;">
-    <div id="pfChange" style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;margin-bottom:6px;"></div>
+    <div id="pfChange" style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;margin-bottom:6px;"></div>
     <svg id="pfChart" viewBox="0 0 300 100" preserveAspectRatio="none" style="width:100%;height:100px;display:block;"></svg>
     <div style="display:flex;gap:6px;margin-top:8px;">
-      <button id="pf7" onclick="pfRange(7)" style="flex:1;padding:7px;background:#F0C060;color:#1a1200;border:none;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;">7D</button>
-      <button id="pf30" onclick="pfRange(30)" style="flex:1;padding:7px;background:#2a2218;color:#aaa;border:1px solid #3a3025;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;">30D</button>
-      <button id="pf365" onclick="pfRange(365)" style="flex:1;padding:7px;background:#2a2218;color:#aaa;border:1px solid #3a3025;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;">1A</button>
+      <button id="pf7" onclick="pfRange(7)" style="flex:1;padding:7px;background:#F0C060;color:#1a1200;border:none;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;cursor:pointer;">7D</button>
+      <button id="pf30" onclick="pfRange(30)" style="flex:1;padding:7px;background:#2a2218;color:#aaa;border:1px solid #3a3025;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;cursor:pointer;">30D</button>
+      <button id="pf365" onclick="pfRange(365)" style="flex:1;padding:7px;background:#2a2218;color:#aaa;border:1px solid #3a3025;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;cursor:pointer;">1A</button>
     </div>
   </div>
 
@@ -457,7 +457,7 @@ input::-moz-placeholder, textarea::-moz-placeholder {
   <!-- MY MEMECOINS — mutat pe /v3/my-coins.html (buton MEME CREATE) -->
   <div class="section-heading" style="display:none;justify-content:space-between;align-items:center;">
     <span class="section-heading__label" id="myCoinsLabel">My Memecoins</span>
-    <span id="portfolioTotal" style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;color:#F5CC75;">— GBX</span>
+    <span id="portfolioTotal" style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:#F5CC75;">— GBX</span>
   </div>
   <div id="myCoinsList" style="display:none;">
     <div class="empty-msg" id="myCoinsEmpty">No coins launched yet</div>
@@ -721,15 +721,15 @@ async function loadMyCoins() {
         '<img src="' + img + '" loading="lazy" decoding="async" style="width:42px;height:42px;border-radius:50%;object-fit:cover;background:#3a3025;flex-shrink:0;" onerror="this.src=\'/assets/coin/gbx-coin-32.png\'">' +
         '<div style="flex:1;min-width:0;overflow:hidden;">' +
           '<div style="display:flex;align-items:center;gap:6px;">' +
-            '<span style="font-family:JetBrains Mono,monospace;font-size:13px;font-weight:800;color:#F5CC75;">$' + tk + '</span>' +
-            '<span class="mc-ch" style="font-size:10px;font-family:JetBrains Mono,monospace;font-weight:700;"></span>' +
+            '<span style="font-family:JetBrains Mono,monospace;font-size:14px;font-weight:800;color:#F5CC75;">$' + tk + '</span>' +
+            '<span class="mc-ch" style="font-size:11px;font-family:JetBrains Mono,monospace;font-weight:700;"></span>' +
           '</div>' +
-          '<div style="font-size:11px;color:#aaa;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + name + '</div>' +
+          '<div style="font-size:12px;color:#aaa;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + name + '</div>' +
         '</div>' +
         '<div class="mc-spark" style="width:56px;flex-shrink:0;display:flex;align-items:center;justify-content:center;"></div>' +
         '<div style="text-align:right;font-family:JetBrains Mono,monospace;flex-shrink:0;min-width:74px;">' +
-          '<div class="mc-val" style="font-size:13px;color:#fff;font-weight:700;">…</div>' +
-          '<div style="font-size:10px;color:#888;margin-top:3px;">' + balStr + ' ' + tk + '</div>' +
+          '<div class="mc-val" style="font-size:14px;color:#fff;font-weight:700;">…</div>' +
+          '<div style="font-size:11px;color:#888;margin-top:3px;">' + balStr + ' ' + tk + '</div>' +
         '</div>';
       list.appendChild(card);
     });
@@ -926,7 +926,7 @@ gbxRefresh_wallet();
     const el = document.createElement('div');
     el.className = 'fav-toast';
     el.textContent = msg;
-    el.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#2a2218;border:1px solid #F5CC75;border-radius:8px;padding:10px 18px;font-size:13px;color:#F5CC75;z-index:9999;font-family:JetBrains Mono,monospace;letter-spacing:0.08em;box-shadow:0 4px 16px rgba(0,0,0,0.5);';
+    el.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#2a2218;border:1px solid #F5CC75;border-radius:8px;padding:10px 18px;font-size:14px;color:#F5CC75;z-index:9999;font-family:JetBrains Mono,monospace;letter-spacing:0.08em;box-shadow:0 4px 16px rgba(0,0,0,0.5);';
     document.body.appendChild(el);
     setTimeout(()=>el.remove(), 1800);
   }
@@ -983,12 +983,12 @@ gbxRefresh_wallet();
   </div>
 
 <nav class="v3-final-nav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:999;">
-  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
+  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
   <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#F5CC75;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:1;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
-  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
-  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
-  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
-  <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">⚙</span><span data-t="navSettings">SETTINGS</span></a>
+  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
+  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
+  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
+  <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">⚙</span><span data-t="navSettings">SETTINGS</span></a>
 </nav>
 <style>body { padding-bottom: 76px !important; }</style>
 
@@ -996,7 +996,7 @@ gbxRefresh_wallet();
   // === DOM-based Sparkline Injection v2 (permissive, multi-fallback) ===
   (function() {
     function renderSpark(prices) {
-      if (!prices || prices.length < 2) return '<span style="color:#fff;font-size:10px;">—</span>';
+      if (!prices || prices.length < 2) return '<span style="color:#fff;font-size:11px;">—</span>';
       const w = 60, h = 20;
       const min = Math.min.apply(null, prices);
       const max = Math.max.apply(null, prices);
@@ -1026,17 +1026,17 @@ gbxRefresh_wallet();
         const spark = document.createElement('div');
         spark.className = 'spark-inj';
         spark.style.cssText = 'min-width:60px;height:20px;margin:0 8px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;';
-        spark.innerHTML = '<span style="color:#fff;font-size:10px;">…</span>';
+        spark.innerHTML = '<span style="color:#fff;font-size:11px;">…</span>';
         target.parentNode.insertBefore(spark, target);
         tasks.push((async () => {
           try {
             const r = await fetch('https://goldbrix.app/launchpad/coins/' + coinId + '/candles?interval=1h');
-            if (!r.ok) { spark.innerHTML = '<span style="color:#fff;font-size:10px;">—</span>'; return; }
+            if (!r.ok) { spark.innerHTML = '<span style="color:#fff;font-size:11px;">—</span>'; return; }
             const d = await r.json();
             const candles = d.candles || (Array.isArray(d) ? d : []);
             const prices = candles.slice(-24).map(c => c.close).filter(v => v != null && !isNaN(v));
             spark.innerHTML = renderSpark(prices);
-          } catch(e) { spark.innerHTML = '<span style="color:#fff;font-size:10px;">—</span>'; }
+          } catch(e) { spark.innerHTML = '<span style="color:#fff;font-size:11px;">—</span>'; }
         })());
       });
       await Promise.allSettled(tasks);
@@ -1241,48 +1241,48 @@ if (typeof _origSwitch === 'function'){
     const shortAddr = roAddr.slice(0,8) + '...' + roAddr.slice(-6);
     document.body.innerHTML = `
       <style>
-        body{background:#0d0a07!important;color:#FFE099;font-family:Inter,system-ui,sans-serif;margin:0;padding:0;}
+        body{background:#0d0a07!important;color:#FFFDF7;font-family:Inter,system-ui,sans-serif;margin:0;padding:0;}
         .ro-wrap{max-width:480px;margin:0 auto;padding:16px;padding-bottom:90px;}
         .ro-topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
-        .ro-back{color:#F0C060;font-family:JetBrains Mono,monospace;font-size:11px;text-decoration:none;letter-spacing:0.1em;}
-        .ro-back:hover{color:#FFE099;}
+        .ro-back{color:#F0C060;font-family:JetBrains Mono,monospace;font-size:12px;text-decoration:none;letter-spacing:0.1em;}
+        .ro-back:hover{color:#FFFDF7;}
         .ro-live{display:flex;align-items:center;gap:6px;font-family:JetBrains Mono,monospace;font-size:9px;color:#eee;letter-spacing:0.15em;}
         .ro-live::before{content:'';width:6px;height:6px;border-radius:50%;background:#4EE08C;animation:pulse 2s infinite;}
         @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
         .ro-hero{background:linear-gradient(135deg,#2a2218 0%,#1a140e 100%);border:1px solid #F0C060;border-radius:18px;padding:22px;margin-bottom:14px;box-shadow:0 0 30px rgba(240,192,96,0.08);}
-        .ro-hero-label{font-family:JetBrains Mono,monospace;font-size:10px;color:#fff;letter-spacing:0.2em;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
+        .ro-hero-label{font-family:JetBrains Mono,monospace;font-size:11px;color:#fff;letter-spacing:0.2em;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
         .ro-hero-badge{font-size:8px;color:#F0C060;background:rgba(240,192,96,0.15);padding:3px 8px;border-radius:10px;border:1px solid rgba(240,192,96,0.3);}
         .ro-hero-amt{font-family:JetBrains Mono,monospace;font-size:32px;color:#F0C060;font-weight:800;letter-spacing:-0.02em;line-height:1;}
-        .ro-hero-change{margin-top:8px;font-family:JetBrains Mono,monospace;font-size:12px;}
+        .ro-hero-change{margin-top:8px;font-family:JetBrains Mono,monospace;font-size:13px;}
         .ro-pos{color:#eee;}
         .ro-neg{color:#eee;}
-        .ro-hero-addr{margin-top:14px;padding:10px;background:#0d0a07;border-radius:10px;font-family:JetBrains Mono,monospace;font-size:11px;color:#fff;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
+        .ro-hero-addr{margin-top:14px;padding:10px;background:#0d0a07;border-radius:10px;font-family:JetBrains Mono,monospace;font-size:12px;color:#fff;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
         .ro-card{background:#1a1410;border:1px solid #3a3025;border-radius:14px;padding:16px;margin-bottom:12px;transition:all 0.2s;}
         .ro-card-clickable{cursor:pointer;}
         .ro-card-clickable:hover{border-color:#F0C060;background:#221a14;}
-        .ro-section-title{font-family:JetBrains Mono,monospace;font-size:11px;color:#fff;letter-spacing:0.15em;margin-bottom:12px;display:flex;justify-content:space-between;}
+        .ro-section-title{font-family:JetBrains Mono,monospace;font-size:12px;color:#fff;letter-spacing:0.15em;margin-bottom:12px;display:flex;justify-content:space-between;}
         .ro-token-row{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #2a2218;border-radius:12px;margin-bottom:8px;transition:all 0.2s;cursor:pointer;}
         .ro-token-row:hover{border-color:#F0C060;background:#221a14;transform:translateX(2px);}
-        .ro-token-icon{width:42px;height:42px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#3a3025,#2a2218);display:flex;align-items:center;justify-content:center;color:#F0C060;font-weight:700;font-family:JetBrains Mono,monospace;font-size:11px;overflow:hidden;border:1px solid #3a3025;}
+        .ro-token-icon{width:42px;height:42px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#3a3025,#2a2218);display:flex;align-items:center;justify-content:center;color:#F0C060;font-weight:700;font-family:JetBrains Mono,monospace;font-size:12px;overflow:hidden;border:1px solid #3a3025;}
         .ro-token-icon img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
         .ro-token-info{flex:1;min-width:0;}
         .ro-token-top{display:flex;align-items:center;gap:6px;margin-bottom:2px;}
-        .ro-token-ticker{font-family:JetBrains Mono,monospace;font-size:14px;font-weight:700;color:#FFE099;}
+        .ro-token-ticker{font-family:JetBrains Mono,monospace;font-size:14px;font-weight:700;color:#FFFDF7;}
         .ro-badge{font-family:JetBrains Mono,monospace;font-size:8px;padding:2px 6px;border-radius:6px;letter-spacing:0.1em;font-weight:700;}
         .ro-badge.native{background:rgba(240,192,96,0.15);color:#F0C060;border:1px solid rgba(240,192,96,0.3);}
         .ro-badge.graduated{background:rgba(168,85,247,0.15);color:#C084FC;border:1px solid rgba(168,85,247,0.3);}
-        .ro-token-bal{font-family:JetBrains Mono,monospace;font-size:11px;color:#fff;}
+        .ro-token-bal{font-family:JetBrains Mono,monospace;font-size:12px;color:#fff;}
         .ro-token-right{text-align:right;}
-        .ro-token-value{font-family:JetBrains Mono,monospace;font-size:13px;font-weight:700;color:#F0C060;}
-        .ro-token-pct{font-family:JetBrains Mono,monospace;font-size:10px;margin-top:2px;}
+        .ro-token-value{font-family:JetBrains Mono,monospace;font-size:14px;font-weight:700;color:#F0C060;}
+        .ro-token-pct{font-family:JetBrains Mono,monospace;font-size:11px;margin-top:2px;}
         .ro-tx-row{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #2a2218;border-radius:10px;margin-bottom:6px;cursor:pointer;transition:all 0.2s;}
         .ro-tx-row:hover{border-color:#F0C060;background:#221a14;}
         .ro-tx-icon{width:32px;height:32px;border-radius:50%;background:rgba(78,224,140,0.15);display:flex;align-items:center;justify-content:center;color:#eee;flex-shrink:0;font-size:14px;}
         .ro-tx-info{flex:1;min-width:0;}
-        .ro-tx-type{font-family:JetBrains Mono,monospace;font-size:12px;color:#FFE099;font-weight:700;}
+        .ro-tx-type{font-family:JetBrains Mono,monospace;font-size:13px;color:#FFFDF7;font-weight:700;}
         .ro-tx-meta{font-family:JetBrains Mono,monospace;font-size:9px;color:#fff;margin-top:1px;}
-        .ro-tx-amt{font-family:JetBrains Mono,monospace;font-size:12px;color:#eee;text-align:right;font-weight:700;}
-        .ro-loading,.ro-empty{text-align:center;padding:30px;color:#fff;font-family:JetBrains Mono,monospace;font-size:11px;}
+        .ro-tx-amt{font-family:JetBrains Mono,monospace;font-size:13px;color:#eee;text-align:right;font-weight:700;}
+        .ro-loading,.ro-empty{text-align:center;padding:30px;color:#fff;font-family:JetBrains Mono,monospace;font-size:12px;}
         .ro-hint{font-family:JetBrains Mono,monospace;font-size:9px;color:#fff;margin-top:4px;letter-spacing:0.05em;}
       </style>
       <div class="ro-wrap">
@@ -1399,7 +1399,7 @@ if (typeof _origSwitch === 'function'){
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <div>
             <div style="font-family:JetBrains Mono,monospace;font-size:22px;color:#F0C060;font-weight:700;">${fmtNum(gbxBalance)} GBX</div>
-            <div style="font-family:JetBrains Mono,monospace;font-size:11px;color:#fff;margin-top:3px;">${fmtUSD(gbxBalance * GBX_USD)}</div>
+            <div style="font-family:JetBrains Mono,monospace;font-size:12px;color:#fff;margin-top:3px;">${fmtUSD(gbxBalance * GBX_USD)}</div>
             <div class="ro-hint">${T('gbxBuyHint')}</div>
           </div>
           <span class="ro-badge native">${T('native')}</span>
@@ -1499,7 +1499,7 @@ if (typeof _origSwitch === 'function'){
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
       <div>
         <div id="followedTitleTxt" style="color:#F5CC75;font-size:18px;font-weight:800;letter-spacing:0.05em;">FOLLOWED WALLETS</div>
-        <div id="followedSubTxt" style="color:#aaa;font-size:11px;margin-top:4px;">Wallets you are tracking</div>
+        <div id="followedSubTxt" style="color:#aaa;font-size:12px;margin-top:4px;">Wallets you are tracking</div>
       </div>
       <button onclick="closeFollowedModal()" style="background:rgba(240,192,96,0.1);border:1px solid #F0C060;border-radius:50%;color:#F0C060;width:36px;height:36px;font-size:18px;cursor:pointer;font-weight:300;line-height:1;display:flex;align-items:center;justify-content:center;">×</button>
     </div>
@@ -1526,7 +1526,7 @@ function renderFollowedList() {
   document.getElementById('followedTitleTxt').textContent = t.followedTitle;
   document.getElementById('followedSubTxt').textContent = t.followedSub;
   if (list.length === 0) {
-    container.innerHTML = '<div style="text-align:center;color:#888;padding:40px 16px;font-size:13px;">👁️<br><br>' + t.noFollowed + '</div>';
+    container.innerHTML = '<div style="text-align:center;color:#888;padding:40px 16px;font-size:14px;">👁️<br><br>' + t.noFollowed + '</div>';
     return;
   }
   container.innerHTML = list.map(a => {
@@ -1534,9 +1534,9 @@ function renderFollowedList() {
     return '<div onclick="window.location.href=\'/v3/wallet-detail.html?addr=' + a + '\'" style="background:rgba(240,192,96,0.06);border:1px solid rgba(240,192,96,0.25);border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;cursor:pointer;">' +
       '<div style="font-size:20px;">👁️</div>' +
       '<div style="flex:1;min-width:0;">' +
-        '<div style="color:#F5CC75;font-family:JetBrains Mono,monospace;font-size:12px;font-weight:700;">' + s + '</div>' +
+        '<div style="color:#F5CC75;font-family:JetBrains Mono,monospace;font-size:13px;font-weight:700;">' + s + '</div>' +
       '</div>' +
-      '<button onclick="unfollowWallet(\'' + a + '\', event)" style="background:rgba(255,100,100,0.1);border:1px solid rgba(255,100,100,0.4);color:#ff6644;border-radius:6px;padding:6px 10px;font-size:10px;font-weight:700;cursor:pointer;">' + t.unfollow + '</button>' +
+      '<button onclick="unfollowWallet(\'' + a + '\', event)" style="background:rgba(255,100,100,0.1);border:1px solid rgba(255,100,100,0.4);color:#ff6644;border-radius:6px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;">' + t.unfollow + '</button>' +
     '</div>';
   }).join('');
 }
@@ -1614,7 +1614,7 @@ window.addEventListener('storage', e => { if (e.key && e.key.indexOf('lang') > -
     if (!document.getElementById('v49FollowBtn')) {
       const btn = document.createElement('button');
       btn.id = 'v49FollowBtn';
-      btn.style.cssText = 'margin:12px auto 0;display:block;padding:10px 24px;border:1px solid #F0C060;background:rgba(240,192,96,0.1);color:#F0C060;border-radius:8px;font-family:JetBrains Mono,monospace;font-size:12px;font-weight:700;letter-spacing:0.08em;cursor:pointer;';
+      btn.style.cssText = 'margin:12px auto 0;display:block;padding:10px 24px;border:1px solid #F0C060;background:rgba(240,192,96,0.1);color:#F0C060;border-radius:8px;font-family:JetBrains Mono,monospace;font-size:13px;font-weight:700;letter-spacing:0.08em;cursor:pointer;';
       btn.onclick = toggleFollow;
       hero.appendChild(btn);
       updateFollowBtn();
@@ -1628,7 +1628,7 @@ window.addEventListener('storage', e => { if (e.key && e.key.indexOf('lang') > -
     if (!document.getElementById('v49BurnsRank')) {
       const b = document.createElement('div');
       b.id = 'v49BurnsRank';
-      b.style.cssText = 'margin:12px;padding:12px 14px;background:rgba(255,100,60,0.06);border:1px solid rgba(255,100,60,0.3);border-radius:10px;display:none;text-align:center;font-size:12px;color:#FFB088;';
+      b.style.cssText = 'margin:12px;padding:12px 14px;background:rgba(255,100,60,0.06);border:1px solid rgba(255,100,60,0.3);border-radius:10px;display:none;text-align:center;font-size:13px;color:#FFB088;';
       const pnl = document.getElementById('v49PnlCard');
       pnl.parentNode.insertBefore(b, pnl.nextSibling);
     }
@@ -1672,9 +1672,9 @@ window.addEventListener('storage', e => { if (e.key && e.key.indexOf('lang') > -
       if (card){
         card.style.display = 'block';
         card.innerHTML = 
-          '<div style="font-size:11px;color:#aaa;letter-spacing:0.1em;margin-bottom:8px;">' + t.pnlTitle + '</div>' +
+          '<div style="font-size:12px;color:#aaa;letter-spacing:0.1em;margin-bottom:8px;">' + t.pnlTitle + '</div>' +
           '<div style="font-size:24px;font-weight:800;color:#F5CC75;">' + totalValue.toFixed(2) + ' GBX</div>' +
-          '<div style="font-size:13px;color:#888;margin-top:2px;">≈ $' + (totalValue*GBX_USD).toFixed(2) + '</div>' +
+          '<div style="font-size:14px;color:#888;margin-top:2px;">≈ $' + (totalValue*GBX_USD).toFixed(2) + '</div>' +
           '<div style="font-size:14px;color:' + color + ';margin-top:8px;font-weight:700;">' + sign + pnlPct.toFixed(2) + '%   ' + sign + pnl.toFixed(2) + ' GBX</div>';
       }
     } catch(e) { console.error('[V49] P&L:', e); }
@@ -1725,10 +1725,10 @@ window.addEventListener('storage', e => { if (e.key && e.key.indexOf('lang') > -
         return '<div class="ro-tx-row" style="display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid rgba(255,255,255,0.05);">' +
           '<div style="width:32px;height:32px;border-radius:50%;background:' + (isBuy?'rgba(0,200,100,0.2)':'rgba(255,100,68,0.2)') + ';display:flex;align-items:center;justify-content:center;color:' + (isBuy?'#00C864':'#FF6644') + ';font-weight:700;">' + (isBuy?'↓':'↑') + '</div>' +
           '<div style="flex:1;min-width:0;">' +
-            '<div style="font-size:13px;color:#F5CC75;font-weight:700;">' + (isBuy?t.buy:t.sell) + ' $' + ticker + '</div>' +
-            '<div style="font-size:11px;color:#888;margin-top:2px;">' + coinAmt.toLocaleString() + ' ' + t.tokens + ' · ' + gbxAmt.toFixed(2) + ' GBX</div>' +
+            '<div style="font-size:14px;color:#F5CC75;font-weight:700;">' + (isBuy?t.buy:t.sell) + ' $' + ticker + '</div>' +
+            '<div style="font-size:12px;color:#888;margin-top:2px;">' + coinAmt.toLocaleString() + ' ' + t.tokens + ' · ' + gbxAmt.toFixed(2) + ' GBX</div>' +
           '</div>' +
-          '<div style="font-size:10px;color:#666;white-space:nowrap;">' + timeStr.split(',')[0] + '</div>' +
+          '<div style="font-size:11px;color:#666;white-space:nowrap;">' + timeStr.split(',')[0] + '</div>' +
         '</div>';
       }).join('');
     } catch(e) {

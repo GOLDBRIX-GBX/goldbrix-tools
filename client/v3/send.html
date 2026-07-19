@@ -23,7 +23,7 @@
 <style>
   .back-btn {
     display: inline-flex; align-items: center; gap: 6px;
-    padding: 8px 14px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    padding: 8px 14px; font-family: 'JetBrains Mono', monospace; font-size:12px;
     letter-spacing: 0.1em; color: var(--text-secondary);
     background: var(--bg-elevated); border: 1px solid var(--border);
     border-radius: var(--r-full); transition: all var(--t-fast); margin: 12px 0 16px;
@@ -32,9 +32,9 @@
 
   .send-hero { text-align: center; padding: 8px 0 20px; }
   .send-hero__title { font-family: 'Inter', sans-serif; font-size: 24px; font-weight: 800; color: var(--gold); margin-bottom: 6px; }
-  .send-hero__sub { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.15em; color: var(--text-secondary); }
+  .send-hero__sub { font-family: 'JetBrains Mono', monospace; font-size:12px; letter-spacing: 0.15em; color: var(--text-secondary); }
 
-  .label { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-secondary); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; display: block; }
+  .label { font-family: 'JetBrains Mono', monospace; font-size:12px; color: var(--text-secondary); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; display: block; }
 
   /* Token selector */
   .token-select {
@@ -51,13 +51,13 @@
 
   .balance-line {
     display: flex; justify-content: space-between; align-items: center;
-    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    font-family: 'JetBrains Mono', monospace; font-size:12px;
     color: var(--text-muted); margin-top: 6px;
   }
   .max-btn {
     background: var(--bg-elevated); border: 1px solid var(--gold-deep);
     color: var(--gold); padding: 4px 10px; border-radius: 6px;
-    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    font-family: 'JetBrains Mono', monospace; font-size:11px;
     letter-spacing: 0.1em; cursor: pointer;
   }
   .max-btn:hover { background: var(--gold-glow); }
@@ -66,8 +66,8 @@
     background: var(--bg-card); border: 1px solid var(--border);
     border-radius: var(--r-md); padding: 14px; margin: 16px 0;
   }
-  .fee-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 4px 0; }
-  .fee-row__label { color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; }
+  .fee-row { display: flex; justify-content: space-between; align-items: center; font-size:14px; padding: 4px 0; }
+  .fee-row__label { color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size:12px; letter-spacing: 0.08em; }
   .fee-row__val { color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-weight: 700; }
   .fee-row--total .fee-row__val { color: var(--gold); font-size: 14px; }
 
@@ -81,20 +81,20 @@
   .success-box { text-align: center; padding: 32px 20px; }
   .success-box__icon { font-size: 64px; margin-bottom: 16px; }
   .ab-bar{ margin-top:6px; }
-  .ab-btn{ background:var(--bg-elevated,#1a1a1a); color:var(--text-secondary,#888); border:1px solid #333; border-radius:8px; padding:6px 12px; font-size:13px; cursor:pointer; }
-  .ab-caret{ font-size:10px; }
+  .ab-btn{ background:var(--bg-elevated,#1a1a1a); color:var(--text-secondary,#888); border:1px solid #333; border-radius:8px; padding:6px 12px; font-size:14px; cursor:pointer; }
+  .ab-caret{ font-size:11px; }
   .ab-list{ margin-top:8px; background:var(--bg-elevated,#1a1a1a); border:1px solid #333; border-radius:8px; padding:6px; }
-  .ab-empty{ color:var(--text-secondary,#888); font-size:12px; padding:8px; text-align:center; }
+  .ab-empty{ color:var(--text-secondary,#888); font-size:13px; padding:8px; text-align:center; }
   .ab-item{ display:flex; align-items:center; justify-content:space-between; padding:8px; border-radius:6px; }
   .ab-item__tap{ display:flex; flex-direction:column; cursor:pointer; flex:1; }
   .ab-item__tap b{ color:var(--text-primary,#fff); font-size:14px; }
-  .ab-item__tap small{ color:var(--text-secondary,#888); font-size:11px; font-family:"JetBrains Mono",monospace; }
+  .ab-item__tap small{ color:var(--text-secondary,#888); font-size:12px; font-family:"JetBrains Mono",monospace; }
   .ab-item__del{ background:none; border:none; color:var(--red,#FF3B3B); font-size:14px; cursor:pointer; padding:4px 8px; }
-  .ab-add{ width:100%; margin-top:6px; background:none; border:1px dashed #444; color:var(--primary,#F0C060); border-radius:6px; padding:8px; font-size:13px; cursor:pointer; }
+  .ab-add{ width:100%; margin-top:6px; background:none; border:1px dashed #444; color:var(--primary,#F0C060); border-radius:6px; padding:8px; font-size:14px; cursor:pointer; }
   .success-box__title { font-size: 22px; font-weight: 800; color: var(--green); margin-bottom: 8px; }
-  .success-box__tx { margin-top: 16px; padding: 12px; background: var(--bg-elevated); border-radius: var(--r-md); font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-secondary); word-break: break-all; }
+  .success-box__tx { margin-top: 16px; padding: 12px; background: var(--bg-elevated); border-radius: var(--r-md); font-family: 'JetBrains Mono', monospace; font-size:12px; color: var(--text-secondary); word-break: break-all; }
 
-  .error-msg { margin: 10px 0; padding: 12px; background: rgba(255, 122, 107, 0.1); border: 1px solid var(--red-dim); border-radius: var(--r-md); color: var(--red); font-size: 13px; display: none; }
+  .error-msg { margin: 10px 0; padding: 12px; background: rgba(255, 122, 107, 0.1); border: 1px solid var(--red-dim); border-radius: var(--r-md); color: var(--red); font-size:14px; display: none; }
   .error-msg.show { display: block; }
 
   .lock-overlay { position: fixed; inset: 0; background: var(--bg-primary); display: flex; align-items: center; justify-content: center; z-index: 9999; }
@@ -188,7 +188,7 @@ input::-moz-placeholder, textarea::-moz-placeholder {
       <div class="pending-box">
         <div class="pending-box__loader"></div>
         <h2 style="font-size:20px;color:var(--gold);font-weight:800;" id="pendingTitle">Broadcasting...</h2>
-        <p style="margin-top:8px;color:var(--text-secondary);font-size:13px;" id="pendingSub">Publishing on-chain</p>
+        <p style="margin-top:8px;color:var(--text-secondary);font-size:14px;" id="pendingSub">Publishing on-chain</p>
       </div>
     </div>
 
@@ -197,7 +197,7 @@ input::-moz-placeholder, textarea::-moz-placeholder {
       <div class="success-box">
         <div class="success-box__icon">✓</div>
         <div class="success-box__title" id="successTitle">Sent Successfully!</div>
-        <div style="color:var(--text-secondary);font-size:13px;" id="successAmt">— GBX</div>
+        <div style="color:var(--text-secondary);font-size:14px;" id="successAmt">— GBX</div>
         <div class="success-box__tx" id="txHash"></div>
         <button class="v3-btn v3-btn--primary v3-btn--lg v3-btn--block v3-mt-lg" onclick="window.location.href='/app.html#wallet'">
           <span id="doneLabel">Back to Wallet</span>
@@ -684,12 +684,12 @@ async function doSend() {
 <script src="/v3/pwa.js?v=111" defer></script>
 
 <nav class="v3-final-nav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:999;">
-  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
+  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
   <a href="/app.html#wallet" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#F5CC75;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:1;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
-  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
-  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
-  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
-  <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">⚙</span><span data-t="navSettings">SETTINGS</span></a>
+  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
+  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
+  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
+  <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">⚙</span><span data-t="navSettings">SETTINGS</span></a>
 </nav>
 <style>body { padding-bottom: 76px !important; }</style>
 
@@ -723,7 +723,7 @@ async function doSend() {
     if (isPromo) {
       // Visual indicator that this is a PROMO send
       const head = document.querySelector('.s-header__title, h1, h2, h3');
-      if (head) head.innerHTML = '🚀 ' + head.innerHTML + ' <span style="background:#F0C060;color:#000;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;margin-left:6px;">PROMOTE</span>';
+      if (head) head.innerHTML = '🚀 ' + head.innerHTML + ' <span style="background:#F0C060;color:#000;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;margin-left:6px;">PROMOTE</span>';
     }
   }
   if (document.readyState === 'loading') {
@@ -773,7 +773,7 @@ async function doSend() {
         const titleEl = document.getElementById('successTitle');
         if (titleEl) titleEl.textContent = msg;
         const amtEl = document.getElementById('successAmt');
-        if (amtEl) amtEl.innerHTML += '<br><span style="color:#F0C060;font-size:11px;margin-top:8px;display:inline-block;">✓ Promotion activated</span>';
+        if (amtEl) amtEl.innerHTML += '<br><span style="color:#F0C060;font-size:12px;margin-top:8px;display:inline-block;">✓ Promotion activated</span>';
         setTimeout(() => { window.location.href = '/'; }, 2500);
       } else {
         gbxAlert('Promote confirm failed: ' + (data.error || 'unknown'));

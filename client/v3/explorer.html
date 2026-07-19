@@ -12,34 +12,34 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   .v3-app { padding-bottom:90px; }
-  .back-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-secondary); background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--r-full); margin:12px 0 8px 16px; }
+  .back-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-secondary); background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--r-full); margin:12px 0 8px 16px; }
   .ex-hero { text-align:center; padding:16px; }
   .ex-hero__title { font-size:26px; font-weight:800; color:var(--gold); margin-bottom:4px; }
-  .ex-hero__sub { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.12em; color:var(--text-secondary); }
+  .ex-hero__sub { font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.12em; color:var(--text-secondary); }
   .stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:0 12px 12px; }
   .stat-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--r-md); padding:14px; text-align:center; }
   .stat-card__val { font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:700; color:var(--gold); }
-  .stat-card__lbl { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-muted); letter-spacing:0.1em; margin-top:4px; text-transform:uppercase; }
+  .stat-card__lbl { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-muted); letter-spacing:0.1em; margin-top:4px; text-transform:uppercase; }
   .stat-card__pulse { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--green); margin-right:5px; box-shadow:0 0 8px var(--green); animation:pulse 1.5s infinite; vertical-align:middle; }
   @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
   .search-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--r-md); padding:14px; margin:0 12px 12px; }
-  .search-card__label { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-secondary); letter-spacing:0.1em; margin-bottom:8px; text-transform:uppercase; }
+  .search-card__label { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-secondary); letter-spacing:0.1em; margin-bottom:8px; text-transform:uppercase; }
   .search-row { display:flex; gap:8px; }
-  .search-input { flex:1; background:var(--bg-input); border:1px solid var(--border); border-radius:var(--r-md); padding:10px 12px; font-size:13px; color:var(--text-primary); font-family:'JetBrains Mono',monospace; }
+  .search-input { flex:1; background:var(--bg-input); border:1px solid var(--border); border-radius:var(--r-md); padding:10px 12px; font-size:14px; color:var(--text-primary); font-family:'JetBrains Mono',monospace; }
   .search-input:focus { outline:none; border-color:var(--gold); }
-  .search-btn { padding:10px 18px; background:var(--gold); color:#eee; border-radius:var(--r-md); font-weight:700; font-family:'JetBrains Mono',monospace; font-size:12px; }
+  .search-btn { padding:10px 18px; background:var(--gold); color:#eee; border-radius:var(--r-md); font-weight:700; font-family:'JetBrains Mono',monospace; font-size:13px; }
   .sect-label { display:flex; align-items:center; gap:10px; padding:0 16px; margin:18px 0 10px; }
-  .sect-label__text { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; letter-spacing:0.15em; color:var(--text-secondary); text-transform:uppercase; }
+  .sect-label__text { font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:0.15em; color:var(--text-secondary); text-transform:uppercase; }
   .sect-label::after { content:''; flex:1; height:1px; background:var(--border); }
   .block-row { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--r-md); padding:12px 14px; margin:0 12px 8px; display:flex; align-items:center; gap:12px; }
-  .block-row__num { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:var(--gold); min-width:60px; }
+  .block-row__num { font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:700; color:var(--gold); min-width:60px; }
   .block-row__info { flex:1; min-width:0; }
-  .block-row__hash { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .block-row__time { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-muted); margin-top:2px; }
-  .info-row { display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--r-md); margin:0 12px 8px; font-size:13px; }
-  .info-row__k { color:var(--text-secondary); font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.05em; }
+  .block-row__hash { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .block-row__time { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-muted); margin-top:2px; }
+  .info-row { display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--r-md); margin:0 12px 8px; font-size:14px; }
+  .info-row__k { color:var(--text-secondary); font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.05em; }
   .info-row__v { color:var(--gold); font-family:'JetBrains Mono',monospace; font-weight:700; }
-  .ext-btn { display:block; background:var(--bg-elevated); border:1px solid var(--gold-deep); padding:12px; text-align:center; border-radius:var(--r-md); margin:16px 12px; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--gold); letter-spacing:0.1em; }
+  .ext-btn { display:block; background:var(--bg-elevated); border:1px solid var(--gold-deep); padding:12px; text-align:center; border-radius:var(--r-md); margin:16px 12px; font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--gold); letter-spacing:0.1em; }
   .ext-btn:hover { background:var(--gold-glow); }
   .bnav { position:fixed; bottom:0; left:0; right:0; background:var(--bg-card); border-top:1px solid var(--border); display:flex; padding:8px 4px 12px; padding-bottom:calc(12px + env(safe-area-inset-bottom)); z-index:100; }
   .bnav__item { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 2px; color:var(--text-muted); }
@@ -102,7 +102,7 @@ input::-moz-placeholder, textarea::-moz-placeholder {
       <input class="search-input" id="searchInput" placeholder="bn1q... or txid" autocapitalize="off">
       <button class="search-btn" onclick="doSearch()" id="searchBtn">GO</button>
     </div>
-    <div id="searchResult" style="margin-top:10px; font-size:12px; color:var(--text-secondary); font-family:'JetBrains Mono',monospace; word-break:break-all;"></div>
+    <div id="searchResult" style="margin-top:10px; font-size:13px; color:var(--text-secondary); font-family:'JetBrains Mono',monospace; word-break:break-all;"></div>
   </div>
 
   <div class="sect-label"><span class="sect-label__text" id="lblRecent">Recent Blocks</span></div>
@@ -229,11 +229,11 @@ async function doSearch() {
 <script src="/v3/pwa.js?v=111" defer></script>
 
 <nav class="v3-final-nav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:999;">
-  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
-  <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
-  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
-  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
-  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
+  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
+  <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
+  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
+  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
+  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
   <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#F5CC75;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:1;"><span style="font-size:18px;">⚙</span><span data-t="navSettings">SETTINGS</span></a>
 </nav>
 <style>body { padding-bottom: 76px !important; }</style>

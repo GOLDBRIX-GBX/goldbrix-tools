@@ -13,29 +13,29 @@
 <style>
   body { padding: 0; background: var(--bg-primary); color: var(--text-primary); font-family: 'Inter', sans-serif; }
   .v3-app { padding: 0 12px 90px; max-width: 480px; margin: 0 auto; }
-  .back-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-secondary); background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--r-full); margin:12px 0; }
+  .back-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-secondary); background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--r-full); margin:12px 0; }
   .buy-hero { text-align:center; padding:8px 0 18px; }
   .buy-hero__title { font-size:26px; font-weight:800; color:var(--gold); margin-bottom:4px; }
-  .buy-hero__sub { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.12em; color:var(--text-secondary); }
-  h2 { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; letter-spacing:0.15em; color:var(--text-secondary); text-transform:uppercase; margin:22px 0 10px; }
+  .buy-hero__sub { font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.12em; color:var(--text-secondary); }
+  h2 { font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:0.15em; color:var(--text-secondary); text-transform:uppercase; margin:22px 0 10px; }
 
   /* Chain picker */
   .chain-picker { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-  .chain-btn { padding: 12px 4px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-md); color: var(--text-secondary); font-family:'JetBrains Mono',monospace; font-size: 10px; font-weight: 600; cursor: pointer; text-align: center; transition: all var(--t-fast); }
+  .chain-btn { padding: 12px 4px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-md); color: var(--text-secondary); font-family:'JetBrains Mono',monospace; font-size:11px; font-weight: 600; cursor: pointer; text-align: center; transition: all var(--t-fast); }
   .chain-btn:hover { border-color: var(--gold-deep); }
   .chain-active { border-color: var(--gold) !important; background: var(--bg-elevated) !important; color: var(--gold) !important; box-shadow: 0 0 0 1px var(--gold-deep) inset; }
   .chain-icon { display:block; font-size: 20px; margin-bottom: 4px; }
 
   /* Wallet picker */
   .wallet-picker { display: flex; flex-direction: column; gap: 8px; }
-  .btn-wallet { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 14px; border: none; border-radius: var(--r-md); font-family:'JetBrains Mono',monospace; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; cursor: pointer; transition: all var(--t-fast); }
+  .btn-wallet { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 14px; border: none; border-radius: var(--r-md); font-family:'JetBrains Mono',monospace; font-size:14px; font-weight: 700; letter-spacing: 0.08em; cursor: pointer; transition: all var(--t-fast); }
   .btn-wallet:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
   .btn-wallet-phantom { background: linear-gradient(135deg, #AB9FF2 0%, #8B7CD8 100%); color: white; }
   .btn-wallet-solflare { background: linear-gradient(135deg, #FC7434 0%, #FE6037 100%); color: white; }
   .btn-wallet-metamask { background: linear-gradient(135deg, #F6851B 0%, #C8731B 100%); color: white; }
   .w-icon { font-size: 18px; }
 
-  #disconnectBtn { width: 100%; padding: 12px; background: var(--bg-card); color: var(--red); border: 1px solid var(--red-dim); border-radius: var(--r-md); font-family:'JetBrains Mono',monospace; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; cursor: pointer; }
+  #disconnectBtn { width: 100%; padding: 12px; background: var(--bg-card); color: var(--red); border: 1px solid var(--red-dim); border-radius: var(--r-md); font-family:'JetBrains Mono',monospace; font-size:13px; font-weight: 700; letter-spacing: 0.1em; cursor: pointer; }
   #disconnectBtn:hover { background: rgba(255,122,107,0.05); }
 
   /* Inputs */
@@ -43,7 +43,7 @@
   input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-glow); }
   input::placeholder { color: #fff; }
   #usdc-input { font-size: 24px; font-weight: 700; }
-  #gbx-addr { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  #gbx-addr { font-family: 'JetBrains Mono', monospace; font-size:13px; }
 
   /* Buttons */
   button:not(.btn-wallet):not(.chain-btn):not(#disconnectBtn) {
@@ -57,20 +57,20 @@
   button:not(.btn-wallet):not(.chain-btn):not(#disconnectBtn):disabled { background: var(--bg-elevated); color: var(--text-muted); box-shadow: none; cursor: not-allowed; transform: none; }
 
   /* Status & display */
-  #status { padding: 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-md); font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; min-height: 20px; word-break: break-all; }
+  #status { padding: 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-md); font-size:14px; color: var(--text-secondary); margin-bottom: 12px; min-height: 20px; word-break: break-all; }
   #status .ok, #status .success { color: var(--green); font-weight: 700; }
   #status .err, #status .error { color: var(--red); font-weight: 700; }
   #status a { color: var(--gold); text-decoration: underline; }
-  #status .addr { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--gold); word-break: break-all; }
+  #status .addr { font-family: 'JetBrains Mono', monospace; font-size:12px; color: var(--gold); word-break: break-all; }
 
   #quote-display { padding: 14px; background: var(--bg-card); border: 1px solid var(--gold-deep); border-radius: var(--r-md); margin: 12px 0; font-size: 14px; line-height: 1.6; }
   #quote-display .big { color: var(--gold); font-size: 20px; font-weight: 700; }
 
-  #order-details { padding: 14px; background: linear-gradient(135deg, var(--bg-card) 0%, rgba(245,204,117,0.05) 100%); border: 1px solid var(--gold); border-radius: var(--r-md); margin: 12px 0; font-size: 13px; line-height: 1.6; }
-  #order-details .label { color: var(--text-muted); font-family:'JetBrains Mono',monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 8px; }
-  #order-details .val { color: var(--gold); font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; word-break: break-all; }
+  #order-details { padding: 14px; background: linear-gradient(135deg, var(--bg-card) 0%, rgba(245,204,117,0.05) 100%); border: 1px solid var(--gold); border-radius: var(--r-md); margin: 12px 0; font-size:14px; line-height: 1.6; }
+  #order-details .label { color: var(--text-muted); font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 8px; }
+  #order-details .val { color: var(--gold); font-family: 'JetBrains Mono', monospace; font-size:14px; font-weight: 700; word-break: break-all; }
 
-  #mobile-hint { padding: 10px; background: rgba(245,204,117,0.05); border: 1px solid var(--gold-deep); border-radius: var(--r-md); font-size: 12px; color: var(--text-tertiary); margin-bottom: 12px; text-align: center; }
+  #mobile-hint { padding: 10px; background: rgba(245,204,117,0.05); border: 1px solid var(--gold-deep); border-radius: var(--r-md); font-size:13px; color: var(--text-tertiary); margin-bottom: 12px; text-align: center; }
   #mobile-hint a { color: var(--gold); text-decoration: underline; font-weight: 700; }
 
   /* bridge.js controls step4 via .hidden attribute */
@@ -95,10 +95,11 @@ input::-moz-placeholder, textarea::-moz-placeholder {
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/goldbrix-brand-180.png">
     <script src="/gbx-update-check.js" defer></script>
     <script src="/gbx-native-bridge.js" defer></script>
-      <script src="/i18n.js?v=103" defer></script>
-  <script src="/promo-banner.js?v=105" defer></script>
+      <script src="/i18n.js?v=111" defer></script>
+  <script src="/v3/gbx-read.js?v=112" defer></script>
+  <script src="/promo-banner.js?v=113" defer></script>
 <style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
-<script src="/v3/nav-i18n.js?v=103" defer></script>
+<script src="/v3/nav-i18n.js?v=111" defer></script>
 </head>
 <body>
 <div class="v3-app">
@@ -142,13 +143,13 @@ input::-moz-placeholder, textarea::-moz-placeholder {
   <!-- STEP 3: Order -->
   <h2>Step 3: Enter Amount</h2>
   <div style="margin-bottom: 10px;">
-    <label style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-secondary); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:6px; display:block;">Amount in USDC (min 1, max 10000)</label>
+    <label style="font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-secondary); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:6px; display:block;">Amount in USDC (min 1, max 10000)</label>
     <input id="usdc-input" type="number" min="1" max="10000" step="0.01" placeholder="0.00">
   </div>
   <div id="quote-display" style="display:none;"></div>
 
   <div style="margin-top: 14px; margin-bottom: 10px;">
-    <label style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-secondary); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:6px; display:block;">Your GBX Receiving Address</label>
+    <label style="font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-secondary); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:6px; display:block;">Your GBX Receiving Address</label>
     <input id="gbx-addr" type="text" placeholder="bn1q..." autocapitalize="off" autocomplete="off" spellcheck="false">
   </div>
 
@@ -265,7 +266,7 @@ function _gbxAutoFill() {
 
     const ind = document.createElement('div');
     ind.className = 'gbx-addr-indicator';
-    ind.style.cssText = 'margin-top:6px;font-size:11px;color:#eee;font-family:JetBrains Mono,monospace;letter-spacing:0.05em;';
+    ind.style.cssText = 'margin-top:6px;font-size:12px;color:#eee;font-family:JetBrains Mono,monospace;letter-spacing:0.05em;';
     ind.innerHTML = '✓ Auto-filled from your GoldBrix wallet (' + source + ')';
     if (parent) parent.appendChild(ind);
 
@@ -275,7 +276,7 @@ function _gbxAutoFill() {
     // No wallet found — show prominent warning + link to create
     const ind = document.createElement('div');
     ind.className = 'gbx-addr-indicator';
-    ind.style.cssText = 'margin-top:6px;padding:8px;background:rgba(255,122,107,0.1);border:1px solid #FF7A6B;border-radius:8px;font-size:12px;color:#eee;font-family:JetBrains Mono,monospace;';
+    ind.style.cssText = 'margin-top:6px;padding:8px;background:rgba(255,122,107,0.1);border:1px solid #FF7A6B;border-radius:8px;font-size:13px;color:#eee;font-family:JetBrains Mono,monospace;';
     ind.innerHTML = '⚠ No GoldBrix wallet found. <a href="/v3/welcome.html" style="color:#F5CC75;text-decoration:underline;">CREATE WALLET FIRST</a>';
     if (parent) parent.appendChild(ind);
     console.warn('[gbx-fill] No wallet found in session or localStorage');
@@ -313,16 +314,16 @@ window.payNow = function() {
 
 <!-- bridge.js handles ALL wallet logic: connect/disconnect/quote/order/pay/poll -->
 
-<script src="/bridge.js?v=103"></script>
+<script src="/bridge.js?v=111"></script>
 
-<script src="/v3/pwa.js?v=103" defer></script>
+<script src="/v3/pwa.js?v=111" defer></script>
 
 <nav class="v3-final-nav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:999;">
-  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
-  <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
-  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
-  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
-  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
+  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
+  <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
+  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
+  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
+  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
   <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#F5CC75;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:1;"><span style="font-size:18px;">⚙</span><span data-t="navSettings">SETTINGS</span></a>
 </nav>
 <style>body { padding-bottom: 76px !important; }</style>

@@ -16,29 +16,29 @@
   .mc-hero { text-align:center; padding:18px 16px 8px; }
   .mc-hero__face { width:64px; height:64px; margin:0 auto 8px; filter:drop-shadow(0 4px 14px rgba(240,192,96,0.4)); }
   .mc-hero__title { font-size:22px; font-weight:800; color:var(--gold); margin-bottom:4px; }
-  .mc-hero__sub { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.12em; color:var(--text-secondary); }
-  .mc-hero__total { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:800; color:var(--gold); margin-top:8px; }
-  .back-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.1em; color:var(--text-secondary); background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--r-full); margin:12px 0 8px 16px; text-decoration:none; }
+  .mc-hero__sub { font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.12em; color:var(--text-secondary); }
+  .mc-hero__total { font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:800; color:var(--gold); margin-top:8px; }
+  .back-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.1em; color:var(--text-secondary); background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--r-full); margin:12px 0 8px 16px; text-decoration:none; }
   .coin-card { display:flex; align-items:center; gap:12px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--r-md); padding:14px; margin:0 12px 8px; transition:all var(--t-fast); cursor:pointer; }
   .coin-card:hover { border-color:var(--gold-deep); background:var(--bg-elevated); }
   .coin-card__img { width:44px; height:44px; border-radius:50%; flex-shrink:0; object-fit:cover; background:var(--bg-elevated); }
   .coin-card__info { flex:1; min-width:0; }
   .coin-card__name { font-size:15px; font-weight:700; color:var(--text-primary); display:flex; align-items:center; gap:6px; }
-  .coin-card__meta { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-secondary); margin-top:2px; }
+  .coin-card__meta { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-secondary); margin-top:2px; }
   .coin-card__right { text-align:right; flex-shrink:0; }
-  .coin-card__mc { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:var(--gold); }
+  .coin-card__mc { font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:700; color:var(--gold); }
   .coin-card__mclbl { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--text-muted); margin-top:2px; }
   .mc-badge { font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; padding:2px 7px; border-radius:var(--r-full); letter-spacing:0.05em; }
   .mc-badge--curve { background:rgba(122,184,255,0.14); color:#7ab8ff; }
   .mc-badge--grad { background:rgba(78,224,140,0.14); color:var(--green); }
   .coin-card__spark { width:54px; height:24px; flex-shrink:0; }
-  .coin-card__ch { font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; margin-top:2px; }
+  .coin-card__ch { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; margin-top:2px; }
   .ch-up { color:var(--green); } .ch-dn { color:var(--red); } .ch-flat { color:var(--text-muted); }
   .mc-empty { text-align:center; padding:50px 24px; }
   .mc-empty__title { font-size:16px; font-weight:700; color:var(--text-primary); margin-bottom:6px; }
-  .mc-empty__sub { font-size:13px; color:var(--text-secondary); margin-bottom:18px; }
+  .mc-empty__sub { font-size:14px; color:var(--text-secondary); margin-bottom:18px; }
   .mc-launch-btn { display:inline-block; padding:12px 28px; background:linear-gradient(135deg,#F0C060,#B8860B); color:#1a1200; font-weight:800; font-size:14px; border-radius:var(--r-full); text-decoration:none; letter-spacing:0.05em; }
-  .mc-loading { text-align:center; padding:40px; color:var(--text-secondary); font-family:'JetBrains Mono',monospace; font-size:12px; }
+  .mc-loading { text-align:center; padding:40px; color:var(--text-secondary); font-family:'JetBrains Mono',monospace; font-size:13px; }
   .bnav { position:fixed; bottom:0; left:0; right:0; background:var(--bg-card); border-top:1px solid var(--border); display:flex; padding:8px 4px 12px; z-index:100; padding-bottom:calc(12px + env(safe-area-inset-bottom)); }
   .bnav__item { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 2px; color:var(--text-muted); text-decoration:none; }
   .bnav__icon { font-size:20px; line-height:1; }
@@ -148,6 +148,6 @@ applyLang(); load();
 setInterval(load, 20000); // GBX — auto-refresh silentios
 </script>
   <script src="/v3/gbx-autolock.js" defer></script>
-<script src="/v3/pwa.js?v=103"></script>
+<script src="/v3/pwa.js?v=111"></script>
 </body>
 </html>

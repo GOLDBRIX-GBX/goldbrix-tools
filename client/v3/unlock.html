@@ -26,10 +26,10 @@
   .loader { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; margin: 0 auto 8px; animation: spin 1s linear infinite; display: none; }
   .loader.show { display: block; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .crypto-loading { text-align: center; padding: 40px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .crypto-loading { text-align: center; padding: 40px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size:13px; }
   .reset-link {
     display: block; text-align: center; margin-top: 24px;
-    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    font-family: 'JetBrains Mono', monospace; font-size:12px;
     color: var(--text-muted); letter-spacing: 0.1em;
     transition: color var(--t-fast);
   }
@@ -49,7 +49,7 @@ input::-moz-placeholder, textarea::-moz-placeholder {
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/goldbrix-brand-180.png">
     <script src="/gbx-update-check.js" defer></script>
     <script src="/gbx-native-bridge.js" defer></script>
-      <script src="/i18n.js?v=103" defer></script>
+      <script src="/i18n.js?v=111" defer></script>
 <style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
 </head>
 <body>
@@ -65,7 +65,7 @@ input::-moz-placeholder, textarea::-moz-placeholder {
       <div class="v3-text-center" style="padding: 16px 0 28px;">
         <img src="/assets/coin/gbx-coin-128.png" style="width: 84px; height: 84px; filter: drop-shadow(0 0 28px var(--gold-glow-strong));">
         <h2 style="margin-top: 18px; font-size: 24px; font-weight: 800;" id="welcomeTitle">Welcome Back</h2>
-        <p style="margin-top: 8px; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.15em; color: var(--text-secondary);" id="welcomeSub">UNLOCK YOUR WALLET</p>
+        <p style="margin-top: 8px; font-family: 'JetBrains Mono', monospace; font-size:12px; letter-spacing: 0.15em; color: var(--text-secondary);" id="welcomeSub">UNLOCK YOUR WALLET</p>
       </div>
 
       <div class="pwd-wrap">
@@ -92,7 +92,7 @@ input::-moz-placeholder, textarea::-moz-placeholder {
   </div>
 </div>
 
-<script type="module" src="/crypto-utils-v2.js?v=103"></script>
+<script type="module" src="/crypto-utils-v2.js?v=111"></script>
 
 <script>
 const T = {
@@ -235,7 +235,7 @@ function resetWallet(ev) {
   }
 })();
 </script>
-<script src="/v3/pwa.js?v=103" defer></script>
+<script src="/v3/pwa.js?v=111" defer></script>
 
 
 

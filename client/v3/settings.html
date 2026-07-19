@@ -21,9 +21,9 @@
   }
   .s-header__brand { display: flex; align-items: center; gap: 8px; }
   .s-header__brand img { width: 28px; height: 28px; border-radius: 6px; }
-  .s-header__title { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: var(--gold); }
+  .s-header__title { font-family: 'JetBrains Mono', monospace; font-size:13px; font-weight: 700; letter-spacing: 0.08em; color: var(--gold); }
   .s-header__back {
-    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    font-family: 'JetBrains Mono', monospace; font-size:12px;
     color: var(--text-secondary); padding: 6px 12px;
     background: var(--bg-elevated); border: 1px solid var(--border);
     border-radius: var(--r-full); letter-spacing: 0.08em;
@@ -36,7 +36,7 @@
   }
   .sect-label__icon { font-size: 16px; }
   .sect-label__text {
-    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    font-family: 'JetBrains Mono', monospace; font-size:12px;
     font-weight: 700; letter-spacing: 0.15em;
     color: var(--text-secondary); text-transform: uppercase;
   }
@@ -77,7 +77,7 @@
     color: var(--text-muted); font-size: 18px; flex-shrink: 0;
   }
   .item-row__value {
-    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    font-family: 'JetBrains Mono', monospace; font-size:13px;
     color: var(--gold); font-weight: 700;
   }
   .item-row--danger .item-row__title { color: var(--red); }
@@ -104,10 +104,10 @@
   }
   .pwa-install-card__text { flex: 1; }
   .pwa-install-card__status-label {
-    font-size: 13px; font-weight: 700; color: var(--text-primary);
+    font-size:14px; font-weight: 700; color: var(--text-primary);
   }
   .pwa-install-card__desc {
-    font-size: 11px; color: var(--text-secondary);
+    font-size:12px; color: var(--text-secondary);
     font-family: 'JetBrains Mono', monospace; margin-top: 2px;
   }
   .pwa-install-card__btn {
@@ -115,7 +115,7 @@
     gap: 8px; padding: 14px;
     background: linear-gradient(135deg, var(--gold-bright) 0%, var(--gold) 100%);
     color: #1a1200; border-radius: var(--r-md);
-    font-family: 'JetBrains Mono', monospace; font-size: 13px;
+    font-family: 'JetBrains Mono', monospace; font-size:14px;
     font-weight: 700; letter-spacing: 0.15em;
     box-shadow: 0 4px 12px var(--gold-glow);
     transition: all var(--t-fast);
@@ -128,7 +128,7 @@
     border: 1.5px solid rgba(240,192,96,0.45);
     color: var(--gold);
     box-shadow: none;
-    font-size: 12px;
+    font-size:13px;
   }
   .pwa-install-card__btn--secondary:hover {
     background: rgba(240,192,96,0.08);
@@ -139,7 +139,7 @@
   .pwa-install-card__btn .gbx-btn-ico { font-size: 16px; line-height: 1; }
   .pwa-install-card__features {
     margin-top: 12px; display: grid; gap: 4px;
-    font-size: 12px; color: var(--text-tertiary);
+    font-size:13px; color: var(--text-tertiary);
   }
 
   /* Lang picker */
@@ -155,7 +155,7 @@
   .lang-row__flag { font-size: 22px; flex-shrink: 0; }
   .lang-row__name { flex: 1; font-size: 14px; font-weight: 600; }
   .lang-row__code {
-    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    font-family: 'JetBrains Mono', monospace; font-size:12px;
     color: var(--text-muted); letter-spacing: 0.08em;
   }
   .lang-row__check { color: var(--gold); font-size: 16px; opacity: 0; }
@@ -169,12 +169,12 @@
   }
   .about-card--red { border-color: var(--red-dim); background: linear-gradient(135deg, rgba(255, 122, 107, 0.04) 0%, var(--bg-card) 100%); }
   .about-card__title {
-    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    font-family: 'JetBrains Mono', monospace; font-size:12px;
     font-weight: 700; letter-spacing: 0.12em; color: var(--gold);
     margin-bottom: 6px; text-transform: uppercase;
   }
   .about-card--red .about-card__title { color: var(--red); }
-  .about-card__body { font-size: 13px; color: var(--text-tertiary); line-height: 1.55; }
+  .about-card__body { font-size:14px; color: var(--text-tertiary); line-height: 1.55; }
 
   /* Bottom nav */
   .bnav {
@@ -195,7 +195,7 @@
   .toast {
     position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
     background: var(--bg-card); border: 1px solid var(--gold);
-    border-radius: var(--r-md); padding: 10px 18px; font-size: 13px;
+    border-radius: var(--r-md); padding: 10px 18px; font-size:14px;
     color: var(--gold); z-index: 1000; box-shadow: var(--shadow-lg);
     font-family: 'JetBrains Mono', monospace; letter-spacing: 0.08em;
   }
@@ -214,8 +214,8 @@ input::-moz-placeholder, textarea::-moz-placeholder {
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/goldbrix-brand-180.png">
     <script src="/gbx-update-check.js" defer></script>
     <script src="/gbx-native-bridge.js" defer></script>
-      <script src="/i18n.js?v=103" defer></script>
-  <script src="/v3/nav-i18n.js?v=103" defer></script>
+      <script src="/i18n.js?v=111" defer></script>
+  <script src="/v3/nav-i18n.js?v=111" defer></script>
 <style id="gbx-hide-ref">
 /* Referrals e pe Home — ascuns în Settings (reversibil: șterge acest bloc) */
 
@@ -749,7 +749,7 @@ function pickLang(lang) {
   localStorage.setItem('gbx_lang', lang);
   applyLang();
   renderLangPicker();
-  showToast(t('langChanged'));
+  showToast(t('langChanged')); setTimeout(function(){ location.reload(); }, 300);
 }
 
 function showToast(msg) {
@@ -813,12 +813,12 @@ function showSeedModal(mnemonic) {
   var html = '<div id="gbxSeedModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:99999;display:flex;align-items:center;justify-content:center;padding:18px;" onclick="if(event.target===this)this.remove()">'
     + '<div style="background:#1a140d;border:1px solid #3a3025;border-radius:18px;max-width:420px;width:100%;padding:20px;font-family:system-ui,sans-serif;">'
     + '<div style="font-size:16px;font-weight:800;color:#F5CC75;margin-bottom:10px;">🔑 ' + t('seedModalTitle') + '</div>'
-    + '<div style="background:rgba(255,68,68,0.12);border:1px solid rgba(255,68,68,0.4);border-radius:10px;padding:12px;font-size:12px;color:#ffaa99;line-height:1.5;margin-bottom:14px;">⚠ ' + t('seedWarn') + '</div>'
+    + '<div style="background:rgba(255,68,68,0.12);border:1px solid rgba(255,68,68,0.4);border-radius:10px;padding:12px;font-size:13px;color:#ffaa99;line-height:1.5;margin-bottom:14px;">⚠ ' + t('seedWarn') + '</div>'
     + '<div style="position:relative;">'
     + '<div id="gbxSeedPhrase" style="background:#241d14;border:1px solid #3a3025;border-radius:12px;padding:16px;font-family:JetBrains Mono,monospace;font-size:15px;font-weight:700;color:#F5CC75;line-height:2;word-spacing:5px;filter:blur(9px);user-select:none;-webkit-user-select:none;">' + phrase + '</div>'
-    + '<button id="gbxSeedRevealBtn" onclick="var p=document.getElementById(\'gbxSeedPhrase\');p.style.filter=\'none\';p.style.userSelect=\'text\';p.style.webkitUserSelect=\'text\';this.remove();document.getElementById(\'gbxSeedCopyBtn\').style.display=\'block\';" style="position:absolute;inset:0;background:rgba(26,20,13,0.5);border:none;border-radius:12px;color:#F5CC75;font-size:13px;font-weight:800;cursor:pointer;font-family:system-ui,sans-serif;">👁 ' + t('seedReveal') + '</button>'
+    + '<button id="gbxSeedRevealBtn" onclick="var p=document.getElementById(\'gbxSeedPhrase\');p.style.filter=\'none\';p.style.userSelect=\'text\';p.style.webkitUserSelect=\'text\';this.remove();document.getElementById(\'gbxSeedCopyBtn\').style.display=\'block\';" style="position:absolute;inset:0;background:rgba(26,20,13,0.5);border:none;border-radius:12px;color:#F5CC75;font-size:14px;font-weight:800;cursor:pointer;font-family:system-ui,sans-serif;">👁 ' + t('seedReveal') + '</button>'
     + '</div>'
-    + '<button id="gbxSeedCopyBtn" data-copied="' + t('seedCopied') + '" onclick="navigator.clipboard&&navigator.clipboard.writeText(document.getElementById(\'gbxSeedPhrase\').textContent);this.textContent=this.getAttribute(\'data-copied\');" style="display:none;width:100%;margin-top:12px;padding:12px;background:#241d14;border:1px solid #3a3025;border-radius:10px;color:#F5CC75;font-size:13px;font-weight:700;cursor:pointer;font-family:system-ui,sans-serif;">📋 ' + t('seedCopy') + '</button>'
+    + '<button id="gbxSeedCopyBtn" data-copied="' + t('seedCopied') + '" onclick="navigator.clipboard&&navigator.clipboard.writeText(document.getElementById(\'gbxSeedPhrase\').textContent);this.textContent=this.getAttribute(\'data-copied\');" style="display:none;width:100%;margin-top:12px;padding:12px;background:#241d14;border:1px solid #3a3025;border-radius:10px;color:#F5CC75;font-size:14px;font-weight:700;cursor:pointer;font-family:system-ui,sans-serif;">📋 ' + t('seedCopy') + '</button>'
     + '<button onclick="document.getElementById(\'gbxSeedModal\').remove()" style="width:100%;margin-top:8px;padding:13px;background:linear-gradient(135deg,#F5CC75,#E0A845);border:none;border-radius:12px;color:#1a140d;font-size:14px;font-weight:800;cursor:pointer;font-family:system-ui,sans-serif;">' + t('seedDone') + '</button>'
     + '</div></div>';
   var old=document.getElementById('gbxSeedModal'); if(old)old.remove();
@@ -879,14 +879,14 @@ async function loadChainStatus() {
   loadChainStatus();
 })();
 </script>
-<script src="/v3/pwa.js?v=103" defer></script>
+<script src="/v3/pwa.js?v=111" defer></script>
 
 <nav class="v3-final-nav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:999;">
-  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🏠</span><span data-i18n="home">HOME</span></a>
-  <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">👤</span><span data-i18n="wallet">WALLET</span></a>
-  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">📊</span><span data-i18n="swap">TRADE</span></a>
-  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🚀</span><span data-i18n="launch">LAUNCH</span></a>
-  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🔥</span><span data-i18n="burnTracker">BURNS</span></a>
+  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🏠</span><span data-i18n="home">HOME</span></a>
+  <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">👤</span><span data-i18n="wallet">WALLET</span></a>
+  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">📊</span><span data-i18n="swap">TRADE</span></a>
+  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🚀</span><span data-i18n="launch">LAUNCH</span></a>
+  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🔥</span><span data-i18n="burnTracker">BURNS</span></a>
   <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#F5CC75;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:1;"><span style="font-size:18px;">⚙</span><span data-i18n="set">SETTINGS</span></a>
 </nav>
 <style>body { padding-bottom: 76px !important; }</style>
