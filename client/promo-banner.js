@@ -40,7 +40,7 @@
     injectCSS();
     if(!bannerEl){ bannerEl=document.createElement('div'); bannerEl.className='gbx-promo-bar'; document.body.insertBefore(bannerEl,document.body.firstChild); document.body.classList.add('gbx-has-promo'); }
     const fp=items.map(i=>i.cat+i.coin_id).join('|');
-    if(fp===lastFingerprint){ updateTimes(); return; }
+    fp=fp+'|'+lang(); if(fp===lastFingerprint){ updateTimes(); return; }
     lastFingerprint=fp;
     const itemHtml=i=>{
       let badge,color,metric=i.metric||'';
@@ -71,15 +71,15 @@
 
   async function refresh(){
     try{
-      // GBX s49: live sources only - consensus launchpad index + on-chain registries.
+      // live sources only - consensus launchpad index + on-chain registries.
       const [curvesR,nodesR,lpsR]=await Promise.all([
-        fetch('/api/curves').then(r=>r.json()).catch(()=>({})),
-        fetch('/api/node-registry').then(r=>r.json()).catch(()=>({})),
-        fetch('/api/lp-registry').then(r=>r.json()).catch(()=>({}))
+        fetch('https://goldbrix.app/api/curves').then(r=>r.json()).catch(()=>({})),
+        fetch('https://goldbrix.app/api/node-registry').then(r=>r.json()).catch(()=>({})),
+        fetch('https://goldbrix.app/api/lp-registry').then(r=>r.json()).catch(()=>({}))
       ]);
       const nN=nodesR.nodes?Object.keys(nodesR.nodes).length:0;
       const nL=lpsR.lps?Object.keys(lpsR.lps).length:0;
-      const join={cat:'join',metric:nN+'\u26d3 '+nL+'\ud83d\udca7'};
+      const join={cat:'join',metric:nN+'\ud83d\udd17 '+nL+'\ud83d\udca7'};
       const all=(curvesR.curves||[]);
       const newest=all.slice().sort((a,b)=>(b.created_height||0)-(a.created_height||0)).slice(0,5)
         .map(c=>({cat:'new',coin_id:c.coin_id,ticker:c.ticker||'?'}));
