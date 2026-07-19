@@ -5,30 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>GoldBrix · Coin</title>
 <link rel="icon" href="/favicon.ico">
-<script type="module" src="/crypto-utils-v2.js?v=107"></script>
-<script src="/i18n.js?v=107" defer></script>
-<script src="/v3/nav-i18n.js?v=107" defer></script>
+<script type="module" src="/crypto-utils-v2.js?v=111"></script>
+<script src="/i18n.js?v=111" defer></script>
+<script src="/v3/nav-i18n.js?v=111" defer></script>
 <style>
 :root{--bg:#1c1610;--card:#2a2218;--card2:#241d13;--line:#3a3025;--gold:#F5CC75;
---gold-soft:#FFE099;--ink:#eee;--dim:#ddd4be;--green:#4EE08C;--red:#FF7A6B;--ember:#e8843a;}
+--gold-soft:#FFE099;--ink:#eee;--dim:#FFFDF7;--green:#4EE08C;--red:#FF7A6B;--ember:#e8843a;}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 body{margin:0;background:var(--bg);color:var(--ink);
- font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-size:13px;padding-bottom:86px;}
+ font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-size:14px;padding-bottom:86px;}
 body[dir="rtl"]{direction:rtl;}
 .wrap{max-width:560px;margin:0 auto;padding:14px;}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;}
-.sect{color:var(--gold);font-weight:800;font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 10px;}
+.sect{color:var(--gold);font-weight:800;font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 10px;}
 .hdr{display:flex;align-items:center;gap:12px;}
 .hdr .logo{width:52px;height:52px;border-radius:50%;background:var(--card2);border:1px solid var(--line);
  display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--gold);font-weight:800;overflow:hidden;}
 .hdr .logo img{width:100%;height:100%;object-fit:cover;}
 .hdr .tick{color:var(--gold);font-weight:800;font-size:18px;letter-spacing:.06em;}
-.hdr .nm{color:var(--dim);font-size:11px;}
+.hdr .nm{color:var(--dim);font-size:12px;}
 .badge{margin-inline-start:auto;font-size:9px;font-weight:800;letter-spacing:.12em;padding:4px 8px;border-radius:6px;}
 .badge.live{color:var(--green);border:1px solid var(--green);}
 .badge.grad{color:var(--gold);border:1px solid var(--gold);}
 .rows{margin-top:10px;}
-.row{display:flex;justify-content:space-between;padding:5px 0;font-size:12px;}
+.row{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;}
 .row .k{color:var(--gold-soft);}
 .row .v{font-weight:700;}
 .row .v.gold{color:var(--gold);} .row .v.green{color:var(--green);} .row .v.red{color:var(--red);}
@@ -36,25 +36,25 @@ body[dir="rtl"]{direction:rtl;}
 .gbarwrap{margin-top:8px;}
 .gbar{height:14px;background:var(--card2);border:1px solid var(--line);border-radius:7px;overflow:hidden;}
 .gbar>i{display:block;height:100%;background:linear-gradient(90deg,#F5CC75,#d9a53f);width:0%;transition:width .5s;}
-.gnote{color:var(--dim);font-size:10px;margin-top:6px;line-height:1.55;}
+.gnote{color:var(--dim);font-size:11px;margin-top:6px;line-height:1.55;}
 canvas{width:100%;height:150px;background:var(--card2);border:1px solid var(--line);border-radius:10px;}
 /* trade */
 .tabs{display:flex;gap:8px;margin-bottom:10px;}
 .tab{flex:1;text-align:center;padding:10px;border-radius:10px;border:1px solid var(--line);
- color:var(--dim);font-weight:800;letter-spacing:.1em;cursor:pointer;font-size:12px;}
+ color:var(--dim);font-weight:800;letter-spacing:.1em;cursor:pointer;font-size:13px;}
 .tab.buy.on{color:#1c1610;background:var(--green);border-color:var(--green);}
 .tab.sell.on{color:#1c1610;background:var(--red);border-color:var(--red);}
 .inp{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:9px;
  color:var(--ink);padding:11px 12px;font:inherit;outline:none;}
 .inp:focus{border-color:var(--gold);}
-.lbl{display:flex;justify-content:space-between;color:var(--gold-soft);font-size:11px;margin:8px 0 5px;}
+.lbl{display:flex;justify-content:space-between;color:var(--gold-soft);font-size:12px;margin:8px 0 5px;}
 /* the impact card — the honest mirror */
 .impact{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:10px;}
 .impact .big{display:flex;justify-content:space-between;align-items:baseline;}
 .impact .pct{font-size:16px;font-weight:800;}
 .impact .pct.hot{color:var(--red);} .impact .pct.warm{color:var(--ember);} .impact .pct.cool{color:var(--green);}
-.impact .arrow{color:var(--dim);font-size:10px;margin-top:4px;}
-.warn{display:none;color:var(--ember);font-size:10px;margin-top:6px;line-height:1.5;}
+.impact .arrow{color:var(--dim);font-size:11px;margin-top:4px;}
+.warn{display:none;color:var(--ember);font-size:11px;margin-top:6px;line-height:1.5;}
 .warn.on{display:block;}
 .btn{width:100%;border:0;border-radius:12px;padding:14px;font:inherit;font-weight:800;letter-spacing:.08em;
  cursor:pointer;margin-top:12px;}
@@ -63,15 +63,15 @@ canvas{width:100%;height:150px;background:var(--card2);border:1px solid var(--li
 .btn.s{background:var(--red);color:#1c1610;}
 .btn.g{background:linear-gradient(90deg,#F5CC75,#d9a53f);color:#241d13;}
 .btn.ghost{background:var(--card2);color:var(--gold-soft);border:1px solid var(--line);}
-.law{color:var(--dim);font-size:10px;line-height:1.6;margin-top:8px;}
-.holders .h{display:flex;justify-content:space-between;font-size:11px;padding:4px 0;color:var(--dim);}
+.law{color:var(--dim);font-size:11px;line-height:1.6;margin-top:8px;}
+.holders .h{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;color:var(--dim);}
 .holders .h b{color:var(--ink);font-weight:700;}
 .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:#111;color:var(--gold-soft);
- border:1px solid var(--line);border-radius:10px;padding:10px 16px;font-size:12px;opacity:0;pointer-events:none;
+ border:1px solid var(--line);border-radius:10px;padding:10px 16px;font-size:13px;opacity:0;pointer-events:none;
  transition:opacity .25s;max-width:90%;z-index:300;}
 .toast.show{opacity:1;}
 .steps{margin-top:10px;}
-.step{display:flex;gap:8px;align-items:center;padding:3px 0;font-size:11px;color:var(--dim);}
+.step{display:flex;gap:8px;align-items:center;padding:3px 0;font-size:12px;color:var(--dim);}
 .step.ok{color:var(--green);} .step.run{color:var(--gold-soft);}
 .step .dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
 .step.ok .dot{background:var(--green);} .step.run .dot{background:var(--gold);}
@@ -503,15 +503,17 @@ $('btnGrad').onclick=async()=>{
 })();
 </script>
 <nav id="pgNav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:200;">
-  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
-  <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
+  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
+  <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
   <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#F5CC75;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:1;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
-  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
-  <a href="/v3/leaderboard.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
-  <a href="/v3/explorer.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🔍</span><span data-t="navExplorer">EXPLORER</span></a>
-  <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFE099;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">⚙️</span><span data-t="navSettings">SETTINGS</span></a>
+  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
+  <a href="/v3/leaderboard.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
+  <a href="/v3/explorer.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🔍</span><span data-t="navExplorer">EXPLORER</span></a>
+  <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">⚙️</span><span data-t="navSettings">SETTINGS</span></a>
 </nav>
-<script src="/v3/pwa.js?v=107" defer></script>
+<script src="/v3/pwa.js?v=111" defer></script>
 <script src="/v3/gbx-autolock.js" defer></script>
+<script src="/v3/gbx-read.js?v=112" defer></script>
+  <script src="/promo-banner.js?v=113" defer></script>
 </body>
 </html>
