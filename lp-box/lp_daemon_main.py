@@ -11,7 +11,7 @@ RPCS=A.get("rpcs",[RPC])  # B.2 multi-RPC fallback
 def _load_treasury_key():
     """Decripteaza cheia treasury 0x3b5B din keystore criptat (PBKDF2 200k + AES-256-CBC).
     Cheia ramane criptata pe disc, decriptata DOAR in memorie. Model identic lib/evm.js.
-    Unificare LP=treasury (decizie fondator 2026-06-29)."""
+    Unificare LP=treasury (o singura identitate calda)."""
     import re as _re, hashlib as _hl
     from cryptography.hazmat.primitives.ciphers import Cipher as _C, algorithms as _alg, modes as _md
     _env=open(E["ENV_F"]).read()

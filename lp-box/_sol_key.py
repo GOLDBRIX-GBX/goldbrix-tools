@@ -2,7 +2,7 @@ from lp_env import E
 """GOLDBRIX · _load_solana_key — decripteaza cheia treasury Solana in RAM.
 Model identic _load_treasury_key (EVM): OpenSSL Salted__ + PBKDF2-SHA256 200k + AES-256-CBC.
 Returneaza array-ul secret de 64 bytes (formatul Solana Keypair), NU il lasa pe disc.
-Aceeasi parola EVM_KEY_PASSPHRASE (o singura identitate calda, decizie fondator)."""
+Aceeasi parola EVM_KEY_PASSPHRASE (o singura identitate calda)."""
 import re, hashlib, json
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 

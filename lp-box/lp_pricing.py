@@ -19,7 +19,7 @@ def _live_price():
 RESERVES_F=E["RESERVES_F"]
 def _reserve_price():
     # PRET AUTONOM GLOBAL: Sigma(USDC tranzactionare pe toate lanturile active) / GBX LP tranzactionare.
-    # Trezoreria (treasury_v2, ~500k) EXCLUSA = va fi BURN. Multi-chain: lanturi cu prefix "_" sunt ignorate.
+    # Trezoreria (treasury_v2) EXCLUSA = va fi BURN. Multi-chain: lanturi cu prefix "_" sunt ignorate.
     # Sincronizat global: acelasi pret oriunde. Floor (in _price) = plasa la lichiditate mica.
     try:
         r=json.load(open(RESERVES_F))
@@ -66,7 +66,7 @@ def _price(c):
     floor=float(c.get("price_usd",0.10))
     src=c.get("price_source")
     if src in ("reserve","amm"):
-        # PRICE-1 (s38): "amm" era necunoscut aici -> cadea pe floor => UI/grafic afisau PODEAUA, nu piata.
+        # PRICE-1: "amm" era necunoscut aici -> cadea pe floor => UI/grafic afisau PODEAUA, nu piata.
         # Mid-price = x_USDC / y_GBX (aceeasi curba x*y=k din care se coteaza buy/sell). Floor = plasa.
         p=_reserve_price()
         return max(floor, p) if p else floor         # PRET AUTONOM din rezerve agregate

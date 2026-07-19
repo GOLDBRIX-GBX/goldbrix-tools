@@ -17,7 +17,7 @@ _D = {
  "RESERVES_F":"/root/lp_reserves.json",
  "INDEX_DB":  "",
 }
-# LP-19 (s38): index DB auto-detect daca nu e dat prin GBX_INDEX_DB
+# LP-19: index DB auto-detect daca nu e dat prin GBX_INDEX_DB
 def _autodb():
     import os as _o
     for c in ("/root/goldbrix-one/server/gbx-index.db",

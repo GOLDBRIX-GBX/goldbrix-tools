@@ -18,7 +18,7 @@ def _lp_evm_addr():
 LP_EVM_ADDR=_lp_evm_addr()
 GCLI=[E["GCLI_BIN"],"-datadir="+E["GBX_DATADIR"]]
 
-# LP-19 (s38): UTXO din indexul local (SQLite read-only). Inlocuieste scanul global (2.5G RSS -> OOM).
+# LP-19: UTXO din indexul local (SQLite read-only). Inlocuieste scanul global (2.5G RSS -> OOM).
 def _index_utxos(addr):
     dbp=E.get("INDEX_DB") or ""
     if not dbp: return None
@@ -267,7 +267,7 @@ class H(BaseHTTPRequestHandler):
                             _used_scan=True
                 except Exception:
                     pass
-                # LP-19 (s38): index local in loc de scan global. Miss = raspuns onest, NU scan.
+                # LP-19: index local in loc de scan global. Miss = raspuns onest, NU scan.
                 if not _used_scan:
                     _ix=_index_utxos(addr)
                     if _ix is None:

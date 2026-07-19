@@ -47,7 +47,7 @@ function pdas(swapIdBytes) {
 
 let out = {};
 try {
-  // TRADE-1 (s38): every swap ever created, settled ones INCLUDED. "events" deliberately skips
+  // TRADE-1: every swap ever created, settled ones INCLUDED. "events" deliberately skips
   // claimed/refunded (the daemon only cares about live ones); the trade index needs exactly those.
   // Additive: the production path above is untouched.
   if (a.cmd === "all-swaps") {
