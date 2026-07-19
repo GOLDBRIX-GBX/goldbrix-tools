@@ -179,7 +179,7 @@ async function syncEVM() {
   // ETAPA 4.9: merge HTLC contracts announced on-chain (GBX:HTLC) — autonomous discovery.
   let annHtlcs = {};
   try {
-    const regPath = process.env.GBX_NODEREG_STATE || '/root/goldbrix-tools/node-registry/node-registry.json';
+    const regPath = process.env.GBX_NODEREG_STATE || require('path').join(__dirname,'..','node-registry','node-registry.json');
     const reg = JSON.parse(fs.readFileSync(regPath,'utf8'));
     for (const key of Object.keys(reg.htlcs||{})) {
       const m = key.match(/^([a-z0-9]{2,16}):(0x[0-9a-fA-F]{40}|[1-9A-HJ-NP-Za-km-z]{32,44})(?::([0-9]{1,12}))?$/);

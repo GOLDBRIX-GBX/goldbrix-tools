@@ -445,7 +445,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/api/htlc-registry') {
       // GBX on-chain HTLC contract registry (GBX:HTLC: OP_RETURN). Read-only, keyless.
       try {
-        const regPath = process.env.GBX_NODEREG_STATE || '/root/goldbrix-tools/node-registry/node-registry.json';
+        const regPath = process.env.GBX_NODEREG_STATE || require('path').join(__dirname,'..','node-registry','node-registry.json');
         const reg = JSON.parse(fs.readFileSync(regPath,'utf8'));
         res.writeHead(200, {'Content-Type':'application/json'});
         return res.end(JSON.stringify({updated_height: reg.scanned_height, htlcs: reg.htlcs||{}}));
@@ -454,7 +454,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/api/lp-registry') {
       // GBX on-chain LP registry (GBX:LP: OP_RETURN). Read-only, keyless.
       try {
-        const regPath = process.env.GBX_NODEREG_STATE || '/root/goldbrix-tools/node-registry/node-registry.json';
+        const regPath = process.env.GBX_NODEREG_STATE || require('path').join(__dirname,'..','node-registry','node-registry.json');
         const reg = JSON.parse(fs.readFileSync(regPath,'utf8'));
         res.writeHead(200, {'Content-Type':'application/json'});
         return res.end(JSON.stringify({updated_height: reg.scanned_height, lps: reg.lps||{}}));
@@ -463,7 +463,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/api/node-registry') {
       // GBX on-chain node registry (GBX:NODE: OP_RETURN). Read-only, keyless.
       try {
-        const regPath = process.env.GBX_NODEREG_STATE || '/root/goldbrix-tools/node-registry/node-registry.json';
+        const regPath = process.env.GBX_NODEREG_STATE || require('path').join(__dirname,'..','node-registry','node-registry.json');
         const reg = JSON.parse(fs.readFileSync(regPath,'utf8'));
         res.writeHead(200, {'Content-Type':'application/json'});
         return res.end(JSON.stringify({updated_height: reg.scanned_height, nodes: reg.nodes}));

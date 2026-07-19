@@ -2,7 +2,7 @@
 // IDEE V token-index reader: read-only queries over token-index.db for read-api.
 // Keyless. No writes. Returns plain objects ready for JSON.
 'use strict';
-const Database = require(process.env.GBX_SQLITE_MOD || '/root/goldbrix-tools/read-api/node_modules/better-sqlite3');
+const Database = require(process.env.GBX_SQLITE_MOD || require('path').join(__dirname,'node_modules','better-sqlite3'));
 
 function openTokenIndex(dbPath){
   const db = new Database(dbPath, { readonly: true, fileMustExist: true });

@@ -5,13 +5,14 @@
 'use strict';
 const { execFileSync } = require('child_process');
 const crypto = require('crypto');
-const Database = require(process.env.GBX_SQLITE_MOD || '/root/goldbrix-tools/read-api/node_modules/better-sqlite3');
+const path = require('path');
+const Database = require(process.env.GBX_SQLITE_MOD || path.join(__dirname,'..','read-api','node_modules','better-sqlite3'));
 
 const BIN     = process.env.GBX_BIN     || '/usr/local/bin/goldbrix-cli';
 const DATADIR = process.env.GBX_DATADIR || '/root/.bitcoin';
 const CHAIN   = process.env.GBX_CHAIN   || 'main';      // 'regtest' | 'main'
 const RPCPORT = process.env.GBX_RPC_PORT|| '8332';
-const DB_PATH = process.env.GBX_TOKENIDX_DB || '/root/goldbrix-tools/token-index/token-index.db';
+const DB_PATH = process.env.GBX_TOKENIDX_DB || path.join(__dirname,'token-index.db');
 const START   = parseInt(process.env.GBX_TOKENIDX_START || '0', 10);
 const POLL_MS = parseInt(process.env.GBX_POLL_MS || '3000', 10);
 const LAUNCH_H= parseInt(process.env.GBX_LAUNCHPAD_HEIGHT || '0', 10); // consensus nLaunchpadHeight mirror; 0 = index everything (pre-activation / regtest)
