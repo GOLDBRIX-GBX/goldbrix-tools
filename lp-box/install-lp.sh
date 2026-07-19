@@ -31,7 +31,7 @@ grep -q CHANGE_ME $D/lp.env && { echo "EDIT $D/lp.env + $D/chains.json (FILL_YOU
 grep -q FILL_YOUR_OWN $D/chains.json && { echo "EDIT $D/chains.json (FILL_YOUR_OWN), then re-run"; exit 2; }
 
 # env overrides -> own paths, own state, own node
-# LP-19 (s38): datadir din nodul VIU, nu presupus. Indexul local inlocuieste scanul global (OOM).
+# LP-19: datadir din nodul VIU, nu presupus. Indexul local inlocuieste scanul global (OOM).
 GBX_NODE_DATADIR=$(systemctl cat goldbrixd 2>/dev/null | grep -oE '\-datadir=[^ ]+' | head -1 | cut -d= -f2)
 [ -n "$GBX_NODE_DATADIR" ] || GBX_NODE_DATADIR=/var/lib/goldbrix
 [ -d "$GBX_NODE_DATADIR" ] || { echo "FAIL: node datadir $GBX_NODE_DATADIR not found"; exit 1; }
