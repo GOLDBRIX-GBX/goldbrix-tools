@@ -104,7 +104,7 @@
   };
 })();
 
-/* s53: GBXRead alias for consumers using absolute paths ('/api/...').
+/* GBXRead alias for consumers using absolute paths ('/api/...').
    Nodes in GBX_NODES already end in /api -> strip the duplicate prefix. */
 (function(){
   'use strict';
