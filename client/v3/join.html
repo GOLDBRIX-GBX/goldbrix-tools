@@ -2,8 +2,8 @@
 <html lang="en"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Join the Federation · GoldBrix</title>
-<script src="/v3/nav-i18n.js?v=111" defer></script>
-<script src="/v3/join-steps.js?v=111"></script>
+<script src="/v3/nav-i18n.js?v=112" defer></script>
+<script src="/v3/join-steps.js?v=112"></script>
 <style>
 .jn-root{background:#0b0804;background-image:radial-gradient(ellipse 90% 55% at 50% -10%,rgba(255,200,80,0.30),transparent 62%),radial-gradient(circle at 100% 100%,rgba(255,200,80,0.10),transparent 45%);color:#FFF6E0;font-family:'Courier New',ui-monospace,monospace;padding:14px 12px 90px;min-height:100vh;box-sizing:border-box}
 .jn-root *{box-sizing:border-box;margin:0;padding:0}
@@ -33,6 +33,11 @@
   <div><b id="jnNodes">—</b><span id="jnNodesL"></span></div>
   <div><b id="jnLps">—</b><span id="jnLpsL"></span></div>
   <div><b id="jnH">—</b><span id="jnHL"></span></div>
+ </div>
+ <div style="text-align:center;margin:14px 0 4px">
+  <button id="jnShare" class="jn-copy" style="font-size:.9rem;padding:10px 22px">📤</button>
+ </div>
+ <div style="display:none">
  </div>
  <div class="jn-list">
   <div class="jn-card">
@@ -99,35 +104,35 @@ sudo bash goldbrix-tools/lp-box/install-lp.sh</div>
    r1:'MINE',d1:'Earn GBX with pure proof-of-work. Phone: forge coins in the app. Server: one command below — payout goes straight to YOUR address, pool fee 0.',n1:'Any pool works: set GBX_POOL to point the miner anywhere. No pool? Run your own node and mine solo.',
    r2:'RUN A NODE',d2:'Carry the chain. Keyless — this machine never holds funds. The installer downloads the official public release and verifies its SHA-256 automatically, then announces your node on-chain so wallets can find it.',n2:'Needs: a Linux server. That is all. Your node makes the network harder to stop.',
    r3:'BECOME AN LP',d3:'Provide GBX↔USDC liquidity with YOUR capital on YOUR machine. Your keys are generated locally and never leave it. Run a node first (card above), then:',n3:'Needs: 8 GB RAM (6 GB minimum), 30 GB free disk, Node.js 18+, Python 3. You earn as a market participant — the protocol takes nothing.',
-   copy:'COPY',copied:'COPIED ✓',
+   copy:'COPY',copied:'COPIED ✓',share:'📤 SHARE',sharetxt:'GoldBrix — no owner, no key, no fees. Real proof-of-work chain. Mine, run a node, provide liquidity — no permission needed.',
    foot:'Everything is open source. Every binary is reproducible (Guix) and SHA-verified. The founder holds no key and takes no fee — and one day walks away. The federation is what remains.'},
   ro:{t:'Alătură-te Federației',s:'GoldBrix funcționează prin oameni, nu printr-o companie. Alege un rol — fără permisiune, fără cont, fără chei ținute de altcineva.',
    nodes:'NODURI ON-CHAIN',lps:'FURNIZORI DE LICHIDITATE',h:'ÎNĂLȚIME LANȚ',
    r1:'MINEAZĂ',d1:'Câștigă GBX prin proof-of-work pur. Telefon: forjează monede în app. Server: o comandă mai jos — plata merge direct la adresa TA, fee pool 0.',n1:'Orice pool merge: setează GBX_POOL către oricare. Fără pool? Rulează propriul nod și minează solo.',
    r2:'RULEAZĂ UN NOD',d2:'Duci lanțul mai departe. Fără chei — mașina nu ține fonduri. Installerul descarcă release-ul public oficial, verifică SHA-256 automat, apoi îți anunță nodul on-chain ca wallet-urile să-l găsească.',n2:'Necesar: un server Linux. Atât. Nodul tău face rețeaua mai greu de oprit.',
    r3:'DEVINO LP',d3:'Oferi lichiditate GBX↔USDC cu capitalul TĂU pe mașina TA. Cheile se generează local și nu o părăsesc niciodată. Întâi rulează un nod (cardul de sus), apoi:',n3:'Necesar: 8 GB RAM (minim 6), 30 GB disc liber, Node.js 18+, Python 3. Câștigi ca participant în piață — protocolul nu ia nimic.',
-   copy:'COPIAZĂ',copied:'COPIAT ✓',
+   copy:'COPIAZĂ',copied:'COPIAT ✓',share:'📤 DISTRIBUIE',sharetxt:'GoldBrix — fără propietar, fără chei, fără taxe. Lanț proof-of-work real. Minează, rulează un nod, oferă lichiditate — fără permisiune.',
    foot:'Totul e open source. Fiecare binar e reproductibil (Guix) și verificat SHA. Fondatorul nu ține nicio cheie, nu ia niciun fee — și într-o zi pleacă. Federația e ceea ce rămâne.'},
   de:{t:'Tritt der Föderation bei',s:'GoldBrix läuft durch Menschen, nicht durch eine Firma. Wähle eine Rolle — ohne Erlaubnis, ohne Konto, ohne fremde Schlüssel.',
    nodes:'NODES ON-CHAIN',lps:'LIQUIDITÄTSANBIETER',h:'CHAIN-HÖHE',
    r1:'MINEN',d1:'Verdiene GBX durch reinen Proof-of-Work. Handy: Coins in der App schmieden. Server: ein Befehl unten — Auszahlung direkt an DEINE Adresse, Pool-Gebühr 0.',n1:'Jeder Pool funktioniert: GBX_POOL beliebig setzen. Kein Pool? Eigenen Node betreiben und solo minen.',
    r2:'NODE BETREIBEN',d2:'Trage die Chain. Ohne Schlüssel — diese Maschine hält keine Gelder. Der Installer lädt das offizielle Release, prüft SHA-256 automatisch und meldet deinen Node on-chain an, damit Wallets ihn finden.',n2:'Nötig: ein Linux-Server. Mehr nicht. Dein Node macht das Netzwerk schwerer zu stoppen.',
    r3:'LP WERDEN',d3:'Stelle GBX↔USDC-Liquidität mit DEINEM Kapital auf DEINER Maschine. Schlüssel werden lokal erzeugt und verlassen sie nie. Erst einen Node betreiben (Karte oben), dann:',n3:'Nötig: 8 GB RAM (min. 6), 30 GB freier Speicher, Node.js 18+, Python 3. Du verdienst als Marktteilnehmer — das Protokoll nimmt nichts.',
-   copy:'KOPIEREN',copied:'KOPIERT ✓',
+   copy:'KOPIEREN',copied:'KOPIERT ✓',share:'📤 TEILEN',sharetxt:'GoldBrix — kein Eigentümer, kein Schlüssel, keine Gebühren. Echte Proof-of-Work-Chain. Minen, Node betreiben, Liquidität stellen — ohne Erlaubnis.',
    foot:'Alles ist Open Source. Jedes Binary ist reproduzierbar (Guix) und SHA-geprüft. Der Gründer hält keinen Schlüssel, nimmt keine Gebühr — und geht eines Tages. Die Föderation ist, was bleibt.'},
   zh:{t:'加入联邦',s:'GoldBrix 靠人运行，而非公司。选择一个角色——无需许可、无需注册、没有任何人替你保管密钥。',
    nodes:'链上节点',lps:'流动性提供者',h:'链高度',
    r1:'挖矿',d1:'用纯工作量证明赚取 GBX。手机：在应用内锻造。服务器：下面一条命令——收益直达你自己的地址，矿池费 0。',n1:'任何矿池都可以：用 GBX_POOL 指向任意矿池。没有矿池？运行自己的节点独立挖矿。',
    r2:'运行节点',d2:'承载这条链。无密钥——这台机器不持有资金。安装器自动下载官方公开发布版并校验 SHA-256，然后将你的节点登记上链，钱包即可发现它。',n2:'需要：一台 Linux 服务器。仅此而已。你的节点让网络更难被停止。',
    r3:'成为 LP',d3:'用你自己的资金、在你自己的机器上提供 GBX↔USDC 流动性。密钥本地生成，永不离开。先运行节点（上方卡片），然后：',n3:'需要：8 GB 内存（最低 6）、30 GB 磁盘、Node.js 18+、Python 3。你作为市场参与者获利——协议分文不取。',
-   copy:'复制',copied:'已复制 ✓',
+   copy:'复制',copied:'已复制 ✓',share:'📤 分享',sharetxt:'GoldBrix — 无所有者、无密钥、无费用。真实的工作量证明链。挖矿、运行节点、提供流动性 — 无需许可。',
    foot:'一切开源。每个二进制均可复现（Guix）并经 SHA 校验。创始人不持有密钥、不收费——终有一天会离开。联邦才是留下的东西。'},
   ar:{t:'انضم إلى الاتحاد',s:'يعمل GoldBrix بالناس، لا بشركة. اختر دورًا — بلا إذن، بلا تسجيل، بلا مفاتيح يحتفظ بها أحد غيرك.',
    nodes:'عُقد على السلسلة',lps:'مزودو السيولة',h:'ارتفاع السلسلة',
    r1:'عدِّن',d1:'اكسب GBX بإثبات العمل الخالص. الهاتف: اصنع العملات داخل التطبيق. الخادم: أمر واحد أدناه — الدفع مباشرة إلى عنوانك، رسوم المجمع 0.',n1:'أي مجمع يعمل: وجّه GBX_POOL أينما شئت. لا مجمع؟ شغّل عقدتك وعدِّن منفردًا.',
    r2:'شغّل عقدة',d2:'احمل السلسلة. بلا مفاتيح — هذه الآلة لا تحتفظ بأموال. المثبّت ينزّل الإصدار الرسمي العام ويتحقق من SHA-256 تلقائيًا ثم يعلن عقدتك على السلسلة لتجدها المحافظ.',n2:'المطلوب: خادم لينكس. هذا كل شيء. عقدتك تجعل الشبكة أصعب إيقافًا.',
    r3:'كن مزود سيولة',d3:'وفّر سيولة GBX↔USDC برأس مالك وعلى جهازك. تُولَّد المفاتيح محليًا ولا تغادره أبدًا. شغّل عقدة أولًا (البطاقة أعلاه)، ثم:',n3:'المطلوب: 8 GB رام (الحد الأدنى 6)، 30 GB قرص، Node.js 18+، Python 3. تكسب كمشارك في السوق — البروتوكول لا يأخذ شيئًا.',
-   copy:'انسخ',copied:'تم النسخ ✓',
+   copy:'انسخ',copied:'تم النسخ ✓',share:'📤 شارك',sharetxt:'GoldBrix — بلا مالك، بلا مفاتيح، بلا رسوم. سلسلة إثبات عمل حقيقية. عدِّن، شغّل عقدة، وفّر سيولة — بلا إذن.',
    foot:'كل شيء مفتوح المصدر. كل ملف تنفيذي قابل لإعادة البناء (Guix) ومتحقق منه بـ SHA. المؤسس لا يحمل مفتاحًا ولا يأخذ رسومًا — وسيرحل يومًا. الاتحاد هو ما يبقى.'}
  };
  var g=localStorage.getItem('gbx_lang')||localStorage.getItem('goldbrix_lang')||'en';
@@ -159,13 +164,21 @@ sudo bash goldbrix-tools/lp-box/install-lp.sh</div>
   if(ST.r4){S('jnR4',ST.r4);S('jnD4',ST.d4);S('jnN4',ST.n4);}
   ['0','1','2','3','4'].forEach(function(n){var ol=document.getElementById('jnS'+n);var arr=ST['s'+n];if(!ol||!arr)return;arr.forEach(function(x){var li=document.createElement('li');li.textContent=x;ol.appendChild(li);});});
  }
- /* live counters — on-chain registries; honest dash on error */
+ /* SHARE — native share sheet, clipboard fallback. GBX_ENTRY_URL = single source; swap to permanent anchor at Stage 5. */
+var GBX_ENTRY_URL='https://goldbrix.app/join';
+var shb=document.getElementById('jnShare');
+if(shb){shb.textContent=t.share;shb.addEventListener('click',function(){
+  var msg=t.sharetxt+'\n'+GBX_ENTRY_URL;
+  if(navigator.share){navigator.share({title:'GoldBrix',text:t.sharetxt,url:GBX_ENTRY_URL}).catch(function(){});}
+  else if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(msg).then(function(){shb.textContent=t.copied;setTimeout(function(){shb.textContent=t.share;},1600);});}
+});}
+/* live counters — on-chain registries; honest dash on error */
  function count(o){return o?Object.keys(o).length:0;}
- fetch('/api/node-registry').then(function(r){return r.json();}).then(function(j){
+ fetch('https://goldbrix.app/api/node-registry').then(function(r){return r.json();}).then(function(j){
   S('jnNodes',String(count(j.nodes)));
   if(j.updated_height)S('jnH',j.updated_height.toLocaleString());
  }).catch(function(){});
- fetch('/api/lp-registry').then(function(r){return r.json();}).then(function(j){
+ fetch('https://goldbrix.app/api/lp-registry').then(function(r){return r.json();}).then(function(j){
   S('jnLps',String(count(j.lps)));
   if(j.updated_height)S('jnH',j.updated_height.toLocaleString());
  }).catch(function(){});
