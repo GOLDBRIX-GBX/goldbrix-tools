@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>GoldBrix · Launch</title>
 <link rel="icon" href="/favicon.ico">
-<script type="module" src="/crypto-utils-v2.js?v=111"></script>
+<script type="module" src="/crypto-utils-v2.js?v=112"></script>
 <script src="/gbx-update-check.js" defer></script>
 <script src="/gbx-native-bridge.js" defer></script>
-<script src="/i18n.js?v=111" defer></script>
-<script src="/v3/nav-i18n.js?v=111" defer></script>
+<script src="/i18n.js?v=112" defer></script>
+<script src="/v3/nav-i18n.js?v=112" defer></script>
 <style>
 :root{
   --bg:#1c1610; --card:#2a2218; --card2:#241d13; --line:#3a3025;
@@ -194,6 +194,7 @@ en:{hero:'A COIN IS BORN OF WORK',law:'no fee kept · everything burned · refun
  'e.amt':'Enter an amount of at least 0.00000001 GBX','e.bal':'Not enough GBX. You need about',
  'e.wallet':'Wallet locked — unlocking…','e.net':'Network unavailable. Nothing was sent. Try again.',
  'e.stale':'The chain moved on — forging again with a fresh block…',
+'e.logo':'Could not read that image. Try another one.',
  'mining':'FORGING…','stopped':'Stopped. Nothing was sent.'},
 ro:{hero:'O MONEDĂ SE NAȘTE DIN MUNCĂ',law:'zero comision păstrat · totul ars · refundul e lege',
  's.identity':'Identitatea monedei','logo.tap':'atinge pentru logo<br>(opțional)',
@@ -214,6 +215,7 @@ ro:{hero:'O MONEDĂ SE NAȘTE DIN MUNCĂ',law:'zero comision păstrat · totul a
  'e.amt':'Introdu o sumă de cel puțin 0,00000001 GBX','e.bal':'GBX insuficient. Ai nevoie de circa',
  'e.wallet':'Portofel blocat — deblocare…','e.net':'Rețea indisponibilă. Nu s-a trimis nimic. Încearcă din nou.',
  'e.stale':'Lanțul a avansat — forjăm din nou cu un bloc proaspăt…',
+'e.logo':'Imaginea nu a putut fi citită. Încearcă alta.',
  'mining':'FORJEZ…','stopped':'Oprit. Nu s-a trimis nimic.'},
 de:{hero:'EINE MÜNZE WIRD AUS ARBEIT GEBOREN',law:'keine Gebühr behalten · alles verbrannt · Erstattung ist Gesetz',
  's.identity':'Identität der Münze','logo.tap':'tippen für ein Logo<br>(optional)',
@@ -234,6 +236,7 @@ de:{hero:'EINE MÜNZE WIRD AUS ARBEIT GEBOREN',law:'keine Gebühr behalten · al
  'e.amt':'Betrag von mindestens 0,00000001 GBX eingeben','e.bal':'Nicht genug GBX. Du brauchst etwa',
  'e.wallet':'Wallet gesperrt — entsperren…','e.net':'Netzwerk nicht erreichbar. Nichts wurde gesendet. Versuche es erneut.',
  'e.stale':'Die Chain ist weitergezogen — wir schmieden mit einem frischen Block neu…',
+'e.logo':'Bild konnte nicht gelesen werden. Versuche ein anderes.',
  'mining':'SCHMIEDE…','stopped':'Gestoppt. Nichts wurde gesendet.'},
 zh:{hero:'币生于工作',law:'不留手续费 · 全部销毁 · 退款是法则',
  's.identity':'币的身份','logo.tap':'点击添加标志<br>（可选）',
@@ -254,6 +257,7 @@ zh:{hero:'币生于工作',law:'不留手续费 · 全部销毁 · 退款是法�
  'e.amt':'请输入至少 0.00000001 GBX','e.bal':'GBX 不足。大约需要',
  'e.wallet':'钱包已锁定——正在解锁…','e.net':'网络不可用。未发送任何内容。请重试。',
  'e.stale':'链已前进——正在用新区块重新锻造…',
+'e.logo':'无法读取该图片。请换一张。',
  'mining':'锻造中…','stopped':'已停止。未发送任何内容。'},
 ar:{hero:'العملة تولد من العمل',law:'لا عمولة محتفظ بها · كل شيء يُحرق · الاسترداد قانون',
  's.identity':'هوية العملة','logo.tap':'اضغط لإضافة شعار<br>(اختياري)',
@@ -274,6 +278,7 @@ ar:{hero:'العملة تولد من العمل',law:'لا عمولة محتفظ
  'e.amt':'أدخل مبلغاً لا يقل عن 0.00000001 GBX','e.bal':'GBX غير كافٍ. تحتاج نحو',
  'e.wallet':'المحفظة مقفلة — جارٍ الفتح…','e.net':'الشبكة غير متاحة. لم يُرسل شيء. حاول مجدداً.',
  'e.stale':'تقدمت السلسلة — نعيد الصياغة بكتلة جديدة…',
+'e.logo':'تعذّرت قراءة الصورة. جرّب صورة أخرى.',
  'mining':'جارٍ الصياغة…','stopped':'توقف. لم يُرسل شيء.'}
 };
 const tt = k => (T[L] && T[L][k]) || T.en[k] || k;
@@ -305,9 +310,17 @@ let _bases=null;
 async function bases(){
   if (_bases) return _bases;
   const out=[];
-  try{ const j=await (await fetch('https://goldbrix.app/lps.json',{cache:'no-store'})).json();
-    for (const x of (j.lps||j||[])){ const b=x.base_url||x.base||x.gateway||x.url; if(b&&out.indexOf(b)<0) out.push(b); } }catch(e){}
-  if (out.indexOf('https://goldbrix.app/lp')<0) out.push('https://goldbrix.app/lp');
+  const origins=(window.GBX_NODES||[]).map(n=>n.replace(/\/api\/?$/,''));
+  for (const o of origins){
+    try{ const j=await (await fetch(o+'/lps.json',{cache:'no-store'})).json();
+      for (const x of (j.lps||j||[])){ const b=x.base_url||x.base||x.gateway||x.url; if(b&&out.indexOf(b)<0) out.push(b); }
+      if (out.length) break;
+    }catch(e){}
+  }
+  try{ const j=await window.GBXRead.json('/api/lp-registry');
+    for (const b of Object.keys((j&&j.lps)||{})) if(out.indexOf(b)<0) out.push(b);
+  }catch(e){}
+  if (out.length===0) for (const o of origins) out.push(o+'/lp');
   _bases=out; return out;
 }
 async function gwGet(path){
@@ -352,10 +365,18 @@ let mining=false, worker=null, logoData=null;
 
 $('logoFile').onchange=e=>{
   const f=e.target.files[0]; if(f===undefined) return;
-  if (f.size>3*1024*1024){ toast('max 3MB'); return; }
-  const r=new FileReader();
-  r.onload=()=>{ logoData=r.result; $('logoBox').innerHTML='<img src="'+logoData+'">'; };
-  r.readAsDataURL(f);
+  const img=new Image(), url=URL.createObjectURL(f);
+  img.onload=()=>{
+    URL.revokeObjectURL(url);
+    const S=256, c=document.createElement('canvas'); c.width=S; c.height=S;
+    const g=c.getContext('2d');
+    const m=Math.min(img.width,img.height);
+    g.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,S,S);
+    logoData=c.toDataURL('image/jpeg',0.85);
+    $('logoBox').innerHTML='<img src="'+logoData+'">';
+  };
+  img.onerror=()=>{ URL.revokeObjectURL(url); toast(tt('e.logo')); };
+  img.src=url;
 };
 
 /* ── validation + live preview (pure local math via the flow module) ── */
@@ -530,7 +551,7 @@ $('btnGo').onclick=forge;
 })();
 </script>
 <script src="/v3/gbx-read.js?v=112"></script>
-<script src="/v3/pwa.js?v=111" defer></script>
+<script src="/v3/pwa.js?v=112" defer></script>
 <nav id="pgNav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:200;">
   <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
   <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
@@ -542,6 +563,6 @@ $('btnGo').onclick=forge;
 </nav>
 <script>if(window.__SPA_PATH2ROUTE){var _n=document.getElementById("pgNav");if(_n)_n.style.display="none";}</script>
 <script src="/v3/gbx-autolock.js" defer></script>
-  <script src="/promo-banner.js?v=113" defer></script>
+  <script src="/promo-banner.js?v=112" defer></script>
 </body>
 </html>

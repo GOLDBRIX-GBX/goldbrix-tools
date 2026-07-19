@@ -71,7 +71,9 @@
         // FIX — const/let top-level (coloana 0) -> var, ca re-vizita sa nu crape cu 'already declared'
         var code=old.textContent;
         // FIX — top-level 'const/let/var NUME =' -> 'window.NUME =' (asignare, nu declarare; zero conflict cu i18n.js global)
+        if(old.type!=='module'){ /* modulele ES au scope propriu — rescrierea le-ar sparge in strict mode */
         code=code.replace(/^(?:const|let|var)\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=/gm, 'window.$1 =');
+        }
         // FIX — location.href='/v3/X' (setter, neinterceptat de shim) -> navigare SPA daca ruta mapata
         // window.__spaNavTo intoarce true daca a navigat in SPA; altfel href real (fallback)
         code=code.replace(/(?:window\.)?location\.href\s*=\s*(['"])([^'"]+)\1/g,

@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>GoldBrix · Coin</title>
 <link rel="icon" href="/favicon.ico">
-<script type="module" src="/crypto-utils-v2.js?v=111"></script>
-<script src="/i18n.js?v=111" defer></script>
-<script src="/v3/nav-i18n.js?v=111" defer></script>
+<script type="module" src="/crypto-utils-v2.js?v=112"></script>
+<script src="/i18n.js?v=112" defer></script>
+<script src="/v3/nav-i18n.js?v=112" defer></script>
 <style>
 :root{--bg:#1c1610;--card:#2a2218;--card2:#241d13;--line:#3a3025;--gold:#F5CC75;
 --gold-soft:#FFE099;--ink:#eee;--dim:#FFFDF7;--green:#4EE08C;--red:#FF7A6B;--ember:#e8843a;}
@@ -285,9 +285,17 @@ function derSig(c){const tr=x=>{let i=0;while(i<31&&x[i]===0)i++;let v=x.subarra
  return Uint8Array.of(0x30,4+r.length+s.length,0x02,r.length,...r,0x02,s.length,...s);}
 let _bases=null;
 async function bases(){if(_bases)return _bases;const out=[];
- try{const j=await(await fetch('https://goldbrix.app/lps.json',{cache:'no-store'})).json();
-  for(const x of(j.lps||j||[])){const b=x.base_url||x.base||x.gateway||x.url;if(b&&out.indexOf(b)<0)out.push(b);}}catch(e){}
- if(out.indexOf('https://goldbrix.app/lp')<0)out.push('https://goldbrix.app/lp');_bases=out;return out;}
+ const origins=(window.GBX_NODES||[]).map(n=>n.replace(/\/api\/?$/,''));
+ for(const o of origins){
+  try{const j=await(await fetch(o+'/lps.json',{cache:'no-store'})).json();
+   for(const x of(j.lps||j||[])){const b=x.base_url||x.base||x.gateway||x.url;if(b&&out.indexOf(b)<0)out.push(b);}
+   if(out.length)break;
+  }catch(e){}}
+ try{const j=await window.GBXRead.json('/api/lp-registry');
+  for(const b of Object.keys((j&&j.lps)||{}))if(out.indexOf(b)<0)out.push(b);
+ }catch(e){}
+ if(out.length===0)for(const o of origins)out.push(o+'/lp');
+ _bases=out;return out;}
 async function gwGet(p){let last=null;for(const b of await bases()){try{const r=await fetch(b+p);if(r.ok)return await r.json();last=new Error('HTTP '+r.status);}catch(e){last=e;}}throw last||new Error('LP_UNAVAILABLE');}
 async function gwBroadcast(rawtx){let last=null;for(const b of await bases()){
  try{const r=await fetch(b+'/broadcast',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({rawtx})});
@@ -511,9 +519,9 @@ $('btnGrad').onclick=async()=>{
   <a href="/v3/explorer.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🔍</span><span data-t="navExplorer">EXPLORER</span></a>
   <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">⚙️</span><span data-t="navSettings">SETTINGS</span></a>
 </nav>
-<script src="/v3/pwa.js?v=111" defer></script>
+<script src="/v3/pwa.js?v=112" defer></script>
 <script src="/v3/gbx-autolock.js" defer></script>
 <script src="/v3/gbx-read.js?v=112" defer></script>
-  <script src="/promo-banner.js?v=113" defer></script>
+  <script src="/promo-banner.js?v=112" defer></script>
 </body>
 </html>
