@@ -103,3 +103,15 @@
     return _rotate(path);
   };
 })();
+
+/* s53: GBXRead alias for consumers using absolute paths ('/api/...').
+   Nodes in GBX_NODES already end in /api -> strip the duplicate prefix. */
+(function(){
+  'use strict';
+  if (window.GBXRead) return;
+  function norm(p){ return (p.indexOf('/api/')===0) ? p.slice(4) : p; }
+  window.GBXRead = {
+    fetch: function(p,o){ return window.gbxRead(norm(p), o); },
+    json:  function(p,o){ return window.gbxRead(norm(p), o).then(function(r){ return r.json(); }); }
+  };
+})();
