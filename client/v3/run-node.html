@@ -36,14 +36,14 @@ sudo bash install-node.sh</code></pre>
 
 <h2>2. Download &amp; verify the binary</h2>
 <p>The release is built with a fully reproducible process. Anyone rebuilding from source obtains byte-identical binaries — verify, don't trust.</p>
-<pre>wget https://goldbrix.app/downloads/goldbrix-30-gbx-10-x86_64-linux-gnu.tar.gz
-wget https://goldbrix.app/downloads/SHA256SUMS-v30-gbx-10.txt
-sha256sum goldbrix-30-gbx-10-x86_64-linux-gnu.tar.gz</pre>
-<div class="warn">Expected SHA-256:<br><code>2f384b897fc0ee106466275c376aa192a596d0feb7537bf0158a67fc6c2c794e</code><br>If the hash does not match — STOP. Do not run the binary.</div>
+<pre>wget https://goldbrix.app/downloads/goldbrix-1747c8e2d817-x86_64-linux-gnu.tar.gz
+wget https://goldbrix.app/downloads/SHA256SUMS-v31-gbx-launchpad.txt
+sha256sum goldbrix-1747c8e2d817-x86_64-linux-gnu.tar.gz</pre>
+<div class="warn">Expected SHA-256:<br><code>bdbac8ac96e7ce62bc060ba908667cd276abc5ca53c85591d8c3253e4f14258e</code><br>If the hash does not match — STOP. Do not run the binary.</div>
 
 <h2>3. Install</h2>
-<pre>tar -xzf goldbrix-30-gbx-10-x86_64-linux-gnu.tar.gz
-sudo cp goldbrix-30-gbx-10/bin/goldbrixd goldbrix-30-gbx-10/bin/goldbrix-cli /usr/local/bin/</pre>
+<pre>tar -xzf goldbrix-1747c8e2d817-x86_64-linux-gnu.tar.gz
+sudo cp goldbrix-1747c8e2d817/bin/goldbrixd goldbrix-1747c8e2d817/bin/goldbrix-cli /usr/local/bin/</pre>
 
 <h2>4. Configure</h2>
 <pre>mkdir -p /var/lib/goldbrix
@@ -82,7 +82,7 @@ curl -s https://goldbrix.app/gbx-node-info</pre>
 <p>The <code>binary_sha256</code> field shows the hash of the reproducible Guix build currently running on public seed nodes.</p>
 
 <h2>8. Rebuild from source (verify, don't trust)</h2>
-<p>Source: <a href="https://github.com/GOLDBRIX-GBX/goldbrix-core">goldbrix-core</a> (<code>git clone</code>, tag <code>v30-gbx-10</code>). Full reproducible-build instructions ship inside the source tree (<code>contrib/guix/</code>). Two independent builds of tag <code>v30-gbx-10</code> produce identical SHA-256 sums.</p>
+<p>Source: <a href="https://github.com/GOLDBRIX-GBX/goldbrix-core">goldbrix-core</a> (<code>git clone</code>, tag <code>v31-gbx-launchpad</code>). Full reproducible-build instructions ship inside the source tree (<code>contrib/guix/</code>). Two independent builds of tag <code>v31-gbx-launchpad</code> produce identical SHA-256 sums.</p>
 <h2>9. Run the public watchtower (optional)</h2>
 <p>Independent, keyless liveness monitor. Records the network's uptime history on YOUR machine — proof the system runs without its founder.</p>
 <pre>wget https://goldbrix.app/downloads/watchtower.py

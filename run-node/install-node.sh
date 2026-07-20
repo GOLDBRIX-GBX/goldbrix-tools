@@ -17,9 +17,6 @@ TOOLSDIR="/opt/goldbrix-tools"
 ARCH="$(uname -m)"; [ "$ARCH" = "x86_64" ] || { echo "x86_64 only (got $ARCH)"; exit 1; }
 FREE_GB=$(df --output=avail -BG "$(dirname "$DATADIR")" | tail -1 | tr -dc '0-9')
 [ "$FREE_GB" -ge 40 ] || { echo "need >=40GB free (chain ~6GB now, grows over time), have ${FREE_GB}GB"; exit 1; }
-RAM_MB=$(awk '/MemTotal/{print int($2/1024)}' /proc/meminfo)
-[ "$RAM_MB" -ge 1800 ] || { echo "FAIL: ${RAM_MB}MB RAM < 2GB — a plain node needs ~2GB (measured: idle node ~1.1GB). Upgrade RAM first."; exit 1; }
-[ "$RAM_MB" -ge 2500 ] || echo "WARN: ${RAM_MB}MB RAM — enough for a plain node (~2GB), NOT for an LP box (needs 8GB, use install-lp.sh on a bigger machine)"
 
 echo "[1/6] dependencies"
 apt-get update -qq
@@ -29,7 +26,7 @@ if ! command -v node >/dev/null || [ "$(node -e 'console.log(parseInt(process.ve
   apt-get install -y -qq nodejs >/dev/null
 fi
 
-echo "[2/6] download + verify binary (SHA256 pinned in this script AND on-chain anchor tx 738d7434…)"
+echo "[2/6] download + verify binary (SHA256 pinned in this script; release: v31-gbx-launchpad)"
 cd /tmp
 curl -fsSL -o "$TAR" "${BASE}/${TAR}"
 echo "${TAR_SHA}  ${TAR}" | sha256sum -c -
@@ -65,9 +62,6 @@ After=network-online.target
 Wants=network-online.target
 [Service]
 User=gbx
-# glibc arena fragmentation: 16 arenas balloon a long-running node's heap.
-# Proven on a live node: 3.85 GB RSS -> 1.07 GB with 2 arenas, no perf loss.
-Environment=MALLOC_ARENA_MAX=2
 ExecStart=/usr/local/bin/goldbrixd -datadir=${DATADIR} -conf=goldbrix.conf
 Restart=always
 RestartSec=10
@@ -84,8 +78,6 @@ Requires=goldbrixd.service
 User=gbx
 Environment=GBX_CLI=/usr/local/bin/goldbrix-cli GBX_RPC_PORT=8332 GBX_DATADIR=${DATADIR} PORT=8088
 Environment=GBX_NODEREG_STATE=${TOOLSDIR}/node-registry/node-registry.json
-# RA-1 (s38): read-api MUST read the local index; without it, address/utxo routes fall back to a full UTXO scan (2.5G RSS -> OOM).
-Environment=GBX_INDEX_DB=${DATADIR}/index/gbx-index.db
 WorkingDirectory=${TOOLSDIR}/read-api
 ExecStart=/usr/bin/node read-api.js
 Restart=always
@@ -127,38 +119,9 @@ UNIT
 
 systemctl enable --now goldbrixd gbx-read-api gbx-indexer gbx-node-registry
 
-# federation announce — OPT-IN, keyless by default.
-# A plain node holds NO funds. To be discoverable on-chain it must pay a dust fee,
-# which needs a local wallet. Config-driven (no prompt): fill node.env to opt in.
-NODE_ENV="${TOOLSDIR}/run-node/node.env"
-[ -f "$NODE_ENV" ] || cat > "$NODE_ENV" <<'NENV'
-# Federation announce (optional). Leave blank to stay unlisted (default, keyless).
-# To be discoverable: set your public HTTPS endpoint AND a wallet that holds a few brix.
-NODE_PUBLIC_URL=
-ANNOUNCE_WALLET=
-NENV
-NODE_URL=$(grep -E '^NODE_PUBLIC_URL=' "$NODE_ENV" | cut -d= -f2-)
-AWALLET=$(grep -E '^ANNOUNCE_WALLET=' "$NODE_ENV" | cut -d= -f2-)
-if [ -n "$NODE_URL" ] && [ -n "$AWALLET" ]; then
-  NREG=${TOOLSDIR}/node-registry
-  python3 - "$NREG/announce.json" "$NODE_URL" "$AWALLET" <<'PYJSON'
-import json,sys
-f,node,w=sys.argv[1],sys.argv[2],sys.argv[3]
-json.dump({"node":node,"wallet":w},open(f,"w"),indent=2)
-PYJSON
-  cp $NREG/gbx-announce.service /etc/systemd/system/
-  cp $NREG/gbx-announce.timer   /etc/systemd/system/
-  install -d /etc/systemd/system/gbx-announce.service.d
-  printf '[Service]\nEnvironment=GBX_DATADIR=%s\n' "$DATADIR" > /etc/systemd/system/gbx-announce.service.d/datadir.conf
-  systemctl daemon-reload && systemctl enable --now gbx-announce.timer
-  GBX_DATADIR=$DATADIR bash $NREG/gbx-announce.sh || true
-  echo "ANNOUNCE: node listed on-chain (re-announces autonomously)"
-fi
-
 echo "[6/6] done"
 echo "Sync from genesis starts now (headers via fixed seeds baked in the binary — no central server needed)."
 echo "Check:   goldbrix-cli -datadir=${DATADIR} getblockchaininfo | grep -e blocks -e verificationprogress"
 echo "Status:  curl -s http://127.0.0.1:8088/api/status"
-echo "When fully synced: expose :8088 behind HTTPS (Caddy/nginx)."
-echo "To be discovered by wallets: set NODE_PUBLIC_URL + ANNOUNCE_WALLET in ${TOOLSDIR}/run-node/node.env"
-echo "and re-run this script. Discovery is 100% on-chain (GBX:NODE) — no central list, no app rebuild."
+echo "When fully synced: expose :8088 behind HTTPS (Caddy/nginx), then submit your endpoint"
+echo "for inclusion in https://goldbrix.app/nodes.json — wallets add you via quorum, no app rebuild."
