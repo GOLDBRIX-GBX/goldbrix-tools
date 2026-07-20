@@ -29,7 +29,7 @@ if ! command -v node >/dev/null || [ "$(node -e 'console.log(parseInt(process.ve
   apt-get install -y -qq nodejs >/dev/null
 fi
 
-echo "[2/6] download + verify binary (SHA256 pinned in this script AND on-chain anchor tx 738d7434…)"
+echo "[2/6] download + verify binary (SHA256 pinned in this script and published in the release checksums)"
 cd /tmp
 curl -fsSL -o "$TAR" "${BASE}/${TAR}"
 echo "${TAR_SHA}  ${TAR}" | sha256sum -c -
@@ -84,7 +84,7 @@ Requires=goldbrixd.service
 User=gbx
 Environment=GBX_CLI=/usr/local/bin/goldbrix-cli GBX_RPC_PORT=8332 GBX_DATADIR=${DATADIR} PORT=8088
 Environment=GBX_NODEREG_STATE=${TOOLSDIR}/node-registry/node-registry.json
-# RA-1 (s38): read-api MUST read the local index; without it, address/utxo routes fall back to a full UTXO scan (2.5G RSS -> OOM).
+# read-api MUST read the local index; without it, address/utxo routes fall back to a full UTXO scan (2.5G RSS -> OOM).
 Environment=GBX_INDEX_DB=${DATADIR}/index/gbx-index.db
 WorkingDirectory=${TOOLSDIR}/read-api
 ExecStart=/usr/bin/node read-api.js
