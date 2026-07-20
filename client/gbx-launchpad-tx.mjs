@@ -1,4 +1,4 @@
-// GOLDBRIX — IDEE V launchpad transactions, built and signed ON DEVICE.
+// GOLDBRIX — launchpad transactions, built and signed ON DEVICE.
 // Uses the same vendor stack as the wallet (bitcoinjs + secp256k1 from /vendor).
 // The server is never in the path: this module builds the exact bytes the
 // consensus accepts, verifies them against the indexer's own parser, and hands
@@ -46,7 +46,7 @@ export function verifyOwnTx(decodedVout, expect){
 }
 export { setWitness };
 
-// IDEE X — MANDATORY guard: re-derive the (M, h_M) transition with the indexer's
+// MANDATORY guard: re-derive the (M, h_M) transition with the indexer's
 // own arithmetic before broadcast. State is READ FROM CHAIN (the spent UTXO's
 // revealed witness script), never from client variables. Null = OK.
 export function verifyOwnCurveState(spentWsBytes, cidHex, trade, spendHeight, gradWindow, outMs){
@@ -60,6 +60,6 @@ export function verifyOwnCurveState(spentWsBytes, cidHex, trade, spendHeight, gr
   } else if(Number(outMs.hM)!==st.hM) return 'h_M must be carried unchanged on a non-record trade';
   return null; }
 
-// IDEE W — MANDATORY guard for CREATE: never broadcast a proof the consensus
+// MANDATORY guard for CREATE: never broadcast a proof the consensus
 // would reject. Re-checks the client's own 80 bytes exactly like CheckCreatePoW.
 export { verifyPow as verifyOwnPow, minePow, CREATE_POW_LEN } from '/gbx-pow.mjs';

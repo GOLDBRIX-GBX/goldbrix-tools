@@ -62,8 +62,8 @@ input::-moz-placeholder, textarea::-moz-placeholder {
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/goldbrix-brand-180.png">
     <script src="/gbx-update-check.js" defer></script>
     <script src="/gbx-native-bridge.js" defer></script>
-      <script src="/v3/gbx-session.js?v=111"></script>
-      <script src="/i18n.js?v=111" defer></script>
+      <script src="/v3/gbx-session.js?v=113"></script>
+      <script src="/i18n.js?v=113" defer></script>
 <style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
 </head>
 <body>
@@ -136,8 +136,8 @@ input::-moz-placeholder, textarea::-moz-placeholder {
   </div>
 </div>
 
-<script type="module" src="/crypto-utils-v2.js?v=111"></script>
-<script type="module" src="/multichain-utils.js?v=111"></script>
+<script type="module" src="/crypto-utils-v2.js?v=113"></script>
+<script type="module" src="/multichain-utils.js?v=113"></script>
 
 <script>
 const T = {
@@ -335,7 +335,7 @@ async function doImport() {
   }
 })();
 
-// SPA-1 (s38): the SPA re-enters this page WITHOUT reloading it, so the DOM keeps whatever step was
+// SPA-1: the SPA re-enters this page WITHOUT reloading it, so the DOM keeps whatever step was
 // last shown. After an import, 'step-result' stayed .active forever: tapping "add wallet" showed the
 // old success screen and only a manual restart fixed it. The loader calls window['gbxRefresh_'+route]
 // on every entry (spa-loader.js) — reset to the first step and clear any secret left in the DOM.
@@ -351,7 +351,7 @@ window['gbxRefresh_import-wallet'] = function(){
   }catch(_e){}
 };
 </script>
-<script src="/v3/pwa.js?v=111" defer></script>
+<script src="/v3/pwa.js?v=113" defer></script>
 
 
 

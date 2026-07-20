@@ -67,7 +67,7 @@ export async function sellGbxSolana(ctx){
   if(sw.amount < BigInt(usdcAmount)) throw new Error("USDC lock invalid (amount) -> NU revendic");
   if(sw.hashlock.toLowerCase()!==_hex(H)) throw new Error("USDC lock invalid (hashlock) -> NU revendic");
   if(sw.claimed||sw.refunded) throw new Error("USDC lock deja consumat");
-  if(sw.timelock < Math.floor(Date.now()/1000)+300) throw new Error("timelock prea scurt -> NU revendic");
+  if(sw.timelock < Math.floor(Date.now()/1000)+300) throw new Error("timelock too short -> not claiming");
   onStatus&&onStatus("usdc_verified",{amount:sw.amount.toString()});
   const preHex="0x"+_hex(secret); let sig=null;
   // CALEA 1 (default): claim gasless via gateway (feePayer=LP), user semneaza

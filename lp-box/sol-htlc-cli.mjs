@@ -197,7 +197,7 @@ try {
   }
 
   else if (a.cmd === "lock-sell") {
-    // SELL: LP locheaza USDC pentru user (sender=payer=LP, receiver=user). Creeaza ATA user daca lipseste (LP plateste).
+    // SELL: the LP locks USDC for the user (sender=payer=LP, receiver=user). Creates the user's ATA if missing (LP pays).
     const { Transaction, SystemProgram, SYSVAR_RENT_PUBKEY } = await import("@solana/web3.js");
     const { getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, ASSOCIATED_TOKEN_PROGRAM_ID } = await import("@solana/spl-token");
     const kp = lpKeypair();

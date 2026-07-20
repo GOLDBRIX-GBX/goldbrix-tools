@@ -97,7 +97,7 @@
       render();
     }catch(e){}
   }
-  async function recoverPending(){ /* retired with custodial launchpad (s47) */ }
+  async function recoverPending(){ /* retired with the custodial launchpad */ }
   function start(){
     refresh(); recoverPending();
     setInterval(refresh,30000);

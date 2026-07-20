@@ -18,7 +18,7 @@ def _lp_evm_addr():
 LP_EVM_ADDR=_lp_evm_addr()
 GCLI=[E["GCLI_BIN"],"-datadir="+E["GBX_DATADIR"]]
 
-# LP-19: UTXO din indexul local (SQLite read-only). Inlocuieste scanul global (2.5G RSS -> OOM).
+# LP-19: UTXOs from the local index (SQLite read-only). Replaces the global scan (2.5G RSS -> OOM).
 def _index_utxos(addr):
     dbp=E.get("INDEX_DB") or ""
     if not dbp: return None
@@ -102,7 +102,7 @@ def _rate_check(ip):
     return True,None
 
 
-# IDEE B (anti-dump): cooldown per-adresa + cap volum GBX/24h per refund_pubkey. Praguri dinamice pe rezerva LP (cod-e-lege).
+# Anti-dump: per-address cooldown + GBX/24h volume cap per refund_pubkey. Dynamic thresholds on the LP reserve (code-is-law).
 SELL_COOLDOWN=600
 SG_F=E["SELL_GUARD_F"]
 def _sg_cap_sats():
@@ -240,7 +240,7 @@ class H(BaseHTTPRequestHandler):
         return self._s(404,{'error':'not_found'})
     def do_GET(self):
         _ip=self.client_address[0] if self.client_address else "?"
-        # do_GET (utxos/quote/height/swap-status) = LIBER, fara rate-limit (sunt citiri, nu vanzari)
+        # do_GET (utxos/quote/height/swap-status) = OPEN, no rate-limit (these are reads, not sales)
         if self.path=='/lp-info': return self._s(200,lp_info())
         if self.path=='/onramp/gbx-price' or self.path=='/gbx-price':
             import lp_pricing as _lp
@@ -267,7 +267,7 @@ class H(BaseHTTPRequestHandler):
                             _used_scan=True
                 except Exception:
                     pass
-                # LP-19: index local in loc de scan global. Miss = raspuns onest, NU scan.
+                # LP-19: local index instead of a global scan. Miss = an honest response, NOT a scan.
                 if not _used_scan:
                     _ix=_index_utxos(addr)
                     if _ix is None:
@@ -314,6 +314,19 @@ class H(BaseHTTPRequestHandler):
             except: _v=0
             ok,err=_sell_guard(pk,_v,commit=False)
             return self._s(200,{'ok':ok,'err':err,'cap_gbx':_sg_cap_sats()/1e8,'cooldown_s':SELL_COOLDOWN})
+        if self.path=='/powtpl':
+            # CREATE-PoW template: height + best hash + bits. Keyless, read-only.
+            try:
+                _c=[E["GCLI_BIN"],"-datadir="+E["GBX_DATADIR"]]
+                r=subprocess.run(_c+['getblockcount'],capture_output=True,text=True,timeout=10)
+                tip=int(r.stdout.strip())
+                r2=subprocess.run(_c+['getblockhash',str(tip)],capture_output=True,text=True,timeout=10)
+                h=r2.stdout.strip()
+                r3=subprocess.run(_c+['getblockheader',h],capture_output=True,text=True,timeout=10)
+                bits=json.loads(r3.stdout)['bits']
+                return self._s(200,{"height":tip,"hash":h,"bits":bits})
+            except Exception as e:
+                return self._s(200,{"height":0,"error":str(e)})
         if self.path=='/height':
             try:
                 r=subprocess.run([E["GCLI_BIN"],"-datadir="+E["GBX_DATADIR"],"getblockcount"],capture_output=True,text=True,timeout=10)

@@ -141,7 +141,7 @@ async function connectMetaMaskSolana() {
       setTimeout(() => { window.location.href = 'https://metamask.app.link/dapp/' + dappPath; }, 600);
       return;
     }
-    status.innerHTML = '<span class="err">❌ MetaMask Solana provider not detected.</span><br>Update MetaMask to latest sau folosește Phantom/Solflare.';
+    status.innerHTML = '<span class="err">❌ MetaMask Solana provider not detected.</span><br>Update MetaMask to the latest version or use Phantom/Solflare.';
     return;
   }
   try {

@@ -1,9 +1,9 @@
-/* GoldBrix SW v6 — HTML network-first (cod mereu proaspat), assets SWR, API network-only.
- * Fix 4 Iun 2026: stale-while-revalidate pe HTML servea cod vechi. */
-const CACHE = 'gbx-shell-v104-20260718-nav-unify';
+/* GoldBrix SW v6 — HTML network-first (always fresh code), assets SWR, API network-only.
+ * Fix: stale-while-revalidate on HTML was serving old code. */
+const CACHE = 'gbx-shell-v107-20260719-join-share';
 
 function isNetworkOnly(url) {
-  // s29: /lp/ + lps.json + ORICE cross-origin = network-only. Quote/pret STALE din cache = interzis (LEGEA).
+  // /lp/ + lps.json + ANY cross-origin = network-only. Stale quotes/prices from cache are forbidden (no-loss rule).
   return /\/(api|v2|launchpad|onramp|lp)\//.test(url)
       || /\/lps\.json/.test(url)
       || /\/version\.json/.test(url)
@@ -33,12 +33,12 @@ self.addEventListener('fetch', (event) => {
   if (isNetworkOnly(url)) return;
   if (!url.startsWith('http')) return;
 
-  // Capacitor/localhost: NU intercepta deloc - WebView serveste din bundle direct
+  // Capacitor/localhost: do not intercept - the WebView serves straight from the bundle
   if (/^https?:\/\/localhost/.test(url) || /^capacitor:/.test(url) || /^https?:\/\/127\.0\.0\.1/.test(url)) {
-    return; // lasa WebView-ul sa serveasca local din APK
+    return; // let the WebView serve locally from the APK
   }
 
-  // HTML -> NETWORK-FIRST (cod mereu proaspat; cache doar offline)
+  // HTML -> NETWORK-FIRST (always fresh code; cache only for offline)
   if (isHTML(req, url)) {
     event.respondWith((async () => {
       const cache = await caches.open(CACHE);
@@ -57,7 +57,7 @@ self.addEventListener('fetch', (event) => {
   // assets (JS/CSS/img) -> stale-while-revalidate
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);
-    // NETWORK-FIRST pe assets (cod mereu proaspat, nu stale)
+    // NETWORK-FIRST on assets (always fresh code, never stale)
     try {
       const fresh = await fetch(req, {cache: 'no-cache'});
       if (fresh && fresh.status === 200 && fresh.type === 'basic') { cache.put(req, fresh.clone()); return fresh; }

@@ -1,4 +1,4 @@
-// GoldBrix — EIP-3009 receiveWithAuthorization signer (browser + daemon, fara ethers).
+// GoldBrix — EIP-3009 receiveWithAuthorization signer (browser + daemon, no ethers).
 // Userul semneaza OFF-CHAIN autorizarea ca USDC-ul lui sa fie mutat in HTLC. Zero gaz.
 import { secp256k1, keccak_256 } from '/vendor/evm-secp.mjs';
 
@@ -18,7 +18,7 @@ const RECEIVE_TYPEHASH = keccak_256(te.encode(
 export async function usdcDomainSeparator(rpc, usdcAddr){
   // selector DOMAIN_SEPARATOR() = 0x3644e515
   const r = await rpc('eth_call',[{to:usdcAddr,data:'0x3644e515'},'latest']);
-  if(!r || r==='0x') throw new Error('USDC fara DOMAIN_SEPARATOR (nu suporta 3009?)');
+  if(!r || r==='0x') throw new Error('USDC without DOMAIN_SEPARATOR (no 3009 support?)');
   return r; // 0x + 64 hex
 }
 
@@ -30,7 +30,7 @@ export function randomAuthNonce(){
 }
 
 // Semneaza autorizatia 3009. Returneaza {v,r,s,validAfter,validBefore,nonce} pt lockAuth.
-// privHex = cheia EVM a userului (NU pleaca de pe device; semnare locala).
+// privHex = the user's EVM key (never leaves the device; local signing).
 export async function signReceiveAuth({ rpc, usdcAddr, fromAddr, toHtlc, value, validAfter=0, validBefore, nonce, privHex }){
   const domainSep = await usdcDomainSeparator(rpc, usdcAddr);
   if(!nonce) nonce = randomAuthNonce();

@@ -21,7 +21,7 @@ const htlc=makeEVMHTLC({rpc,evm,chainId:a.chainId});
 const pad=x=>x.replace(/^0x/,'').toLowerCase().padStart(64,'0');
 async function getLogsChunked(address,topics,fromHex){
   const latest=parseInt(await rpc('eth_blockNumber',[]),16);
-  // B.2: lookback marginit (locks BUY noi sunt recente; cele vechi sunt in st.swaps).
+  // B.2: bounded lookback (new BUY locks are recent; old ones live in st.swaps).
   // Fereastra ADAPTIVA: daca RPC limiteaza range-ul, reduce automat si reincearca.
   const LOOKBACK=120000;                       // ~ cateva zile pe Base (2s/bloc) — generos
   let from=parseInt(fromHex||'0x0',16);
@@ -32,7 +32,7 @@ async function getLogsChunked(address,topics,fromHex){
     try{
       const part=await rpc('eth_getLogs',[{address,fromBlock:'0x'+from.toString(16),toBlock:'0x'+to.toString(16),topics}]);
       logs=logs.concat(part); from=to+1;
-      if(win<9000) win=Math.min(9000,win*2);   // revine la fereastra mare cand RPC permite
+      if(win<9000) win=Math.min(9000,win*2);   // return to the large window when the RPC allows it
     }catch(e){
       const msg=String((e&&e.message)||e);
       const m=msg.match(/up to (?:a )?(\d+)\s*block/i) || msg.match(/(\d+)\s*-\s*(\d+)\s*blocks?\s*range/i) || msg.match(/limited to[^\d]*(\d+)/i);

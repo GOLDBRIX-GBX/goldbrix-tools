@@ -16,7 +16,7 @@
   function muted(){ try{return localStorage.getItem('gbx_chat_muted')==='1';}catch(e){return false;} }
   function myAddr(){ try{var r=localStorage.getItem('goldbrix_state_v3');if(r){var st=JSON.parse(r);return st.activeAddress||(st.wallets&&st.wallets[0]&&st.wallets[0].address)||null;}}catch(e){} return null; }
 
-  // sunet scurt discret (WebAudio, fara fisier)
+  // short discreet sound (WebAudio, no file)
   function beep(){
     if(muted()) return;
     try{
@@ -67,7 +67,7 @@
       var unread=msgs.filter(function(m){ return (m.created_at||0)>read && m.address!==me; });
       var n=unread.length;
       setBadge(n);
-      // sunet doar cand creste numarul (mesaj nou aparut)
+      // sound only when the count grows (a new message appeared)
       if(n>prevUnread && prevUnread>=0 && read>0){ beep(); }
       prevUnread=n;
     }catch(e){}

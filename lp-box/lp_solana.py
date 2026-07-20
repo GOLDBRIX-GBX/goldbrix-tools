@@ -34,7 +34,7 @@ def sol_scan_and_lock_gbx(st, fund, cfg, deps):
         sswid = intent.get("sol_swap_id")
         if not sswid: continue
         ev = _solcli(cfg, cmd="swap", swap_id=sswid).get("swap")
-        if not ev: continue                                    # lock USDC inca neconfirmat on-chain
+        if not ev: continue                                    # USDC lock not yet confirmed on-chain
         if ev["receiver"] != cfg["lp_sol"]: continue           # doar catre LP-ul nostru
         if ev["claimed"] or ev["refunded"]: continue           # doar active
         if ev["hashlock"].lower() != hl.lower(): continue      # hashlock din swap == cheia intent
@@ -72,9 +72,9 @@ def sol_scan_and_claim_usdc(st, cfg, deps):
                 print(f"  [SOL REFUND-L1] {sid[:14]} user si-a luat GBX inapoi pe timelock"); continue
             sw["_unres"] = sw.get("_unres",0)+1
             if sw["_unres"] < 3:
-                print(f"  [SOL UNRESOLVED] {sid[:14]} spender negasit inca (retry {sw['_unres']}/3)"); continue
+                print(f"  [SOL UNRESOLVED] {sid[:14]} spender not found yet (retry {sw['_unres']}/3)"); continue
             sw["status"] = "ANOMALY_spent_no_preimage"; st["halt"] = True
-            print(f"  [SOL HALT] {sid[:14]} GBX disparut fara preimage NICI refund (3 scanari)"); continue
+            print(f"  [SOL HALT] {sid[:14]} GBX gone with neither preimage NOR refund (3 scans)"); continue
         hl_clean = sw["hashlock"][2:] if sw["hashlock"].startswith("0x") else sw["hashlock"]
         if hashlib.sha256(s).hexdigest() != hl_clean:
             sw["status"] = "ANOMALY_bad_preimage"; st["halt"] = True
@@ -155,7 +155,7 @@ def sol_scan_and_claim_gbx_for_sell(st, fund, cfg, deps):
         o = _solcli(cfg, cmd="preimage", swap_id=sw["sol_swap_id"], hashlock=sw["hashlock"])
         pre = o.get("preimage")
         if not pre:
-            print(f"  [SOL SELL PENDING] {sid[:20]} claimed on-chain, preimage inca necitit"); continue
+            print(f"  [SOL SELL PENDING] {sid[:20]} claimed on-chain, preimage not read yet"); continue
         s = bytes.fromhex(pre[2:] if pre.startswith("0x") else pre)
         hl_clean = sw["hashlock"][2:] if sw["hashlock"].startswith("0x") else sw["hashlock"]
         if hashlib.sha256(s).hexdigest() != hl_clean:

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// IDEE V token-index reader: read-only queries over token-index.db for read-api.
+// token-index reader: read-only queries over token-index.db for read-api.
 // Keyless. No writes. Returns plain objects ready for JSON.
 'use strict';
 const Database = require(process.env.GBX_SQLITE_MOD || require('path').join(__dirname,'node_modules','better-sqlite3'));
@@ -19,7 +19,7 @@ function openTokenIndex(dbPath){
                          GROUP BY pk ORDER BY amount DESC LIMIT ?`),
     holderCount: db.prepare(`SELECT COUNT(DISTINCT pk) n FROM token_utxos
                              WHERE coin_id=? AND spent_height IS NULL`),
-    // IDEE X: curves live from the chain (rule X scanner tables)
+    // curves live from the chain (launchpad scanner tables)
     curves: db.prepare(`SELECT c.coin_id, c.txid, c.vout, c.reserve, c.m, c.h_m, c.height, c.status,
                                m.ticker, m.name,
                                (SELECT COUNT(DISTINCT pk) FROM token_utxos t
@@ -30,7 +30,7 @@ function openTokenIndex(dbPath){
                                  m.ticker, m.name
                           FROM curves c LEFT JOIN coin_meta m ON m.coin_id=c.coin_id
                           WHERE c.coin_id=?`),
-    // IDEE X my-coins: what a pubkey holds / created — straight from the chain
+    // my-coins: what a pubkey holds / created — straight from the chain
     heldBy: db.prepare(`SELECT t.coin_id, SUM(CAST(t.amount AS INTEGER)) amount, COUNT(*) utxos,
                                m.ticker, m.name
                         FROM token_utxos t LEFT JOIN coin_meta m ON m.coin_id=t.coin_id

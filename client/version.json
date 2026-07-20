@@ -1,9 +1,9 @@
 {
-  "build": 103,
-  "version": "1.0.103",
-  "downloadUrl": "https://goldbrix.app/downloads/android/goldbrix-1.0.103-103.apk",
+  "build": 113,
+  "version": "1.0.113",
+  "downloadUrl": "https://goldbrix.app/downloads/android/goldbrix-1.0.113-113.apk",
   "minBuild": 1,
-  "releasedAt": "2026-07-09T11:24:48Z",
-  "sha256": "0190dd1a91f911c048ee798e58f17478da3eb3f68a1656432904711a89bfe75f",
-  "changelog": "Build 103 v1.0.103"
+  "releasedAt": "2026-07-19T14:48:51Z",
+  "sha256": "9067f49a50d85cb0a89ccc030448204339a239f3f00419dc11137a88bd7eaccc",
+  "changelog": "Build 113 v1.0.113"
 }

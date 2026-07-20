@@ -36,7 +36,7 @@ export async function buyGbx(ctx){
       auth3009: { v: auth.v, r: auth.r, s: auth.s, validAfter: auth.validAfter, validBefore: auth.validBefore, nonce: auth.nonce } });
     onStatus && onStatus('usdc_authorized', { gasless: true });
   } else {
-    // Calea clasica: userul plateste gazul (approve + lock).
+    // Classic path: the user pays the gas (approve + lock).
     await submitIntent({ hashlock: Hhex, pkU: hex(pkU), gbx_amount: gbxAmount });
     await evm.approve(amountUsdc);
     const lockId = await evm.lock({ receiver: lpEvmAddr, amount: amountUsdc, hashlock: Hhex, timelock: timelockT1 });

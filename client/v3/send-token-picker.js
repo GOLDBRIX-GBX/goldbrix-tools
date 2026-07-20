@@ -1,5 +1,5 @@
 /* GBX · token picker vizual peste #tokenSelect. Sursa de adevar = <select>.
-   Daca esueaza, <select> nativ ramane vizibil si functional (fail-safe). */
+   If it fails, the native <select> stays visible and functional (fail-safe). */
 (function(){
   'use strict';
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
@@ -14,7 +14,7 @@
     var h=0,i; for(i=0;i<ticker.length;i++){ h=(h*31+ticker.charCodeAt(i))%360; }
     return badge(ticker.charAt(0)||'?','hsl('+h+',58%,42%)');
   }
-  // handler global: la eroare imagine -> inlocuieste cu badge fallback (fara HTML in atribut)
+  // global handler: on image error -> replace with a fallback badge (no HTML in the attribute)
   window.__tkImgFail=function(img){
     try{ var b=document.createElement('span'); b.className='tk-ic';
       b.style.background=img.getAttribute('data-bg')||'#444';

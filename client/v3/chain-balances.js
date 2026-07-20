@@ -38,7 +38,7 @@
     var lr = await rpc(RPC.sol, { jsonrpc: '2.0', id: 1, method: 'getBalance', params: [a] });
     var sol = lr == null ? 0 : ((lr.value != null ? lr.value : lr) / 1e9);
     var usdc = 0, others = 0;
-    // USDC SPL via ATA determinist (gratis, fara indexer platit): derivare ATA + getTokenAccountBalance
+    // USDC SPL via deterministic ATA (free, no paid indexer): derive the ATA + getTokenAccountBalance
     try {
       var S = await import('/vendor/solana.mjs');
       var ata = (await S.getAssociatedTokenAddress(new S.PublicKey(SOL_USDC_MINT), new S.PublicKey(a))).toBase58();
@@ -118,7 +118,7 @@
       }
       if (evmRows) html += heading('Ethereum & EVM') + evmRows;
 
-      // Nota onesta (5 limbi): ce afiseaza GoldBrix vs ce ramane in wallet
+      // Honest note (5 languages): what GoldBrix displays vs what stays in the wallet
       var _lang='en'; try{ _lang=(localStorage.getItem('gbx_lang')||localStorage.getItem('lang')||document.documentElement.lang||navigator.language||'en'); }catch(e){}
       var _L=['en','ro','de','zh','ar'].indexOf(_lang.slice(0,2).toLowerCase())>=0?_lang.slice(0,2).toLowerCase():'en';
       var _NOTE={
@@ -150,7 +150,7 @@
     } catch (e) { inflight = false; if (window.console) console.error('[chain-balances]', e); }
   };
 
-  // AUTO-TRIGGER: cand tokensList are randul GBX si nu exista inca chainHoldings -> ruleaza
+  // AUTO-TRIGGER: when tokensList has the GBX row and chainHoldings does not exist yet -> run
   function tryRender() {
     var list = document.getElementById('tokensList');
     var aw = getActiveWallet();
@@ -163,7 +163,7 @@
     }
   }
   setInterval(tryRender, 1000);
-  // AUTO-REFRESH solduri la 30s (fara refresh manual de pagina)
+  // AUTO-REFRESH balances every 30s (no manual page refresh)
   setInterval(function(){
     var aw = getActiveWallet();
     if (aw && aw.mnemonic && document.getElementById('chainHoldings') && !inflight) {

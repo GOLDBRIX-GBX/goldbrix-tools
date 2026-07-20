@@ -19,7 +19,7 @@ def _live_price():
 RESERVES_F=E["RESERVES_F"]
 def _reserve_price():
     # PRET AUTONOM GLOBAL: Sigma(USDC tranzactionare pe toate lanturile active) / GBX LP tranzactionare.
-    # Trezoreria (treasury_v2) EXCLUSA = va fi BURN. Multi-chain: lanturi cu prefix "_" sunt ignorate.
+    # The treasury (treasury_v2) is EXCLUDED = it will be BURNED. Multi-chain: chains prefixed with "_" are ignored.
     # Sincronizat global: acelasi pret oriunde. Floor (in _price) = plasa la lichiditate mica.
     try:
         r=json.load(open(RESERVES_F))
@@ -29,7 +29,7 @@ def _reserve_price():
             usdc_total+=float(v.get("amount",0) or 0)
         gbx_lp=float(r.get("gbx_lp_reserve",0) or 0)
         if gbx_lp>0 and usdc_total>0:
-            return usdc_total/gbx_lp                 # pret = USDC rezerva / GBX rezerva (pur de rezerve, fara owner)
+            return usdc_total/gbx_lp                 # price = USDC reserve / GBX reserve (pure reserves, no owner)
     except Exception:
         pass
     return None                                      # nu pot calcula -> cade pe floor
@@ -47,7 +47,7 @@ def _amm_reserves():
     return None
 def _amm_buy_out(usd_in):
     # AMM constant-product: dai usd_in USDC -> primesti dy GBX. dy = y - k/(x+usd_in).
-    # Balena plateste PROGRESIV mai mult (pret mediu creste cu marimea swap-ului). Anti-balena IN COD.
+    # A whale pays PROGRESSIVELY more (average price grows with swap size). Anti-whale IN CODE.
     rv=_amm_reserves()
     if not rv or not(usd_in>0): return None
     x,y=rv; k=x*y
@@ -66,7 +66,7 @@ def _price(c):
     floor=float(c.get("price_usd",0.10))
     src=c.get("price_source")
     if src in ("reserve","amm"):
-        # PRICE-1: "amm" era necunoscut aici -> cadea pe floor => UI/grafic afisau PODEAUA, nu piata.
+        # PRICE-1: "amm" was unknown here -> it fell back to the floor => the UI/chart showed the FLOOR, not the market.
         # Mid-price = x_USDC / y_GBX (aceeasi curba x*y=k din care se coteaza buy/sell). Floor = plasa.
         p=_reserve_price()
         return max(floor, p) if p else floor         # PRET AUTONOM din rezerve agregate
@@ -85,7 +85,7 @@ def _cap_info(c):
     # cap_gbx = CAP_FRACTION * rezerva_GBX_LP. Auto-scaleaza cu rezerva. 0 rezerva => cap inactiv.
     frac=float(c.get("cap_fraction",0.20))   # 20% din rezerva per swap (configurable)
     gbx_res=_lp_gbx_reserve()
-    cap_gbx = frac*gbx_res if gbx_res>0 else 0.0   # 0 => fara cap (lichiditate necunoscuta)
+    cap_gbx = frac*gbx_res if gbx_res>0 else 0.0   # 0 => no cap (unknown liquidity)
     return frac, gbx_res, cap_gbx
 
 def quote(usd):
@@ -156,7 +156,7 @@ def price_info():
     return {
         "price_source":src, "price_usd":round(price,6), "floor_usd":floor,
         "spread_bps":sp, "burn_bps":bn,
-        "formula":"AMM x*y=k: pret = x_USDC / y_GBX; buy urca, sell coboara; balena plateste progresiv (anti-balena in cod)",
+        "formula":"AMM x*y=k: price = x_USDC / y_GBX; buys push up, sells push down; a whale pays progressively more (anti-whale in code)",
         "treasury_excluded":True, "amm_active":(src=="amm"),
         "reserves_usdc":reserves, "gbx_lp_reserve":gbx_lp,
         "x_usdc":(round(x,6) if x else None), "y_gbx":(round(y,6) if y else None),

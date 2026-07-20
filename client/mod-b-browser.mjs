@@ -25,9 +25,9 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
   };
   const htlc=makeEVMHTLC({ rpc, evm:GoldbrixEVM, chainId });
   const post=async(p,b)=>{ const r=await fetch(gatewayBase+p,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b)}); return r.json(); };
-  // IDEE S: broadcast-fallback. LP-ul e doar prima incercare; la esec, tx-ul pleaca
+  // Broadcast fallback: the LP is only the first attempt; on failure the tx goes out
   // spre TOATE nodurile publice din discovery (/api/broadcast = keyless sendrawtransaction).
-  // Scrierea supravietuieste chiar daca LP-ul (sau serverele fondatorului) sunt moarte.
+  // The write survives even if the LP (or any single operator's servers) is dead.
   // txid = dsha256 pe serializarea FARA witness (BIP144). Segwit: marker 0x00 flag 0x01
   // dupa version; witness-ul se sare dupa outputs. Parsare structurala, zero ghicit.
   const _txidOf=(rawtxHex)=>{
@@ -63,7 +63,7 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
         clearTimeout(t);
         const j=await r.json();
         if(j&&j.txid) return j.txid;
-        // deja in mempool/lant (raspuns pierdut la o incercare anterioara) = SUCCES:
+        // already in the mempool/chain (response lost on a previous attempt) = SUCCESS:
         // txid-ul se calculeaza local din rawtx (dsha256, little-endian), nu se ghiceste.
         if(j&&j.error&&/already in block chain|txn-already|already known|already-in-mempool/i.test(JSON.stringify(j.error))) return _txidOf(tx);
       }catch(_e){}
@@ -135,7 +135,7 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
     return { hash:(r&&r.hash)||r, lockId };
   }
   async function lockGbxForSell({ mnemonic, gbxAmount, H }){
-    // lock GBX L1 pentru sell (identic cu calea din sellGbxInApp, fara partea EVM)
+    // lock GBX on L1 for the sell (identical to the sellGbxInApp path, without the EVM part)
     const gk=await crypto.deriveKeypairFromMnemonic(mnemonic);
     const skU=Uint8Array.from(gk.privateKey), pkU=Uint8Array.from(gk.publicKey);
     const userGbxAddr=p2wpkhAddress(pkU);
@@ -159,13 +159,13 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
     const skU=Uint8Array.from(gk.privateKey), pkU=Uint8Array.from(gk.publicKey);
     let sc = scriptHex ? unhex(String(scriptHex).replace(/^0x/,'')) : null;
     let T1 = Number(t1||0);
-    // s35: script prezent dar t1 lipsa (pending completat de la LP) -> T1 e IN script, parse structural (layout fix HTLC)
+    // script present but t1 missing (pending completed from the LP) -> T1 is IN the script, structural parse (fixed HTLC layout)
     if(sc && !T1 && sc.length>75 && sc[0]===0x63 && sc[71]===0x67){
       const n=sc[72];
       if(n>=1 && n<=5){ let v=0; for(let j=0;j<n;j++) v+=sc[73+j]*Math.pow(256,j); T1=v; }
     }
     if(!sc || !T1){
-      // RECONSTRUCTIE DETERMINISTA (pendinguri vechi fara script/t1):
+      // DETERMINISTIC RECONSTRUCTION (old pendings without script/t1):
       // H din arguments.hashlock, lpGbxPub din /lp-info, T1 iterat in [h_fund+100000±30]
       // pana sha256(buildHtlcScript(H,lpGbxPub,pkU,T1)) == witness program-ul REAL al UTXO-ului. Zero ghicit.
       const hl=(arguments[0]&&arguments[0].hashlock)||'';

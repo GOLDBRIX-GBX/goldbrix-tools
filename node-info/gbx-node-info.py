@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# GoldBrix node health endpoint (IDEE A) - keyless, read-only
+# GoldBrix node health endpoint - keyless, read-only
 import json, hashlib, time, os, sys
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.request import Request, urlopen

@@ -20,7 +20,7 @@ function scanLikeIndex(address){
 }
 module.exports = { scanLikeIndex, tipHeight };
 
-// Sumar rapid: total/spendable/utxo direct in SQL, fara materializare.
+// Quick summary: total/spendable/utxo straight in SQL, no materialization.
 // spendable = exclude coinbase imatur (<100 conf). NU stie de mempool (ajustat in caller).
 function summaryFast(address){
   const tip = tipHeight();

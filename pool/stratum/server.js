@@ -332,7 +332,7 @@ setInterval(async () => {
   } catch (e) { console.error('poll:', e.message); }
 }, 500);
 
-// ---------- /pool-info (public transparency, IDEE A-style) ----------
+// ---------- /pool-info (public transparency) ----------
 http.createServer(async (req, res) => {
   let height = null, best = null;
   try { height = await rpc('getblockcount', []); best = await rpc('getbestblockhash', []); } catch {}

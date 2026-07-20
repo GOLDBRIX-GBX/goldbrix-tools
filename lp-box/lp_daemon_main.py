@@ -10,8 +10,8 @@ RPC="https://mainnet.base.org"; CHAIN=8453
 RPCS=A.get("rpcs",[RPC])  # B.2 multi-RPC fallback
 def _load_treasury_key():
     """Decripteaza cheia treasury 0x3b5B din keystore criptat (PBKDF2 200k + AES-256-CBC).
-    Cheia ramane criptata pe disc, decriptata DOAR in memorie. Model identic lib/evm.js.
-    Unificare LP=treasury (o singura identitate calda)."""
+    The key stays encrypted on disk, decrypted ONLY in memory. Same model as lib/evm.js.
+    LP and treasury unified (single warm identity)."""
     import re as _re, hashlib as _hl
     from cryptography.hazmat.primitives.ciphers import Cipher as _C, algorithms as _alg, modes as _md
     _env=open(E["ENV_F"]).read()
@@ -61,7 +61,7 @@ def gcli(*a,wallet=None):
             print(f"  [WAIT] gcli {a[0]}: TIMEOUT 90s, retry {_attempt+1}/40"); continue
         if r.returncode==0: return r.stdout.strip()
         err=r.stderr.strip()
-        # erori tranzitorii: nod in loading / inca porneste -> retry
+        # transient errors: node loading / still starting -> retry
         if ("-28" in err) or ("Loading" in err) or ("warming up" in err) or ("Could not connect" in err) or ("couldn't connect" in err.lower()):
             print(f"  [WAIT] gcli {a[0]}: nod ocupat ({err[:50]}), retry {_attempt+1}/40 in 4s")
             time.sleep(4); continue
@@ -131,7 +131,7 @@ def save_state(st): json.dump(st,open(STATE_F,"w"),indent=1)
 def load_intents():
     return json.load(open(INTENTS_F)) if os.path.exists(INTENTS_F) else {}
 def refund_sell_guard(pk,val_sats):
-    # restituie volumul consumat de _sell_guard la /intent cand daemonul respinge (reject nu e vanzare)
+    # give back the volume consumed by _sell_guard at /intent when the daemon rejects (a reject is not a sale)
     try:
         sgf=E.get("SELL_GUARD_F")
         if not sgf or not pk: return
@@ -171,7 +171,7 @@ def find_preimage(txid,vout,from_h):
                     if len(w)>=3 and w[1]: return bytes.fromhex(w[1])  # non-empty = claim
     return None
 def spent_via_refund(txid,vout,from_h):
-    # output cheltuit pe calea de REFUND (timelock, fara preimage) = legitim, NU furt.
+    # output spent via the REFUND path (timelock, no preimage) = legitimate, NOT theft.
     # In HTLC-ul nostru: claim are witness[1] non-empty (preimage). refund are witness[1] gol.
     from_h=min(from_h,_fund_height(txid,from_h))
     for h in range(from_h,gheight()+1):
@@ -256,8 +256,8 @@ def scan_and_claim_usdc(st,ctx):
             if rtx is not None:
                 sw["status"]="refunded_on_timelock"; sw["refund_tx"]=rtx; print(f"  [REFUND] {sid[:14]} output refundat pe timelock (legitim, user si-a luat GBX inapoi)"); continue
             sw["_unres"]=sw.get("_unres",0)+1
-            if sw["_unres"]<3: print(f"  [UNRESOLVED] {sid[:14]} spender negasit inca (retry {sw['_unres']}/3)"); continue
-            sw["status"]="ANOMALY_spent_no_preimage"; st["halt"]=True; print(f"  [HALT] {sid[:14]} output disparut REAL fara preimage NICI refund (3 scanari)"); continue
+            if sw["_unres"]<3: print(f"  [UNRESOLVED] {sid[:14]} spender not found yet (retry {sw['_unres']}/3)"); continue
+            sw["status"]="ANOMALY_spent_no_preimage"; st["halt"]=True; print(f"  [HALT] {sid[:14]} output REALLY gone with neither preimage NOR refund (3 scans)"); continue
         if sha256(s).hex()!=sw["hashlock"][2:]: sw["status"]="ANOMALY_bad_preimage"; st["halt"]=True; print(f"  [HALT] {sid[:14]} preimage gresit"); continue
         o=evmcli(ctx=ctx,cmd="claim",pk=LP_PK_EVM,htlc=ctx["htlc"],id=sw.get("evm_id",sid.split(":",1)[-1]),preimage="0x"+s.hex())
         sw["status"]="completed" if o.get("status")=="0x1" else "evm_claim_failed"
@@ -267,7 +267,7 @@ def scan_and_refund_gbx(st,fund):
     for sid,sw in list(st["swaps"].items()):
         if sw["status"]!="gbx_locked": continue
         if gclij("gettxout",sw["gbx_txid"],sw["gbx_vout"]) is None: continue   # cheltuit (claim) -> nu refund
-        if gheight() < sw["T2"]: continue                                       # inca nu se poate refunda
+        if gheight() < sw["T2"]: continue                                       # cannot refund yet
         skLP=sk_from_hex(st["lp_gbx_sk"]); SCRIPT=bytes.fromhex(sw["script"])
         le=bytes.fromhex(sw["gbx_txid"])[::-1]; oval=sw["gbx_val"]-2000
         DEST=gcli("getnewaddress","","bech32",wallet=WALLET); DSPK=bytes.fromhex(gclij("getaddressinfo",DEST,wallet=WALLET)["scriptPubKey"])
@@ -283,7 +283,7 @@ def _gbx_lp_balance():
     except Exception: return None
 
 def check_economic_breaker(st):
-    # BREAKER ECONOMIC OWNERLESS: reguli deterministe, fara admin key, auto-resume.
+    # OWNERLESS ECONOMIC BREAKER: deterministic rules, no admin key, auto-resume.
     # Diferit de "halt" (securitate/preimage = permanent). Breaker = economic = se reia singur.
     try:
         cfg=json.load(open(E["CONFIG_F"]))
@@ -307,10 +307,10 @@ def check_economic_breaker(st):
             drop=(bn["bal"]-bal)/bn["bal"]
             if drop_pct>0 and drop>=drop_pct:
                 reasons.append(f"reserve_drop:{drop*100:.1f}%>= {drop_pct*100:.0f}% in {win}s")
-        # actualizez snapshot la fiecare fereastra
+        # refresh the snapshot every window
         if (not bn) or (now-bn.get("ts",0))>=win:
             st["_brk_balsnap"]={"bal":bal,"ts":now}
-    # decizie
+    # decision
     cur=st.get("breaker") or {}
     if reasons:
         if not cur.get("active"):
@@ -327,7 +327,7 @@ def run_once():
     if st.get("halt"): print("DAEMON HALTED (anomalie securitate)"); return st
     st=check_economic_breaker(st)
     if st.get("breaker",{}).get("active"):
-        save_state(st); print("DAEMON BREAKER ECONOMIC activ -> NU procesez swap-uri noi (auto-resume cand revine)"); return st
+        save_state(st); print("ECONOMIC BREAKER active -> NOT processing new swaps (auto-resume when it clears)"); return st
     fund=ensure_setup(st)
     for _cn in (enabled_chains() or ["base"]):
         try:
@@ -368,7 +368,7 @@ def run_loop(interval=5, iters=None):
                 _h=-1
             print(f"  [hb] alive cycles={i} chain_h={_h}", flush=True)
         # REZILIENT: orice eroare tranzitorie (RPC/nod/retea) -> log + continua, NU muri.
-        # Un swap reactor de productie nu moare la un hiccup; ramane viu ca sell-urile sa prinda mereu LP-ul.
+        # A production swap reactor does not die on a hiccup; it stays alive so sells always find the LP.
         try:
             st=run_once()
             if st.get("halt"): time.sleep(interval); continue
@@ -384,11 +384,11 @@ def scan_and_lock_usdc(st,fund,ctx):
         if intent.get("direction")!="sell": continue
         if intent.get("chain")=="solana": continue  # sell:solana = ramura lp_solana, nu EVM
         if not intent.get("chain"):
-            sid="sell:nochain:"+hl  # scope fix: sid construit explicit AICI (bug s33: citit inainte de atribuirea de la finalul buclei)
+            sid="sell:nochain:"+hl  # scope fix: sid built explicitly HERE (it used to be read before the end-of-loop assignment)
             if sid not in st["swaps"]:
                 st["swaps"][sid]={"direction":"sell","hashlock":hl,"status":"rejected_missing_chain"}; save_state(st)
                 refund_sell_guard(intent_refund_key(intent),intent.get("gbx_val"))
-                print(f"  [GUARD SELL] REJECT {hl[:14]} intent fara chain (fail-loud, nu ghicesc lantul)")
+                print(f"  [GUARD SELL] REJECT {hl[:14]} intent without a chain (fail-loud, refusing to guess the chain)")
             continue
         if intent.get("chain")!=ctx["name"]: continue  # lock ONLY on the intent's chain (fix double-lock)
         sid="sell:"+ctx["name"]+":"+hl  # scope fix: sid definit INAINTE de orice citire (LP-15 il folosea nedefinit)
@@ -409,7 +409,7 @@ def scan_and_lock_usdc(st,fund,ctx):
         if txo["scriptPubKey"]["hex"]!=p2wsh_spk(script).hex():
             st["swaps"][sid]={"direction":"sell","hashlock":hl,"status":"rejected_spk"}; print(f"  [SELL REJECT] {hl[:14]} spk mismatch"); continue
         gbx_val=int(round(txo["value"]*1e8))
-        # IDEE B enforcement: gbx_val declarat la /intent (baza capului 24h) nu poate fi sub-declarat
+        # Anti-dump enforcement: the gbx_val declared at /intent (the basis of the 24h cap) cannot be under-declared
         _decl=int(intent.get("gbx_val") or 0)
         if _decl and gbx_val > int(_decl*1.01):
             st["swaps"][sid]={"direction":"sell","hashlock":hl,"status":"rejected_val_underdeclared"}; print(f"  [GUARD SELL] REJECT {hl[:14]} onchain={gbx_val} > declared={_decl}"); continue
@@ -423,12 +423,12 @@ def scan_and_lock_usdc(st,fund,ctx):
         o=evmcli(ctx=ctx,cmd="lock",pk=LP_PK_EVM,htlc=ctx["htlc"],receiver=intent["evm_receiver"],token=ctx["usdc"],amount=req_usdc,hashlock=hl,timelock=T2)
         _lid=o.get("id")
         if not _lid:
-            # LP-17: lock fara id in raspuns (receipt pierdut / tx neminat) -> verifica on-chain, nu minti statusul
+            # LP-17: lock without an id in the response (lost receipt / unmined tx) -> verify on-chain, never lie about the status
             try: _lid=next((e["id"] for e in evmcli(ctx=ctx,cmd="events",htlc=ctx["htlc"]).get("events",[]) if e["hashlock"].lower()==hl.lower()),None)
             except Exception: _lid=None
         if not _lid:
             st["swaps"][sid]={"direction":"sell","chain":ctx["name"],"hashlock":hl,"status":"rejected_lock_failed","note":"LP-17: no id from lock and no Locked event on-chain; USDC never left LP"}
-            print(f"  [LP-17] REJECT {hl[:14]} lock fara id si fara event on-chain — USDC neblocat, user refund GBX la T1"); continue
+            print(f"  [LP-17] REJECT {hl[:14]} lock without an id and without an on-chain event — USDC not locked, the user refunds GBX at T1"); continue
         st["swaps"][sid]={"direction":"sell","chain":ctx["name"],"hashlock":hl,"usdc_lock_id":_lid,"gbx_txid":intent["gbx_txid"],"gbx_vout":intent["gbx_vout"],"script":intent["gbx_script"],"gbx_val":gbx_val,"status":"usdc_locked","T2_evm":T2}
         print(f"  [LOCK USDC] {hl[:14]} -> {intent['evm_receiver'][:10]} amount {req_usdc}")
     save_state(st)
@@ -440,7 +440,7 @@ def scan_and_claim_gbx(st,fund,ctx):
         if claimed is None: claimed={c["id"].lower():c["preimage"] for c in evmcli(ctx=ctx,cmd="claimed",htlc=ctx["htlc"]).get("claimed",[])}
         lid=(sw.get("usdc_lock_id") or "").lower()
         if lid not in claimed:
-            # LP-6: userul NU a revendicat si T2 a expirat -> refund USDC la LP (banii LP-ului; GBX-ul userului ramane refundabil de USER pe L1)
+            # LP-6: the user did NOT claim and T2 expired -> refund the USDC to the LP (the LP's money; the user's GBX stays refundable by the USER on L1)
             _t2=int(sw.get("T2_evm") or 0)
             if _t2 and int(time.time())>_t2+120:
                 try:

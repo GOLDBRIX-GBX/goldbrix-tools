@@ -1,6 +1,6 @@
 /* GBX SPA loader v2 — cache de view-uri. Fiecare view trait intr-un container
    propriu; navigare = ascunde/arata (display), NU distruge. Revenire instant.
-   Paginile vechi raman vii (acces direct /v3/X.html merge). */
+   Old pages stay alive (direct /v3/X.html access still works). */
 (function(){
   'use strict';
   // ── SHIM navigare: location.href=/replace/assign spre rute SPA -> hash (nu reload) ──
@@ -10,7 +10,7 @@
       var u=String(url);
       if(u.charAt(0)==='#') return null;          // deja hash
       if(/^https?:\/\//i.test(u) && u.indexOf(location.host)<0) return null; // extern
-      var path=u.replace(/^https?:\/\/[^/]+/i,''); // scoate origin
+      var path=u.replace(/^https?:\/\/[^/]+/i,''); // strip the origin
       var q=''; var qi=path.indexOf('?'); if(qi>=0){ q=path.slice(qi+1); path=path.slice(0,qi); }
       var r=window.__SPA_PATH2ROUTE&&window.__SPA_PATH2ROUTE[path];
       if(!r) return null;
@@ -31,7 +31,7 @@
 
   var MAP = {
     home:'/home.html', wallet:'/v3/wallet.html', explorer:'/v3/explorer.html',
-    trade:'/v3/coins-x.html', launch:'/v3/launch-x.html', /* s48: consensus launchpad X pages; on-page guard until height 2720000 */ burns:'/v3/burns.html',
+    trade:'/v3/coins-x.html', launch:'/v3/launch-x.html', /* consensus launchpad X pages; on-page guard until height 2720000 */ burns:'/v3/burns.html',
     settings:'/v3/settings.html', gbx:'/v3/gbx.html',
     receive:'/v3/receive-usdc.html', favorites:'/v3/favorites.html',
     leaderboard:'/v3/leaderboard.html',
@@ -120,7 +120,7 @@
       if(head){ headScripts=Array.prototype.slice.call(head.querySelectorAll('script')); }
       var scripts=headScripts.concat(Array.prototype.slice.call(body.querySelectorAll('script')));
       scripts.forEach(function(s){ s.parentNode.removeChild(s); });
-      // scoate TOATE nav-urile proprii ale paginii (variante multiple de selector)
+      // remove ALL of the page's own navs (multiple selector variants)
       var navSel='.bnav, .v3-final-nav, nav.bnav, nav[class*="nav"], .bottom-nav';
       // ASCUND nav-ul view-ului (nu-l scot din DOM) — scripturile cauta navHome etc., daca lipseste applyLang crapa
       body.querySelectorAll(navSel).forEach(function(n){ n.style.display='none'; n.setAttribute('data-spa-hidden','1'); });
@@ -215,7 +215,7 @@
     ['.gbx-promo-bar','.gbx-burns-bar','#pwaBanner','.v3-pwa-banner'].forEach(function(sel){
       document.querySelectorAll(sel).forEach(function(el){ el.style.display = pre ? 'none' : ''; });
     });
-    // scoate padding-top-ul adaugat de promo-banner cand bara e ascunsa pe pre-login
+    // remove the padding-top added by the promo banner when the bar is hidden pre-login
     if(pre){ document.body.classList.remove('gbx-has-promo'); }
   }
 

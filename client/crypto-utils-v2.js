@@ -55,8 +55,8 @@ const GOLDBRIX_NETWORK = {
 const DERIVATION_PATH = "m/84'/0'/0'/0/0";
 const API_BASE = (typeof window!=='undefined' && window.GBX_API_BASE) || 'https://goldbrix.app/api';
 
-// IDEE S (client): failover per-request pe federatia LP pentru utxos + broadcast.
-// Ordinea: GBX_LP_BASE (daca routerul swap a ales deja) -> toate gateway-urile din lps.json -> fallback static.
+// Client-side per-request failover across the LP federation for utxos + broadcast.
+// Order: GBX_LP_BASE (if the swap router already chose) -> all gateways from lps.json -> static fallback.
 let _gbxLpList=null, _gbxLpListTs=0;
 async function _lpBases(){
   const bases=[];

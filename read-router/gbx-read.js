@@ -1,6 +1,6 @@
 /* GBX READ-ROUTER — multi-node read with failover + quorum on critical fields.
    Keyless by construction. Works with OR without founder servers.
-   s26: multi-source discovery (site + GitHub raw; Arweave slot ready) +
+   multi-source discovery (site + GitHub raw; Arweave slot ready) +
    client-side node scoring (dead nodes demoted at the edge — no server watchdog).
    API unchanged: window.gbxRead(path, {quorum, field}) */
 (function(){
@@ -27,7 +27,7 @@
       }).catch(function(){});
   });
 
-  // On-chain discovery (IDEE C): node registry from GBX:NODE: OP_RETURN via any known node.
+  // On-chain discovery: node registry from GBX:NODE: OP_RETURN via any known node.
   // Zero web server needed once >=1 node is reachable. Failure = silent.
   window.GBX_NODES.slice(0,2).forEach(function(base){
     fetch(base.replace(/\/+$/,'')+'/node-registry', {cache:'no-store'})

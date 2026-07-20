@@ -7,7 +7,7 @@
 <script>window.__gbxErr=[];addEventListener("error",function(e){window.__gbxErr.push((e.message||e.type)+" @ "+((e.filename||"").split("/").pop())+":"+(e.lineno||""));},true);</script>
 <script>
 window.GBX_API_BASE='https://goldbrix.app/api'; window.GBX_LP_BASE='https://goldbrix.app/lp';
-// IDEE Q (client): LP discovery — lps.json + registrul ON-CHAIN (GBX:LP via /lp-registry).
+// LP discovery — lps.json + registrul ON-CHAIN (GBX:LP via /lp-registry).
 // Merge dedup pe base_url; intrarile on-chain = minime (health-check /lp-info decide). Failure = silent.
 window.GBX_LPS = async function(){
   if(window.__GBX_LPS_C && (Date.now()-window.__GBX_LPS_C.ts)<60000) return window.__GBX_LPS_C.lps;
@@ -31,7 +31,7 @@ window.GBX_LPS = async function(){
   window.__GBX_LPS_C={ts:Date.now(), lps:lps};
   return lps;
 };
-// IDEE S (partea client): failover PER-REQUEST intre LP-uri. Orice fetch spre gateway
+// PER-REQUEST failover across LPs. Any fetch toward a gateway
 // esuat -> re-selectie LP sanatos din lps.json pentru lantul respectiv -> retry o data.
 window.GBX_LP_FETCH = async function(C, pathq){
   async function tryOne(base){
@@ -316,10 +316,10 @@ input, textarea, .copyable, [data-copyable], .addr, .hash, .txid, code, .gbx-amo
   </div>
   <footer data-i="foot">Non-custodial · atomic · no one holds your keys</footer>
 </div>
-<script src="/v3/gbx-read.js?v=112"></script>
-<script src="/v3/gbx-session.js?v=111"></script>
+<script src="/v3/gbx-read.js?v=113"></script>
+<script src="/v3/gbx-session.js?v=113"></script>
 <script type="module" src="/crypto-utils-v2.js"></script>
-<script type="module" src="/multichain-utils.js?v=111"></script>
+<script type="module" src="/multichain-utils.js?v=113"></script>
 <script type="module" src="/evm-tx.mjs"></script>
 <script type="module">
 import("/mod-b-browser.mjs").then(function(){ if(!window.GoldbrixModB) window.__gbxErr.push("ModB importat dar window.GoldbrixModB NESETAT"); }).catch(function(e){ window.__gbxErr.push("ModB: "+((e&&e.message)||String(e))); });
@@ -544,7 +544,7 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
   }
   function setMsg(text, ok){ el.msg.hidden=false; el.msg.className='err'+(ok?' ok':''); el.msg.textContent=text; }
 
-  // SPA-2 (s38): the SPA re-enters this page WITHOUT reloading it, so the DOM keeps the LAST swap's
+  // SPA-2: the SPA re-enters this page WITHOUT reloading it, so the DOM keeps the LAST swap's
   // state. A user opening Buy after an earlier swap saw every step ticked and "GBX is in your wallet"
   // BEFORE pressing anything — a false confirmation of money that was never moved. Reset on entry.
   // No new strings: this restores the initial state, already translated in all 5 languages.
@@ -556,7 +556,7 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
       if(el.recv){ el.recv.textContent = '—'; }
     }catch(_e){}
   }
-  // PRICE-2 (s38): show the REAL market price next to the LP quote. They can differ honestly: an LP may
+  // PRICE-2: show the REAL market price next to the LP quote. They can differ honestly: an LP may
   // sit on the floor to protect the user while the market (settled on-chain swaps) trades above it.
   // Source = the same keyless trade index the chart uses; federated, no single server.
   async function gbxShowMarketPrice(){
@@ -676,7 +676,7 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
         const _sr=await (await window.gbxRead('/address/'+_a,{quorum:true,field:'spendable_gbx'})).json();
         const _have=Math.round((+_sr.spendable_gbx||0)*1e8), _need=Math.round(v*1e8);
         if(_have<_need){ setMsg((_M[lang]||_M.en)+(_have/1e8).toLocaleString()+' GBX'); _reset(); return; }
-        // IDEE B pre-check INAINTE de lock L1 (altfel GBX ramane blocat pana la refund T1)
+        // Anti-dump pre-check BEFORE the L1 lock (otherwise GBX stays locked until the T1 refund)
         try{
           const _kp=await window.GoldbrixCrypto.deriveKeypairFromMnemonic(w.mnemonic);
           const _pk=Array.from(_kp.publicKey).map(b=>b.toString(16).padStart(2,'0')).join('');
@@ -801,7 +801,7 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
         // IZOLARE PER-WALLET: cardul apare doar pe wallet-ul care a initiat sell-ul
         try{ const _aw=activeWallet(); if(p.owner && _aw){ const _ev=await window.GoldbrixMultichain.deriveEVM(_aw.mnemonic); if(_ev && _ev.address && _ev.address.toLowerCase()!==p.owner){ continue; } } }catch(_e){}
         // ORFANE: pending mai vechi de 48h -> curata DOAR daca niciun LP nu-l cunoaste SI GBX-ul nu e blocat on-chain.
-        // LEGEA: cat timp exista UTXO viu (bani reali), pendingul NU se sterge NICIODATA (contine datele de refund).
+        // No-loss rule: as long as a live UTXO exists (real money), the pending is NEVER deleted (it holds the refund data).
         try{ if(p.ts && (Date.now()-p.ts)>172800000){
           const _sw=await GBX_LP_SWAP_STATUS((p.hashlock||'').toLowerCase());
           if(!_sw || _sw.status==='pending'){
@@ -829,7 +829,7 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
           let _rej=false;
           try{ const sw=await GBX_LP_SWAP_STATUS((p.hashlock||'').toLowerCase());
                if(!sw || !sw.status || String(sw.status).startsWith('rejected') || String(sw.status).startsWith('refunded') || sw.status==='expired') _rej=true;
-               // TELEFON PIERDUT (s35): pending minim (doar hashlock+txid) -> completeaza script/gbx_val de la LP; t1 il reconstruieste refundGbxForSell criptografic
+               // LOST PHONE: minimal pending (hashlock+txid only) -> fetch script/gbx_val from the LP; t1 is rebuilt cryptographically by refundGbxForSell
                if(sw && sw.script && !p.script){ p.script=sw.script; p.gbx_val=p.gbx_val||sw.gbx_val; try{ localStorage.setItem(k, JSON.stringify(p)); }catch(_e){} } }catch(_e){ _rej=true; }
           if(_rej){
             // TRIERE ON-CHAIN: UTXO cheltuit deja (refundat/claimed) -> cardul dispare
@@ -963,7 +963,7 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
     try{
       var _lpbase=(typeof C!=='undefined'&&C.gateway)?C.gateway:(window.GBX_LP_BASE||'/lp'); var r=await fetch(_lpbase+'/lp-info',{cache:'no-store'}); var d=await r.json(); var p=d.price||{};
       var x=(p.x_usdc!=null)?(+p.x_usdc).toFixed(2):'0.00';
-      // s38: numbers speak (live price above, chart, explorer links below). One honest line.
+      // numbers speak (live price above, chart, explorer links below). One honest line.
       var head = '• '+(t.piSimple||'');
       var EXP={base:{u:'https://basescan.org/token/0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913?a=',n:'Base'},
                arbitrum:{u:'https://arbiscan.io/token/0xaf88d065e77c8cC2239327C5EDb3A432268e5831?a=',n:'Arbitrum'},

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// IDEE V token-index (production): token holdings derived purely on-chain from
+// token-index (production): token holdings derived purely on-chain from
 // GBX:C intents (mint at C/B/P) minus spent token UTXOs. Keyless, reconstructible,
 // reorg-safe (per-block hash checkpoint + rollback). SQLite state.
 'use strict';
@@ -43,7 +43,7 @@ function parseIntent(tx){
     let data;
     try { [data] = readPush(Buffer.from(hex,'hex'), 1); } catch { continue; }
     if (!data.subarray(0,6).equals(Buffer.from('GBX:C:'))) continue;
-    // IDEE W: a CREATE carries its 80-byte proof of work right after the 88-byte
+    // a CREATE carries its 80-byte proof of work right after the 88-byte
     // intent (168 total). Every other op is exactly 88. The proof itself is
     // consensus's job; the intent bytes we read are the same either way.
     const isCreate = data.length >= 7 && data[6] === 0x43;
@@ -89,7 +89,7 @@ function witnessPks(tx){
   }
   return out;
 }
-// ── IDEE X: curve state (reserve, M, h_M) tracked from the chain alone ──────
+// ── curve state (reserve, M, h_M) tracked from the chain alone ──────
 const COIN=100000000n, V_GBX=30000n*COIN, V_TOK=1073000000n, CURVE_TOKENS=800000000n;
 const KCURVE=V_GBX*V_TOK, FEE_BPS=50n;
 const GRAD_N=20n, GRAD_MIN=2000n*COIN;
@@ -214,7 +214,7 @@ const applyBlock = db.transaction((h, blk) => {
     for (const vin of (tx.vin || []))
       if (vin.txid !== undefined) q.spend.run(h, vin.txid, vin.vout);
     const it = parseIntent(tx);
-    // ── curve tracking (IDEE X) — runs for EVERY curve op, tokensOut or not ──
+    // ── curve tracking — runs for EVERY curve op, tokensOut or not ──
     if (it && 'CBSRG'.includes(it.op) && !(LAUNCH_H > 0 && h < LAUNCH_H)){ // pre-activation X ops are NOT consensus-guarded -> never indexed
       const cidHex = it.cid.toString('hex');
       if (it.op === 'C'){
@@ -329,7 +329,7 @@ function dump(){
   console.log(`tip=${scanned()} live_holdings=${rows.length}`);
   for (const r of rows)
     console.log(`  coin=${r.coin_id.slice(0,16)}.. holder=${r.pk.slice(0,16)}.. amount=${Number(r.amt).toLocaleString('en-US')}`);
-  // IDEE X: HONEST graduation progress — R vs max(N*M_live, R_MIN), plus tokens/800M.
+  // HONEST graduation progress — R vs max(N*M_live, R_MIN), plus tokens/800M.
   const tip = scanned();
   for (const c of q.cAll.all()){
     const R=BigInt(c.reserve), m=BigInt(c.m);

@@ -57,7 +57,7 @@
         var w = (u.wallets || []).find(function (x) { return x.id === u.activeWalletId; }) || (u.wallets || [])[0];
         return (w && w.address) ? 'ok' : 'expired';
       }
-      // sesiune lipsa: e cont configurat? atunci doar nepropagata inca
+      // missing session: is an account configured? then it just has not propagated yet
       var st = _state();
       if (st && st.wallets && st.wallets.length && st.salt && st.pwdHash) return 'retry';
       return 'none'; // niciun cont -> welcome

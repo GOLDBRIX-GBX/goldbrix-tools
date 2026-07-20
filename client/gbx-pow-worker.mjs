@@ -1,4 +1,4 @@
-// gbx-pow-worker.mjs — CREATE-PoW mining worker (IDEE W client b)
+// gbx-pow-worker.mjs — CREATE-PoW mining worker
 // Browser: new Worker('/gbx-pow-worker.mjs', { type: 'module' })
 // Node E2E: worker_threads.Worker(path). Same message protocol both ways.
 // in : {cmd:'start', coinIdHex, prevHashDisplayHex, nBits, powLimitHex?, batch?}

@@ -1,4 +1,4 @@
-// GoldBrix EVM SEND — transfer USDC/ETH + citire solduri. Non-custodial: cheia ramane locala.
+// GoldBrix EVM SEND — USDC/ETH transfers + balance reads. Non-custodial: the key stays local.
 // Refoloseste primitivele DOVEDITE (evm-tx-core: dataTransfer, signTx, addressFromPriv).
 // Model identic cu evm-htlc.mjs send() dar cu VALUE parametrizat (pt ETH nativ).
 export function makeEVMSend({ rpc, evm, chainId }){

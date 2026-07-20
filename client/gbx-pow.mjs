@@ -1,4 +1,4 @@
-// GOLDBRIX — IDEE W: a coin is born of WORK, not of money.
+// GOLDBRIX — a coin is born of WORK, not of money.
 // Mines and verifies the 80-byte near-block proof a CREATE must carry:
 //   version(4 LE) | prevhash(32 internal) | merkle=coin_id(32) | time(4 LE) | bits(4 LE) | nonce(4 LE)
 // BigInt mirror of consensus CheckCreatePoW + DeriveTarget. Same module runs

@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { execFile } = require('child_process');
 const gbxIndex = require('./gbx-index-read.js');
-// TRADE-1 (s38): keyless market data. Price/volume DERIVED on-chain (L1 HTLC claim x EVM USDC lock,
+// TRADE-1: keyless market data. Price/volume DERIVED on-chain (L1 HTLC claim x EVM USDC lock,
 // joined on hashlock). No LP is trusted, no private DB, no key. Any node can rebuild it.
 let gbxTrades = null;
 try { gbxTrades = require('./gbx-trade-read.js'); } catch (e) { console.error('[TRADE-1] trade index unavailable:', e.message); }
@@ -25,10 +25,10 @@ function _assertTxid(x){ if(typeof x!=='string' || !/^[0-9a-fA-F]{64}$/.test(x))
 function _assertInt(x){ const n=Number(x); if(!Number.isInteger(n)||n<0||n>1e9) throw new Error('invalid height'); return String(n); }
 
 const UTXO_CACHE = new Map();
-const UTXO_CACHE_TTL = 60 * 1000; // GBX — 60s: scan adresa curata=0.1s (sigur). Adresa mining ramane protejata de cache. Fix real=indexer (sesiune autonomie)
+const UTXO_CACHE_TTL = 60 * 1000; // GBX — 60s: a clean-address scan takes ~0.1s (safe). The mining address stays protected by the cache. The real fix = the indexer.
 
 function _runCliOnce(argv) {
-  // argv = ARRAY de argumente (fara shell). Imun la shell-injection.
+  // argv = an ARRAY of arguments (no shell). Immune to shell injection.
   return new Promise((resolve, reject) => {
     const base = [`-rpcconnect=${RPC_CONNECT}`, `-rpcport=${RPC_PORT}`, `-datadir=${DATADIR}`];
     execFile(CLI, base.concat(argv), { maxBuffer: 32 * 1024 * 1024 }, (error, stdout, stderr) => {
@@ -38,7 +38,7 @@ function _runCliOnce(argv) {
   });
 }
 // REZILIENT (Claude): nodul poate fi temporar in "Loading" (-28) la restart/reindex.
-// Retry in loc sa arunce -> read-api nu mai moare, citirile raman disponibile (sell/balanta stabile).
+// Retry instead of throwing -> read-api no longer dies, reads stay available (stable sell/balance).
 async function runCli(args) {
   let lastErr=null;
   for (let attempt=0; attempt<8; attempt++) {
@@ -117,7 +117,7 @@ async function getUtxoSet() {
   return _utxoSetCache.data;
 }
 
-// B.5 circuit breaker: ultima valoare buna a status-ului (stale-fallback cand nodul e indisponibil)
+// B.5 circuit breaker: last good status value (stale fallback when the node is unavailable)
 let _lastStatus = null;
 
 async function getStatus() {
@@ -141,8 +141,8 @@ async function getStatus() {
     _lastStatus = { data: out, ts: Date.now() };  // B.5: salveaza ultima valoare buna
     return out;
   } catch (e) {
-    // B.5 circuit breaker: nodul indisponibil dupa retry -> ultima valoare buna marcata stale,
-    // in loc de eroare 500. Userul vede date (putin vechi), nu eroare. Auto-revine cand nodul revine.
+    // B.5 circuit breaker: node unavailable after retry -> last good value marked stale,
+    // instead of a 500 error. The user sees data (slightly stale), not an error. Auto-recovers when the node returns.
     if (_lastStatus) {
       console.warn('[getStatus] nod indisponibil -> stale fallback:', (e && e.message) || e);
       return Object.assign({}, _lastStatus.data, {
@@ -150,7 +150,7 @@ async function getStatus() {
         stale_age_sec: Math.floor((Date.now() - _lastStatus.ts) / 1000),
       });
     }
-    throw e;  // nicio valoare buna inca -> propaga (primul boot cu nod mort)
+    throw e;  // no good value yet -> propagate (first boot with a dead node)
   }
 }
 
@@ -176,7 +176,7 @@ async function scanAddress(address) {
   if (c && Date.now() - c.ts < UTXO_CACHE_TTL) {
     return { info, scan: c.data };
   }
-  // RA-1 (s38): scantxoutset scos de pe ruta publica (2.5G RSS -> OOM). Index miss = 503 onest.
+  // RA-1: scantxoutset removed from the public route (2.5G RSS -> OOM). Index miss = an honest 503.
   console.error('[RA-1] index miss /api/address addr-spk=' + String(info.scriptPubKey).slice(0,16));
   const _e = new Error('indexing'); _e.gbxIndexing = true; throw _e;
 }
@@ -208,7 +208,7 @@ let _mpCache = null;
 async function getMempoolSpentOutpoints() {
   // V4.9 OPT — global 5s cache; was uncached -> getrawmempool + per-tx getrawtransaction every request.
   if (_mpCache && Date.now() - _mpCache.ts < 5000) return _mpCache.data;
-  // SWR: cache vechi (<60s) servit INSTANT + refresh in fundal (mempool scan = zeci de subprocess-uri seriale, 16s la mempool plin)
+  // SWR: recent cache (<60s) served INSTANTLY + background refresh (a mempool scan = dozens of serial subprocesses, 16s on a full mempool)
   if (_mpCache && Date.now() - _mpCache.ts < 60000) {
     if (!_mpRefreshing) { _mpRefreshing = true; _mpRefresh().catch(()=>{}).finally(()=>{ _mpRefreshing = false; }); }
     return _mpCache.data;
@@ -329,7 +329,7 @@ async function getTxVerboseAtHeight(txid, height) {
 async function getAddressTxs(address) {
   const { scan, info } = await scanAddress(address);
   let unspents = Array.isArray(scan.unspents) ? scan.unspents : [];
-  // GBX — limita dura: pe adrese cu zeci de mii de UTXO (mining) evita 200k+ RPC (hang).
+  // GBX — hard limit: on addresses with tens of thousands of UTXOs (mining) avoid 200k+ RPCs (hang).
   // Sorteaza desc dupa height (cele mai recente) + max 50.
   unspents = unspents.slice().sort(function(a,b){ return Number(b.height||0) - Number(a.height||0); }).slice(0, 50);
   const tip = Number(await runCli(['getblockcount']));
@@ -391,7 +391,7 @@ const server = http.createServer(async (req, res) => {
 
     const url = new URL(req.url, `http://${req.headers.host}`);
 
-    // IDEE V token-index (guarded: served only when GBX_TOKENIDX_DB is set)
+    // token-index (guarded: served only when GBX_TOKENIDX_DB is set)
     if (req.method === 'GET' && url.pathname === '/api/token-registry') {
       const dbp = process.env.GBX_TOKENIDX_DB;
       if (!dbp) { res.writeHead(404); return res.end('not enabled'); }
@@ -414,7 +414,7 @@ const server = http.createServer(async (req, res) => {
         return res.end(JSON.stringify(out));
       } catch (e) { res.writeHead(500); return res.end('token-index error'); }
     }
-    // IDEE X: my-coins — held + created for a pubkey (guarded by GBX_TOKENIDX_DB)
+    // my-coins — held + created for a pubkey (guarded by GBX_TOKENIDX_DB)
     if (req.method === 'GET' && url.pathname.startsWith('/api/my-coins/')) {
       const dbp = process.env.GBX_TOKENIDX_DB;
       if (!dbp) { res.writeHead(404); return res.end('not enabled'); }
@@ -427,7 +427,7 @@ const server = http.createServer(async (req, res) => {
         return res.end(JSON.stringify(out));
       } catch (e) { res.writeHead(500); return res.end('my-coins error'); }
     }
-    // IDEE X: curves live from the chain — list + detail (guarded by GBX_TOKENIDX_DB)
+    // curves live from the chain — list + detail (guarded by GBX_TOKENIDX_DB)
     if (req.method === 'GET' && (url.pathname === '/api/curves' || url.pathname.startsWith('/api/curves/'))) {
       const dbp = process.env.GBX_TOKENIDX_DB;
       if (!dbp) { res.writeHead(404); return res.end('not enabled'); }
@@ -508,7 +508,7 @@ const server = http.createServer(async (req, res) => {
 
     
   
-    // TRADE-1 (s38): /api/gbx/stats · /api/gbx/candles · /api/gbx/trades — on-chain derived, keyless.
+    // TRADE-1: /api/gbx/stats · /api/gbx/candles · /api/gbx/trades — on-chain derived, keyless.
     if (req.method === 'GET' && url.pathname.startsWith('/api/gbx/')) {
       if (!gbxTrades) return sendJson(res, 503, { error: 'trade_index_unavailable' });
       const IV = {'1m':60000,'5m':300000,'15m':900000,'1h':3600000,'4h':14400000,'1d':86400000};

@@ -1,5 +1,5 @@
 // GOLDBRIX · mod-b-onramp-evm.mjs · ON-RAMP NON-CUSTODIAL EVM: ETH<->USDC (Base + Arbitrum)
-// Agregatoare KEYLESS cu fallback (supravietuieste R - fara chei API). User semneaza, agregator executa.
+// KEYLESS aggregators with fallback (no API keys to hold or expire). The user signs, the aggregator executes.
 // Lista extensibila: adauga un agregator = un obiect in AGG[]. Primar -> rezerva automat.
 // RPC configurabil (scalabil: la volum schimbi endpoint, nu cod).
 
