@@ -180,7 +180,7 @@ def spent_via_refund(txid,vout,from_h):
             for vin in tx.get("vin",[]):
                 if vin.get("txid")==txid and vin.get("vout")==vout:
                     w=vin.get("txinwitness",[])
-                    # refund: witness exista dar witness[1] e gol (calea OP_ELSE timelock)
+                    # refund: the witness exists but witness[1] is empty (the OP_ELSE timelock path)
                     if len(w)>=2 and not w[1]: return tx.get("txid")  # txid-ul refundului
                     return None  # cheltuit cu preimage (claim) - tratat separat
     return None
@@ -209,7 +209,7 @@ def scan_and_lock_gbx(st,fund,ctx):
                     for e in evmcli(ctx=ctx,cmd="events",htlc=ctx["htlc"]).get("events",[]))
         if already:
             st["gasless_locked"][gkey]={"status":"already_onchain"}; save_state(st); continue
-        # pretul: validez ca la calea clasica inainte sa mut banii
+        # the price: validate exactly like the classic path before moving money
         usd=int(intent["usdc_amount"])/1e6; max_gbx=quote(usd)["gbx_out"]; req_gbx=float(intent.get("gbx_amount",1.0))
         if req_gbx > max_gbx*(1+0.01):
             st["gasless_locked"][gkey]={"status":"rejected_price"}; save_state(st)

@@ -154,7 +154,7 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
     return { gbx_txid:await gbxBroadcast(hex(tx)), gbx_vout:0, script:hex(script), gbx_val:fundValue, refund_pubkey:hex(pkU), t1:T1 };
   }
   async function refundGbxForSell({ mnemonic, gbxTxid, gbxVout, gbxVal8, scriptHex, t1 }){
-    // Refund L1 pe ramura timelock (dupa T1): userul isi ia GBX-ul inapoi din HTLC-ul de sell abandonat/respins
+    // L1 refund on the timelock branch (after T1): the user takes their GBX back from the HTLC de sell abandonat/respins
     const gk=await crypto.deriveKeypairFromMnemonic(mnemonic);
     const skU=Uint8Array.from(gk.privateKey), pkU=Uint8Array.from(gk.publicKey);
     let sc = scriptHex ? unhex(String(scriptHex).replace(/^0x/,'')) : null;

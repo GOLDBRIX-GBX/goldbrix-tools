@@ -151,7 +151,7 @@ class H(BaseHTTPRequestHandler):
             if not hl: return self._s(400,{'error':'missing'})
             it=load(INTENTS_F,{})
             if body.get('direction')=='sell':
-                # ANTI-DUMP: rate-limit DOAR la vanzare (banii care ies)
+                # ANTI-DUMP: rate-limit ONLY on sells (outgoing money)
                 _ok,_why=_rate_check(_ip)
                 if not _ok: return self._s(429,{'error':_why})
                 _gok,_gerr=_sell_guard(body.get('refund_pubkey') or body.get('sol_user_pubkey'),body.get('gbx_val'))

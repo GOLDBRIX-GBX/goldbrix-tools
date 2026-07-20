@@ -6,7 +6,7 @@ const _eq=(a,b)=>{ if(a.length!==b.length) return false; for(let i=0;i<a.length;
 const _sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
 function _randomSecret(){ return globalThis.crypto.getRandomValues(new Uint8Array(32)); }
 
-// Verifica HTLC-ul GBX finantat de LP: ramura de claim TREBUIE sa fie (H-ul nostru, pubkey-ul nostru).
+// Verify the LP-funded GBX HTLC: the claim branch MUST be (our H, pubkey-ul nostru).
 // Layout: 63 a8 [20 H(32)] 88 [21 pkClaim(33)] ac 67 [push T2] b1 75 [21 pkRefund(33)] ac 68
 export function verifyGbxLock({ H, pkU, scriptHex, onchainSpkHex, gbxVal8, minVal8 }){
   const scr = unhex(scriptHex);
