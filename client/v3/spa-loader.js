@@ -122,7 +122,7 @@
       scripts.forEach(function(s){ s.parentNode.removeChild(s); });
       // remove ALL of the page's own navs (multiple selector variants)
       var navSel='.bnav, .v3-final-nav, nav.bnav, nav[class*="nav"], .bottom-nav';
-      // ASCUND nav-ul view-ului (nu-l scot din DOM) — scripturile cauta navHome etc., daca lipseste applyLang crapa
+      // HIDE the view's nav (do not remove it from the DOM) — scripts look for navHome etc.; if it is missing, applyLang crashes
       body.querySelectorAll(navSel).forEach(function(n){ n.style.display='none'; n.setAttribute('data-spa-hidden','1'); });
       // fallback: orice element fix jos (bara de nav stilata inline)
       body.querySelectorAll('[style*="bottom:0"],[style*="bottom: 0"]').forEach(function(n){
@@ -229,7 +229,7 @@
   }
   document.addEventListener('click', function(e){
     var el=e.target;
-    // urca in DOM max 4 niveluri cautand <a href> SAU onclick cu /v3/
+    // walk up the DOM at most 4 levels looking for an <a href> OR an onclick with /v3/
     for(var i=0; i<5 && el && el!==document; i++){
       // 1) <a href>
       if(el.tagName==='A' && el.getAttribute && el.getAttribute('href')){

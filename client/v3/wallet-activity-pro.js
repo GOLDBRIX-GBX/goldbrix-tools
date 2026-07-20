@@ -132,7 +132,7 @@
       let acts=(d.activity||[]);
       // ISTORIC ON-CHAIN (autonom, cross-device): GBX din nod + USDC din Base
       try{
-          // 1) GBX primit (tranzactiile adresei pe nod)
+          // 1) GBX received (the address's transactions on the node)
           const gr=await fetch(API+'/api/address/'+addr+'/txs');
           if(gr.ok){ const gtx=await gr.json(); (Array.isArray(gtx)?gtx:[]).forEach(function(x){
             if(x.coinbase) return; // sar coinbase (minat, nu swap)

@@ -48,7 +48,7 @@
     },
 
     // 'ok' | 'retry' | 'expired' | 'none'
-    // self-healing: daca sesiunea lipseste dar state local e valid (deblocabil),
+    // self-healing: if the session is missing but the local state is valid (unlockable),
     // intoarce 'retry' ca apelantul sa astepte propagarea, NU sa redirecteze brutal.
     status: function () {
       var u = _read();
