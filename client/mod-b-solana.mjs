@@ -79,7 +79,7 @@ export async function sellGbxSolana(ctx){
     if(sub.error||!sub.sig) throw new Error("submit-claim: "+JSON.stringify(sub));
     sig=sub.sig;
   }catch(e1){
-    // CALEA 2 (trustless): claim direct daca userul are SOL
+    // PATH 2 (trustless): direct claim if the user has SOL
     const bal=await _solRpc("getBalance",[userPk.toBase58(),{commitment:"confirmed"}]).then(r=>r.value||r).catch(()=>0);
     if(!(bal>=1000000)) throw e1;
     const { TransactionInstruction, getAssociatedTokenAddress }=await import("/vendor/solana.mjs");

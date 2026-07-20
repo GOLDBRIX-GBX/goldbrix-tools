@@ -65,7 +65,7 @@ export async function sendUSDC(secretHex, toAddr, amountUsdc){
   const dest = new PublicKey(toAddr);
   const srcAta = await getAssociatedTokenAddress(USDC_MINT, kp.publicKey);
   const dstAta = await getAssociatedTokenAddress(USDC_MINT, dest);
-  // pre-check gas: fee + (rent ATA daca destinatia nu are cont USDC)
+  // gas pre-check: fee + (ATA rent if the destination has no USDC account)
   let needL = FEE_LAMPORTS;
   try{ await c.getTokenAccountBalance(dstAta); }catch(e){ needL += ATA_RENT_LAMPORTS; }
   const balL = BigInt(await c.getBalance(kp.publicKey));

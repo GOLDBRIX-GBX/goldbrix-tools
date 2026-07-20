@@ -8,7 +8,7 @@ import { buildHtlcScript, p2wshSpk, p2wpkhAddress, p2wpkhSpkFromPub, buildFundTx
 function p2wpkhSpk2(pub){ const h=ripemd160(sha256(pub)); const o=new Uint8Array(22); o[0]=0; o[1]=0x14; o.set(h,2); return o; }
 const LOCKED_SIG='Locked(bytes32,address,address,address,uint256,bytes32,uint256)';
 export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, evmRpc, chainId, chainName, htlcAddr, usdcAddr, lpEvmAddr, fetchUtxos, t1Blocks }){
-  // FALLBACK AUTONOM: incearca mai multe RPC-uri; fiecare e bun la altceva
+  // AUTONOMOUS FALLBACK: try several RPCs; each is good at something different
   // (publicnode: eth_call OK, getLogs archive NU | mainnet.base.org: getLogs OK, eth_call intermitent)
   const RPC_LIST=[evmRpc,'https://mainnet.base.org','https://base-rpc.publicnode.com','https://base-mainnet.public.blastapi.io','https://1rpc.io/base'].filter((v,i,a)=>v&&a.indexOf(v)===i);
   const rpc=async(method,params)=>{
@@ -29,7 +29,7 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
   // spre TOATE nodurile publice din discovery (/api/broadcast = keyless sendrawtransaction).
   // The write survives even if the LP (or any single operator's servers) is dead.
   // txid = dsha256 pe serializarea FARA witness (BIP144). Segwit: marker 0x00 flag 0x01
-  // dupa version; witness-ul se sare dupa outputs. Parsare structurala, zero ghicit.
+  // after the version; the witness is skipped after the outputs. Structural parsing, zero guessing.
   const _txidOf=(rawtxHex)=>{
     const b=unhex(rawtxHex); let o=4; const parts=[b.slice(0,4)];
     const segwit = b[4]===0x00 && b[5]===0x01;

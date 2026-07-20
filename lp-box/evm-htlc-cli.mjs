@@ -22,7 +22,7 @@ const pad=x=>x.replace(/^0x/,'').toLowerCase().padStart(64,'0');
 async function getLogsChunked(address,topics,fromHex){
   const latest=parseInt(await rpc('eth_blockNumber',[]),16);
   // B.2: bounded lookback (new BUY locks are recent; old ones live in st.swaps).
-  // Fereastra ADAPTIVA: daca RPC limiteaza range-ul, reduce automat si reincearca.
+  // ADAPTIVE window: if the RPC limits the range, shrink automatically and retry.
   const LOOKBACK=120000;                       // ~ cateva zile pe Base (2s/bloc) — generos
   let from=parseInt(fromHex||'0x0',16);
   const floor=Math.max(from, latest-LOOKBACK);

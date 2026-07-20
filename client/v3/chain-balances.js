@@ -135,7 +135,7 @@
       var wrap = document.createElement('div');
       wrap.id = 'chainHoldings';
       wrap.innerHTML = html;
-      // Expun soldurile brute pentru alte module (Convert) - non-custodial, doar citire
+      // Expose the raw balances to other modules (Convert) - non-custodial, read-only
       try{
         window.gbxBalances = {
           solana:{ SOL: solR.sol||0, USDC: solR.usdc||0 },

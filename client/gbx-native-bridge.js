@@ -48,9 +48,9 @@ window.gbxHaptic = function(kind){
   function setup(App){
     if(!App||!App.addListener) return;
     App.addListener('backButton', function(ev){
-      // Daca exista istoric in pagina si nu suntem pe home -> back normal in pagina
+      // If the page has history and we are not on home -> normal in-page back
       if (!isHome() && window.history.length > 1) {
-        // pagini interioare: mergi la wallet (predictibil), nu history.back orb
+        // inner pages: go to the wallet (predictable), not a blind history.back
         window.location.href = '/v3/wallet.html';
         return;
       }
@@ -64,7 +64,7 @@ window.gbxHaptic = function(kind){
       window.location.href = '/v3/wallet.html';
     });
   }
-  // @capacitor/app expune App prin Capacitor.Plugins.App
+  // @capacitor/app exposes App via Capacitor.Plugins.App
   if (Cap.Plugins && Cap.Plugins.App) { setup(Cap.Plugins.App); }
   else { document.addEventListener('deviceready', function(){ if(Cap.Plugins&&Cap.Plugins.App) setup(Cap.Plugins.App); }); }
 })();

@@ -3,7 +3,7 @@
    Old pages stay alive (direct /v3/X.html access still works). */
 (function(){
   'use strict';
-  // ── SHIM navigare: location.href=/replace/assign spre rute SPA -> hash (nu reload) ──
+  // ── Navigation SHIM: location.href=/replace/assign toward SPA routes -> hash (no reload) ──
   (function installNavShim(){
     function toRoute(url){
       if(!url) return null;
@@ -21,7 +21,7 @@
       location.assign=function(u){ var h=toRoute(u); if(h){ location.hash=h; } else { orig.assign(u); } };
       location.replace=function(u){ var h=toRoute(u); if(h){ location.hash=h; } else { orig.replace(u); } };
     }catch(e){}
-    // href= setter: prin defineProperty pe un wrapper (best-effort, cade pe orig daca nu merge)
+    // href= setter: via defineProperty on a wrapper (best-effort, falls back to the original if it fails)
     window.__spaNavTo=function(u){ var h=toRoute(u); if(h){ location.hash=h; return true; } return false; };
   })();
   var SHELL = document.getElementById('spa-view');
@@ -59,7 +59,7 @@
         if(a.name==='defer'||a.name==='async') continue;  // FIX — la injectare dinamica strica ordinea; vrem onload sincronizat
         s.setAttribute(a.name,a.value); }
       if(old.src){
-        // Modulele ES au scope propriu (nu declara globale top-level) -> sigur de re-injectat la fiecare vizita.
+        // ES modules have their own scope (no top-level globals) -> safe to re-inject on every visit.
         // Doar scripturile CLASICE externe (i18n.js: const I18N global) raman one-shot.
         var isModule=(old.type==='module');
         var srcKey=old.src.split('?')[0];
@@ -68,14 +68,14 @@
         s.onload=function(){resolve();}; s.onerror=function(){resolve();};
         document.body.appendChild(s);
       } else {
-        // FIX — const/let top-level (coloana 0) -> var, ca re-vizita sa nu crape cu 'already declared'
+        // FIX — top-level const/let (column 0) -> var, so a re-visit does not crash with 'already declared'
         var code=old.textContent;
         // FIX — top-level 'const/let/var NUME =' -> 'window.NUME =' (asignare, nu declarare; zero conflict cu i18n.js global)
         if(old.type!=='module'){ /* modulele ES au scope propriu — rescrierea le-ar sparge in strict mode */
         code=code.replace(/^(?:const|let|var)\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=/gm, 'window.$1 =');
         }
         // FIX — location.href='/v3/X' (setter, neinterceptat de shim) -> navigare SPA daca ruta mapata
-        // window.__spaNavTo intoarce true daca a navigat in SPA; altfel href real (fallback)
+        // window.__spaNavTo returns true if it navigated inside the SPA; otherwise a real href (fallback)
         code=code.replace(/(?:window\.)?location\.href\s*=\s*(['"])([^'"]+)\1/g,
           function(m,q,url){ return '(window.__spaNavTo&&window.__spaNavTo('+q+url+q+'))||(location.href='+q+url+q+')'; });
         s.textContent=code;
@@ -124,7 +124,7 @@
       var navSel='.bnav, .v3-final-nav, nav.bnav, nav[class*="nav"], .bottom-nav';
       // HIDE the view's nav (do not remove it from the DOM) — scripts look for navHome etc.; if it is missing, applyLang crashes
       body.querySelectorAll(navSel).forEach(function(n){ n.style.display='none'; n.setAttribute('data-spa-hidden','1'); });
-      // fallback: orice element fix jos (bara de nav stilata inline)
+      // fallback: any fixed bottom element (an inline-styled nav bar)
       body.querySelectorAll('[style*="bottom:0"],[style*="bottom: 0"]').forEach(function(n){
         var st=(n.getAttribute('style')||''); 
         if(/position:\s*fixed/.test(st) && (/<a /i.test(n.innerHTML)) && n.querySelectorAll('a').length>=3){
@@ -141,7 +141,7 @@
       try{
         for(var i=0;i<scripts.length;i++){ await runScript(scripts[i], box); }
       } finally { window.__spaBuildingEl = null; }
-      // FIX — multe pagini pornesc prin DOMContentLoaded; in SPA nu se declanseaza singur
+      // FIX — many pages boot via DOMContentLoaded; in the SPA it does not fire on its own
       try{
         document.dispatchEvent(new Event('DOMContentLoaded',{bubbles:false,cancelable:false}));
         window.dispatchEvent(new Event('load'));
@@ -181,7 +181,7 @@
       v.el.style.display = (rt===info.route)?'block':'none';
       v.cssNodes.forEach(function(n){ n.disabled = (rt!==info.route); });
     });
-    // construieste daca prima vizita
+    // build on first visit
     if(!views[info.route]){
       var rec=await buildView(info);
       // re-aplica vizibilitate (build dureaza, alt view putea fi cerut)

@@ -145,7 +145,7 @@ async function sendGBX(mnemonic, fromAddress, toAddress, amountGbx, feeRateSatsP
     throw new Error(`Mnemonic mismatch. Derived: ${derivedAddr}, Expected: ${fromAddress}`);
   }
 
-  const utxos = await fetchUtxos(fromAddress, amountGbx + 0.01);  // CU target -> LP gateway (UTXO mari + scriptPubKey; read-api limit=1000 dadea doar 250 GBX)
+  const utxos = await fetchUtxos(fromAddress, amountGbx + 0.01);  // WITH a target -> LP gateway (large UTXOs + scriptPubKey; read-api limit=1000 only yielded 250 GBX)
   if (utxos.length === 0) throw new Error('No UTXOs available');
 
   // V2.21: filter immature coinbase UTXOs (must have 100+ confirmations)

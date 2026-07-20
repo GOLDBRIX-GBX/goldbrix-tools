@@ -1,6 +1,6 @@
-// GOLDBRIX · mod-b-onramp-sol.mjs · ON-RAMP NON-CUSTODIAL: SOL -> USDC prin Jupiter (agregator public)
+// GOLDBRIX · mod-b-onramp-sol.mjs · NON-CUSTODIAL ON-RAMP: SOL -> USDC via Jupiter (public aggregator)
 // Model: app = fereastra, Jupiter = executie on-chain peer-to-pool. Fondatorul NU atinge banii.
-// User semneaza cu cheia derivata BIP39. Zero spread GoldBrix. Legacy tx (vendor n-are VersionedTransaction).
+// The user signs with the BIP39-derived key. Zero GoldBrix spread. Legacy tx (the vendor lacks VersionedTransaction).
 import { Connection, Keypair, Transaction, PublicKey, getAssociatedTokenAddress } from "/vendor/solana.mjs";
 
 const SOL_MINT  = "So11111111111111111111111111111111111111112";   // wrapped SOL (nativ)
@@ -13,7 +13,7 @@ const RPCS = [
 ];
 const RPC = RPCS[0];
 
-// submit cu fallback: incearca fiecare RPC pana unul accepta tx (rezilienta, keyless)
+// submit with fallback: try each RPC until one accepts the tx (resilient, keyless)
 async function _sendRawWithFallback(rawTx){
   const errs=[];
   for(const url of RPCS){
@@ -46,13 +46,13 @@ export async function quoteSolToUsdc(solAmountLamports, slippageBps){
     inLamports: Number(solAmountLamports),
     outUsdc6:   Number(q.outAmount),                 // USDC with 6 decimals
     outUsdc:    Number(q.outAmount) / 1e6,
-    minOutUsdc: Number(q.otherAmountThreshold) / 1e6, // minim garantat dupa slippage
+    minOutUsdc: Number(q.otherAmountThreshold) / 1e6, // guaranteed minimum after slippage
     priceImpactPct: Number(q.priceImpactPct || 0),
     _raw: q
   };
 }
 
-// SWAP: executa conversia. User semneaza, Jupiter executa on-chain. Fondatorul nu atinge nimic.
+// SWAP: run the conversion. The user signs, Jupiter executes on-chain. No operator touches anything.
 export async function swapSolToUsdc(ctx){
   const { solKeypair, solAmountLamports, slippageBps, onStatus } = ctx;
   const bps = slippageBps || 50;
@@ -76,7 +76,7 @@ export async function swapSolToUsdc(ctx){
   const sw = await swapResp.json();
   if(!sw || !sw.swapTransaction) throw new Error("jup-swap: " + JSON.stringify(sw).slice(0,160));
 
-  // 3. deserializeaza (legacy) + user semneaza cu cheia lui
+  // 3. deserialize (legacy) + the user signs with their own key
   const tx = Transaction.from(Uint8Array.from(atob(sw.swapTransaction), c=>c.charCodeAt(0)));
   tx.sign(solKeypair);
   onStatus && onStatus("user_signed");
@@ -125,7 +125,7 @@ export async function swapUsdcToSol(ctx){
 // ==== AGREGATOR RAYDIUM (keyless) — alternativa la Jupiter, selectabil de user in UI ====
 const RAY_BASE = "https://transaction-v1.raydium.io";
 
-// QUOTE Raydium (SOL->USDC sau USDC->SOL, dupa mint-uri)
+// Raydium QUOTE (SOL->USDC or USDC->SOL, by mints)
 export async function quoteRaydium(inMint, outMint, amount, slippageBps){
   const url = RAY_BASE + "/compute/swap-base-in?inputMint=" + inMint + "&outputMint=" + outMint +
               "&amount=" + String(amount) + "&slippageBps=" + (slippageBps||50) + "&txVersion=LEGACY";

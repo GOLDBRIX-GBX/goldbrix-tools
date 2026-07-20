@@ -37,7 +37,7 @@
 
     get: function () { return _read(); },
 
-    // intoarce wallet-ul activ valid, sau null. NU redirecteaza — decide apelantul.
+    // return the valid active wallet, or null. It does NOT redirect — the caller decides.
     activeWallet: function () {
       var u = _read();
       if (!u || !u.unlocked_at) return null;

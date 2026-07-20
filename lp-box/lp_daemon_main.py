@@ -172,7 +172,7 @@ def find_preimage(txid,vout,from_h):
     return None
 def spent_via_refund(txid,vout,from_h):
     # output spent via the REFUND path (timelock, no preimage) = legitimate, NOT theft.
-    # In HTLC-ul nostru: claim are witness[1] non-empty (preimage). refund are witness[1] gol.
+    # In our HTLC: a claim has a non-empty witness[1] (the preimage). A refund has an empty witness[1].
     from_h=min(from_h,_fund_height(txid,from_h))
     for h in range(from_h,gheight()+1):
         blk=gclij("getblock",gcli("getblockhash",h),2)
@@ -204,7 +204,7 @@ def scan_and_lock_gbx(st,fund,ctx):
         a=intent.get("auth3009") or {}
         if not all(k in a for k in ("v","r","s","validAfter","validBefore","nonce")): continue
         if "evm_user" not in intent or "usdc_amount" not in intent: continue
-        # guard: daca exista deja un lock pe HTLC cu acest hashlock, nu re-submit
+        # guard: if a lock already exists on the HTLC with this hashlock, do not re-submit
         already=any(e["hashlock"].lower()==hl and e["receiver"].lower()==ctx["lp_evm"].lower()
                     for e in evmcli(ctx=ctx,cmd="events",htlc=ctx["htlc"]).get("events",[]))
         if already:
@@ -225,7 +225,7 @@ def scan_and_lock_gbx(st,fund,ctx):
             print(f"  [GASLESS LOCK] {hl[:14]} user={intent['evm_user'][:10]} amount={intent['usdc_amount']} -> lockAuth ok id={str(o.get('id'))[:12]}")
         except Exception as e:
             print(f"  [GASLESS FAIL] {hl[:14]} lockAuth esuat: {str(e)[:120]} -> NU marchez, reincerc data viitoare")
-    # === fluxul BUY clasic (vede acum si lock-urile gasless ca events normale) ===
+    # === the classic BUY flow (now also sees gasless locks as normal events) ===
     for ev in evmcli(ctx=ctx,cmd="events",htlc=ctx["htlc"]).get("events",[]):
         if not isinstance(ev,dict): continue   # P2: RPC malformat (string in loc de dict) -> sare gratios, nu crapa
         if ev["receiver"].lower()!=ctx["lp_evm"].lower() or (ctx["name"]+":"+ev["id"]) in st["swaps"]: continue
@@ -394,7 +394,7 @@ def scan_and_lock_usdc(st,fund,ctx):
         sid="sell:"+ctx["name"]+":"+hl  # scope fix: sid definit INAINTE de orice citire (LP-15 il folosea nedefinit)
         _sw=st["swaps"].get(sid)
         if _sw and str(_sw.get("status","")).startswith(("rejected","completed","refunded","archived")):
-            # LP-15: swap terminal -> intent zombie; il sterg din intents.json ca sa nu fie reluat la nesfarsit
+            # LP-15: terminal swap -> zombie intent; delete it from intents.json so it is not replayed on the nesfarsit
             try:
                 _all=load_intents()
                 if hl in _all: del _all[hl]; json.dump(_all,open(INTENTS_F,'w')); print(f"  [LP-15] intent zombie curatat {hl[:14]} (swap {_sw.get('status')})")

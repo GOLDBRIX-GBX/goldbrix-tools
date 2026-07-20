@@ -330,7 +330,7 @@ async function getAddressTxs(address) {
   const { scan, info } = await scanAddress(address);
   let unspents = Array.isArray(scan.unspents) ? scan.unspents : [];
   // GBX — hard limit: on addresses with tens of thousands of UTXOs (mining) avoid 200k+ RPCs (hang).
-  // Sorteaza desc dupa height (cele mai recente) + max 50.
+  // Sort desc by height (most recent) + max 50.
   unspents = unspents.slice().sort(function(a,b){ return Number(b.height||0) - Number(a.height||0); }).slice(0, 50);
   const tip = Number(await runCli(['getblockcount']));
 
@@ -535,7 +535,7 @@ const server = http.createServer(async (req, res) => {
       const utxosMatch = url.pathname.match(/^\/api\/utxos\/([^/]+)$/);
       if (req.method === 'GET' && utxosMatch) {
         const address = utxosMatch[1];
-        // GBX — limit optional: intoarce cele mai mari N UTXO (semnarea selecteaza din cele mari).
+        // GBX — optional limit: return the largest N UTXOs (signing selects from the large ones).
         const limitParam = parseInt(url.searchParams.get('limit') || '0', 10);
         const cacheKey = limitParam > 0 ? address + ':' + limitParam : address;
         const cached = UTXO_CACHE.get(cacheKey);
@@ -551,7 +551,7 @@ const server = http.createServer(async (req, res) => {
           const scan = ixU;
           let rawUnspents = scan.unspents || [];
           const totalCount = rawUnspents.length;
-          // GBX — daca limit cerut: sorteaza desc dupa amount + ia primele N (BUY/SELL rapid pe adrese cu multe UTXO)
+          // GBX — if a limit is requested: sort desc by amount + take the first N (fast BUY/SELL on addresses cu multe UTXO)
           if (limitParam > 0 && rawUnspents.length > limitParam) {
             rawUnspents = rawUnspents.slice().sort((a,b) => Number(b.amount||0) - Number(a.amount||0)).slice(0, limitParam);
           }

@@ -144,7 +144,7 @@ class H(BaseHTTPRequestHandler):
         self.send_response(204); self.send_header('access-control-allow-origin','*'); self.send_header('access-control-allow-methods','GET,POST,OPTIONS'); self.send_header('access-control-allow-headers','content-type'); self.end_headers()
     def do_POST(self):
         _ip=self.client_address[0] if self.client_address else "?"
-        # RATE-LIMIT DOAR PE SELL (anti-dump). Buy/quote/utxos/broadcast = LIBER (banii care intra nu se blocheaza).
+        # SELL-ONLY RATE LIMIT (anti-dump). Buy/quote/utxos/broadcast = OPEN (incoming money nu se blocheaza).
         if self.path=='/intent':
             if _breaker_active(): return self._s(503,{'error':'breaker_active','msg':'swaps temporarily suspended (economic anomaly), auto-resumes'})
             body=self._body(); hl=(body.get('hashlock') or '').lower()
@@ -233,7 +233,7 @@ class H(BaseHTTPRequestHandler):
         if self.path=='/broadcast':
             body=self._body(); raw=body.get('rawtx')
             if not raw: return self._s(400,{'error':'missing_rawtx'})
-            # LP-13: rawtx prin STDIN (nu argv) — argv are limita kernel ARG_MAX; tx mari (>128KB hex) crapau
+            # LP-13: rawtx via STDIN (not argv) — argv hits the kernel ARG_MAX limit; large txs (>128KB hex) crapau
             r=subprocess.run(GCLI+['-stdin','sendrawtransaction'],input=raw+'\n',capture_output=True,text=True,timeout=60)
             if r.returncode==0 and r.stdout.strip(): return self._s(200,{'txid':r.stdout.strip()})
             return self._s(400,{'error':(r.stderr or 'broadcast_failed').strip()})
@@ -293,7 +293,7 @@ class H(BaseHTTPRequestHandler):
                         acc+=float(u["amount"])
                         if tgt>0 and acc>=tgt+0.001: break
                 else:
-                    # scantxoutset (useri noi) poate avea UTXO cheltuite -> verific gettxout anti-missingorspent
+                    # scantxoutset (new users) may contain spent UTXOs -> check gettxout against missingorspent
                     for u in allu:
                         chk=subprocess.run(GCLI+["gettxout",u["txid"],str(u["vout"])],capture_output=True,text=True)
                         if chk.returncode!=0 or not chk.stdout.strip(): continue

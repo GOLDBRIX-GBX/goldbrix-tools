@@ -1,5 +1,5 @@
 // GoldBrix — EIP-3009 receiveWithAuthorization signer (browser + daemon, no ethers).
-// Userul semneaza OFF-CHAIN autorizarea ca USDC-ul lui sa fie mutat in HTLC. Zero gaz.
+// The user signs OFF-CHAIN the authorization for their USDC to be moved into the HTLC. Zero gas.
 import { secp256k1, keccak_256 } from '/vendor/evm-secp.mjs';
 
 const te = new TextEncoder();

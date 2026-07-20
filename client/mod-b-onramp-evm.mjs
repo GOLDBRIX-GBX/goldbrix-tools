@@ -1,7 +1,7 @@
 // GOLDBRIX · mod-b-onramp-evm.mjs · ON-RAMP NON-CUSTODIAL EVM: ETH<->USDC (Base + Arbitrum)
 // KEYLESS aggregators with fallback (no API keys to hold or expire). The user signs, the aggregator executes.
 // Lista extensibila: adauga un agregator = un obiect in AGG[]. Primar -> rezerva automat.
-// RPC configurabil (scalabil: la volum schimbi endpoint, nu cod).
+// Configurable RPC (scalable: at volume you swap the endpoint, not the code).
 
 const NATIVE = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"; // ETH nativ (conventie agregatoare)
 const CHAINS = {
@@ -60,7 +60,7 @@ const AGG = [
   { name:"KyberSwap", quote:kyberQuote,   tx:kyberTx,    evmOnly:true  }
 ];
 
-// QUOTE cu fallback: incearca fiecare agregator pana unul raspunde
+// QUOTE with fallback: try each aggregator until one answers
 export async function quoteEvm(chain, srcTok, dstTok, amountWei, userAddr){
   let lastErr;
   for(const a of AGG){
@@ -73,7 +73,7 @@ export async function quoteEvm(chain, srcTok, dstTok, amountWei, userAddr){
   throw new Error("toate agregatoarele EVM indisponibile: "+(lastErr&&lastErr.message||""));
 }
 
-// ---- allowance ERC20: sursa USDC cere aprobare catre router INAINTE de swap (altfel revert 0x0) ----
+// ---- ERC20 allowance: the USDC source requires approval to the router BEFORE the swap (otherwise revert 0x0) ----
 async function _rpcCall(chain, method, params){
   const r = await fetch(CHAINS[chain].rpc, {method:"POST",headers:{"content-type":"application/json"},
     body: JSON.stringify({jsonrpc:"2.0",id:1,method:method,params:params})});
@@ -93,7 +93,7 @@ async function _ensureAllowance(chain, token, owner, spender, amountWei, signer)
   let cur;
   try{ cur = await _rpcCall(chain, "eth_call", [{to:token, data:dataAllow}, "latest"]); }catch(e){}
   if(!cur || cur==="0x") cur = "0x0";
-  if(BigInt(cur) >= BigInt(amountWei)) return; // deja aprobat, nu cheltui gaz
+  if(BigInt(cur) >= BigInt(amountWei)) return; // already approved, do not spend gas
   const dataApprove = "0x095ea7b3" + _pad32(spender) + "f".repeat(64);
   const h = await signer.signAndSend({ to:token, data:dataApprove, value:"0", chainId:CHAINS[chain].id });
   if(!h) throw new Error("approve-no-hash");
@@ -101,7 +101,7 @@ async function _ensureAllowance(chain, token, owner, spender, amountWei, signer)
   if(st!=="0x1") throw new Error("approve-reverted");
 }
 
-// SWAP: construieste tx cu agregatorul care a dat quote-ul, user semneaza, submite on-chain
+// SWAP: build the tx with the aggregator that gave the quote, the user signs, submit on-chain
 export async function swapEvm(ctx){
   const { chain, srcTok, dstTok, amountWei, signer, onStatus } = ctx;
   // signer = { address, signAndSend(txObj) } furnizat de clientul EVM existent (mod-b-browser)
