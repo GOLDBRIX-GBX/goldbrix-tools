@@ -22,6 +22,7 @@ GBX:R:<tag>:<sha256-hex>
 |-----|----------------------|-----|
 | v30-gbx-7 | 00cf8408f0c1fb728ae38d701c73e30fc2b04cf66487e102a8f6011e35a542c4 | 738d7434a4e46cfc67c8f4c47ff55aaa596ef592f99409c23c8e3b446df419f6 |
 | v30-gbx-10 (anchored as `gbx-10`) | 278586e1571861d4f2f4c38fb9cd05fe8213d432084fcb571021db7568e527e4 | 72374fa90764de31295bad482ae335d6a5e9b3099872556cd199afbedd95dfc2 |
+| v31-gbx-launchpad (anchored as `v31`) | 40cee217f050e759e5b8d35283302d474b23095b6ec702473af73801b9664315 | 0b8cfced03ee2db2a60d4d0c16c1e85bc5f5a87a329b123cbd7a1f52f5d66893 |
 
 ## Verify (any node, no permission needed)
 
