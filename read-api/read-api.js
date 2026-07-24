@@ -442,6 +442,40 @@ const server = http.createServer(async (req, res) => {
         return res.end(JSON.stringify(out));
       } catch (e) { res.writeHead(500); return res.end('curve-index error'); }
     }
+    // per-coin trades + candles — chain-derived (curve_ops / curve_log / pool_log)
+    if (req.method === 'GET' && (url.pathname.startsWith('/api/trades/') || url.pathname.startsWith('/api/candles/'))) {
+      const dbp = process.env.GBX_TOKENIDX_DB;
+      if (!dbp) { res.writeHead(404); return res.end('not enabled'); }
+      try {
+        const { openTokenIndex } = require('./gbx-token-read.js');
+        if (!global.__gbxTokenIdx) global.__gbxTokenIdx = openTokenIndex(dbp);
+        let out;
+        if (url.pathname.startsWith('/api/trades/'))
+          out = global.__gbxTokenIdx.coinTrades(url.pathname.slice('/api/trades/'.length));
+        else
+          out = global.__gbxTokenIdx.coinCandles(url.pathname.slice('/api/candles/'.length),
+                  parseInt(url.searchParams.get('interval')||'1200',10)||1200);
+        if (!out) { res.writeHead(404); return res.end('unknown coin'); }
+        res.writeHead(200, {'Content-Type':'application/json'});
+        return res.end(JSON.stringify(out));
+      } catch (e) { res.writeHead(500); return res.end('trades error'); }
+    }
+    // federated leaderboard — burners/traders from curve_ops
+    if (req.method === 'GET' && url.pathname === '/api/leaderboard') {
+      const dbp = process.env.GBX_TOKENIDX_DB;
+      if (!dbp) { res.writeHead(404); return res.end('not enabled'); }
+      try {
+        const { openTokenIndex } = require('./gbx-token-read.js');
+        if (!global.__gbxTokenIdx) global.__gbxTokenIdx = openTokenIndex(dbp);
+        const kind = url.searchParams.get('kind') || 'burners';
+        const period = url.searchParams.get('period') || '24h';
+        const blocks = period === 'all' ? 0 : (period === '7d' ? 201600 : 28800);
+        const out = global.__gbxTokenIdx.leaderboard(kind, blocks);
+        if (!out) { res.writeHead(404); return res.end('unknown kind'); }
+        res.writeHead(200, {'Content-Type':'application/json'});
+        return res.end(JSON.stringify(out));
+      } catch (e) { res.writeHead(500); return res.end('leaderboard error'); }
+    }
     // 24h dashboard stats — chain-derived, keyless, per-node
     if (req.method === 'GET' && url.pathname === '/api/stats24') {
       const dbp = process.env.GBX_TOKENIDX_DB;

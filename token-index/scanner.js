@@ -122,6 +122,12 @@ function tokenWS(cid, amt, pk){
   return Buffer.concat([push(cid), push(a), Buffer.from([0x6d]), push(pk), Buffer.from([0xac])]);
 }
 const p2wsh = ws => '0020' + sha256(ws).toString('hex');
+const BURN_SPK = '0014' + '00'.repeat(20); // mirror of consensus CurveBurnScript
+function burnedAmount(tx){
+  let t=0n;
+  for (const o of tx.vout) if (((o.scriptPubKey||{}).hex||'')===BURN_SPK) t+=BigInt(Math.round(o.value*1e8));
+  return t;
+}
 
 // -- pool state (AMM after graduation) -- mirror of consensus PoolWitnessScript /
 // ParsePoolWitnessScript: <cid:32> <tokens:8 BE> OP_2DROP(6d) OP_TRUE(51).
@@ -236,6 +242,12 @@ CREATE TABLE IF NOT EXISTS pool_log(
   txid TEXT NOT NULL, vout INTEGER NOT NULL,
   gbx_sat TEXT NOT NULL, tokens TEXT NOT NULL);
 CREATE INDEX IF NOT EXISTS pl_h ON pool_log(height);
+CREATE TABLE IF NOT EXISTS curve_ops(
+  height INTEGER NOT NULL, txid TEXT NOT NULL, coin_id TEXT NOT NULL,
+  op TEXT NOT NULL, pk TEXT NOT NULL, amount TEXT NOT NULL,
+  tokens_out TEXT NOT NULL, burn_sat TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS co_h ON curve_ops(height);
+CREATE INDEX IF NOT EXISTS co_pk ON curve_ops(pk);
 `);
 try{ db.exec("ALTER TABLE curves ADD COLUMN creator_pk TEXT NOT NULL DEFAULT ''"); }catch(_e){}
 const q = {
@@ -274,6 +286,8 @@ const q = {
   pLast:    db.prepare('SELECT * FROM pool_log WHERE coin_id=? ORDER BY height DESC, rowid DESC LIMIT 1'),
   pAllIds:  db.prepare('SELECT DISTINCT coin_id FROM pool_log'),
   pDel:     db.prepare('DELETE FROM pools WHERE coin_id=?'),
+  opPut:    db.prepare('INSERT INTO curve_ops(height,txid,coin_id,op,pk,amount,tokens_out,burn_sat) VALUES(?,?,?,?,?,?,?,?)'),
+  opRb:     db.prepare('DELETE FROM curve_ops WHERE height > ?'),
   cLast:    db.prepare(`SELECT * FROM curve_log WHERE coin_id=? ORDER BY height DESC, rowid DESC LIMIT 1`),
   cAllIds:  db.prepare('SELECT DISTINCT coin_id FROM curve_log'),
   cAll:     db.prepare(`SELECT * FROM curves ORDER BY height`),
@@ -298,6 +312,7 @@ const rollbackTo = db.transaction(h => {
   q.rbNew.run(h); q.rbSpent.run(h); q.rbBlk.run(h);
   q.cRb.run(h);
   q.mRb.run(h);
+  q.opRb.run(h);
   q.pRb.run(h);
   for (const {coin_id} of q.pAllIds.all()){
     const last = q.pLast.get(coin_id);
@@ -380,6 +395,10 @@ const applyBlock = db.transaction((h, blk) => {
     }
     if (it && 'PQ'.includes(it.op) && !(LAUNCH_H > 0 && h < LAUNCH_H)){
       applyPoolOp(h, tx, it);
+    }
+    if (it && 'CBSRGPQ'.includes(it.op) && !(LAUNCH_H > 0 && h < LAUNCH_H)){
+      q.opPut.run(h, tx.txid, it.cid.toString('hex'), it.op, it.pk.toString('hex'),
+                  it.amount.toString(), it.tokensOut.toString(), burnedAmount(tx).toString());
     }
     const meta = parseMeta(tx);
     if (meta){

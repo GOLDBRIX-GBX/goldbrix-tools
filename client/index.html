@@ -16,8 +16,8 @@
 <meta property="og:title" content="GoldBrix — Autonomous Memecoin Launchpad">
 <meta property="og:description" content="Launch, trade and burn on an independent Proof-of-Work L1. Every fee burned, 100%. No company, no CEO.">
 <meta property="og:url" content="https://goldbrix.app/">
-<meta property="og:image" content="https://goldbrix.app/assets/brand/goldbrix-brand-512.png?v=113">
-<meta property="og:image:secure_url" content="https://goldbrix.app/assets/brand/goldbrix-brand-512.png?v=113">
+<meta property="og:image" content="https://goldbrix.app/assets/brand/goldbrix-brand-512.png?v=114">
+<meta property="og:image:secure_url" content="https://goldbrix.app/assets/brand/goldbrix-brand-512.png?v=114">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="512">
 <meta property="og:image:height" content="512">
@@ -25,7 +25,7 @@
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="GoldBrix — Autonomous Memecoin Launchpad">
 <meta name="twitter:description" content="Launch, trade and burn on an independent L1. Every fee burned, 100%.">
-<meta name="twitter:image" content="https://goldbrix.app/assets/brand/goldbrix-brand-512.png?v=113">
+<meta name="twitter:image" content="https://goldbrix.app/assets/brand/goldbrix-brand-512.png?v=114">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   body { background: #1c1610; color: #fff; font-family: 'Inter', -apple-system, sans-serif; min-height: 100vh; padding-bottom: 80px; }
@@ -158,9 +158,39 @@
     <script src="/gbx-update-check.js" defer></script>
     <script src="/gbx-native-bridge.js" defer></script>
     <script src="/gbx-chat-notify.js" defer></script>
-      <script src="/i18n.js?v=113" defer></script>
-  <script src="/v3/gbx-read.js?v=113" defer></script>
-  <script src="/promo-banner.js?v=113" defer></script>
+      <script src="/i18n.js?v=114" defer></script>
+  <script src="/v3/gbx-read.js?v=114" defer></script>
+<script>
+// Federated data adapter: the old dashboard reads the chain through the
+// federation layer (gbx-read) — /api/curves + /api/pools + /api/stats24.
+// Serves the legacy coin shape so every renderer keeps working unchanged.
+window.GBXFed=(function(){
+  var C=null,T=0,S=null,TS=0;
+  async function j(p){
+    for(var i=0;i<20&&!window.GBXRead;i++)await new Promise(function(r){setTimeout(r,100);});
+    if(window.GBXRead) return await window.GBXRead.json(p);
+    return await (await fetch(p)).json();
+  }
+  async function coins(){
+    if(C&&Date.now()-T<15000)return C;
+    var cd=await j('/api/curves'); var pools={};
+    try{ ((await j('/api/pools')).pools||[]).forEach(function(p){pools[p.coin_id]=p;}); }catch(e){}
+    C=(cd.curves||[]).map(function(c){
+      var p=pools[c.coin_id], g=(c.status==='graduated');
+      return { id:c.coin_id, ticker:c.ticker||c.coin_id.slice(0,6).toUpperCase(), name:c.name||'',
+        graduated:g, holders:c.holders||0, height:c.height||0,
+        reserve_gbx: (g&&p) ? Number(p.gbx_sat)/1e8 : Number(c.reserve_sat||0)/1e8,
+        market_cap_gbx:null, image_url:null,
+        created_at: (cd.scanned&&c.height) ? (Date.now()-(cd.scanned-c.height)*3000) : null,
+        change_24h:null };
+    });
+    T=Date.now(); return C;
+  }
+  async function stats(){ if(S&&Date.now()-TS<15000)return S; S=await j('/api/stats24'); TS=Date.now(); return S; }
+  return {coins:coins,stats:stats};
+})();
+</script>
+  <script src="/promo-banner.js?v=114" defer></script>
 <style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
 </head>
 <body>
@@ -244,7 +274,7 @@
 <div class="bubble-wrap" id="gradBubbleWrap" style="display:none;"><div class="loading">...</div></div>
 <script>
 (function(){
-  var API='https://goldbrix.app';
+  var API='';
   var L=(localStorage.getItem('gbx_lang')||'en');
   var GT={en:'ROAD TO GRADUATION',ro:'DRUM SPRE ABSOLVIRE',de:'WEG ZUR GRADUIERUNG',zh:'毕业之路',ar:'الطريق إلى التخرج'};
   function renderGradBubbles(coins){
@@ -284,7 +314,7 @@
   }
   async function loadGradMap(){
     try{
-      var r=await fetch(API+'/v2/memecoin/list?limit=500'); var d=await r.json(); var coins=(d.coins||d.list||[]);
+      var coins=await window.GBXFed.coins();
       var t=document.getElementById('gradMapTitle'), w=document.getElementById('gradBubbleWrap');
       var cl=coins.filter(function(c){ return !c.graduated && (c.reserve_gbx||0)>0; });
       if(!cl.length){ if(t)t.style.display='none'; if(w)w.style.display='none'; return; }
@@ -327,7 +357,7 @@
   </div>
   <div style="color:#5cc8e8;font-size:20px;opacity:0.7;">→</div>
 </div>
-<script>(function(){var L=localStorage.getItem('gbx_lang')||'en';var T={en:{t:'💬 COMMUNITY CHAT GOLDBRIX',s:'Talk to traders worldwide · auto-translated'},ro:{t:'💬 CHAT COMUNITATE GOLDBRIX',s:'Vorbește cu traderi din toată lumea · auto-tradus'},de:{t:'💬 COMMUNITY-CHAT GOLDBRIX',s:'Sprich mit Tradern weltweit · auto-übersetzt'},zh:{t:'💬 GOLDBRIX 社区聊天',s:'与全球交易者交谈 · 自动翻译'},ar:{t:'💬 دردشة مجتمع GOLDBRIX',s:'تحدث مع المتداولين حول العالم · ترجمة تلقائية'}};var x=T[L]||T.en;var a=document.getElementById('h_chatTitle');var b=document.getElementById('h_chatSub');if(a)a.textContent=x.t;if(b)b.textContent=x.s;})();</script>
+<script>(function(){var L=localStorage.getItem('gbx_lang')||'en';var T={en:{t:'\ud83d\udce1 CHAT \u2192 FEDERATION',s:'Central server retired \u00b7 returns federated after activation'},ro:{t:'\ud83d\udce1 CHAT \u2192 FEDERA\u021aIE',s:'Server central retras \u00b7 revine federat dup\u0103 activare'},de:{t:'\ud83d\udce1 CHAT \u2192 F\u00d6DERATION',s:'Zentraler Server stillgelegt \u00b7 kehrt f\u00f6deriert zur\u00fcck'},zh:{t:'\ud83d\udce1 \u804a\u5929 \u2192 \u8054\u90a6',s:'\u4e2d\u5fc3\u670d\u52a1\u5668\u5df2\u9000\u5f79 \u00b7 \u6fc0\u6d3b\u540e\u4ee5\u8054\u90a6\u5f62\u5f0f\u56de\u5f52'},ar:{t:'\ud83d\udce1 \u0627\u0644\u062f\u0631\u062f\u0634\u0629 \u2190 \u0627\u0644\u0627\u062a\u062d\u0627\u062f',s:'\u062a\u0645 \u0625\u064a\u0642\u0627\u0641 \u0627\u0644\u062e\u0627\u062f\u0645 \u0627\u0644\u0645\u0631\u0643\u0632\u064a \u00b7 \u062a\u0639\u0648\u062f \u0627\u062a\u062d\u0627\u062f\u064a\u0629 \u0628\u0639\u062f \u0627\u0644\u062a\u0641\u0639\u064a\u0644'}};var x=T[L]||T.en;var a=document.getElementById('h_chatTitle');var b=document.getElementById('h_chatSub');if(a)a.textContent=x.t;if(b)b.textContent=x.s;})();</script>
 <!-- NEW LAUNCHES -->
 
 <!-- BUBBLE MAP (moved before search) -->
@@ -353,7 +383,7 @@
 
 <script>
 (function() {
-  var API = 'https://goldbrix.app';
+  var API = '';
   var GBX_USD = 0.10;
   var allCoins = [];
   var currentSort = 'reserve_gbx';
@@ -413,26 +443,15 @@
       }
     } catch(_) {}
     try {
-      var [coinsR, burnsR] = await Promise.all([
-        fetch(API + '/v2/memecoin/list?limit=500'),
-        fetch(API + '/v2/memecoin/burns/stats')
-      ]);
-      var coinsD = await coinsR.json();
-      var burnsD = await burnsR.json();
-      if (coinsD.ok) {
-        allCoins = coinsD.coins || [];
-        document.getElementById('kpi-coins').textContent = allCoins.length;
-        var tvlGbx = allCoins.reduce(function(a,c){ return a+(c.reserve_gbx||0); }, 0);
-        document.getElementById('kpi-tvl').textContent = fmtUSD(tvlGbx * GBX_USD);
-      }
-      if (burnsD.ok) document.getElementById('kpi-burned').textContent = fmt(burnsD.all_time_gbx,0)+' GBX';
-      // 24h volume
-      var volR = await fetch(API + '/v2/memecoin/leaderboard/coins?metric=volume&period=24h&limit=100');
-      var volD = await volR.json();
-      if (volD.ok) {
-        var totalVol = volD.coins.reduce(function(a,c){ return a+(c.volume_gbx||0); }, 0);
-        document.getElementById('kpi-vol').textContent = fmtUSD(totalVol * GBX_USD);
-      }
+      var st = await window.GBXFed.stats();
+      allCoins = await window.GBXFed.coins();
+      document.getElementById('kpi-coins').textContent = allCoins.length;
+      document.getElementById('kpi-tvl').textContent = fmtUSD(Number(st.tvl_sat||0)/1e8 * GBX_USD);
+      document.getElementById('kpi-vol').textContent = fmtUSD(Number(st.vol24_sat||0)/1e8 * GBX_USD);
+      try {
+        var burnsD = await (await fetch(API + '/v2/memecoin/burns/stats')).json();
+        if (burnsD.ok) document.getElementById('kpi-burned').textContent = fmt(burnsD.all_time_gbx,0)+' GBX';
+      } catch(_) {}
       // GBX-PERF-LOCK Strat3 — scrie KPI in cache pt render instant next load
       try {
         localStorage.setItem('gbx_cache_kpi', JSON.stringify({
@@ -544,7 +563,7 @@
         grads.sort(function(a,b){ return (b.market_cap_gbx||b.reserve_gbx||0) - (a.market_cap_gbx||a.reserve_gbx||0); });
         box.innerHTML = grads.map(function(c) {
           var img = c.image_url ? '<img loading="lazy" src="'+c.image_url+'" alt="">' : (c.ticker||'?').charAt(0);
-          var mcGbx = c.market_cap_gbx || (c.reserve_gbx||0) * 100;
+          var mcGbx = c.reserve_gbx||0; // honest: pool/curve liquidity, no synthetic cap
           return '<div class="coin-row" onclick="window.location.href=\'/v3/trade.html?coin='+c.id+'\'">' +
             '<div class="coin-img">'+img+'</div>' +
             '<div class="coin-main">' +
@@ -557,14 +576,11 @@
         box.dataset.loaded='1';
         return;
       }
-      var url;
-      if (currentSort === 'volume') url = API + '/v2/memecoin/leaderboard/coins?metric=volume&period=24h&limit=20';
-      else if (currentSort === 'holders') url = API + '/v2/memecoin/leaderboard/coins?metric=holders&limit=20';
-      else if (currentSort === 'reserve_gbx') url = API + '/v2/memecoin/list?sort=reserve_gbx&limit=20';
-      else url = API + '/v2/memecoin/list?sort=created_at&limit=20';
-      var r = await fetch(url);
-      var d = await r.json();
-      var coins = d.coins || [];
+      var coins = (await window.GBXFed.coins()).slice();
+      if (currentSort === 'holders') coins.sort(function(a,b){ return (b.holders||0)-(a.holders||0); });
+      else if (currentSort === 'created_at') coins.sort(function(a,b){ return (b.height||0)-(a.height||0); });
+      else coins.sort(function(a,b){ return (b.reserve_gbx||0)-(a.reserve_gbx||0); });
+      coins = coins.slice(0, 20);
       if (!coins.length) { box.innerHTML = '<div class="empty">No coins yet.</div>'; return; }
       box.innerHTML = coins.map(function(c) {
         var img = c.image_url ? '<img loading="lazy" src="'+c.image_url+'" alt="">' : (c.ticker||'?').charAt(0);
@@ -576,7 +592,7 @@
         if (ch == null) chHtml = '<div class="coin-stats" style="color:#fff;">-- 24h</div>';
         else if (ch > 0) chHtml = '<div class="coin-stats" style="color:#1DB954;font-weight:800;">↑ +'+ch.toFixed(2)+'%</div>';
         else chHtml = '<div class="coin-stats" style="color:#FF3B3B;font-weight:800;">↓ '+ch.toFixed(2)+'%</div>';
-        var mcGbx = c.market_cap_gbx || (c.reserve_gbx||0) * 100;
+        var mcGbx = c.reserve_gbx||0; // honest: pool/curve liquidity, no synthetic cap
         var meta = '<div class="coin-price">'+fmt(mcGbx,2)+' GBX</div>'+chHtml;
         return '<div class="coin-row" onclick="window.location.href=\'/v3/trade.html?coin='+c.id+'\'">' +
           '<div class="coin-img">'+img+'</div>' +
@@ -746,7 +762,7 @@
   setInterval(function(){ renderNewLaunches(); renderGraduated(); renderBubbles(); }, 30000);
 })();
 </script>
-<script src="/v3/pwa.js?v=113" defer></script>
+<script src="/v3/pwa.js?v=114" defer></script>
 
 
 
@@ -902,9 +918,7 @@ async function loadPromoteCoinList() {
   const list = document.getElementById('promoCoinList');
   list.innerHTML = '<div style="text-align:center;padding:20px;color:#bbb;font-size:12px;">' + ((window.t&&window.t('promo_loading'))||'Loading...') + '</div>';
   try {
-    const r = await fetch('https://goldbrix.app/launchpad/coins');
-    const data = await r.json();
-    window.allPromoteCoins = (data.coins || []).filter(c => !c.graduated);
+    window.allPromoteCoins = (await window.GBXFed.coins()).filter(c => !c.graduated);
     const inp = document.getElementById('promoSearch');
     if (inp) inp.value = '';
     filterPromoteCoins();

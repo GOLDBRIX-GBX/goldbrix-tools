@@ -108,6 +108,75 @@ function openTokenIndex(dbPath){
       }
       return out;
     },
+    coinTrades(coinId, limit = 100){
+      // every consensus-guarded op on this coin, newest first — who bought/sold, from the chain
+      if (!/^[0-9a-f]{64}$/.test(coinId)) return null;
+      let rows=[];
+      try{ rows = db.prepare('SELECT height, txid, op, pk, amount, tokens_out, burn_sat FROM curve_ops WHERE coin_id=? ORDER BY height DESC, rowid DESC LIMIT ?').all(coinId, Math.min(limit,500)); }catch(_e){ return { ok:true, trades: [] }; }
+      return { ok:true, scanned: parseInt(q.meta.get('scanned')?.v ?? '0', 10),
+        trades: rows.map(r=>({height:r.height, txid:r.txid, op:r.op, pk:r.pk,
+          amount:String(r.amount), tokens:String(r.tokens_out), burn_sat:String(r.burn_sat)})) };
+    },
+    coinCandles(coinId, interval = 1200, limit = 96){
+      // OHLC in sat/token from the coin's own life: curve_log (spot from reserve)
+      // + pool_log (spot = gbx/tokens). interval in blocks (1200 blocks ~ 1h at 3s).
+      if (!/^[0-9a-f]{64}$/.test(coinId)) return null;
+      const pts=[];
+      const V=3000000000000n, VT=1073000000n, KC=V*VT;
+      try{
+        for (const l of db.prepare('SELECT height, reserve, status FROM curve_log WHERE coin_id=? ORDER BY height').all(coinId)){
+          if (l.status==='graduated'||l.status==='closed') continue;
+          const R=BigInt(l.reserve); const cur=V+R;
+          pts.push({h:l.height, p:Number(cur*cur)/Number(KC)});
+        }
+      }catch(_e){}
+      try{
+        for (const l of db.prepare('SELECT height, gbx_sat, tokens FROM pool_log WHERE coin_id=? ORDER BY height').all(coinId)){
+          if (BigInt(l.tokens)>0n) pts.push({h:l.height, p:Number(l.gbx_sat)/Number(l.tokens)});
+        }
+      }catch(_e){}
+      pts.sort((a,b)=>a.h-b.h);
+      if (!pts.length) return { ok:true, candles: [] };
+      const out=[]; let cur=null;
+      for (const pt of pts){
+        const bucket = Math.floor(pt.h/interval)*interval;
+        if (!cur || cur.t!==bucket){
+          if (cur) out.push(cur);
+          cur={t:bucket, o:(out.length?out[out.length-1].c:pt.p), h:pt.p, l:pt.p, c:pt.p};
+        }
+        cur.h=Math.max(cur.h,pt.p); cur.l=Math.min(cur.l,pt.p); cur.c=pt.p;
+      }
+      out.push(cur);
+      return { ok:true, scanned: parseInt(q.meta.get('scanned')?.v ?? '0', 10), candles: out.slice(-limit) };
+    },
+    leaderboard(kind, blocks = 28800){
+      // federated leaderboard, straight from curve_ops (chain-derived, reorg-safe).
+      const tip = parseInt(q.meta.get('scanned')?.v ?? '0', 10);
+      const since = (blocks > 0) ? tip - blocks : -1;
+      let ops = [];
+      try{ ops = db.prepare('SELECT * FROM curve_ops WHERE height > ?').all(since); }catch(_e){ return { ok:true, scanned:tip, items:[] }; }
+      if (kind === 'burners'){
+        const by={};
+        for (const o of ops){ const b=BigInt(o.burn_sat); if(b<=0n) continue;
+          by[o.pk]=(by[o.pk]||0n)+b; }
+        const items=Object.keys(by).map(pk=>({pk, burned_sat: by[pk].toString()}))
+          .sort((a,b)=> (BigInt(b.burned_sat)>BigInt(a.burned_sat)?1:-1)).slice(0,50);
+        return { ok:true, scanned:tip, items };
+      }
+      if (kind === 'traders'){
+        const by={};
+        for (const o of ops){
+          if(!'BSPQ'.includes(o.op)) continue;
+          const r=by[o.pk]||(by[o.pk]={pk:o.pk, trades:0, gbx_sat:0n});
+          r.trades++;
+          if (o.op==='B'||o.op==='P') r.gbx_sat+=BigInt(o.amount);
+        }
+        const items=Object.values(by).map(r=>({pk:r.pk, trades:r.trades, gbx_sat:r.gbx_sat.toString()}))
+          .sort((a,b)=>b.trades-a.trades).slice(0,50);
+        return { ok:true, scanned:tip, items };
+      }
+      return null;
+    },
     stats24(blocks24 = 28800){
       // honest 24h dashboard numbers, straight from the index (chain-derived).
       // TVL = live curve reserves + AMM pool reserves. Volume = sum of absolute

@@ -114,11 +114,30 @@ canvas{width:100%;height:150px;background:var(--card2);border:1px solid var(--li
     <div class="gnote" id="gGraduated" style="display:none;color:var(--gold)" data-x="g.done">Graduated — the liquidity moved to the open pool. This history is the curve's life.</div>
   </div>
 
+  <!-- PRICE · OHLC -->
+  <div class="card">
+    <div class="sect" data-x="s.price">Price · candles</div>
+    <canvas id="candles" width="520" height="170"></canvas>
+    <div class="gnote" data-x="p.note">sat per token — the coin's whole life, curve and pool, from the chain alone.</div>
+  </div>
+
   <!-- CHART -->
   <div class="card">
     <div class="sect" data-x="s.chart">Curve history</div>
     <canvas id="chart" width="520" height="150"></canvas>
     <div class="gnote" data-x="c.note">Reserve over time, read from the chain alone.</div>
+  </div>
+
+  <!-- RECENT TRADES -->
+  <div class="card">
+    <div class="sect" data-x="s.trades">Recent trades</div>
+    <div id="tradesList" class="gnote">—</div>
+  </div>
+
+  <!-- TOP HOLDERS -->
+  <div class="card">
+    <div class="sect" data-x="s.holders">Top holders</div>
+    <div id="holdersList" class="gnote">—</div>
   </div>
 
   <!-- TRADE -->
@@ -181,7 +200,7 @@ en:{loading:'reading the chain…','r.price':'Price','r.liq':'Curve liquidity','
  's.grad':'Graduation · honest',
  'g.note':'The target is alive: it is 20× the largest trade of the last ~7 days (never less than 2,000 GBX). A whale raising the price raises its own bar. No fixed sum, ever.',
  'g.done':'Graduated — the liquidity moved to the open pool. This history is the curve\u2019s life.',
- 's.chart':'Curve history','c.note':'Reserve over time, read from the chain alone.',
+ 's.chart':'Curve history','c.note':'Reserve over time, read from the chain alone.','s.price':'Price \u00b7 candles','p.note':'sat per token \u2014 the coin\u2019s whole life, curve and pool, from the chain alone.','s.trades':'Recent trades','s.holders':'Top holders','o.create':'CREATE','o.refund':'REFUND','o.grad':'GRADUATE','w.you':'you',
  't.buy':'BUY','t.sell':'SELL','a.buy':'Amount (GBX)','a.sell':'Amount (tokens)',
  'i.title':'Your position moves the price','i.get':'You receive','i.avg':'Average execution price',
  'i.fee':'0.5% burned forever',
@@ -198,7 +217,7 @@ ro:{loading:'citesc lanțul…','r.price':'Preț','r.liq':'Lichiditatea curbei',
  's.grad':'Graduare · onestă',
  'g.note':'Ținta e vie: e 20× cel mai mare trade din ultimele ~7 zile (niciodată sub 2.000 GBX). Balena care urcă prețul își urcă propriul prag. Nicio sumă fixă, niciodată.',
  'g.done':'Graduat — lichiditatea s-a mutat în pool-ul deschis. Istoricul de aici e viața curbei.',
- 's.chart':'Istoricul curbei','c.note':'Rezerva în timp, citită doar din lanț.',
+ 's.chart':'Istoricul curbei','c.note':'Rezerva în timp, citită doar din lanț.','s.price':'Preț \u00b7 lumânări','p.note':'sat per token \u2014 toată viața coin-ului, curbă și pool, doar din lanț.','s.trades':'Tranzacții recente','s.holders':'Top deținători','o.create':'CREARE','o.refund':'REFUND','o.grad':'GRADUARE','w.you':'tu',
  't.buy':'CUMPĂRĂ','t.sell':'VINDE','a.buy':'Sumă (GBX)','a.sell':'Sumă (tokens)',
  'i.title':'Poziția ta mișcă prețul','i.get':'Primești','i.avg':'Preț mediu de execuție',
  'i.fee':'0,5% ars pentru totdeauna',
@@ -215,7 +234,7 @@ de:{loading:'lese die Chain…','r.price':'Preis','r.liq':'Kurven-Liquidität','
  's.grad':'Graduierung · ehrlich',
  'g.note':'Das Ziel lebt: es ist 20× der größte Trade der letzten ~7 Tage (nie unter 2.000 GBX). Ein Wal, der den Preis hebt, hebt seine eigene Latte. Nie eine feste Summe.',
  'g.done':'Graduiert — die Liquidität ist in den offenen Pool gewandert. Diese Historie ist das Leben der Kurve.',
- 's.chart':'Kurven-Historie','c.note':'Reserve über die Zeit, allein von der Chain gelesen.',
+ 's.chart':'Kurven-Historie','c.note':'Reserve über die Zeit, allein von der Chain gelesen.','s.price':'Preis \u00b7 Kerzen','p.note':'sat pro Token \u2014 das ganze Leben der Münze, Kurve und Pool, allein von der Chain.','s.trades':'Letzte Trades','s.holders':'Top-Halter','o.create':'ERSTELLEN','o.refund':'ERSTATTUNG','o.grad':'GRADUIERUNG','w.you':'du',
  't.buy':'KAUFEN','t.sell':'VERKAUFEN','a.buy':'Betrag (GBX)','a.sell':'Betrag (Tokens)',
  'i.title':'Deine Position bewegt den Preis','i.get':'Du erhältst','i.avg':'Durchschnittlicher Ausführungspreis',
  'i.fee':'0,5% für immer verbrannt',
@@ -232,7 +251,7 @@ zh:{loading:'正在读取链…','r.price':'价格','r.liq':'曲线流动性','r
  's.grad':'毕业 · 诚实',
  'g.note':'目标是活的：为最近约7天最大交易的20倍（绝不低于2,000 GBX）。鲸鱼抬价即抬高自己的门槛。永无固定金额。',
  'g.done':'已毕业——流动性已进入开放池。这段历史是曲线的一生。',
- 's.chart':'曲线历史','c.note':'储备随时间变化，仅从链上读取。',
+ 's.chart':'曲线历史','c.note':'储备随时间变化，仅从链上读取。','s.price':'价格 \u00b7 K线','p.note':'每代币 sat \u2014 币的一生，曲线与池，仅来自链上。','s.trades':'最近交易','s.holders':'主要持有者','o.create':'创建','o.refund':'退款','o.grad':'毕业','w.you':'你',
  't.buy':'买入','t.sell':'卖出','a.buy':'金额 (GBX)','a.sell':'数量（代币）',
  'i.title':'你的仓位会移动价格','i.get':'你将获得','i.avg':'平均成交价',
  'i.fee':'0.5% 永久销毁',
@@ -249,7 +268,7 @@ ar:{loading:'قراءة السلسلة…','r.price':'السعر','r.liq':'سي�
  's.grad':'التخرج · بأمانة',
  'g.note':'الهدف حي: إنه 20× أكبر صفقة في آخر ~7 أيام (لا يقل أبداً عن 2,000 GBX). الحوت الذي يرفع السعر يرفع عتبته. لا مبلغ ثابت أبداً.',
  'g.done':'تخرجت — انتقلت السيولة إلى المجمع المفتوح. هذا التاريخ هو حياة المنحنى.',
- 's.chart':'تاريخ المنحنى','c.note':'الاحتياطي عبر الزمن، يُقرأ من السلسلة وحدها.',
+ 's.chart':'تاريخ المنحنى','c.note':'الاحتياطي عبر الزمن، يُقرأ من السلسلة وحدها.','s.price':'السعر \u00b7 شموع','p.note':'sat لكل رمز \u2014 حياة العملة كاملة، المنحنى والمجمع، من السلسلة وحدها.','s.trades':'أحدث الصفقات','s.holders':'كبار الحائزين','o.create':'إنشاء','o.refund':'استرداد','o.grad':'تخرج','w.you':'أنت',
  't.buy':'شراء','t.sell':'بيع','a.buy':'المبلغ (GBX)','a.sell':'الكمية (رموز)',
  'i.title':'مركزك يحرك السعر','i.get':'ستستلم','i.avg':'متوسط سعر التنفيذ',
  'i.fee':'0.5% تُحرق للأبد',
@@ -336,8 +355,80 @@ function render(){
   $('gFill').style.width=Math.min(100,D.progress_pct)+'%';
   $('gNums').textContent=fmt(D.reserve_sat,0)+' / '+fmt(D.bar_sat,0)+' GBX';
   $('gPct').textContent=D.progress_pct.toFixed(1)+'%';
-  if(grad){$('gGraduated').style.display='block';$('tradeCard').style.display='none';}
+  if(grad){
+    $('gGraduated').style.display='block';
+    if(D.pool){ // dual phase: the market lives on, sourced from the AMM pool
+      $('tradeCard').style.display='block';
+      $('rPrice').textContent=(Number(D.pool.gbx_sat)/Number(D.pool.tokens)).toFixed(8)+' GBX';
+      $('rLiq').textContent=fmt(D.pool.gbx_sat,2)+' GBX';
+    } else {
+      $('tradeCard').style.display='none';
+    }
+  }
   drawChart();
+  loadExtras();
+}
+let _exT=0;
+async function loadExtras(){
+  if(Date.now()-_exT<10000)return; _exT=Date.now();
+  try{
+    const gj=async p=>{for(let i=0;i<20&&!window.GBXRead;i++)await new Promise(r=>setTimeout(r,100));
+      return window.GBXRead?await window.GBXRead.json(p):await (await fetch(p)).json();};
+    const [cd,td]=await Promise.all([gj('/api/candles/'+cid+'?interval=600'),gj('/api/trades/'+cid)]);
+    drawCandles((cd&&cd.candles)||[]);
+    renderTrades((td&&td.trades)||[]);
+  }catch(e){}
+  renderHolders();
+}
+function drawCandles(cs){
+  const cv=$('candles'); if(!cv)return; const ctx=cv.getContext('2d');
+  ctx.clearRect(0,0,cv.width,cv.height);
+  if(cs.length<1)return;
+  const lo=Math.min(...cs.map(c=>c.l)), hi=Math.max(...cs.map(c=>c.h))*1.02||1;
+  const W=cv.width-16, H=cv.height-20, X=i=>8+W*(i+0.5)/cs.length, Y=p=>8+H*(1-(p-lo)/Math.max(1e-9,hi-lo));
+  const bw=Math.max(2,Math.min(14,W/cs.length*0.6));
+  cs.forEach((c,i)=>{
+    const up=c.c>=c.o, col=up?'#4EE08C':'#FF5C5C';
+    ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(X(i),Y(c.h));ctx.lineTo(X(i),Y(c.l));ctx.stroke();
+    const y1=Y(Math.max(c.o,c.c)), y2=Y(Math.min(c.o,c.c));
+    ctx.fillRect(X(i)-bw/2, y1, bw, Math.max(1,y2-y1));
+  });
+  ctx.fillStyle='#9a8c6f';ctx.font='10px monospace';
+  ctx.fillText(hi.toFixed(hi<10?4:0),8,14);ctx.fillText(lo.toFixed(lo<10?4:0),8,cv.height-6);
+}
+function renderTrades(ts){
+  const el=$('tradesList'); if(!el)return;
+  if(!ts.length){el.textContent='—';return;}
+  const myPk=keys?Array.from(new Uint8Array(keys.publicKey),x=>x.toString(16).padStart(2,'0')).join(''):null;
+  el.innerHTML=ts.slice(0,25).map(t=>{
+    const buy=(t.op==='B'||t.op==='P'||t.op==='C'), sell=(t.op==='S'||t.op==='Q');
+    const lbl=buy?(t.op==='C'?tt('o.create'):tt('t.buy')):(sell?tt('t.sell'):(t.op==='G'?tt('o.grad'):tt('o.refund')));
+    const col=buy?'#4EE08C':(sell?'#FF5C5C':'var(--gold)');
+    const amt=(t.op==='S'||t.op==='Q'||t.op==='R')?(fmtT(t.amount)+' tk'):((Number(t.amount)/1e8).toFixed(2)+' GBX');
+    const who=(myPk&&t.pk===myPk)?tt('w.you'):(t.pk.slice(0,6)+'…'+t.pk.slice(-4));
+    return '<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)">'+
+      '<span style="color:'+col+';font-weight:700;min-width:70px">'+lbl+'</span>'+
+      '<span style="flex:1">'+amt+'</span>'+
+      '<span style="opacity:.8">'+who+'</span>'+
+      '<span style="opacity:.5">#'+t.height+'</span></div>';
+  }).join('');
+}
+function renderHolders(){
+  const el=$('holdersList'); if(!el)return;
+  const hs=(D&&D.holders_list)||[];
+  if(!hs.length){el.textContent='—';return;}
+  const myPk=keys?Array.from(new Uint8Array(keys.publicKey),x=>x.toString(16).padStart(2,'0')).join(''):null;
+  const tot=hs.reduce((a,h)=>a+Number(h.amount),0)||1;
+  el.innerHTML=hs.slice(0,20).map((h,i)=>{
+    const who=(myPk&&h.pk===myPk)?tt('w.you'):(h.pk.slice(0,6)+'…'+h.pk.slice(-4));
+    const pct=(Number(h.amount)/tot*100).toFixed(1);
+    return '<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)">'+
+      '<span style="opacity:.6;min-width:24px">'+(i+1)+'.</span>'+
+      '<span style="flex:1">'+who+'</span>'+
+      '<span>'+fmtT(h.amount)+'</span>'+
+      '<span style="color:var(--gold);min-width:52px;text-align:right">'+pct+'%</span></div>';
+  }).join('');
 }
 function drawChart(){
   const cv=$('chart'),ctx=cv.getContext('2d');
@@ -361,16 +452,19 @@ function refreshQuote(){
   const v=$('amt').value;
   $('impactCard').style.display='none';$('btnTrade').disabled=true;
   if(D===null)return;
+  const pool=(D.status==='graduated'&&D.pool)?D.pool:null;
   if(side==='buy'){
     const sat=gbxToSat(v); if(sat===null||sat<1n)return;
-    const q=C.quoteBuy(BigInt(D.reserve_sat),sat);
+    const q=pool?C.quotePoolBuy(BigInt(pool.gbx_sat),BigInt(pool.tokens),sat)
+                :C.quoteBuy(BigInt(D.reserve_sat),sat);
     if(q.ok===false)return;
     showImpact(q, fmtT(q.tokensOut)+' tokens', fmt(q.feeSat)+' GBX');
   }else{
     const tok=/^\d+$/.test(v.trim())?BigInt(v.trim()):null;
     if(tok===null||tok<1n)return;
     if(myHolding===null||tok>BigInt(myHolding.amount)){toast(tt('e.notoken'));return;}
-    const q=C.quoteSell(BigInt(D.reserve_sat),tok);
+    const q=pool?C.quotePoolSell(BigInt(pool.gbx_sat),BigInt(pool.tokens),tok)
+                :C.quoteSell(BigInt(D.reserve_sat),tok);
     if(q.ok===false)return;
     showImpact(q, fmt(q.netOut)+' GBX', fmt(q.feeSat)+' GBX');
   }
@@ -432,16 +526,24 @@ async function execute(){
     const utxos=raw.filter(u=>u.spendable!==false).map(u=>({txid:u.txid,vout:u.vout,value8:Math.round(u.amount*1e8)}));
     const curve={cid:C.unhex(cid),cidHex:cid,txid:D.curve_txid,vout:D.curve_vout,
       reserve:BigInt(D.reserve_sat),m:BigInt(D.m_sat),hM:D.h_m,tipHeight:tpl.height};
+    const pool=(D.status==='graduated'&&D.pool)
+      ?{cid:C.unhex(cid),cidHex:cid,txid:D.pool.pool_txid,vout:D.pool.pool_vout,
+        gbxSat:BigInt(D.pool.gbx_sat),tokens:BigInt(D.pool.tokens)}:null;
     let built,inputsTyped;
     if(side==='buy'){
       const sat=gbxToSat($('amt').value);
-      built=await F.buildBuyTx({curve,gbxInSat:sat,utxos,pkU,K:201600,p2wpkhSpkOf:()=>spkU});
-      inputsTyped=built.inputsCurveFirst.map((u,i)=>i===0?{...u,kind:'curve',ws:C.unhex(built.oldWsHex)}:{...u,kind:'p2wpkh'});
+      built=pool
+        ?await F.buildPoolBuyTx({pool,gbxInSat:sat,utxos,pkU,p2wpkhSpkOf:()=>spkU})
+        :await F.buildBuyTx({curve,gbxInSat:sat,utxos,pkU,K:201600,p2wpkhSpkOf:()=>spkU});
+      const insArr=pool?built.inputsPoolFirst:built.inputsCurveFirst;
+      inputsTyped=insArr.map((u,i)=>i===0?{...u,kind:'curve',ws:C.unhex(built.oldWsHex)}:{...u,kind:'p2wpkh'});
     }else{
       myHolding=await findMyHolding();
       if(myHolding===null){toast(tt('e.notoken'));cleanup();return;}
       const tok=BigInt($('amt').value.trim());
-      built=await F.buildSellTx({curve,holding:myHolding,tokensInSat:tok,utxos,pkU,K:201600,p2wpkhSpkOf:()=>spkU});
+      built=pool
+        ?await F.buildPoolSellTx({pool,holding:myHolding,tokensInSat:tok,utxos,pkU,p2wpkhSpkOf:()=>spkU})
+        :await F.buildSellTx({curve,holding:myHolding,tokensInSat:tok,utxos,pkU,K:201600,p2wpkhSpkOf:()=>spkU});
       inputsTyped=built.inputs.map((u,i)=>i===0?{...u,kind:'curve',ws:C.unhex(built.oldWsHex)}
         :(i===1?{...u,kind:'token',ws:C.unhex(built.tokenWsHex)}:{...u,kind:'p2wpkh'}));
     }
