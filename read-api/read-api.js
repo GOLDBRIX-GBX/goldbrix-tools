@@ -442,6 +442,21 @@ const server = http.createServer(async (req, res) => {
         return res.end(JSON.stringify(out));
       } catch (e) { res.writeHead(500); return res.end('curve-index error'); }
     }
+    // AMM pools after graduation — list + detail (same guard as curves)
+    if (req.method === 'GET' && (url.pathname === '/api/pools' || url.pathname.startsWith('/api/pools/'))) {
+      const dbp = process.env.GBX_TOKENIDX_DB;
+      if (!dbp) { res.writeHead(404); return res.end('not enabled'); }
+      try {
+        const { openTokenIndex } = require('./gbx-token-read.js');
+        if (!global.__gbxTokenIdx) global.__gbxTokenIdx = openTokenIndex(dbp);
+        let out;
+        if (url.pathname === '/api/pools') out = global.__gbxTokenIdx.poolsAll();
+        else out = global.__gbxTokenIdx.poolDetail(url.pathname.slice('/api/pools/'.length));
+        if (!out) { res.writeHead(404); return res.end('unknown pool'); }
+        res.writeHead(200, {'Content-Type':'application/json'});
+        return res.end(JSON.stringify(out));
+      } catch (e) { res.writeHead(500); return res.end('pool-index error'); }
+    }
     if (req.method === 'GET' && url.pathname === '/api/htlc-registry') {
       // GBX on-chain HTLC contract registry (GBX:HTLC: OP_RETURN). Read-only, keyless.
       try {

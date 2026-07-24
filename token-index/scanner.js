@@ -123,6 +123,86 @@ function tokenWS(cid, amt, pk){
 }
 const p2wsh = ws => '0020' + sha256(ws).toString('hex');
 
+// -- pool state (AMM after graduation) -- mirror of consensus PoolWitnessScript /
+// ParsePoolWitnessScript: <cid:32> <tokens:8 BE> OP_2DROP(6d) OP_TRUE(51).
+const POOL_LP = 200000000n, POOL_FEE_BPS = 30n;
+function poolWS(cid, tokens){
+  const t = Buffer.alloc(8); t.writeBigUInt64BE(tokens);
+  return Buffer.concat([push(cid), push(t), Buffer.from([0x6d, 0x51])]);
+}
+function parsePoolWS(buf){
+  try{
+    let i=0; const rd=n=>{ if(buf[i]!==n) throw 0; const d=buf.subarray(i+1,i+1+n); i+=1+n; return d; };
+    const id=rd(32), t=rd(8);
+    if (buf[i++]!==0x6d || buf[i++]!==0x51 || i!==buf.length) return null;
+    return { cid:id.toString('hex'), tokens:t.readBigUInt64BE() };
+  }catch{ return null; }
+}
+const ceilDiv = (a,b) => (a + b - 1n) / b;
+// consensus PoolBuy/PoolSell -- rounding always favours the pool (k monotone)
+function poolBuyCalc(g, t, gbxIn){
+  if (g<=0n||t<=0n||gbxIn<=0n) return null;
+  const k=g*t, ng=g+gbxIn, nt=ceilDiv(k, ng);
+  const out=t-nt; if (out<=0n) return null;
+  return { tokensOut: out, newGbx: ng, newTok: nt };
+}
+function poolSellCalc(g, t, tokIn){
+  if (g<=0n||t<=0n||tokIn<=0n) return null;
+  const k=g*t, nt=t+tokIn, ng=ceilDiv(k, nt);
+  const out=g-ng; if (out<=0n||out>g) return null;
+  return { gbxOut: out, newGbx: ng, newTok: nt };
+}
+const poolFee = gross => (gross*POOL_FEE_BPS)/10000n;
+// GRADUATE: find the newborn pool output. Every unit follows: pool value ==
+// curve reserve, so tokens = LP + (800M - sold(value)) derives from the output alone.
+function poolFromTx(h, tx, cidHex){
+  const cid = Buffer.from(cidHex,'hex');
+  for (const o of tx.vout){
+    const hex = (o.scriptPubKey && o.scriptPubKey.hex) || '';
+    if (!hex.startsWith('0020')) continue;
+    const v = BigInt(Math.round(o.value * 1e8));
+    if (v <= 0n) continue;
+    const sold = tokensSold(v);
+    if (sold < 0n || sold > CURVE_TOKENS) continue;
+    const t = POOL_LP + (CURVE_TOKENS - sold);
+    if (p2wsh(poolWS(cid, t)) !== hex) continue;
+    q.pPut.run(cidHex, tx.txid, o.n, v.toString(), t.toString(), h);
+    q.pLog.run(h, cidHex, tx.txid, o.n, v.toString(), t.toString());
+    return true;
+  }
+  return false;
+}
+// POOL_BUY(P) / POOL_SELL(Q): prev pool = DB row for the spent outpoint (gbx side)
+// + revealed witness (token side); recompute the consensus transition, record output.
+function applyPoolOp(h, tx, it){
+  const cidHex = it.cid.toString('hex');
+  for (const vin of (tx.vin||[])){
+    const wit = vin.txinwitness; if (!wit || !wit.length) continue;
+    const pw = parsePoolWS(Buffer.from(wit[wit.length-1],'hex'));
+    if (!pw || pw.cid !== cidHex) continue;
+    const prev = q.pByOut.get(vin.txid, vin.vout);
+    if (!prev){ console.error('[tokenidx] pool op without known pool state', cidHex.slice(0,16)); return; }
+    const g = BigInt(prev.gbx_sat);
+    let next = null;
+    if (it.op === 'P'){
+      const net = it.amount - poolFee(it.amount);
+      next = poolBuyCalc(g, pw.tokens, net);
+    } else {
+      next = poolSellCalc(g, pw.tokens, it.amount);
+    }
+    if (!next) return;
+    const spk = p2wsh(poolWS(it.cid, next.newTok));
+    for (const o of tx.vout){
+      if ((((o.scriptPubKey||{}).hex)||'') !== spk) continue;
+      const v = BigInt(Math.round(o.value * 1e8));
+      q.pPut.run(cidHex, tx.txid, o.n, v.toString(), next.newTok.toString(), h);
+      q.pLog.run(h, cidHex, tx.txid, o.n, v.toString(), next.newTok.toString());
+      return;
+    }
+    return;
+  }
+}
+
 // -- state
 const db = new Database(DB_PATH);
 db.pragma('journal_mode = WAL');
@@ -148,6 +228,14 @@ CREATE TABLE IF NOT EXISTS curve_log(
   txid TEXT NOT NULL, vout INTEGER NOT NULL,
   reserve TEXT NOT NULL, m TEXT NOT NULL, h_m INTEGER NOT NULL, status TEXT NOT NULL);
 CREATE INDEX IF NOT EXISTS cl_h ON curve_log(height);
+CREATE TABLE IF NOT EXISTS pools(
+  coin_id TEXT PRIMARY KEY, txid TEXT NOT NULL, vout INTEGER NOT NULL,
+  gbx_sat TEXT NOT NULL, tokens TEXT NOT NULL, height INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS pool_log(
+  height INTEGER NOT NULL, coin_id TEXT NOT NULL,
+  txid TEXT NOT NULL, vout INTEGER NOT NULL,
+  gbx_sat TEXT NOT NULL, tokens TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS pl_h ON pool_log(height);
 `);
 try{ db.exec("ALTER TABLE curves ADD COLUMN creator_pk TEXT NOT NULL DEFAULT ''"); }catch(_e){}
 const q = {
@@ -178,6 +266,14 @@ const q = {
                         height=excluded.height, status=excluded.status`),
   cLog:     db.prepare('INSERT INTO curve_log(height,coin_id,txid,vout,reserve,m,h_m,status) VALUES(?,?,?,?,?,?,?,?)'),
   cRb:      db.prepare('DELETE FROM curve_log WHERE height > ?'),
+  pGet:     db.prepare('SELECT * FROM pools WHERE coin_id=?'),
+  pByOut:   db.prepare('SELECT * FROM pools WHERE txid=? AND vout=?'),
+  pPut:     db.prepare('INSERT INTO pools(coin_id,txid,vout,gbx_sat,tokens,height) VALUES(?,?,?,?,?,?) ON CONFLICT(coin_id) DO UPDATE SET txid=excluded.txid, vout=excluded.vout, gbx_sat=excluded.gbx_sat, tokens=excluded.tokens, height=excluded.height'),
+  pLog:     db.prepare('INSERT INTO pool_log(height,coin_id,txid,vout,gbx_sat,tokens) VALUES(?,?,?,?,?,?)'),
+  pRb:      db.prepare('DELETE FROM pool_log WHERE height > ?'),
+  pLast:    db.prepare('SELECT * FROM pool_log WHERE coin_id=? ORDER BY height DESC, rowid DESC LIMIT 1'),
+  pAllIds:  db.prepare('SELECT DISTINCT coin_id FROM pool_log'),
+  pDel:     db.prepare('DELETE FROM pools WHERE coin_id=?'),
   cLast:    db.prepare(`SELECT * FROM curve_log WHERE coin_id=? ORDER BY height DESC, rowid DESC LIMIT 1`),
   cAllIds:  db.prepare('SELECT DISTINCT coin_id FROM curve_log'),
   cAll:     db.prepare(`SELECT * FROM curves ORDER BY height`),
@@ -202,6 +298,12 @@ const rollbackTo = db.transaction(h => {
   q.rbNew.run(h); q.rbSpent.run(h); q.rbBlk.run(h);
   q.cRb.run(h);
   q.mRb.run(h);
+  q.pRb.run(h);
+  for (const {coin_id} of q.pAllIds.all()){
+    const last = q.pLast.get(coin_id);
+    if (last) q.pPut.run(coin_id, last.txid, last.vout, last.gbx_sat, last.tokens, last.height);
+    else q.pDel.run(coin_id);
+  }
   for (const {coin_id} of q.cAllIds.all()){
     const last = q.cLast.get(coin_id);
     if (last) q.cPut.run(coin_id, last.txid, last.vout, last.reserve, last.m, last.h_m, last.height, last.status);
@@ -243,7 +345,7 @@ const applyBlock = db.transaction((h, blk) => {
           const wit = vin.txinwitness; if(!wit || !wit.length) continue;
           const st = parseCurveWS(Buffer.from(wit[wit.length-1],'hex'));
           if (!st || st.cid !== cidHex) continue;
-          if (it.op === 'G'){ curveApply(h, tx, cidHex, st.m, st.hM, 'graduated'); break; }
+          if (it.op === 'G'){ curveApply(h, tx, cidHex, st.m, st.hM, 'graduated'); poolFromTx(h, tx, cidHex); break; }
           // B/S/R: consensus M-transition (REFUND never updates M)
           let m=st.m, hM=st.hM;
           if (it.op !== 'R'){
@@ -276,6 +378,9 @@ const applyBlock = db.transaction((h, blk) => {
         }
       }
     }
+    if (it && 'PQ'.includes(it.op) && !(LAUNCH_H > 0 && h < LAUNCH_H)){
+      applyPoolOp(h, tx, it);
+    }
     const meta = parseMeta(tx);
     if (meta){
       const row = q.cPk.get(meta.cid);
@@ -283,7 +388,7 @@ const applyBlock = db.transaction((h, blk) => {
           && !q.mGet.get(meta.cid) && !q.mTicker.get(meta.ticker))
         q.mPut.run(meta.cid, meta.ticker, meta.name, tx.txid, h);
     }
-    if (!it || !'CBPSR'.includes(it.op) || it.tokensOut <= 0n) continue;  // C,B,P mint tokens; S,R return change — every one of them creates a token UTXO
+    if (!it || !'CBPSRQ'.includes(it.op) || it.tokensOut <= 0n) continue;  // C,B,P mint; S,R,Q return change  // C,B,P mint tokens; S,R return change — every one of them creates a token UTXO
     if (LAUNCH_H > 0 && h < LAUNCH_H) continue; // pre-activation X ops are NOT consensus-guarded -> never minted
     const spk = p2wsh(tokenWS(it.cid, it.tokensOut, it.pk));
     for (const o of tx.vout)
@@ -345,6 +450,20 @@ function dump(){
       ` progress=${Math.min(pctR,100).toFixed(1)}% sold=${pctT.toFixed(2)}%`);
   }
 }
+// One-time recovery: a pool graduated before this index existed is rebuilt
+// deterministically from its graduate block. No extra state, no server.
+function bootstrapPools(){
+  for (const c of q.cAll.all()){
+    if (c.status !== 'graduated' || q.pGet.get(c.coin_id)) continue;
+    try{
+      const blk = cli('getblock', cli('getblockhash', c.height), 2);
+      const tx = (blk.tx||[]).find(t => t.txid === c.txid);
+      if (tx && poolFromTx(c.height, tx, c.coin_id))
+        console.log('[tokenidx] pool bootstrapped for', c.coin_id.slice(0,16));
+    }catch(e){ console.error('[tokenidx] pool bootstrap', e.message); }
+  }
+}
+bootstrapPools();
 if (MODE === '--oneshot'){ console.log(`[tokenidx] synced to ${syncOnce()}`); }
 else if (MODE === '--dump'){ dump(); }
 else { (async () => { for(;;){ try { syncOnce(); } catch(e){ console.error('[tokenidx]', e.message); } await new Promise(r=>setTimeout(r, POLL_MS)); } })(); }

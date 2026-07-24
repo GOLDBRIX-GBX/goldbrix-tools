@@ -46,6 +46,19 @@ function openTokenIndex(dbPath){
                              WHERE coin_id=? AND pk=? AND spent_height IS NULL
                              ORDER BY CAST(amount AS INTEGER) DESC LIMIT 50`),
   };
+  // AMM pools after graduation (pool-index tables); absent on older DBs -> null.
+  let pq = null;
+  try {
+    pq = {
+      all: db.prepare(`SELECT p.coin_id, p.txid, p.vout, p.gbx_sat, p.tokens, p.height,
+                              m.ticker, m.name
+                       FROM pools p LEFT JOIN coin_meta m ON m.coin_id=p.coin_id
+                       ORDER BY p.height DESC`),
+      one: db.prepare('SELECT * FROM pools WHERE coin_id=?'),
+      log: db.prepare(`SELECT height, txid, vout, gbx_sat, tokens FROM pool_log
+                       WHERE coin_id=? ORDER BY height ASC LIMIT ?`),
+    };
+  } catch (_e) { pq = null; }
   // honest graduation math — mirror of the scanner/consensus (BigInt, sats)
   const N=20n, R_MIN=200000000000n, K=201600, V_GBX=3000000000000n, V_TOKENS=1073000000n, KCURVE=V_GBX*V_TOKENS, CURVE_TOKENS=800000000n;
   function curveView(r, tip){
@@ -61,6 +74,13 @@ function openTokenIndex(dbPath){
              sold_tokens: soldTok.toString(),
              sold_pct: Number(soldTok*10000n/CURVE_TOKENS)/100,
              holders: r.holders };
+  }
+  function poolView(r){
+    return { coin_id:r.coin_id, ticker:r.ticker||null, name:r.name||null,
+             pool_txid:r.txid, pool_vout:r.vout, height:r.height,
+             gbx_sat:String(r.gbx_sat), tokens:String(r.tokens),
+             // spot price in sat per token (integer floor; quoting uses x*y=k)
+             price_sat: BigInt(r.tokens) > 0n ? (BigInt(r.gbx_sat)/BigInt(r.tokens)).toString() : '0' };
   }
   return {
     registry(){
@@ -82,6 +102,26 @@ function openTokenIndex(dbPath){
                  .map(l => ({height:l.height, reserve_sat:l.reserve, m_sat:l.m, h_m:l.h_m, status:l.status}));
       out.holders_list = q.holders.all(coinId, 100)
         .map(h => ({...h, utxo_list: q.holderUtxos.all(coinId, h.pk)}));
+      if (pq){
+        const p = pq.one.get(coinId);
+        if (p) out.pool = poolView({...p, ticker:r.ticker, name:r.name});
+      }
+      return out;
+    },
+    poolsAll(){
+      const tip = parseInt(q.meta.get('scanned')?.v ?? '0', 10);
+      if (!pq) return { scanned: tip, pools: [] };
+      return { scanned: tip, pools: pq.all.all().map(poolView) };
+    },
+    poolDetail(coinId, logLimit = 2000){
+      if (!pq || !/^[0-9a-f]{64}$/.test(coinId)) return null;
+      const p = pq.one.get(coinId);
+      if (!p) return null;
+      const r = q.curveOne.get(coinId);
+      const out = poolView({...p, ticker:r&&r.ticker, name:r&&r.name});
+      out.scanned = parseInt(q.meta.get('scanned')?.v ?? '0', 10);
+      out.log = pq.log.all(coinId, Math.min(logLimit, 5000))
+        .map(l => ({height:l.height, txid:l.txid, vout:l.vout, gbx_sat:String(l.gbx_sat), tokens:String(l.tokens)}));
       return out;
     },
     myCoins(pkHex){
