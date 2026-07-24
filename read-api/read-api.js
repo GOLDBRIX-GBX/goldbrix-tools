@@ -442,6 +442,17 @@ const server = http.createServer(async (req, res) => {
         return res.end(JSON.stringify(out));
       } catch (e) { res.writeHead(500); return res.end('curve-index error'); }
     }
+    // 24h dashboard stats — chain-derived, keyless, per-node
+    if (req.method === 'GET' && url.pathname === '/api/stats24') {
+      const dbp = process.env.GBX_TOKENIDX_DB;
+      if (!dbp) { res.writeHead(404); return res.end('not enabled'); }
+      try {
+        const { openTokenIndex } = require('./gbx-token-read.js');
+        if (!global.__gbxTokenIdx) global.__gbxTokenIdx = openTokenIndex(dbp);
+        res.writeHead(200, {'Content-Type':'application/json'});
+        return res.end(JSON.stringify(global.__gbxTokenIdx.stats24()));
+      } catch (e) { res.writeHead(500); return res.end('stats error'); }
+    }
     // AMM pools after graduation — list + detail (same guard as curves)
     if (req.method === 'GET' && (url.pathname === '/api/pools' || url.pathname.startsWith('/api/pools/'))) {
       const dbp = process.env.GBX_TOKENIDX_DB;

@@ -108,6 +108,41 @@ function openTokenIndex(dbPath){
       }
       return out;
     },
+    stats24(blocks24 = 28800){
+      // honest 24h dashboard numbers, straight from the index (chain-derived).
+      // TVL = live curve reserves + AMM pool reserves. Volume = sum of absolute
+      // reserve deltas over the last ~24h of blocks (3s blocks -> 28800).
+      const tip = parseInt(q.meta.get('scanned')?.v ?? '0', 10);
+      const since = tip - blocks24;
+      const db2 = db;
+      const liveTvl = db2.prepare("SELECT COALESCE(SUM(CAST(reserve AS INTEGER)),0) s, COUNT(*) n FROM curves WHERE status='live'").get();
+      const gradN  = db2.prepare("SELECT COUNT(*) n FROM curves WHERE status='graduated'").get();
+      let poolTvl = 0n, poolVol = 0n;
+      if (pq){
+        for (const p of pq.all.all()) poolTvl += BigInt(p.gbx_sat);
+        try{
+          const pl = db2.prepare('SELECT coin_id, height, gbx_sat FROM pool_log WHERE height > ? ORDER BY coin_id, height, rowid').all(since);
+          const prevP = {};
+          for (const r of pl){
+            if (prevP[r.coin_id] !== undefined) { const d = BigInt(r.gbx_sat) - prevP[r.coin_id]; poolVol += d < 0n ? -d : d; }
+            prevP[r.coin_id] = BigInt(r.gbx_sat);
+          }
+        }catch(_e){}
+      }
+      let curveVol = 0n;
+      const cl = db2.prepare('SELECT coin_id, height, reserve, status FROM curve_log WHERE height > ? ORDER BY coin_id, height, rowid').all(since);
+      const prevC = {};
+      for (const r of cl){
+        // graduation moves liquidity into the pool — a transfer, not trading volume
+        const isTransfer = r.status === 'graduated' || r.status === 'closed';
+        if (prevC[r.coin_id] !== undefined && !isTransfer){ const d = BigInt(r.reserve) - prevC[r.coin_id]; curveVol += d < 0n ? -d : d; }
+        prevC[r.coin_id] = BigInt(r.reserve);
+      }
+      return { scanned: tip,
+               tvl_sat: (BigInt(liveTvl.s||0) + poolTvl).toString(),
+               vol24_sat: (curveVol + poolVol).toString(),
+               live_coins: liveTvl.n, graduated_coins: gradN.n };
+    },
     poolsAll(){
       const tip = parseInt(q.meta.get('scanned')?.v ?? '0', 10);
       if (!pq) return { scanned: tip, pools: [] };
