@@ -244,9 +244,12 @@ export function buildCurveTx(inputs, outs, pkU, signDigest, nLockTime = 0){
 
 // ── GRADUATE: curve full OR R >= max(N*M_live, R_MIN) — checked by consensus.
 // Pool gets the ENTIRE reserve (fee comes from a separate user input). Anyone can call it.
-export function poolWitnessScript(cid){
-  // <push32 cid> OP_DROP OP_TRUE — mirror of consensus BuildPoolScript
-  const o = new Uint8Array(35); o[0]=32; o.set(cid,1); o[33]=0x75; o[34]=0x51; return o;
+export function poolWitnessScript(cid, poolTokens){
+  // <push32 cid> <push8 tokens BE> OP_2DROP OP_TRUE — exact mirror of consensus PoolWitnessScript
+  const o = new Uint8Array(44); o[0]=32; o.set(cid,1); o[33]=8;
+  let t=BigInt(poolTokens);
+  for(let i=0;i<8;i++) o[34+i]=Number((t>>BigInt((7-i)*8))&0xffn);
+  o[42]=0x6d; o[43]=0x51; return o;
 }
 export async function buildGraduateTx({ curve, utxos, pkU, p2wpkhSpkOf }){
   const it = intentPayload('G', curve.cid, BigInt(curve.reserve), 0n, pkU);
@@ -254,7 +257,10 @@ export async function buildGraduateTx({ curve, utxos, pkU, p2wpkhSpkOf }){
   const change = sum - TRADE_FEE_SAT;
   const outs = [];
   if (change > DUST_SAT) outs.push({ spk: p2wpkhSpkOf(pkU), value8: Number(change) });
-  outs.push({ spk: await p2wsh(poolWitnessScript(curve.cid)), value8: Number(curve.reserve) });
+  // consensus: pool_tokens = LP_TOKENS + (CURVE_TOKENS - sold(reserve_in))
+  const _sold = curveTokensSold(BigInt(curve.reserve));
+  const _poolTokens = 200000000n + (800000000n - BigInt(_sold));
+  outs.push({ spk: await p2wsh(poolWitnessScript(curve.cid, _poolTokens)), value8: Number(curve.reserve) });
   outs.push({ spk: opReturn(it.raw), value8: 0 });
   return { oldWsHex: hex(curveWitnessScript(curve.cid, BigInt(curve.m), curve.hM)),
            inputs: [{txid: curve.txid, vout: curve.vout, value8: Number(curve.reserve)}, ...ins],
