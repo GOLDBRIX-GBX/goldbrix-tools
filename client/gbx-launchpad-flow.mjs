@@ -110,6 +110,7 @@ export function buildMetaTx({ cidHex, ticker, name, utxos, pkU,
 // ── on-device BUY / SELL / REFUND (mirror of consensus + x_lib proven layouts) ──
 import { quoteBuy, quoteSell, curveSell, curveTokensSold, parseCurveWitnessScript as _pcws,
          curveWitnessScript as _cws } from './gbx-curve.mjs';
+import { quotePoolBuy, quotePoolSell } from './gbx-curve.mjs';
 
 export const TRADE_FEE_SAT = 50000n; // flat network fee, paid from user funds
 
@@ -264,5 +265,73 @@ export async function buildGraduateTx({ curve, utxos, pkU, p2wpkhSpkOf }){
   outs.push({ spk: opReturn(it.raw), value8: 0 });
   return { oldWsHex: hex(curveWitnessScript(curve.cid, BigInt(curve.m), curve.hM)),
            inputs: [{txid: curve.txid, vout: curve.vout, value8: Number(curve.reserve)}, ...ins],
+           outs };
+}
+
+// ── AMM pool trading after graduation — exact mirror of consensus CheckPoolTransition.
+// The pool script carries its own token side; spending reveals it, the transition
+// recreates the pool with EXACTLY the reserves the product dictates. Anyone can trade.
+export function parsePoolWitnessScript(ws, cidHex){
+  // <push32 cid> <push8 tokens BE> OP_2DROP OP_TRUE — 44 bytes
+  if (ws.length !== 44 || ws[0] !== 32 || ws[33] !== 8 || ws[42] !== 0x6d || ws[43] !== 0x51) return null;
+  if (hex(ws.slice(1,33)) !== cidHex) return null;
+  let t = 0n;
+  for (let i=0;i<8;i++) t = (t<<8n) | BigInt(ws[34+i]);
+  return { tokens: t };
+}
+
+// POOL_BUY: inputs [pool, user funds...] ->
+//   [change?, pool'(gbx+net, tokens'), token(tokensOut,pk), burn(fee), intent P]
+// consensus: intent.amount = GROSS GBX committed; fee (30 bps of gross) burned;
+// net enters the pool; zero token-inputs allowed.
+export async function buildPoolBuyTx({ pool, gbxInSat, utxos, pkU, p2wpkhSpkOf }){
+  const q = quotePoolBuy(pool.gbxSat, pool.tokens, gbxInSat);
+  if (q.ok === false) throw new Error('quote: ' + q.reason);
+  const oldWs = poolWitnessScript(pool.cid, BigInt(pool.tokens));
+  const st = parsePoolWitnessScript(oldWs, pool.cidHex);
+  if (st === null || st.tokens !== BigInt(pool.tokens)) throw new Error('verifyOwnPoolScript failed');
+  const newWs = poolWitnessScript(pool.cid, q.newTok);
+  const tokenWs = tokenWitnessScript(pool.cid, q.tokensOut, pkU);
+  const it = intentPayload('P', pool.cid, BigInt(gbxInSat), q.tokensOut, pkU);
+  const need = BigInt(gbxInSat) + DUST_SAT + TRADE_FEE_SAT;
+  const { ins, sum } = selectUtxos(utxos, need);
+  const change = sum - need;
+  const outs = [];
+  if (change > DUST_SAT) outs.push({ spk: p2wpkhSpkOf(pkU), value8: Number(change) });
+  outs.push({ spk: await p2wsh(newWs),   value8: Number(q.newGbx) });
+  outs.push({ spk: await p2wsh(tokenWs), value8: Number(DUST_SAT) });
+  outs.push({ spk: burnScript(),         value8: Number(q.feeSat) });
+  outs.push({ spk: opReturn(it.raw),     value8: 0 });
+  return { quote: q, oldWsHex: hex(oldWs),
+           inputsPoolFirst: [{txid: pool.txid, vout: pool.vout, value8: Number(pool.gbxSat)}, ...ins],
+           outs };
+}
+
+// POOL_SELL: inputs [pool, token, user fee funds] ->
+//   [change?, pool'(gbx-gross, tokens+sold), user net(gross-fee), token change?, burn(fee), intent Q]
+// consensus: intent.amount = tokens sold; intent.tokens_out = TOKEN CHANGE;
+// fee = 30 bps of the GROSS release, burned out of the released GBX.
+export async function buildPoolSellTx({ pool, holding, tokensInSat, utxos, pkU, p2wpkhSpkOf }){
+  const q = quotePoolSell(pool.gbxSat, pool.tokens, tokensInSat);
+  if (q.ok === false) throw new Error('quote: ' + q.reason);
+  const tokenRest = BigInt(holding.amount) - BigInt(tokensInSat);
+  if (tokenRest < 0n) throw new Error('not enough tokens');
+  const oldWs = poolWitnessScript(pool.cid, BigInt(pool.tokens));
+  const newWs = poolWitnessScript(pool.cid, q.newTok);
+  const it = intentPayload('Q', pool.cid, BigInt(tokensInSat), tokenRest, pkU);
+  const { ins, sum } = selectUtxos(utxos, TRADE_FEE_SAT);
+  const change = sum - TRADE_FEE_SAT;
+  const outs = [];
+  if (change > DUST_SAT) outs.push({ spk: p2wpkhSpkOf(pkU), value8: Number(change) });
+  outs.push({ spk: await p2wsh(newWs), value8: Number(q.newGbx) });
+  outs.push({ spk: p2wpkhSpkOf(pkU),   value8: Number(q.netOut) });
+  if (tokenRest > 0n)
+    outs.push({ spk: await p2wsh(tokenWitnessScript(pool.cid, tokenRest, pkU)), value8: Number(DUST_SAT) });
+  outs.push({ spk: burnScript(),     value8: Number(q.feeSat) });
+  outs.push({ spk: opReturn(it.raw), value8: 0 });
+  return { quote: q, oldWsHex: hex(oldWs),
+           tokenWsHex: hex(tokenWitnessScript(pool.cid, BigInt(holding.amount), pkU)),
+           inputs: [{txid: pool.txid, vout: pool.vout, value8: Number(pool.gbxSat)},
+                    {txid: holding.txid, vout: holding.vout, value8: Number(DUST_SAT)}, ...ins],
            outs };
 }

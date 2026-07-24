@@ -80,6 +80,59 @@ export function quoteSell(reserve, tokensIn){
     priceBefore: pBefore, priceAfter: pAfter, avgPrice: avg,
     impactPct: pBefore>0 ? (pAfter - pBefore)/pBefore*100 : 0 };
 }
+// ── AMM pool math after graduation (consensus mirror: PoolBuy/PoolSell) ──────
+// Rounding is CEILING on the pool side, both legs — it must always favour the
+// pool, or a buy+sell round-trip would print money and bleed the pool out.
+export function poolFee(gross){ gross=BigInt(gross); return gross<=0n?0n:(gross*POOL_FEE_BPS)/10000n; }
+const ceilDiv=(a,b)=>(a+b-1n)/b;
+export function poolBuy(poolGbx, poolTok, gbxIn){
+  poolGbx=BigInt(poolGbx); poolTok=BigInt(poolTok); gbxIn=BigInt(gbxIn);
+  if (poolGbx<=0n||poolTok<=0n||gbxIn<=0n) return null;
+  if (gbxIn>MAX_MONEY||poolGbx>MAX_MONEY) return null;
+  const k=poolGbx*poolTok, ng=poolGbx+gbxIn, nt=ceilDiv(k, ng);
+  const tokensOut=poolTok-nt;
+  if (tokensOut<=0n) return null;
+  return { tokensOut, newGbx: ng, newTok: nt };
+}
+export function poolSell(poolGbx, poolTok, tokIn){
+  poolGbx=BigInt(poolGbx); poolTok=BigInt(poolTok); tokIn=BigInt(tokIn);
+  if (poolGbx<=0n||poolTok<=0n||tokIn<=0n) return null;
+  const k=poolGbx*poolTok, nt=poolTok+tokIn, ng=ceilDiv(k, nt);
+  const gbxOut=poolGbx-ng;
+  if (gbxOut<=0n||gbxOut>poolGbx) return null;
+  return { gbxOut, newGbx: ng, newTok: nt };
+}
+// honest pool quotes — same shape as quoteBuy/quoteSell (pure math, no server)
+export function quotePoolBuy(poolGbx, poolTok, gbxInSat){
+  poolGbx=BigInt(poolGbx); poolTok=BigInt(poolTok); gbxInSat=BigInt(gbxInSat);
+  const fee = poolFee(gbxInSat);            // consensus: fee on the GROSS commit
+  const net = gbxInSat - fee;
+  const rc = poolBuy(poolGbx, poolTok, net);
+  if (rc === null) return { ok:false, reason:'invalid' };
+  const pBefore = Number(poolGbx)/Number(poolTok);
+  const pAfter  = Number(rc.newGbx)/Number(rc.newTok);
+  return { ok:true, side:'buy',
+    tokensOut: rc.tokensOut, newGbx: rc.newGbx, newTok: rc.newTok,
+    feeSat: fee, netSat: net,
+    priceBefore: pBefore, priceAfter: pAfter,
+    avgPrice: Number(net)/Number(rc.tokensOut),
+    impactPct: pBefore>0 ? (pAfter-pBefore)/pBefore*100 : 0 };
+}
+export function quotePoolSell(poolGbx, poolTok, tokensIn){
+  poolGbx=BigInt(poolGbx); poolTok=BigInt(poolTok); tokensIn=BigInt(tokensIn);
+  const rc = poolSell(poolGbx, poolTok, tokensIn);
+  if (rc === null) return { ok:false, reason:'invalid' };
+  const fee = poolFee(rc.gbxOut);           // consensus: fee on the GROSS release
+  const pBefore = Number(poolGbx)/Number(poolTok);
+  const pAfter  = Number(rc.newGbx)/Number(rc.newTok);
+  return { ok:true, side:'sell',
+    gbxOut: rc.gbxOut, netOut: rc.gbxOut - fee, feeSat: fee,
+    newGbx: rc.newGbx, newTok: rc.newTok,
+    priceBefore: pBefore, priceAfter: pAfter,
+    avgPrice: Number(rc.gbxOut)/Number(tokensIn),
+    impactPct: pBefore>0 ? (pAfter-pBefore)/pBefore*100 : 0 };
+}
+
 // ── scripts (byte-identical to consensus) ──────────────────────────────────
 const sha256 = async b => new Uint8Array(await crypto.subtle.digest('SHA-256', b));
 const OP={DROP:0x75,TRUE:0x51,DROP2:0x6d,CHECKSIG:0xac,RETURN:0x6a,ZERO:0x00};
