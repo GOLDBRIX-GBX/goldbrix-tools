@@ -42,6 +42,9 @@ function openTokenIndex(dbPath){
                            WHERE c.creator_pk=? ORDER BY c.height DESC LIMIT 500`),
     curveLog: db.prepare(`SELECT height, reserve, m, h_m, status FROM curve_log
                           WHERE coin_id=? ORDER BY height ASC LIMIT ?`),
+    holderUtxos: db.prepare(`SELECT txid, vout, amount FROM token_utxos
+                             WHERE coin_id=? AND pk=? AND spent_height IS NULL
+                             ORDER BY CAST(amount AS INTEGER) DESC LIMIT 50`),
   };
   // honest graduation math — mirror of the scanner/consensus (BigInt, sats)
   const N=20n, R_MIN=200000000000n, K=201600, V_GBX=3000000000000n, V_TOKENS=1073000000n, KCURVE=V_GBX*V_TOKENS, CURVE_TOKENS=800000000n;
@@ -77,7 +80,8 @@ function openTokenIndex(dbPath){
       out.scanned = tip;
       out.log = q.curveLog.all(coinId, Math.min(logLimit, 5000))
                  .map(l => ({height:l.height, reserve_sat:l.reserve, m_sat:l.m, h_m:l.h_m, status:l.status}));
-      out.holders_list = q.holders.all(coinId, 100);
+      out.holders_list = q.holders.all(coinId, 100)
+        .map(h => ({...h, utxo_list: q.holderUtxos.all(coinId, h.pk)}));
       return out;
     },
     myCoins(pkHex){

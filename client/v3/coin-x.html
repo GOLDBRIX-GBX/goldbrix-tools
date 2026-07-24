@@ -405,7 +405,9 @@ async function findMyHolding(){
   if(keys===null)return null;
   const pkHex=Array.from(new Uint8Array(keys.publicKey),x=>x.toString(16).padStart(2,'0')).join('');
   const mine=(D.holders_list||[]).find(h=>h.pk===pkHex);
-  return mine?{txid:mine.txid,vout:mine.vout,amount:BigInt(mine.amount)}:null;
+  if(!mine)return null;
+  const u=(mine.utxo_list||[])[0];
+  return u?{txid:u.txid,vout:u.vout,amount:BigInt(u.amount)}:null;
 }
 
 /* ── execute (guarded) ── */
