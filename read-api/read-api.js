@@ -427,6 +427,19 @@ const server = http.createServer(async (req, res) => {
         return res.end(JSON.stringify(out));
       } catch (e) { res.writeHead(500); return res.end('activity error'); }
     }
+    // coin-stats — market band: price, window % change, liquidity, 24h vol/txns/traders (guarded by GBX_TOKENIDX_DB)
+    if (req.method === 'GET' && url.pathname.startsWith('/api/coin-stats/')) {
+      const dbp = process.env.GBX_TOKENIDX_DB;
+      if (!dbp) { res.writeHead(404); return res.end('not enabled'); }
+      try {
+        const { openTokenIndex } = require('./gbx-token-read.js');
+        if (!global.__gbxTokenIdx) global.__gbxTokenIdx = openTokenIndex(dbp);
+        const out = global.__gbxTokenIdx.coinStats(url.pathname.slice('/api/coin-stats/'.length).toLowerCase());
+        if (!out) { res.writeHead(404); return res.end('bad coin'); }
+        res.writeHead(200, {'Content-Type':'application/json'});
+        return res.end(JSON.stringify(out));
+      } catch (e) { res.writeHead(500); return res.end('coin-stats error'); }
+    }
     // my-coins — held + created for a pubkey (guarded by GBX_TOKENIDX_DB)
     if (req.method === 'GET' && url.pathname.startsWith('/api/my-coins/')) {
       const dbp = process.env.GBX_TOKENIDX_DB;

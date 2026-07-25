@@ -292,6 +292,26 @@ function openTokenIndex(dbPath){
                            amount:String(r.amount), tokens:String(r.tokens_out), burn_sat:String(r.burn_sat)})); }catch(_e){}
       return { scanned: tip, pk: pkHex, held, ops };
     },
+    coinStats(coinId){
+      // market stats band: price, window % change, liquidity, 24h volume/txns/traders — all on-chain.
+      if (!/^[0-9a-f]{64}$/.test(coinId)) return null;
+      const tip = parseInt(q.meta.get('scanned')?.v ?? '0', 10);
+      const W = { m30:600, h1:1200, h4:4800, d1:28800 };
+      const rows = db.prepare('SELECT height, gbx_sat, tokens FROM pool_log WHERE coin_id=? ORDER BY height ASC, rowid ASC').all(coinId);
+      let price=null, liq=null, chg={m30:null,h1:null,h4:null,d1:null}, vol24=0n, phase='curve';
+      if (rows.length){
+        phase='pool';
+        const last=rows[rows.length-1];
+        price = Number(last.gbx_sat)/Number(last.tokens);
+        liq = String(last.gbx_sat);
+        const priceAt=(h)=>{ let r=null; for(const x of rows){ if(x.height<=h) r=x; else break; } if(!r) r=rows[0]; return Number(r.gbx_sat)/Number(r.tokens); };
+        for (const k of Object.keys(W)){ const p0=priceAt(tip-W[k]); if(p0>0) chg[k]=(price/p0-1)*100; }
+        for (let i=1;i<rows.length;i++){ if(rows[i].height>tip-W.d1){ const d=BigInt(rows[i].gbx_sat)-BigInt(rows[i-1].gbx_sat); vol24 += d<0n?-d:d; } }
+      }
+      let t24={n:0,t:0};
+      try{ t24 = db.prepare('SELECT COUNT(*) n, COUNT(DISTINCT pk) t FROM curve_ops WHERE coin_id=? AND height>=?').get(coinId, tip-W.d1); }catch(_e){}
+      return { scanned:tip, coin_id:coinId, phase, price_sat:price, liquidity_sat:liq, chg, vol24_sat:String(vol24), txns24:t24.n, traders24:t24.t };
+    },
     myCoins(pkHex){
       if (!/^[0-9a-f]{66}$/.test(pkHex)) return null;
       const tip = parseInt(q.meta.get('scanned')?.v ?? '0', 10);

@@ -13,8 +13,8 @@
 <link rel="stylesheet" href="/lib/price-chart.css">
 <script src="/lib/price-chart.js?v=115" defer></script>
 <style>
-:root{--bg:#1c1610;--card:#2a2218;--card2:#241d13;--line:#3a3025;--gold:#F5CC75;
---gold-soft:#FFE099;--ink:#eee;--dim:#FFFDF7;--green:#4EE08C;--red:#FF7A6B;--ember:#e8843a;}
+:root{--bg:#1c1610;--card:#2a2218;--card2:#241d13;--line:#3a3025;--gold:#FFD98A;
+--gold-soft:#FFE099;--ink:#FFFDF7;--dim:#FFFDF7;--green:#57FF9E;--red:#FF6B5C;--ember:#e8843a;}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 .pctb{flex:1;background:var(--card2);border:1px solid var(--line);color:var(--dim);border-radius:8px;padding:7px 0;font-family:inherit;font-size:.78rem;cursor:pointer}
 .pctb:active{border-color:var(--gold);color:var(--gold)}
@@ -45,6 +45,18 @@ body[dir="rtl"]{direction:rtl;}
 .gnote{color:var(--dim);font-size:11px;margin-top:6px;line-height:1.55;}
 #chart{width:100%;height:150px;background:var(--card2);border:1px solid var(--line);border-radius:10px;}
 #proChart canvas{width:auto;height:auto;background:transparent;border:none;border-radius:0}
+.statband{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card2)}
+.sbrow{display:grid;grid-template-columns:repeat(4,1fr)}
+.sbrow+.sbrow{border-top:1px solid var(--line)}
+.sbc{padding:10px 4px;text-align:center;min-width:0}
+.sbc+.sbc{border-left:1px solid var(--line)}
+.sbc .pk1{font-size:.72rem;color:#FFFDF7;margin-right:5px}
+.sbc .pv{font-size:.78rem;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.sbc .pv.up{color:var(--green)}.sbc .pv.dn{color:var(--red)}.sbc .pv.fl{color:#F5EFE2}
+.sbc .mk{display:block;font-size:.6rem;letter-spacing:.04em;color:#FFFDF7;text-transform:uppercase;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sbc .mv{display:block;font-size:.94rem;font-weight:800;color:#F5EFE2;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tfb{background:var(--card2);border:1px solid var(--line);border-radius:8px;color:#FFFDF7;padding:7px 0;font-size:.85rem;cursor:pointer;font-family:inherit;touch-action:manipulation}
+.tfb.active{border-color:var(--gold);color:var(--gold);font-weight:700}
 /* trade */
 .tabs{display:flex;gap:8px;margin-bottom:10px;}
 .tab{flex:1;text-align:center;padding:10px;border-radius:10px;border:1px solid var(--line);
@@ -65,7 +77,7 @@ body[dir="rtl"]{direction:rtl;}
 .warn.on{display:block;}
 .btn{width:100%;border:0;border-radius:12px;padding:14px;font:inherit;font-weight:800;letter-spacing:.08em;
  cursor:pointer;margin-top:12px;}
-.btn:disabled{opacity:.45;cursor:default;}
+.btn:disabled{opacity:.8;cursor:default;}
 .btn.b{background:var(--green);color:#1c1610;}
 .btn.s{background:var(--red);color:#1c1610;}
 .btn.g{background:linear-gradient(90deg,#F5CC75,#d9a53f);color:#241d13;}
@@ -121,6 +133,24 @@ body[dir="rtl"]{direction:rtl;}
     <div class="gnote" id="gGraduated" style="display:none;color:var(--gold)" data-x="g.done">Graduated — the liquidity moved to the open pool. This history is the curve's life.</div>
   </div>
 
+  <!-- MARKET STATS BAND -->
+  <div class="card" id="statCard" style="display:none;padding:0;background:none;border:none">
+    <div class="statband">
+      <div class="sbrow">
+        <div class="sbc"><span class="pk1">30M</span><span class="pv fl" id="sbM30">—</span></div>
+        <div class="sbc"><span class="pk1">1H</span><span class="pv fl" id="sbH1">—</span></div>
+        <div class="sbc"><span class="pk1">4H</span><span class="pv fl" id="sbH4">—</span></div>
+        <div class="sbc"><span class="pk1">24H</span><span class="pv fl" id="sbD1">—</span></div>
+      </div>
+      <div class="sbrow">
+        <div class="sbc"><span class="mk" id="sbLiqK">Liquidity</span><span class="mv" id="sbLiq">—</span></div>
+        <div class="sbc"><span class="mk" id="sbVolK">Vol 24h</span><span class="mv" id="sbVol">—</span></div>
+        <div class="sbc"><span class="mk" id="sbTxK">Txns 24h</span><span class="mv" id="sbTx">—</span></div>
+        <div class="sbc"><span class="mk" id="sbTrK">Traders 24h</span><span class="mv" id="sbTr">—</span></div>
+      </div>
+    </div>
+  </div>
+
   <!-- PRICE · OHLC -->
   <div class="card">
     <div class="sect" data-x="s.price">Price · candles</div>
@@ -151,6 +181,12 @@ body[dir="rtl"]{direction:rtl;}
   <!-- RECENT TRADES -->
   <div class="card" id="tradesCard">
     <div class="sect" data-x="s.trades">Recent trades</div>
+    <div id="tradeFilters" style="display:flex;gap:6px;margin-bottom:8px">
+      <button class="tfb active" data-f="all" style="flex:1">All</button>
+      <button class="tfb" data-f="s" style="flex:1">🦐</button>
+      <button class="tfb" data-f="d" style="flex:1">🐬</button>
+      <button class="tfb" data-f="w" style="flex:1">🐋</button>
+    </div>
     <div id="tradesList" class="gnote">—</div>
   </div>
 
@@ -221,7 +257,7 @@ en:{loading:'reading the chain…','r.price':'Price','r.liq':'Curve liquidity','
  's.grad':'Graduation · honest',
  'g.note':'The target is alive: it is 20× the largest trade of the last ~7 days (never less than 2,000 GBX). A whale raising the price raises its own bar. No fixed sum, ever.',
  'g.done':'Graduated — the liquidity moved to the open pool. This history is the curve\u2019s life.',
- 's.chart':'Curve history','c.note':'Reserve over time, read from the chain alone.','s.price':'Price \u00b7 candles','p.note':'sat per token \u2014 the coin\u2019s whole life, curve and pool, from the chain alone.','s.trades':'Recent trades','s.holders':'Top holders','o.create':'CREATE','o.refund':'REFUND','o.grad':'GRADUATE','w.you':'you',
+ 's.chart':'Curve history','c.note':'Reserve over time, read from the chain alone.','s.price':'Price \u00b7 candles','p.note':'\u00b5GBX per token \u2014 the coin\u2019s whole life, curve and pool, from the chain alone.','s.trades':'Recent trades','s.holders':'Top holders','o.create':'CREATE','o.refund':'REFUND','o.grad':'GRADUATE','w.you':'you',
  't.buy':'BUY','t.sell':'SELL','a.buy':'Amount (GBX)','a.sell':'Amount (tokens)',
  'i.title':'Your position moves the price','i.get':'You receive','i.avg':'Average execution price',
  'i.fee':'0.5% burned forever','i.fee2':'0.3% burned forever','r.circ':'In circulation','b.avail':'available',
@@ -238,7 +274,7 @@ ro:{loading:'citesc lanțul…','r.price':'Preț','r.liq':'Lichiditatea curbei',
  's.grad':'Graduare · onestă',
  'g.note':'Ținta e vie: e 20× cel mai mare trade din ultimele ~7 zile (niciodată sub 2.000 GBX). Balena care urcă prețul își urcă propriul prag. Nicio sumă fixă, niciodată.',
  'g.done':'Graduat — lichiditatea s-a mutat în pool-ul deschis. Istoricul de aici e viața curbei.',
- 's.chart':'Istoricul curbei','c.note':'Rezerva în timp, citită doar din lanț.','s.price':'Preț \u00b7 lumânări','p.note':'sat per token \u2014 toată viața coin-ului, curbă și pool, doar din lanț.','s.trades':'Tranzacții recente','s.holders':'Top deținători','o.create':'CREARE','o.refund':'REFUND','o.grad':'GRADUARE','w.you':'tu',
+ 's.chart':'Istoricul curbei','c.note':'Rezerva în timp, citită doar din lanț.','s.price':'Preț \u00b7 lumânări','p.note':'\u00b5GBX per token \u2014 toată viața coin-ului, curbă și pool, doar din lanț.','s.trades':'Tranzacții recente','s.holders':'Top deținători','o.create':'CREARE','o.refund':'REFUND','o.grad':'GRADUARE','w.you':'tu',
  't.buy':'CUMPĂRĂ','t.sell':'VINDE','a.buy':'Sumă (GBX)','a.sell':'Sumă (tokens)',
  'i.title':'Poziția ta mișcă prețul','i.get':'Primești','i.avg':'Preț mediu de execuție',
  'i.fee':'0,5% ars pentru totdeauna','i.fee2':'0,3% ars pentru totdeauna','r.circ':'\u00cen circula\u021bie','b.avail':'disponibil',
@@ -255,7 +291,7 @@ de:{loading:'lese die Chain…','r.price':'Preis','r.liq':'Kurven-Liquidität','
  's.grad':'Graduierung · ehrlich',
  'g.note':'Das Ziel lebt: es ist 20× der größte Trade der letzten ~7 Tage (nie unter 2.000 GBX). Ein Wal, der den Preis hebt, hebt seine eigene Latte. Nie eine feste Summe.',
  'g.done':'Graduiert — die Liquidität ist in den offenen Pool gewandert. Diese Historie ist das Leben der Kurve.',
- 's.chart':'Kurven-Historie','c.note':'Reserve über die Zeit, allein von der Chain gelesen.','s.price':'Preis \u00b7 Kerzen','p.note':'sat pro Token \u2014 das ganze Leben der Münze, Kurve und Pool, allein von der Chain.','s.trades':'Letzte Trades','s.holders':'Top-Halter','o.create':'ERSTELLEN','o.refund':'ERSTATTUNG','o.grad':'GRADUIERUNG','w.you':'du',
+ 's.chart':'Kurven-Historie','c.note':'Reserve über die Zeit, allein von der Chain gelesen.','s.price':'Preis \u00b7 Kerzen','p.note':'\u00b5GBX pro Token \u2014 das ganze Leben der Münze, Kurve und Pool, allein von der Chain.','s.trades':'Letzte Trades','s.holders':'Top-Halter','o.create':'ERSTELLEN','o.refund':'ERSTATTUNG','o.grad':'GRADUIERUNG','w.you':'du',
  't.buy':'KAUFEN','t.sell':'VERKAUFEN','a.buy':'Betrag (GBX)','a.sell':'Betrag (Tokens)',
  'i.title':'Deine Position bewegt den Preis','i.get':'Du erhältst','i.avg':'Durchschnittlicher Ausführungspreis',
  'i.fee':'0,5% für immer verbrannt','i.fee2':'0,3% für immer verbrannt','r.circ':'Im Umlauf','b.avail':'verfügbar',
@@ -272,7 +308,7 @@ zh:{loading:'正在读取链…','r.price':'价格','r.liq':'曲线流动性','r
  's.grad':'毕业 · 诚实',
  'g.note':'目标是活的：为最近约7天最大交易的20倍（绝不低于2,000 GBX）。鲸鱼抬价即抬高自己的门槛。永无固定金额。',
  'g.done':'已毕业——流动性已进入开放池。这段历史是曲线的一生。',
- 's.chart':'曲线历史','c.note':'储备随时间变化，仅从链上读取。','s.price':'价格 \u00b7 K线','p.note':'每代币 sat \u2014 币的一生，曲线与池，仅来自链上。','s.trades':'最近交易','s.holders':'主要持有者','o.create':'创建','o.refund':'退款','o.grad':'毕业','w.you':'你',
+ 's.chart':'曲线历史','c.note':'储备随时间变化，仅从链上读取。','s.price':'价格 \u00b7 K线','p.note':'每代币 \u00b5GBX \u2014 币的一生，曲线与池，仅来自链上。','s.trades':'最近交易','s.holders':'主要持有者','o.create':'创建','o.refund':'退款','o.grad':'毕业','w.you':'你',
  't.buy':'买入','t.sell':'卖出','a.buy':'金额 (GBX)','a.sell':'数量（代币）',
  'i.title':'你的仓位会移动价格','i.get':'你将获得','i.avg':'平均成交价',
  'i.fee':'0.5% 永久销毁','i.fee2':'0.3% 永久销毁','r.circ':'流通量','b.avail':'可用',
@@ -289,7 +325,7 @@ ar:{loading:'قراءة السلسلة…','r.price':'السعر','r.liq':'سي�
  's.grad':'التخرج · بأمانة',
  'g.note':'الهدف حي: إنه 20× أكبر صفقة في آخر ~7 أيام (لا يقل أبداً عن 2,000 GBX). الحوت الذي يرفع السعر يرفع عتبته. لا مبلغ ثابت أبداً.',
  'g.done':'تخرجت — انتقلت السيولة إلى المجمع المفتوح. هذا التاريخ هو حياة المنحنى.',
- 's.chart':'تاريخ المنحنى','c.note':'الاحتياطي عبر الزمن، يُقرأ من السلسلة وحدها.','s.price':'السعر \u00b7 شموع','p.note':'sat لكل رمز \u2014 حياة العملة كاملة، المنحنى والمجمع، من السلسلة وحدها.','s.trades':'أحدث الصفقات','s.holders':'كبار الحائزين','o.create':'إنشاء','o.refund':'استرداد','o.grad':'تخرج','w.you':'أنت',
+ 's.chart':'تاريخ المنحنى','c.note':'الاحتياطي عبر الزمن، يُقرأ من السلسلة وحدها.','s.price':'السعر \u00b7 شموع','p.note':'\u00b5GBX لكل رمز \u2014 حياة العملة كاملة، المنحنى والمجمع، من السلسلة وحدها.','s.trades':'أحدث الصفقات','s.holders':'كبار الحائزين','o.create':'إنشاء','o.refund':'استرداد','o.grad':'تخرج','w.you':'أنت',
  't.buy':'شراء','t.sell':'بيع','a.buy':'المبلغ (GBX)','a.sell':'الكمية (رموز)',
  'i.title':'مركزك يحرك السعر','i.get':'ستستلم','i.avg':'متوسط سعر التنفيذ',
  'i.fee':'0.5% تُحرق للأبد','i.fee2':'0.3% تُحرق للأبد','r.circ':'المتداول','b.avail':'متاح',
@@ -438,7 +474,7 @@ function drawCandles(cs){
     ctx.fillStyle='#FFFDF7';ctx.fillText(fmtP(pv),AX,y+3);}
   const bw=Math.max(2,Math.min(14,W/cs.length*0.6));
   cs.forEach((c,i)=>{
-    const up=c.c>=c.o, col=up?'#4EE08C':'#FF5C5C';
+    const up=c.c>=c.o, col=up?'#57FF9E':'#FF6B5C';
     ctx.strokeStyle=col;ctx.fillStyle=col;
     ctx.beginPath();ctx.moveTo(X(i),Y(c.h));ctx.lineTo(X(i),Y(c.l));ctx.stroke();
     const y1=Y(Math.max(c.o,c.c)), y2=Y(Math.min(c.o,c.c));
@@ -451,20 +487,36 @@ function drawCandles(cs){
   ctx.fillStyle='#FFE099';ctx.fillRect(cv.width-R+1,ly-8,R-2,14);ctx.fillStyle='#1c1610';ctx.fillText(fmtP(last),AX,ly+3);
 }
 function renderTrades(ts){
+  window.__gbxLastTrades=ts;window.__gbxRenderTrades=renderTrades;
   const el=$('tradesList'); if(!el)return;
   if(!ts.length){el.textContent='—';return;}
   const myPk=keys?Array.from(new Uint8Array(keys.publicKey),x=>x.toString(16).padStart(2,'0')).join(''):null;
-  el.innerHTML=ts.slice(0,25).map(t=>{
+  const sizeOf=function(t){
+    const st=window.__gbxStats;
+    if(!(st&&st.liquidity_sat&&Number(st.liquidity_sat)>0))return null;
+    if(!(t.op==='B'||t.op==='P'||t.op==='S'||t.op==='Q'))return null;
+    let gv=null;
+    if(t.op==='B'||t.op==='P')gv=Number(t.amount);
+    else if(st.price_sat)gv=Number(t.amount)*st.price_sat;
+    if(gv===null||!isFinite(gv))return null;
+    const pc=100*gv/Number(st.liquidity_sat);
+    return pc<0.5?'s':(pc<5?'d':'w');
+  };
+  const F=window.__gbxTradeFilter||'all';
+  const fts=F==='all'?ts:ts.filter(t=>sizeOf(t)===F);
+  el.innerHTML=fts.slice(0,25).map(t=>{
     const buy=(t.op==='B'||t.op==='P'||t.op==='C'), sell=(t.op==='S'||t.op==='Q');
     const lbl=buy?(t.op==='C'?tt('o.create'):tt('t.buy')):(sell?tt('t.sell'):(t.op==='G'?tt('o.grad'):tt('o.refund')));
-    const col=buy?'#4EE08C':(sell?'#FF5C5C':'var(--gold)');
+    const col=buy?'#57FF9E':(sell?'#FF6B5C':'var(--gold)');
     const amt=(t.op==='S'||t.op==='Q'||t.op==='R')?(fmtT(t.amount)+' tk'):((Number(t.amount)/1e8).toFixed(2)+' GBX');
-    const who='<a href="/v3/profile-x.html?pk='+t.pk+'" style="color:inherit;text-decoration:underline dotted">'+((myPk&&t.pk===myPk)?tt('w.you'):(t.pk.slice(0,6)+'…'+t.pk.slice(-4)))+'</a>';
+    const who='<a href="/v3/profile-x.html?pk='+t.pk+'" style="color:var(--gold);text-decoration:underline dotted">'+t.pk.slice(0,6)+'…'+t.pk.slice(-4)+'</a>'+((myPk&&t.pk===myPk)?' <span style="opacity:.9;font-size:.7em">('+tt('w.you')+')</span>':'');
+    const sz=sizeOf(t);
+    const badge=sz?({s:'\u{1F990} ',d:'\u{1F42C} ',w:'\u{1F40B} '})[sz]:'';
     return '<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)">'+
-      '<span style="color:'+col+';font-weight:700;min-width:70px">'+lbl+'</span>'+
+      '<span style="color:'+col+';font-weight:700;min-width:70px">'+badge+lbl+'</span>'+
       '<span style="flex:1">'+amt+'</span>'+
-      '<span style="opacity:.8">'+who+'</span>'+
-      '<span style="opacity:.5">#'+t.height+'</span></div>';
+      '<span style="opacity:1">'+who+'</span>'+
+      '<span style="opacity:.85">#'+t.height+'</span></div>';
   }).join('');
 }
 function renderHolders(){
@@ -474,7 +526,7 @@ function renderHolders(){
   const myPk=keys?Array.from(new Uint8Array(keys.publicKey),x=>x.toString(16).padStart(2,'0')).join(''):null;
   const tot=hs.reduce((a,h)=>a+Number(h.amount),0)||1;
   el.innerHTML=hs.slice(0,20).map((h,i)=>{
-    const who='<a href="/v3/profile-x.html?pk='+h.pk+'" style="color:inherit;text-decoration:underline dotted">'+((myPk&&h.pk===myPk)?tt('w.you'):(h.pk.slice(0,6)+'…'+h.pk.slice(-4)))+'</a>';
+    const who='<a href="/v3/profile-x.html?pk='+h.pk+'" style="color:var(--gold);text-decoration:underline dotted">'+((myPk&&h.pk===myPk)?tt('w.you'):(h.pk.slice(0,6)+'…'+h.pk.slice(-4)))+'</a>';
     const pct=(Number(h.amount)/tot*100).toFixed(1);
     return '<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)">'+
       '<span style="opacity:.6;min-width:24px">'+(i+1)+'.</span>'+
@@ -732,16 +784,62 @@ $('btnGrad').onclick=async()=>{
 })();
 </script>
 <nav id="pgNav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:200;">
-  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
-  <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
+  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.92;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
+  <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.92;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
   <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#F5CC75;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:1;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
-  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
-  <a href="/v3/leaderboard.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
-  <a href="/v3/explorer.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🔍</span><span data-t="navExplorer">EXPLORER</span></a>
-  <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">⚙️</span><span data-t="navSettings">SETTINGS</span></a>
+  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.92;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
+  <a href="/v3/leaderboard.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.92;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
+  <a href="/v3/explorer.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.92;"><span style="font-size:18px;">🔍</span><span data-t="navExplorer">EXPLORER</span></a>
+  <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.92;"><span style="font-size:18px;">⚙️</span><span data-t="navSettings">SETTINGS</span></a>
 </nav>
 <script src="/v3/pwa.js?v=114" defer></script>
 <script src="/v3/gbx-autolock.js" defer></script>
+<script>
+(function(){
+var BT={en:{liq:'Liquidity \u00b7 GBX',vol:'Vol 24h \u00b7 GBX',tx:'Txns 24h',tr:'Traders 24h'},
+ro:{liq:'Lichiditate \u00b7 GBX',vol:'Vol 24h \u00b7 GBX',tx:'Tranzacții 24h',tr:'Traderi 24h'},
+de:{liq:'Liquidität',vol:'Vol 24h',tx:'Txns 24h',tr:'Trader 24h'},
+zh:{liq:'流动性 GBX',vol:'24h量 GBX',tx:'24h笔数',tr:'24h交易者'},
+es:{liq:'Liquidez \u00b7 GBX',vol:'Vol 24h \u00b7 GBX',tx:'Txns 24h',tr:'Traders 24h'}};
+var l;try{l=localStorage.getItem('gbx_lang')||localStorage.getItem('goldbrix_lang')||'en';}catch(e){l='en';}
+var bt=BT[l]||BT.en;
+function $(i){return document.getElementById(i);}
+function pct(el,v){var e=$(el);if(v===null||v===undefined||!isFinite(v)){e.textContent='—';e.className='pv fl';return;}
+  var a=Math.abs(v),d=a>=100?0:(a>=10?1:2),s=(v>=0?'+':'')+v.toFixed(d)+'%';e.textContent=s;e.className='pv '+(v>=0?'up':'dn');}
+function gbx(sat){if(sat===null||sat===undefined)return '—';var n=Number(sat)/1e8;
+  if(n>=1000000)return (n/1000000).toFixed(2)+'M';
+  if(n>=10000)return (n/1000).toFixed(1)+'K';
+  if(n>=1000)return n.toLocaleString('en-US',{maximumFractionDigits:0});
+  return n.toFixed(n>=100?0:1);}
+async function draw(){
+  try{
+    for(var i=0;i<20&&!window.GBXRead;i++)await new Promise(function(r){setTimeout(r,100);});
+    var cid2=new URLSearchParams(location.search).get('coin')||'';
+    if(!cid2)return;
+    var j=window.GBXRead?await window.GBXRead.json('/api/coin-stats/'+cid2):await (await fetch('/api/coin-stats/'+cid2)).json();
+    if(!j)return;var had=!!window.__gbxStats;window.__gbxStats=j;if(!had&&window.__gbxLastTrades&&typeof renderTrades==='function')renderTrades(window.__gbxLastTrades);if(j.phase!=='pool')return;
+    $('sbLiqK').textContent=bt.liq;$('sbVolK').textContent=bt.vol;$('sbTxK').textContent=bt.tx;$('sbTrK').textContent=bt.tr;
+    pct('sbM30',j.chg.m30);pct('sbH1',j.chg.h1);pct('sbH4',j.chg.h4);pct('sbD1',j.chg.d1);
+    $('sbLiq').textContent=gbx(j.liquidity_sat);$('sbVol').textContent=gbx(j.vol24_sat);
+    $('sbTx').textContent=String(j.txns24);$('sbTr').textContent=String(j.traders24);
+    $('statCard').style.display='';
+  }catch(e){}
+}
+document.addEventListener('DOMContentLoaded',draw);draw();setInterval(draw,30000);
+document.addEventListener('DOMContentLoaded',function(){
+  var tf=document.getElementById('tradeFilters');
+  if(tf)tf.querySelectorAll('.tfb').forEach(function(b){
+    b.addEventListener('click',function(){
+      window.__gbxTradeFilter=b.dataset.f;
+      tf.querySelectorAll('.tfb').forEach(function(x){x.className='tfb'+(x===b?' active':'');});
+      if(window.__gbxLastTrades&&window.__gbxRenderTrades)window.__gbxRenderTrades(window.__gbxLastTrades);
+    });
+  });
+});
+window.addEventListener('pageshow',function(e){if(e.persisted)location.reload();});
+document.addEventListener('visibilitychange',function(){if(!document.hidden)draw();});
+})();
+</script>
 <script src="/v3/gbx-read.js?v=114" defer></script>
   <script src="/promo-banner.js?v=114" defer></script>
 </body>
