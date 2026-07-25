@@ -277,6 +277,21 @@ function openTokenIndex(dbPath){
         .map(l => ({height:l.height, txid:l.txid, vout:l.vout, gbx_sat:String(l.gbx_sat), tokens:String(l.tokens)}));
       return out;
     },
+    activity(pkHex, limit = 200){
+      // address profile: holdings (token_utxos) + full op history (curve_ops) for one pubkey.
+      if (!/^[0-9a-f]{66}$/.test(pkHex)) return null;
+      const tip = parseInt(q.meta.get('scanned')?.v ?? '0', 10);
+      const held = q.heldBy.all(pkHex).map(r => ({
+        coin_id:r.coin_id, ticker:r.ticker||null, name:r.name||null,
+        amount:String(r.amount), utxos:r.utxos }));
+      let ops=[];
+      try{ ops = db.prepare(`SELECT o.height, o.txid, o.coin_id, o.op, o.amount, o.tokens_out, o.burn_sat, m.ticker
+                             FROM curve_ops o LEFT JOIN coin_meta m ON m.coin_id=o.coin_id
+                             WHERE o.pk=? ORDER BY o.height DESC, o.rowid DESC LIMIT ?`).all(pkHex, Math.min(limit,500))
+                 .map(r=>({height:r.height, txid:r.txid, coin_id:r.coin_id, ticker:r.ticker||null, op:r.op,
+                           amount:String(r.amount), tokens:String(r.tokens_out), burn_sat:String(r.burn_sat)})); }catch(_e){}
+      return { scanned: tip, pk: pkHex, held, ops };
+    },
     myCoins(pkHex){
       if (!/^[0-9a-f]{66}$/.test(pkHex)) return null;
       const tip = parseInt(q.meta.get('scanned')?.v ?? '0', 10);

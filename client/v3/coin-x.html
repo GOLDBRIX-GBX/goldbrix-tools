@@ -459,7 +459,7 @@ function renderTrades(ts){
     const lbl=buy?(t.op==='C'?tt('o.create'):tt('t.buy')):(sell?tt('t.sell'):(t.op==='G'?tt('o.grad'):tt('o.refund')));
     const col=buy?'#4EE08C':(sell?'#FF5C5C':'var(--gold)');
     const amt=(t.op==='S'||t.op==='Q'||t.op==='R')?(fmtT(t.amount)+' tk'):((Number(t.amount)/1e8).toFixed(2)+' GBX');
-    const who=(myPk&&t.pk===myPk)?tt('w.you'):(t.pk.slice(0,6)+'…'+t.pk.slice(-4));
+    const who='<a href="/v3/profile-x.html?pk='+t.pk+'" style="color:inherit;text-decoration:underline dotted">'+((myPk&&t.pk===myPk)?tt('w.you'):(t.pk.slice(0,6)+'…'+t.pk.slice(-4)))+'</a>';
     return '<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)">'+
       '<span style="color:'+col+';font-weight:700;min-width:70px">'+lbl+'</span>'+
       '<span style="flex:1">'+amt+'</span>'+
@@ -474,7 +474,7 @@ function renderHolders(){
   const myPk=keys?Array.from(new Uint8Array(keys.publicKey),x=>x.toString(16).padStart(2,'0')).join(''):null;
   const tot=hs.reduce((a,h)=>a+Number(h.amount),0)||1;
   el.innerHTML=hs.slice(0,20).map((h,i)=>{
-    const who=(myPk&&h.pk===myPk)?tt('w.you'):(h.pk.slice(0,6)+'…'+h.pk.slice(-4));
+    const who='<a href="/v3/profile-x.html?pk='+h.pk+'" style="color:inherit;text-decoration:underline dotted">'+((myPk&&h.pk===myPk)?tt('w.you'):(h.pk.slice(0,6)+'…'+h.pk.slice(-4)))+'</a>';
     const pct=(Number(h.amount)/tot*100).toFixed(1);
     return '<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)">'+
       '<span style="opacity:.6;min-width:24px">'+(i+1)+'.</span>'+

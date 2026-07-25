@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1c1610">
+<title>GoldBrix · Address</title>
+<link rel="icon" href="/favicon.ico">
+<script src="/v3/nav-i18n.js?v=115" defer></script>
+<script src="/v3/gbx-read.js?v=115" defer></script>
+<style>
+:root{--bg:#1c1610;--card:#2a2218;--card2:#241d13;--line:#3a3025;--gold:#F5CC75;--ink:#eee;--dim:#FFFDF7;--green:#4EE08C;--red:#FF7A6B;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;background:var(--bg)}
+body{color:var(--ink);font-family:'Courier New',ui-monospace,monospace;padding:14px 12px 90px;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;max-width:560px;margin-left:auto;margin-right:auto;}
+.sect{color:#FFFDF7;font-weight:800;font-size:13px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 10px;}
+.pk{font-size:.78rem;word-break:break-all;color:var(--dim);opacity:.85}
+.row{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:.85rem;align-items:baseline}
+.row:last-child{border-bottom:none}
+.fav{float:right;background:none;border:1px solid var(--line);border-radius:8px;color:var(--gold);font-size:1rem;padding:4px 10px;cursor:pointer;font-family:inherit}
+.fav.on{background:var(--gold);color:#1c1610;border-color:var(--gold)}
+.opB{color:var(--green);font-weight:700}.opS{color:var(--red);font-weight:700}.opO{color:var(--gold);font-weight:700}
+a.coin{color:var(--gold);text-decoration:none}
+.muted{opacity:.6}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="sect" id="tTitle">Address</div>
+  <button class="fav" id="favBtn">☆</button>
+  <div class="pk" id="pkFull">—</div>
+</div>
+<div class="card">
+  <div class="sect" id="tHold">Holdings</div>
+  <div id="holdList" class="muted">…</div>
+</div>
+<div class="card">
+  <div class="sect" id="tAct">Activity</div>
+  <div id="opsList" class="muted">…</div>
+</div>
+<script>
+(function(){
+var L=localStorage.getItem('gbx_lang')||localStorage.getItem('goldbrix_lang')||'en';
+var T={en:{title:'Address',hold:'Holdings',act:'Activity',none:'nothing here yet',buy:'BUY',sell:'SELL',create:'CREATE',grad:'GRADUATE',refund:'REFUND'},
+ro:{title:'Adresă',hold:'Dețineri',act:'Activitate',none:'nimic încă',buy:'CUMPĂRĂ',sell:'VINDE',create:'CREARE',grad:'GRADUARE',refund:'REFUND'},
+de:{title:'Adresse',hold:'Bestände',act:'Aktivität',none:'noch nichts',buy:'KAUF',sell:'VERKAUF',create:'ERSTELLT',grad:'GRADUIERT',refund:'ERSTATTUNG'},
+zh:{title:'地址',hold:'持仓',act:'活动',none:'暂无',buy:'买入',sell:'卖出',create:'创建',grad:'毕业',refund:'退款'},
+ar:{title:'العنوان',hold:'الحيازات',act:'النشاط',none:'لا شيء بعد',buy:'شراء',sell:'بيع',create:'إنشاء',grad:'تخرّج',refund:'استرداد'}};
+var tt=function(k){return (T[L]&&T[L][k])||T.en[k]||k;};
+if(L==='ar')document.body.dir='rtl';
+document.getElementById('tTitle').textContent=tt('title');
+document.getElementById('tHold').textContent=tt('hold');
+document.getElementById('tAct').textContent=tt('act');
+var pk=(new URLSearchParams(location.search).get('pk')||'').toLowerCase();
+if(!/^[0-9a-f]{66}$/.test(pk)){document.getElementById('pkFull').textContent='?';return;}
+document.getElementById('pkFull').textContent=pk;
+var FKEY='gbx_fav_addr';
+function favs(){try{return JSON.parse(localStorage.getItem(FKEY)||'[]');}catch(e){return [];}}
+var fb=document.getElementById('favBtn');
+function favDraw(){var on=favs().indexOf(pk)>=0;fb.textContent=on?'★':'☆';fb.className='fav'+(on?' on':'');}
+fb.onclick=function(){var f=favs(),i=f.indexOf(pk);if(i>=0)f.splice(i,1);else f.push(pk);localStorage.setItem(FKEY,JSON.stringify(f));favDraw();};
+favDraw();
+function gj(p){for(var i=0;i<20&&!window.GBXRead;i++){/*wait*/}
+  return window.GBXRead?window.GBXRead.json(p):fetch(p).then(function(r){return r.json();});}
+async function go(){
+  for(var i=0;i<20&&!window.GBXRead;i++)await new Promise(function(r){setTimeout(r,100);});
+  var a,pools={};
+  try{a=await gj('/api/activity/'+pk);}catch(e){}
+  try{var pd=await gj('/api/pools');(pd.pools||[]).forEach(function(q){pools[q.coin_id]=q;});}catch(e){}
+  var hl=document.getElementById('holdList');
+  if(a&&a.held&&a.held.length){hl.className='';hl.innerHTML=a.held.map(function(h){
+    var pp=pools[h.coin_id],amt=Number(h.amount);
+    var val=pp?(' · '+((amt*Number(pp.gbx_sat)/Number(pp.tokens))/1e8).toFixed(2)+' GBX'):'';
+    return '<div class="row"><a class="coin" href="/v3/coin-x.html?coin='+h.coin_id+'">$'+(h.ticker||h.coin_id.slice(0,8))+'</a><span>'+amt.toLocaleString()+val+'</span></div>';
+  }).join('');}else hl.textContent=tt('none');
+  var ol=document.getElementById('opsList');
+  if(a&&a.ops&&a.ops.length){ol.className='';ol.innerHTML=a.ops.slice(0,60).map(function(o){
+    var lbl,cls;
+    if(o.op==='B'||o.op==='P'){lbl=tt('buy');cls='opB';}
+    else if(o.op==='S'||o.op==='Q'){lbl=tt('sell');cls='opS';}
+    else if(o.op==='C'){lbl=tt('create');cls='opO';}
+    else if(o.op==='G'){lbl=tt('grad');cls='opO';}
+    else{lbl=tt('refund');cls='opO';}
+    var amt=(o.op==='S'||o.op==='Q'||o.op==='R')?(Number(o.amount).toLocaleString()+' tk'):((Number(o.amount)/1e8).toFixed(2)+' GBX');
+    return '<div class="row"><span class="'+cls+'">'+lbl+'</span><a class="coin" href="/v3/coin-x.html?coin='+o.coin_id+'">$'+(o.ticker||o.coin_id.slice(0,6))+'</a><span>'+amt+'</span><span class="muted">#'+o.height+'</span></div>';
+  }).join('');}else ol.textContent=tt('none');
+}
+go();
+})();
+</script>
+</body>
+</html>
