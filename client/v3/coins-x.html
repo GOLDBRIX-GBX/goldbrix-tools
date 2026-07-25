@@ -3,9 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#171310">
 <title>GoldBrix — Living Markets</title>
 <script src="/v3/nav-i18n.js?v=114" defer></script>
 <style>
+html,body{margin:0;background:#171310}
 .cx-root{background:#171310;color:#FFFDF7;font-family:'Courier New',ui-monospace,monospace;padding:14px 12px 90px;min-height:100vh;box-sizing:border-box}
 .cx-root *{box-sizing:border-box;margin:0;padding:0}
 .cx-root h1{color:#e8c476;font-size:1.35rem;letter-spacing:.14em;text-align:center;margin:18px 0 6px;text-transform:uppercase}
@@ -118,6 +120,9 @@
     } catch(e) {
       el('cxState').className='cx-err'; el('cxState').textContent = tr('err'); return;
     }
+    var pools = {};
+    try { var pd = window.GBXRead ? await window.GBXRead.json('/api/pools') : await (await fetch('/api/pools')).json();
+          (pd.pools||[]).forEach(function(q){ pools[q.coin_id]=q; }); } catch(e){}
     try { var lr = await fetch('/api/lp-registry').then(function(x){return x.json();});
           tipReal = lr.updated_height || 0; } catch(e){}
     if (tipReal > 0 && tipReal < ACTIVATION_HEIGHT){
@@ -144,16 +149,17 @@
         var tick = '$'+(c.ticker || c.coin_id.slice(0,8).toUpperCase());
         var name = c.name || ('coin '+c.coin_id.slice(0,16)+'…');
         var pct = Math.min(100, c.progress_pct || 0);
+        var pp = pools[c.coin_id];
         var bottom;
         if (c.status === 'live')
           bottom = '<div class="cx-barwrap"><div class="cx-bar" style="width:'+pct+'%"></div></div>'+
                    '<div class="cx-meta"><span>'+pct.toFixed(2)+'%</span><span>'+(c.holders||0)+' '+tr('holders')+'</span></div>';
         else if (c.status === 'graduated')
-          bottom = '<div class="cx-meta"><span class="cx-grad">'+tr('graduated')+'</span><span>'+(c.holders||0)+' '+tr('holders')+'</span></div>';
+          bottom = '<div class="cx-meta"><span class="cx-grad">'+tr('graduated')+(pp&&pp.price_sat?(' \u00b7 '+pp.price_sat+' sat/token'):'')+'</span><span>'+(c.holders||0)+' '+tr('holders')+'</span></div>';
         else
           bottom = '<div class="cx-meta"><span>'+tr('closed')+'</span></div>';
         card.innerHTML = '<div class="cx-row"><span class="cx-tick"></span><span class="cx-name"></span></div>'+
-                         '<div class="cx-meta"><span>'+tr('reserve')+'</span><span class="cx-res">'+fmtGBX(c.reserve_sat||'0')+'</span></div>'+bottom;
+                         (c.status==='graduated'&&pp ? '<div class="cx-meta"><span>AMM</span><span class="cx-res">'+fmtGBX(pp.gbx_sat)+'</span></div>' : '<div class="cx-meta"><span>'+tr('reserve')+'</span><span class="cx-res">'+fmtGBX(c.reserve_sat||'0')+'</span></div>')+bottom;
         card.querySelector('.cx-tick').textContent = tick;   /* textContent: chain data is untrusted */
         card.querySelector('.cx-name').textContent = name;
         card.addEventListener('click', function(){ location.href = '/v3/coin-x.html?coin='+encodeURIComponent(c.coin_id); });
