@@ -315,13 +315,23 @@ function openTokenIndex(dbPath){
       const W = { m30:600, h1:1200, h4:4800, d1:28800 };
       const rows = db.prepare('SELECT height, gbx_sat, tokens FROM pool_log WHERE coin_id=? ORDER BY height ASC, rowid ASC').all(coinId);
       let price=null, liq=null, chg={m30:null,h1:null,h4:null,d1:null}, vol24=0n, phase='curve';
+      // curve phase: spot price from the same virtual reserves the consensus uses
+      try{
+        const cr = db.prepare('SELECT reserve, status FROM curves WHERE coin_id=?').get(coinId);
+        if (cr && cr.status !== 'graduated') {
+          const R = BigInt(cr.reserve||0);
+          const gbxRes = V_GBX + R, tokRes = KCURVE/(V_GBX+R);
+          if (tokRes > 0n) price = Number(gbxRes)/Number(tokRes);
+          liq = String(R);
+        }
+      }catch(_e){}
       if (rows.length){
         phase='pool';
         const last=rows[rows.length-1];
         price = Number(last.gbx_sat)/Number(last.tokens);
         liq = String(last.gbx_sat);
-        const priceAt=(h)=>{ let r=null; for(const x of rows){ if(x.height<=h) r=x; else break; } if(!r) r=rows[0]; return Number(r.gbx_sat)/Number(r.tokens); };
-        for (const k of Object.keys(W)){ const p0=priceAt(tip-W[k]); if(p0>0) chg[k]=(price/p0-1)*100; }
+        const priceAt=(h,maxAge)=>{ let r=null; for(const x of rows){ if(x.height<=h) r=x; else break; } if(!r) return null; if(maxAge && (h-r.height)>maxAge) return null; return Number(r.gbx_sat)/Number(r.tokens); };
+        for (const k of Object.keys(W)){ const p0=priceAt(tip-W[k], W[k]); if(p0!==null&&p0>0) chg[k]=(price/p0-1)*100; }
         for (let i=1;i<rows.length;i++){ if(rows[i].height>tip-W.d1){ const d=BigInt(rows[i].gbx_sat)-BigInt(rows[i-1].gbx_sat); vol24 += d<0n?-d:d; } }
       }
       let t24={n:0,t:0};

@@ -314,12 +314,12 @@ input::-moz-placeholder, textarea::-moz-placeholder {
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/goldbrix-brand-180.png">
     <script src="/gbx-update-check.js" defer></script>
     <script src="/gbx-native-bridge.js" defer></script>
-      <script src="/v3/gbx-session.js?v=113"></script>
-    <script src="/v3/gbx-read.js?v=113"></script>
-      <script src="/i18n.js?v=113" defer></script>
-  <script src="/promo-banner.js?v=113" defer></script>
+      <script src="/v3/gbx-session.js?v=114"></script>
+    <script src="/v3/gbx-read.js?v=114"></script>
+      <script src="/i18n.js?v=114" defer></script>
+  <script src="/promo-banner.js?v=114" defer></script>
 <style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
-<script src="/v3/nav-i18n.js?v=113" defer></script>
+<script src="/v3/nav-i18n.js?v=114" defer></script>
 </head>
 <body>
 
@@ -414,7 +414,7 @@ input::-moz-placeholder, textarea::-moz-placeholder {
       <div class="action-btn__icon">↓</div>
       <div class="action-btn__label" id="lblUsdc">RECEIVE</div>
     </a>
-    <a class="action-btn action-btn--send" href="/v3/send.html?v=113">
+    <a class="action-btn action-btn--send" href="/v3/send.html?v=114">
       <div class="action-btn__icon">→</div>
       <div class="action-btn__label" id="lblSend">SEND</div>
     </a>
@@ -501,7 +501,7 @@ const T = {
 let currentLang = localStorage.getItem('gbx_lang') || 'en';
 let activeWallet = null;
 let GBX_USD = 0.10;
-let _gbxPricePromise=null;(function(){async function _g(){try{const r=await fetch('https://goldbrix.app/onramp/gbx-price');const d=await r.json();if(d&&d.gbx_price_usd>0)GBX_USD=d.gbx_price_usd;}catch(e){}}_gbxPricePromise=_g();setInterval(_g,30000);})();
+let _gbxPricePromise=null;(function(){async function _g(){try{if(!window.GBXRead)return;const reg=await window.GBXRead.json('/api/lp-registry');const eps=((reg&&(reg.lps||reg.entries))||[]).map(function(x){return x.url||x.endpoint;}).filter(Boolean);const qs=await Promise.all(eps.slice(0,5).map(function(u){return fetch(u.replace(/\/$/,'')+'/quote?usd=1',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});}));const px=qs.map(function(q){return q&&Number(q.gbx_price_usd||q.price_usd||0);}).filter(function(v){return v>0;}).sort(function(a,b){return a-b;});GBX_USD=px.length?px[Math.floor(px.length/2)]:0;}catch(e){GBX_USD=0;}}_gbxPricePromise=_g();setInterval(_g,30000);})();
 
 function t(k) { return (T[currentLang] && T[currentLang][k]) || T.en[k] || k; }
 
@@ -632,110 +632,67 @@ window.toggleHideZero = toggleHideZero;
 window.updateHideZeroBtn = updateHideZeroBtn;
 
 async function loadMyCoins() {
-  if (!activeWallet || !activeWallet.address) return;
   const list = document.getElementById('tokensList');
   const emptyMsg = document.getElementById('myCoinsEmpty');
   if (!list) return;
   try {
-    // V5.0 — Holdings din DB (tabela holders = sursa unica de adevar; include si TRANSFERURI, nu doar trades)
-    const API2 = 'https://goldbrix.app';
-    const [hr, cr, tr] = await Promise.all([
-      fetch(API2 + '/launchpad/wallet/' + activeWallet.address + '/holdings'),
-      fetch(API2 + '/v2/memecoin/list?limit=500'),
-      fetch(API2 + '/launchpad/wallet/' + activeWallet.address + '/trades').catch(()=>null)
-    ]);
-    const hd = await hr.json();
-    const dbHoldings = Array.isArray(hd.holdings) ? hd.holdings : [];
-    const allCoins = (await cr.json()).coins || [];
-    const metaById = {};
-    allCoins.forEach(c => { metaById[c.id] = c; });
-    // avg_buy din trades (doar cost-basis, NU pentru sold)
-    const buyGbx = {}, buyCoin = {};
-    try {
-      const td = tr ? await tr.json() : null;
-      const trades = Array.isArray(td) ? td : ((td && td.trades) || []);
-      trades.forEach(t => {
-        if (!t.coin_id || t.side !== 'buy') return;
-        buyGbx[t.coin_id] = (buyGbx[t.coin_id] || 0) + (Number(t.gbx_amount) || 0);
-        buyCoin[t.coin_id] = (buyCoin[t.coin_id] || 0) + (Number(t.coin_amount) || 0);
-      });
-    } catch(_e){}
-    const merged = [];
-    dbHoldings.forEach(h => {
-      const net = Number(h.balance) || 0;
-      if (net <= 1) return;
-      const id = h.coin_id;
-      const m = metaById[id] || {};
-      merged.push({
-        coin_id: id,
-        ticker: h.ticker || m.ticker || '?',
-        name: h.name || m.name || h.ticker || '?',
-        image_url: h.image_url || (API2 + '/launchpad/coin/' + id + '/image'),
-        balance: net,
-        avg_buy: buyCoin[id] > 0 ? buyGbx[id] / buyCoin[id] : 0,
-        market_cap_gbx: Number(m.market_cap_gbx || 0),
-        price_per_token_gbx: 0,
-        value_gbx: 0
-      });
-    });
-    let filtered = merged;
-    // Sort by value_gbx DESC, then balance DESC
-    filtered.sort((a, b) => {
-      if (Number(b.value_gbx) !== Number(a.value_gbx)) return Number(b.value_gbx) - Number(a.value_gbx);
-      return Number(b.balance) - Number(a.balance);
-    });
-    if (filtered.length === 0) {
+    if (!activeWallet || !activeWallet.mnemonic || !window.GoldbrixCrypto || !window.GBXRead) return;
+    if (!window.__gbxMyPk) {
+      const kp = await window.GoldbrixCrypto.deriveKeypairFromMnemonic(activeWallet.mnemonic);
+      window.__gbxMyPk = Array.from(new Uint8Array(kp.publicKey), x => x.toString(16).padStart(2,'0')).join('');
+    }
+    const d = await window.GBXRead.json('/api/my-coins/' + window.__gbxMyPk);
+    const held = (d && Array.isArray(d.held)) ? d.held : [];
+    const merged = held.map(h => ({
+      coin_id: h.coin_id,
+      ticker: String(h.ticker || '?').toUpperCase(),
+      name: h.name || h.ticker || '?',
+      balance: Number(h.amount) || 0
+    })).filter(c => c.balance > 0);
+    merged.sort((x, y) => y.balance - x.balance);
+    if (merged.length === 0) {
       if (emptyMsg) emptyMsg.style.display = 'block';
       list.querySelectorAll('.my-coin-card').forEach(c => c.remove());
+      list.dataset.lastIds = '';
       return;
     }
     if (emptyMsg) emptyMsg.style.display = 'none';
-    // SILENT UPDATE: rebuild only if filtered actually changed
-    const newIds = filtered.map(c => c.coin_id || c.ticker).join(',');
-    const cachedIds = list.dataset.lastIds || '';
-    if (newIds === cachedIds && list.querySelectorAll('.my-coin-card').length > 0) {
-      // No changes, skip rebuild
+    const newIds = merged.map(c => c.coin_id).join(',');
+    if (newIds === (list.dataset.lastIds || '') && list.querySelectorAll('.my-coin-card').length > 0) {
+      if (window.enrichHoldings) window.enrichHoldings();
       return;
     }
     list.dataset.lastIds = newIds;
     list.querySelectorAll('.my-coin-card').forEach(c => c.remove());
-    // V4.9 PRO — Clean professional render with logo, ticker+name, balance+value, 24h% badge
-    // window._coinMetaCache populated by loadPortfolio (memecoin/list response)
-    filtered.forEach(c => {
-      const tk = String(c.ticker || '?').toUpperCase();
-      const name = (c.name || tk).substring(0, 22);
-      const img = c.image_url || '/assets/coin/gbx-coin-32.png';
-      const id = c.coin_id;
-      const bal = Number(c.balance) || 0;
-      const balStr = bal > 0 ? bal.toLocaleString('en-US', {maximumFractionDigits: 0}) : '0';
+    merged.forEach(c => {
+      const tk = c.ticker, id = c.coin_id;
+      const balStr = c.balance.toLocaleString('en-US', {maximumFractionDigits: 0});
       const card = document.createElement('div');
       card.className = 'my-coin-card';
-      card.setAttribute('data-coinid', id || '');
-      card.setAttribute('data-bal', bal);
-      card.setAttribute('data-avgbuy', c.avg_buy || 0);
-      card.style.cssText = 'display:flex;align-items:center;gap:10px;padding:12px 14px;background:#2a2218;border-radius:14px;border:1px solid #3a3025;margin-bottom:6px;cursor:pointer;transition:border-color 0.15s;min-height:64px;';
-      card.onmouseover = () => { card.style.borderColor = '#F0C060'; };
-      card.onmouseout = () => { card.style.borderColor = '#3a3025'; };
-      card.onclick = () => { if (id) window.location.href = '/v3/trade.html?coin=' + id; };
+      card.setAttribute('data-coinid', id);
+      card.setAttribute('data-bal', c.balance);
+      card.style.cssText = 'display:flex;align-items:center;gap:10px;padding:12px 14px;background:#2a2218;border-radius:14px;border:1px solid #3a3025;margin-bottom:6px;cursor:pointer;min-height:64px;';
+      card.addEventListener('click', () => { window.location.href = '/v3/coin-x.html?coin=' + id; });
       card.innerHTML =
-        '<img src="' + img + '" loading="lazy" decoding="async" style="width:42px;height:42px;border-radius:50%;object-fit:cover;background:#3a3025;flex-shrink:0;" onerror="this.src=\'/assets/coin/gbx-coin-32.png\'">' +
+        '<div style="width:42px;height:42px;border-radius:50%;background:#3a3025;color:#FFD98A;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:JetBrains Mono,monospace;font-size:17px;font-weight:800;">' + tk.slice(0,1) + '</div>' +
         '<div style="flex:1;min-width:0;overflow:hidden;">' +
           '<div style="display:flex;align-items:center;gap:6px;">' +
-            '<span style="font-family:JetBrains Mono,monospace;font-size:14px;font-weight:800;color:#F5CC75;">$' + tk + '</span>' +
+            '<span style="font-family:JetBrains Mono,monospace;font-size:14px;font-weight:800;color:#FFD98A;">$' + tk + '</span>' +
             '<span class="mc-ch" style="font-size:11px;font-family:JetBrains Mono,monospace;font-weight:700;"></span>' +
           '</div>' +
-          '<div style="font-size:12px;color:#aaa;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + name + '</div>' +
+          '<div style="font-size:12px;color:#FFFDF7;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + String(c.name).substring(0,22) + '</div>' +
         '</div>' +
         '<div class="mc-spark" style="width:56px;flex-shrink:0;display:flex;align-items:center;justify-content:center;"></div>' +
         '<div style="text-align:right;font-family:JetBrains Mono,monospace;flex-shrink:0;min-width:74px;">' +
-          '<div class="mc-val" style="font-size:14px;color:#fff;font-weight:700;">…</div>' +
-          '<div style="font-size:11px;color:#888;margin-top:3px;">' + balStr + ' ' + tk + '</div>' +
+          '<div class="mc-val" style="font-size:14px;color:#FFFDF7;font-weight:700;">\u2026</div>' +
+          '<div style="font-size:11px;color:#FFFDF7;opacity:.85;margin-top:3px;">' + balStr + ' ' + tk + '</div>' +
         '</div>';
       list.appendChild(card);
     });
     if (window.enrichHoldings) window.enrichHoldings();
-  } catch(e) { console.warn('[loadMyCoins]', e); }
+  } catch (e) { console.warn('[loadMyCoins]', e); }
 }
+
 
 
 async function loadPortfolio() {
@@ -771,7 +728,7 @@ async function loadPortfolio() {
     holdings = [];
     // Fetch memecoin holdings separately
     try {
-      const rH = await fetch('https://goldbrix.app/launchpad/wallet/' + activeWallet.address + '/holdings');
+      const rH = { ok:true, json: async () => ({ holdings: (window.__gbxMyPk ? ((await window.GBXRead.json('/api/my-coins/' + window.__gbxMyPk).catch(()=>null))||{}).held || [] : []).map(h=>({coin_id:h.coin_id,ticker:h.ticker,name:h.name,balance:Number(h.amount)||0})) }) };
       if (rH.ok) {
         const dH = await rH.json();
         holdings = Array.isArray(dH.holdings) ? dH.holdings : (Array.isArray(dH.tokens) ? dH.tokens : []);
@@ -958,7 +915,7 @@ gbxRefresh_wallet();
   setTimeout(decorateRows, 3000);
 })();
 </script>
-<script src="/v3/pwa.js?v=113" defer></script>
+<script src="/v3/pwa.js?v=114" defer></script>
 
 
   <!-- RECENT TRANSACTIONS SECTION -->
@@ -1030,7 +987,7 @@ gbxRefresh_wallet();
         target.parentNode.insertBefore(spark, target);
         tasks.push((async () => {
           try {
-            const r = await fetch('https://goldbrix.app/launchpad/coins/' + coinId + '/candles?interval=1h');
+            const r = { ok:true, json: async () => { const d = await window.GBXRead.json('/api/candles/' + coinId + '?interval=1h').catch(()=>null); return { candles: ((d&&d.candles)||[]).map(x=>({close:Number(x.c),time:x.t})) }; } };
             if (!r.ok) { spark.innerHTML = '<span style="color:#fff;font-size:11px;">—</span>'; return; }
             const d = await r.json();
             const candles = d.candles || (Array.isArray(d) ? d : []);
@@ -1219,7 +1176,7 @@ if (typeof _origSwitch === 'function'){
   if (!roAddr || !/^bn1q[a-z0-9]{30,50}$/i.test(roAddr)) return;
   
   let GBX_USD = 0.10;
-  let _gbxPriceP=(async function(){try{const r=await fetch('https://goldbrix.app/onramp/gbx-price');const d=await r.json();if(d&&d.gbx_price_usd>0)GBX_USD=d.gbx_price_usd;}catch(e){}})();
+  let _gbxPriceP=Promise.resolve();
   
   const _roT={
     en:{back:'← BACK TO TRADE',live:'LIVE',portfolio:'TOTAL VALUE',readOnly:'READ-ONLY',gbxAsset:'GoldBrix · GBX',gbxBuyHint:'Tap to buy GBX →',tokens:'Token Holdings',noTokens:'No tokens held',copied:'Address copied!',native:'NATIVE',graduated:'GRADUATED',sortValue:'Value',loading:'Loading...',recentTx:'Recent Transactions',noTx:'No transactions yet',received:'Received',confirmed:'Confirmed',pending:'Pending',justNow:'just now',tapToTrade:'Tap to trade'},
@@ -1327,7 +1284,7 @@ if (typeof _origSwitch === 'function'){
   async function getCoinsCache(){
     if (_coinCache) return _coinCache;
     try {
-      const r = await fetch('https://goldbrix.app/v2/memecoin/list?limit=2000');
+      const r = { ok:true, json: async () => ({ coins: await (async()=>{ const [c,pl] = await Promise.all([window.GBXRead.json('/api/curves').catch(()=>null), window.GBXRead.json('/api/pools').catch(()=>null)]); const out=[]; ((c&&c.curves)||[]).forEach(x=>out.push({id:x.coin_id,ticker:x.ticker,name:x.name})); ((pl&&pl.pools)||[]).forEach(x=>{ if(!out.some(o=>o.id===x.coin_id)) out.push({id:x.coin_id,ticker:x.ticker,name:x.name}); }); return out; })() }) };
       const d = await r.json();
       const coins = d.coins || d || [];
       _coinCache = {};
@@ -1346,7 +1303,7 @@ if (typeof _origSwitch === 'function'){
     
     let holdings = [];
     try {
-      const r = await fetch('https://goldbrix.app/launchpad/wallet/' + roAddr + '/holdings');
+      const r = { ok:true, json: async () => ({ holdings: (window.__gbxMyPk ? ((await window.GBXRead.json('/api/my-coins/' + window.__gbxMyPk).catch(()=>null))||{}).held || [] : []).map(h=>({coin_id:h.coin_id,ticker:h.ticker,name:h.name,balance:Number(h.amount)||0})) }) };
       const d = await r.json();
       holdings = d.holdings || [];
     } catch(e){}
@@ -1450,7 +1407,7 @@ if (typeof _origSwitch === 'function'){
   async function loadTxHistory(){
     const txList = document.getElementById('roTxList');
     try {
-      const r = await fetch('https://goldbrix.app/launchpad/wallet/' + roAddr + '/trades');
+      const r = { ok:true, json: async () => ({ trades: (window.__gbxMyPk ? ((await window.GBXRead.json('/api/my-coins/' + window.__gbxMyPk).catch(()=>null))||{}).ops || [] : []).map(o=>({coin_id:o.coin_id,ticker:o.ticker,side:(o.op==='B'||o.op==='P')?'buy':'sell',gbx_amount:(Number(o.amount)||0)/1e8,coin_amount:Number(o.tokens)||0,created_at:0,height:o.height,txid:o.txid})) }) };
       const dd = await r.json();
       let txs = Array.isArray(dd) ? dd : (dd.trades || []);
       if (!txs.length){
@@ -1567,7 +1524,7 @@ window.addEventListener('storage', e => { if (e.key && e.key.indexOf('lang') > -
 
   const API = 'https://goldbrix.app';
   let GBX_USD = 0.10;
-  let _gbxPriceP=(async function(){try{const r=await fetch('https://goldbrix.app/onramp/gbx-price');const d=await r.json();if(d&&d.gbx_price_usd>0)GBX_USD=d.gbx_price_usd;}catch(e){}})();
+  let _gbxPriceP=Promise.resolve();
 
   const I18N = {
     en: { follow:'⭐ FOLLOW', following:'✓ FOLLOWING', pnlTitle:'📊 PORTFOLIO P&L', noTrades:'No trades yet', loadFailed:'Load failed', buy:'BUY', sell:'SELL', tokens:'tokens', rank:'RANK', of:'of', burners:'burners', burnTxs:'burn txs' },
@@ -1601,7 +1558,7 @@ window.addEventListener('storage', e => { if (e.key && e.key.indexOf('lang') > -
   let coinMeta = {};
   async function loadCoinMeta(){
     try {
-      const r = await fetch(API + '/v2/memecoin/list?limit=500');
+      const r = { ok:true, json: async () => ({ coins: await (async()=>{ const [c,pl] = await Promise.all([window.GBXRead.json('/api/curves').catch(()=>null), window.GBXRead.json('/api/pools').catch(()=>null)]); const out=[]; ((c&&c.curves)||[]).forEach(x=>out.push({id:x.coin_id,ticker:x.ticker,name:x.name})); ((pl&&pl.pools)||[]).forEach(x=>{ if(!out.some(o=>o.id===x.coin_id)) out.push({id:x.coin_id,ticker:x.ticker,name:x.name}); }); return out; })() }) };
       const d = await r.json();
       const arr = Array.isArray(d) ? d : (d.coins||[]);
       arr.forEach(c => { coinMeta[c.id||c.coin_id] = c; });
@@ -1682,7 +1639,7 @@ window.addEventListener('storage', e => { if (e.key && e.key.indexOf('lang') > -
 
   async function loadBurnsRank(){
     try {
-      const r = await fetch(API + '/v2/memecoin/leaderboard/burners?period=all&limit=200');
+      const r = { ok:true, json: async () => { const d = await window.GBXRead.json('/api/leaderboard?kind=burners&blocks=0').catch(()=>null); return { burners: (d&&(d.rows||d.burners))||[] }; } };
       const d = await r.json();
       const arr = Array.isArray(d) ? d : (d.leaderboard||[]);
       const idx = arr.findIndex(x => x.address === roAddr);
@@ -1765,7 +1722,7 @@ window.addEventListener('storage', e => { if (e.key && e.key.indexOf('lang') > -
 // V4.9 — Preload coin meta cache for 24h % display
 async function _v49PreloadCoinMeta() {
   try {
-    const r = await fetch('https://goldbrix.app/v2/memecoin/list?limit=500');
+    const r = { ok:true, json: async () => ({ coins: await (async()=>{ const [c,pl] = await Promise.all([window.GBXRead.json('/api/curves').catch(()=>null), window.GBXRead.json('/api/pools').catch(()=>null)]); const out=[]; ((c&&c.curves)||[]).forEach(x=>out.push({id:x.coin_id,ticker:x.ticker,name:x.name})); ((pl&&pl.pools)||[]).forEach(x=>{ if(!out.some(o=>o.id===x.coin_id)) out.push({id:x.coin_id,ticker:x.ticker,name:x.name}); }); return out; })() }) };
     const d = await r.json();
     window._coinMetaCache = {};
     (d.coins || []).forEach(co => { window._coinMetaCache[co.id] = co; });
@@ -1774,8 +1731,9 @@ async function _v49PreloadCoinMeta() {
 _v49PreloadCoinMeta();
 setInterval(_v49PreloadCoinMeta, 30000);
 </script>
-<script src="/v3/wallet-holdings-pro.js?v=113" defer></script>
-<script src="/v3/wallet-activity-pro.js?v=113" defer></script>
+<script type="module" src="/crypto-utils-v2.js?v=115"></script>
+<script src="/v3/wallet-holdings-pro.js?v=115" defer></script>
+<script src="/v3/wallet-activity-pro.js?v=114" defer></script>
 
 <script>
 // GBX — grafic portofoliu (ca wallet-view)
@@ -1807,7 +1765,7 @@ setInterval(_v49PreloadCoinMeta, 30000);
   };
   function loadPfChart(){
     var a=getWalletAddr(); if(!a)return;
-    fetch('https://goldbrix.app/launchpad/wallet/'+a+'/portfolio-history?days='+pfDays).then(function(r){return r.json();}).then(function(d){drawPf(d.series||[]);}).catch(function(){});
+    drawPf([]);
   }
   setTimeout(loadPfChart, 1000);
   setInterval(loadPfChart, 20000);
@@ -1815,15 +1773,15 @@ setInterval(_v49PreloadCoinMeta, 30000);
 </script>
 
   <script src="/v3/gbx-autolock.js" defer></script>
-  <script type="module" src="/multichain-utils.js?v=113"></script>
+  <script type="module" src="/multichain-utils.js?v=114"></script>
   <script type="module">
     import("/evm-tx.mjs").catch(function(e){});
     import("/evm-send.mjs").catch(function(e){});
     import("/mod-b-onramp-sol.mjs").then(function(m){ window.GoldbrixOnrampSol=m; }).catch(function(e){});
     import("/mod-b-onramp-evm.mjs").then(function(m){ window.GoldbrixOnrampEvm=m; }).catch(function(e){});
   </script>
-  <script src="/v3/convert-ui.js?v=113"></script>
+  <script src="/v3/convert-ui.js?v=114"></script>
 
-  <script src="/v3/chain-balances.js?v=113" defer></script>
+  <script src="/v3/chain-balances.js?v=114" defer></script>
 </body>
 </html>
