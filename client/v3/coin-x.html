@@ -13,6 +13,8 @@
 :root{--bg:#1c1610;--card:#2a2218;--card2:#241d13;--line:#3a3025;--gold:#F5CC75;
 --gold-soft:#FFE099;--ink:#eee;--dim:#FFFDF7;--green:#4EE08C;--red:#FF7A6B;--ember:#e8843a;}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+.pctb{flex:1;background:var(--card2);border:1px solid var(--line);color:var(--dim);border-radius:8px;padding:7px 0;font-family:inherit;font-size:.78rem;cursor:pointer}
+.pctb:active{border-color:var(--gold);color:var(--gold)}
 body{margin:0;background:var(--bg);color:var(--ink);
  font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-size:14px;padding-bottom:86px;}
 body[dir="rtl"]{direction:rtl;}
@@ -149,6 +151,7 @@ canvas{width:100%;height:150px;background:var(--card2);border:1px solid var(--li
     </div>
     <div class="lbl"><span id="amtLbl" data-x="a.buy">Amount (GBX)</span><span id="balLbl">—</span></div>
     <input class="inp" id="amt" inputmode="decimal" placeholder="1.0" autocomplete="off">
+    <div id="pctRow" style="display:flex;gap:6px;margin:8px 0 2px"><button class="pctb" data-pct="10">10%</button><button class="pctb" data-pct="25">25%</button><button class="pctb" data-pct="50">50%</button><button class="pctb" data-pct="100">MAX</button></div>
 
     <!-- THE IMPACT CARD -->
     <div class="impact" id="impactCard" style="display:none">
@@ -204,7 +207,7 @@ en:{loading:'reading the chain…','r.price':'Price','r.liq':'Curve liquidity','
  's.chart':'Curve history','c.note':'Reserve over time, read from the chain alone.','s.price':'Price \u00b7 candles','p.note':'sat per token \u2014 the coin\u2019s whole life, curve and pool, from the chain alone.','s.trades':'Recent trades','s.holders':'Top holders','o.create':'CREATE','o.refund':'REFUND','o.grad':'GRADUATE','w.you':'you',
  't.buy':'BUY','t.sell':'SELL','a.buy':'Amount (GBX)','a.sell':'Amount (tokens)',
  'i.title':'Your position moves the price','i.get':'You receive','i.avg':'Average execution price',
- 'i.fee':'0.5% burned forever','i.fee2':'0.3% burned forever','r.circ':'In circulation',
+ 'i.fee':'0.5% burned forever','i.fee2':'0.3% burned forever','r.circ':'In circulation','b.avail':'available',
  'i.warn':'Large impact: you are moving this market noticeably. The curve charges you for your own size — that is the honest math.',
  'st.tx':'Transaction verified against the rules','st.cast':'Broadcast to the network',
  'b.buy':'BUY','b.sell':'SELL','s.refund':'Refund · the law',
@@ -221,7 +224,7 @@ ro:{loading:'citesc lanțul…','r.price':'Preț','r.liq':'Lichiditatea curbei',
  's.chart':'Istoricul curbei','c.note':'Rezerva în timp, citită doar din lanț.','s.price':'Preț \u00b7 lumânări','p.note':'sat per token \u2014 toată viața coin-ului, curbă și pool, doar din lanț.','s.trades':'Tranzacții recente','s.holders':'Top deținători','o.create':'CREARE','o.refund':'REFUND','o.grad':'GRADUARE','w.you':'tu',
  't.buy':'CUMPĂRĂ','t.sell':'VINDE','a.buy':'Sumă (GBX)','a.sell':'Sumă (tokens)',
  'i.title':'Poziția ta mișcă prețul','i.get':'Primești','i.avg':'Preț mediu de execuție',
- 'i.fee':'0,5% ars pentru totdeauna','i.fee2':'0,3% ars pentru totdeauna','r.circ':'\u00cen circula\u021bie',
+ 'i.fee':'0,5% ars pentru totdeauna','i.fee2':'0,3% ars pentru totdeauna','r.circ':'\u00cen circula\u021bie','b.avail':'disponibil',
  'i.warn':'Impact mare: miști vizibil această piață. Curba te taxează pentru propria mărime — asta e matematica onestă.',
  'st.tx':'Tranzacția verificată după reguli','st.cast':'Difuzată în rețea',
  'b.buy':'CUMPĂRĂ','b.sell':'VINDE','s.refund':'Refund · legea',
@@ -238,7 +241,7 @@ de:{loading:'lese die Chain…','r.price':'Preis','r.liq':'Kurven-Liquidität','
  's.chart':'Kurven-Historie','c.note':'Reserve über die Zeit, allein von der Chain gelesen.','s.price':'Preis \u00b7 Kerzen','p.note':'sat pro Token \u2014 das ganze Leben der Münze, Kurve und Pool, allein von der Chain.','s.trades':'Letzte Trades','s.holders':'Top-Halter','o.create':'ERSTELLEN','o.refund':'ERSTATTUNG','o.grad':'GRADUIERUNG','w.you':'du',
  't.buy':'KAUFEN','t.sell':'VERKAUFEN','a.buy':'Betrag (GBX)','a.sell':'Betrag (Tokens)',
  'i.title':'Deine Position bewegt den Preis','i.get':'Du erhältst','i.avg':'Durchschnittlicher Ausführungspreis',
- 'i.fee':'0,5% für immer verbrannt','i.fee2':'0,3% für immer verbrannt','r.circ':'Im Umlauf',
+ 'i.fee':'0,5% für immer verbrannt','i.fee2':'0,3% für immer verbrannt','r.circ':'Im Umlauf','b.avail':'verfügbar',
  'i.warn':'Großer Impact: du bewegst diesen Markt spürbar. Die Kurve berechnet dir deine eigene Größe — das ist die ehrliche Mathematik.',
  'st.tx':'Transaktion gegen die Regeln geprüft','st.cast':'Ins Netzwerk gesendet',
  'b.buy':'KAUFEN','b.sell':'VERKAUFEN','s.refund':'Erstattung · das Gesetz',
@@ -255,7 +258,7 @@ zh:{loading:'正在读取链…','r.price':'价格','r.liq':'曲线流动性','r
  's.chart':'曲线历史','c.note':'储备随时间变化，仅从链上读取。','s.price':'价格 \u00b7 K线','p.note':'每代币 sat \u2014 币的一生，曲线与池，仅来自链上。','s.trades':'最近交易','s.holders':'主要持有者','o.create':'创建','o.refund':'退款','o.grad':'毕业','w.you':'你',
  't.buy':'买入','t.sell':'卖出','a.buy':'金额 (GBX)','a.sell':'数量（代币）',
  'i.title':'你的仓位会移动价格','i.get':'你将获得','i.avg':'平均成交价',
- 'i.fee':'0.5% 永久销毁','i.fee2':'0.3% 永久销毁','r.circ':'流通量',
+ 'i.fee':'0.5% 永久销毁','i.fee2':'0.3% 永久销毁','r.circ':'流通量','b.avail':'可用',
  'i.warn':'冲击较大：你正在明显移动这个市场。曲线按你的规模收费——这就是诚实的数学。',
  'st.tx':'交易已按规则验证','st.cast':'已广播到网络',
  'b.buy':'买入','b.sell':'卖出','s.refund':'退款 · 法则',
@@ -272,7 +275,7 @@ ar:{loading:'قراءة السلسلة…','r.price':'السعر','r.liq':'سي�
  's.chart':'تاريخ المنحنى','c.note':'الاحتياطي عبر الزمن، يُقرأ من السلسلة وحدها.','s.price':'السعر \u00b7 شموع','p.note':'sat لكل رمز \u2014 حياة العملة كاملة، المنحنى والمجمع، من السلسلة وحدها.','s.trades':'أحدث الصفقات','s.holders':'كبار الحائزين','o.create':'إنشاء','o.refund':'استرداد','o.grad':'تخرج','w.you':'أنت',
  't.buy':'شراء','t.sell':'بيع','a.buy':'المبلغ (GBX)','a.sell':'الكمية (رموز)',
  'i.title':'مركزك يحرك السعر','i.get':'ستستلم','i.avg':'متوسط سعر التنفيذ',
- 'i.fee':'0.5% تُحرق للأبد','i.fee2':'0.3% تُحرق للأبد','r.circ':'المتداول',
+ 'i.fee':'0.5% تُحرق للأبد','i.fee2':'0.3% تُحرق للأبد','r.circ':'المتداول','b.avail':'متاح',
  'i.warn':'تأثير كبير: أنت تحرك هذا السوق بوضوح. المنحنى يحاسبك على حجمك — هذه هي الرياضيات الأمينة.',
  'st.tx':'تم التحقق من المعاملة وفق القواعد','st.cast':'تم البث إلى الشبكة',
  'b.buy':'شراء','b.sell':'بيع','s.refund':'الاسترداد · القانون',
@@ -488,10 +491,56 @@ function showImpact(q,getStr,feeStr){
   $('btnTrade').disabled=false;
 }
 $('amt').addEventListener('input',refreshQuote);
+let _gbxBal=null;
+async function gbxBal(force){
+  if(_gbxBal!==null&&!force)return _gbxBal;
+  const w=loadWallet(); if(!w)return null;
+  try{const raw=await window.GoldbrixCrypto.fetchUtxos(w.address, 0);
+    _gbxBal=raw.filter(u=>u.spendable!==false).reduce((a,u)=>a+u.amount,0);
+  }catch(e){return _gbxBal;}
+  return _gbxBal;
+}
+async function ensureHolding(){
+  if(myHolding!==null)return myHolding;
+  const w=loadWallet(); if(!w||!D)return null;
+  try{
+    if(!keys){keys=await window.GoldbrixCrypto.deriveKeypairFromMnemonic(w.mnemonic);}
+    myHolding=await findMyHolding();
+  }catch(e){}
+  return myHolding;
+}
+let _balSeq=0;
+async function updBal(force){
+  const seq=++_balSeq;
+  if(side==='sell'){
+    const h=await ensureHolding();
+    if(seq!==_balSeq||side!=='sell')return;
+    $('balLbl').textContent=h?fmtT(h.amount)+' tk':'0 tk';
+    return;
+  }
+  const b=await gbxBal(force);
+  if(seq!==_balSeq||side!=='buy')return;
+  $('balLbl').textContent=(b===null)?'\u2014':(b.toLocaleString('en-US',{maximumFractionDigits:2})+' GBX '+tt('b.avail'));
+}
+updBal();
+document.querySelectorAll('.pctb').forEach(btn=>btn.onclick=async()=>{
+  const pc=Number(btn.getAttribute('data-pct'));
+  if(side==='sell'){
+    const h=await ensureHolding();
+    if(!h){toast(tt('e.notoken'));return;}
+    $('amt').value=String(BigInt(h.amount)*BigInt(pc)/100n);
+  }else{
+    const b=await gbxBal();
+    if(b===null){toast(tt('e.wallet'));return;}
+    const v=Math.max(0, b*pc/100 - 0.05);
+    $('amt').value=v.toFixed(2);
+  }
+  refreshQuote();
+});
 $('tabBuy').onclick=()=>{side='buy';$('tabBuy').classList.add('on');$('tabSell').classList.remove('on');
- $('amtLbl').textContent=tt('a.buy');$('btnTrade').textContent=tt('b.buy');$('btnTrade').className='btn b';refreshQuote();};
+ $('amtLbl').textContent=tt('a.buy');$('btnTrade').textContent=tt('b.buy');$('btnTrade').className='btn b';refreshQuote();updBal();};
 $('tabSell').onclick=()=>{side='sell';$('tabSell').classList.add('on');$('tabBuy').classList.remove('on');
- $('amtLbl').textContent=tt('a.sell');$('btnTrade').textContent=tt('b.sell');$('btnTrade').className='btn s';refreshQuote();};
+ $('amtLbl').textContent=tt('a.sell');$('btnTrade').textContent=tt('b.sell');$('btnTrade').className='btn s';refreshQuote();updBal();};
 
 /* ── keys + holdings ── */
 async function ensureKeys(){
