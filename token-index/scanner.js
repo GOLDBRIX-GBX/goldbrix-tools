@@ -28,6 +28,24 @@ function cli(...args){
   try { return JSON.parse(s); } catch { return s; }
 }
 const sha256 = b => crypto.createHash('sha256').update(b).digest();
+// ── total burned, measured from this node's own chain (autonomous, no third party):
+// sum of all UTXOs on the canonical burn script (P2WPKH all-zero program).
+let _lastBurnScan = 0;
+function scanBurnTotal(q){
+  const now = Date.now();
+  if (now - _lastBurnScan < 5*60*1000) return;   // at most every 5 min
+  _lastBurnScan = now;
+  try{
+    const r = cli('scantxoutset','start','["addr(bn1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3kc3g2)"]');
+    if (r && r.success){
+      const sat = Math.round(Number(r.total_amount) * 1e8);
+      q.setMeta.run('burn_total_sat', String(sat));
+      q.setMeta.run('burn_utxos', String((r.unspents||[]).length));
+      q.setMeta.run('burn_scan_height', String(r.height||0));
+    }
+  }catch(_e){ /* node busy; retry next cycle */ }
+}
+
 
 // -- payload: "GBX:C:" + op(1) + cid(32) + amount(8 BE) + tokens_out(8 BE) + pk(33) = 88 bytes
 function readPush(b, i){
@@ -446,6 +464,7 @@ function syncOnce(){
     if (s % 10000 === 0) console.log(`[tokenidx] scanned ${s}/${tip}`);
     tip = cli('getblockcount');
   }
+  scanBurnTotal(q);
   return s;
 }
 function dump(){

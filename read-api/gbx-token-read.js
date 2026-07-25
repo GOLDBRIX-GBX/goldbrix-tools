@@ -292,6 +292,22 @@ function openTokenIndex(dbPath){
                            amount:String(r.amount), tokens:String(r.tokens_out), burn_sat:String(r.burn_sat)})); }catch(_e){}
       return { scanned: tip, pk: pkHex, held, ops };
     },
+    burnsAll(limit = 500){
+      // every burn on the chain, oldest first: op, coin, exact sat, txid, height.
+      const tip = parseInt(q.meta.get('scanned')?.v ?? '0', 10);
+      let rows=[];
+      try{ rows = db.prepare(`SELECT o.height,o.txid,o.coin_id,o.op,o.burn_sat,m.ticker
+                              FROM curve_ops o LEFT JOIN coin_meta m ON m.coin_id=o.coin_id
+                              WHERE CAST(o.burn_sat AS INTEGER)>0 ORDER BY o.height ASC, o.rowid ASC LIMIT ?`).all(Math.min(limit,2000))
+              .map(r=>({height:r.height,txid:r.txid,coin_id:r.coin_id,op:r.op,ticker:r.ticker||null,burn_sat:String(r.burn_sat)})); }catch(_e){}
+      let tot={n:0,s:'0'};
+      try{ const x=db.prepare("SELECT COUNT(*) n, SUM(CAST(burn_sat AS INTEGER)) s FROM curve_ops WHERE CAST(burn_sat AS INTEGER)>0").get();
+           tot={n:x.n, s:String(x.s||0)}; }catch(_e){}
+      const chainTot = q.meta.get('burn_total_sat')?.v ?? null;
+      const chainUtxos = q.meta.get('burn_utxos')?.v ?? null;
+      return { scanned:tip, chain_total_sat:chainTot, chain_burn_utxos:chainUtxos?parseInt(chainUtxos,10):null,
+               launchpad_burn_sat:tot.s, launchpad_ops:tot.n, burns:rows };
+    },
     coinStats(coinId){
       // market stats band: price, window % change, liquidity, 24h volume/txns/traders — all on-chain.
       if (!/^[0-9a-f]{64}$/.test(coinId)) return null;
