@@ -80,7 +80,7 @@ zh:{title:'销毁',tot:'链上总销毁 · 永久',meas:'由本节点从链上�
 ar:{title:'الحرق',tot:'إجمالي المحروق على السلسلة · للأبد',meas:'مقاس بواسطة هذه العقدة من السلسلة',froz:'يشمل الحقبة الوصائية (34,694.09 GBX · 207 معاملة · مغلقة) وكل حرق launchpad',fsub:'',list:'حرق launchpad · من الأول إلى الأخير',loading:'جارٍ التحميل…',nodata:'لا حرق بعد',blk:'كتلة',fees:{C:'رسوم الإنشاء',B:'رسوم المنحنى 0.5%',S:'رسوم المنحنى 0.5%',P:'رسوم المجمع 0.3%',Q:'رسوم المجمع 0.3%',G:'التخرج',R:'استرداد'},scanned:'تم مسح السلسلة حتى الكتلة'}};
 var t=T[L]||T.en;
 function $(i){return document.getElementById(i);}
-$('pgTitle').textContent=t.title;$('hTot').textContent=t.tot;$('fTit').textContent=t.froz;$('fSub').textContent=t.fsub;$('listTitle').textContent=t.list;$('loadMsg').textContent=t.loading;
+[['pgTitle',t.title],['hTot',t.tot],['fTit',t.froz],['listTitle',t.list],['loadMsg',t.loading]].forEach(function(x){var e=$(x[0]);if(e)e.textContent=x[1];});
 
 function gbxFull(sat){var n=Number(sat)/1e8;
   return n.toLocaleString('en-US',{minimumFractionDigits:n<1?4:2,maximumFractionDigits:n<1?8:2});}
