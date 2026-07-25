@@ -15,7 +15,7 @@ window.PriceChart = (function () {
 
   var cfg=null, chart=null, series=null, vol=null;
   var candles=[], tf='1m', chartType='candles', showMA=true;
-  var pollTimer=null, cdTimer=null, hiLine=null, loLine=null, ma7=null, ma14=null, ma28=null, xFmtSet=false, resizeBound=false;
+  var pollTimer=null, cdTimer=null, hiLine=null, loLine=null, ma7=null, ma14=null, ma28=null, xFmtSet=false, resizeBound=false, _lastType=null;
 
   function mul(){ return (cfg.usdMultiplier ? cfg.usdMultiplier() : 1) || 1; }
   function dec(){ return cfg.displayDecimals!=null ? cfg.displayDecimals : 8; }
@@ -48,9 +48,10 @@ window.PriceChart = (function () {
     updateChange();
     var container=$(cfg.container); if(!container||typeof LightweightCharts==='undefined') return;
     if(!candles.length){ container.innerHTML='<div class="t-chart-empty">'+L('nodata')+'</div>'; return; }
-    if(chart){ try{chart.remove();}catch(e){} chart=null; }
-    container.innerHTML='';
+    var reuse = chart && series && _lastType===chartType;
+    if(!reuse){ if(chart){ try{chart.remove();}catch(e){} } chart=null; series=null; vol=null; ma7=ma14=ma28=null; hiLine=loLine=null; xFmtSet=false; }
     var U=mul();
+    if(!reuse){ container.innerHTML='';
     chart=LightweightCharts.createChart(container,{
       width:container.clientWidth, height:cfg.height||260,
       layout:{background:{color:'#000'},textColor:'#fff'},
@@ -59,13 +60,13 @@ window.PriceChart = (function () {
       rightPriceScale:{autoScale:true,scaleMargins:{top:0.05,bottom:0.25},borderColor:'#222',mode:0},
       timeScale:{borderColor:'#222',timeVisible:true,secondsVisible:true,rightOffset:5,barSpacing:8},
       handleScroll:true,handleScale:true
-    });
+    }); }
     var pf={type:'price',precision:prec(),minMove:minMove()};
-    if(chartType==='line'){
+    if(!reuse){ if(chartType==='line'){
       series=chart.addLineSeries({color:'#1DB954',lineWidth:2,priceLineVisible:true,priceLineColor:'#F0C060',priceLineWidth:1,priceLineStyle:2,lastValueVisible:true,priceFormat:pf});
     } else {
       series=chart.addCandlestickSeries({upColor:'#1DB954',downColor:'#FF3B3B',wickUpColor:'#1DB954',wickDownColor:'#FF3B3B',borderUpColor:'#1DB954',borderDownColor:'#FF3B3B',priceLineVisible:true,priceLineColor:'#F0C060',priceLineWidth:1,priceLineStyle:2,lastValueVisible:true,priceFormat:pf});
-    }
+    } _lastType=chartType; }
     var cleaned=candles.filter(function(c){return c&&c.time&&c.close!=null;}).map(function(c){return {time:Math.floor(c.time/1000),open:c.open,high:c.high,low:c.low,close:c.close};}).sort(function(a,b){return a.time-b.time;});
     var dedup=[],lastT=null;
     for(var i=0;i<cleaned.length;i++){ if(cleaned[i].time!==lastT){dedup.push(cleaned[i]);lastT=cleaned[i].time;} }
@@ -84,14 +85,14 @@ window.PriceChart = (function () {
     try{
       var calcMA=function(n){ var out=[]; for(var i=0;i<colored.length;i++){ var aN=Math.min(n,i+1); var win=colored.slice(i-aN+1,i+1).map(function(c){return c.close;}).filter(function(v){return v!=null&&!isNaN(v);}); if(!win.length) continue; out.push({time:colored[i].time,value:(win.reduce(function(a,b){return a+b;},0)/win.length)*U}); } return out; };
       if(showMA){
-        ma7=chart.addLineSeries({color:'#F0C060',lineWidth:2,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false});
-        ma14=chart.addLineSeries({color:'#54B8F0',lineWidth:2,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false});
-        ma28=chart.addLineSeries({color:'#A06FFF',lineWidth:2,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false});
+        if(!ma7)ma7=chart.addLineSeries({color:'#F0C060',lineWidth:2,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false});
+        if(!ma14)ma14=chart.addLineSeries({color:'#54B8F0',lineWidth:2,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false});
+        if(!ma28)ma28=chart.addLineSeries({color:'#A06FFF',lineWidth:2,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false});
         ma7.setData(calcMA(7)); ma14.setData(calcMA(14)); ma28.setData(calcMA(28));
       } else { ma7=ma14=ma28=null; }
       var closes=colored.map(function(c){return c.close;}).filter(function(v){return v!=null&&!isNaN(v);});
       var lastMA=function(n){ if(!closes.length) return null; var sl=closes.slice(-Math.min(n,closes.length)); return sl.reduce(function(a,b){return a+b;},0)/sl.length; };
-      var fmt=function(v){ return v==null?'--':'$'+(v*U).toFixed(dec()); };
+      var fmt=function(v){ if(v==null)return '--'; var x=(v*U).toFixed(dec()); return cfg.unitLabel!=null ? x+' '+cfg.unitLabel : '$'+x; };
       var e7=$(cfg.els&&cfg.els.ma7),e14=$(cfg.els&&cfg.els.ma14),e28=$(cfg.els&&cfg.els.ma28);
       if(!showMA){ if(e7)e7.textContent='—'; if(e14)e14.textContent='—'; if(e28)e28.textContent='—'; }
       else if(closes.length<5){ if(e7)e7.textContent='—'; if(e14)e14.textContent='—'; if(e28)e28.textContent='—'; }
@@ -141,7 +142,7 @@ window.PriceChart = (function () {
     // volume (optional)
     if(cfg.showVolume!==false){
       try{
-        vol=chart.addHistogramSeries({priceFormat:{type:'volume'},priceScaleId:'',color:'#1DB95440'});
+        if(!vol)vol=chart.addHistogramSeries({priceFormat:{type:'volume'},priceScaleId:'',color:'#1DB95440'});
         vol.priceScale().applyOptions({scaleMargins:{top:0.85,bottom:0}});
         var sc=candles.slice().filter(function(c){return c&&c.time;}).sort(function(a,b){return a.time-b.time;});
         vol.setData(sc.map(function(c,idx){ var col='rgba(29,185,84,0.4)'; if(idx>0){ var p=sc[idx-1]; if(c.close<p.close)col='rgba(255,59,59,0.4)'; else if(c.close>p.close)col='rgba(29,185,84,0.4)'; else col='rgba(120,120,120,0.3)'; } return {time:Math.floor(c.time/1000),value:c.volume_gbx||0,color:col}; }));

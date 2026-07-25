@@ -452,9 +452,15 @@ const server = http.createServer(async (req, res) => {
         let out;
         if (url.pathname.startsWith('/api/trades/'))
           out = global.__gbxTokenIdx.coinTrades(url.pathname.slice('/api/trades/'.length));
-        else
-          out = global.__gbxTokenIdx.coinCandles(url.pathname.slice('/api/candles/'.length),
-                  parseInt(url.searchParams.get('interval')||'1200',10)||1200);
+        else {
+          const iv = url.searchParams.get('interval')||'1200';
+          if (/^(1m|5m|15m|1h|4h|1d)$/.test(iv))
+            out = global.__gbxTokenIdx.coinCandlesPro(url.pathname.slice('/api/candles/'.length), iv,
+                    url.searchParams.get('phase')||null);
+          else
+            out = global.__gbxTokenIdx.coinCandles(url.pathname.slice('/api/candles/'.length),
+                    parseInt(iv,10)||1200);
+        }
         if (!out) { res.writeHead(404); return res.end('unknown coin'); }
         res.writeHead(200, {'Content-Type':'application/json'});
         return res.end(JSON.stringify(out));

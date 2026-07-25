@@ -155,7 +155,7 @@ html,body{margin:0;background:#171310}
           bottom = '<div class="cx-barwrap"><div class="cx-bar" style="width:'+pct+'%"></div></div>'+
                    '<div class="cx-meta"><span>'+pct.toFixed(2)+'%</span><span>'+(c.holders||0)+' '+tr('holders')+'</span></div>';
         else if (c.status === 'graduated')
-          bottom = '<div class="cx-meta"><span class="cx-grad">'+tr('graduated')+(pp&&pp.price_sat?(' \u00b7 '+pp.price_sat+' sat/token'):'')+'</span><span>'+(c.holders||0)+' '+tr('holders')+'</span></div>';
+          bottom = '<div class="cx-meta"><span class="cx-grad">'+tr('graduated')+(pp&&pp.price_sat?(' \u00b7 '+(Number(pp.price_sat)*0.01).toFixed(2)+' \u00b5GBX'):'')+'</span><span>'+(c.holders||0)+' '+tr('holders')+'</span></div>';
         else
           bottom = '<div class="cx-meta"><span>'+tr('closed')+'</span></div>';
         card.innerHTML = '<div class="cx-row"><span class="cx-tick"></span><span class="cx-name"></span></div>'+

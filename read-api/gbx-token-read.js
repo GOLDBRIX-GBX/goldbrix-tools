@@ -127,12 +127,12 @@ function openTokenIndex(dbPath){
         for (const l of db.prepare('SELECT height, reserve, status FROM curve_log WHERE coin_id=? ORDER BY height').all(coinId)){
           if (l.status==='graduated'||l.status==='closed') continue;
           const R=BigInt(l.reserve); const cur=V+R;
-          pts.push({h:l.height, p:Number(cur*cur)/Number(KC)});
+          pts.push({h:l.height, p:Number(cur*cur)/Number(KC), s:'c'});
         }
       }catch(_e){}
       try{
         for (const l of db.prepare('SELECT height, gbx_sat, tokens FROM pool_log WHERE coin_id=? ORDER BY height').all(coinId)){
-          if (BigInt(l.tokens)>0n) pts.push({h:l.height, p:Number(l.gbx_sat)/Number(l.tokens)});
+          if (BigInt(l.tokens)>0n) pts.push({h:l.height, p:Number(l.gbx_sat)/Number(l.tokens), s:'p'});
         }
       }catch(_e){}
       pts.sort((a,b)=>a.h-b.h);
@@ -140,14 +140,63 @@ function openTokenIndex(dbPath){
       const out=[]; let cur=null;
       for (const pt of pts){
         const bucket = Math.floor(pt.h/interval)*interval;
-        if (!cur || cur.t!==bucket){
+        if (!cur || cur.t!==bucket || cur.ph!==pt.s){
           if (cur) out.push(cur);
-          cur={t:bucket, o:(out.length?out[out.length-1].c:pt.p), h:pt.p, l:pt.p, c:pt.p};
+          const prev=(out.length&&out[out.length-1].ph===pt.s)?out[out.length-1].c:pt.p;
+          cur={t:bucket, o:prev, h:pt.p, l:pt.p, c:pt.p, ph:pt.s};
         }
         cur.h=Math.max(cur.h,pt.p); cur.l=Math.min(cur.l,pt.p); cur.c=pt.p;
       }
       out.push(cur);
       return { ok:true, scanned: parseInt(q.meta.get('scanned')?.v ?? '0', 10), candles: out.slice(-limit) };
+    },
+    coinCandlesPro(coinId, tf = '1h', phaseOnly = null, limit = 200){
+      // pro candles for the PriceChart component: {time(ms),open,high,low,close,volume_gbx}
+      // time derived honestly from height (3s/block vs scanned tip); volume = abs reserve/pool deltas
+      // within the bucket, phase transitions excluded. phaseOnly='p' -> pool-phase only (graduated view).
+      if (!/^[0-9a-f]{64}$/.test(coinId)) return null;
+      const TFB={'1m':20,'5m':100,'15m':300,'1h':1200,'4h':4800,'1d':28800};
+      const ib=TFB[tf]||1200;
+      const tip=parseInt(q.meta.get('scanned')?.v ?? '0', 10);
+      const now=Date.now();
+      const pts=[];
+      const V=3000000000000n, VT=1073000000n, KC=V*VT;
+      try{
+        let prevR=null;
+        for (const l of db.prepare('SELECT height, reserve, status FROM curve_log WHERE coin_id=? ORDER BY height').all(coinId)){
+          if (l.status==='graduated'||l.status==='closed'){ prevR=null; continue; }
+          const R=BigInt(l.reserve); const cur=V+R;
+          const dv=prevR===null?0:Math.abs(Number(R-prevR));
+          pts.push({h:l.height, p:Number(cur*cur)/Number(KC), v:dv, s:'c'});
+          prevR=R;
+        }
+      }catch(_e){}
+      try{
+        let prevG=null;
+        for (const l of db.prepare('SELECT height, gbx_sat, tokens FROM pool_log WHERE coin_id=? ORDER BY height').all(coinId)){
+          if (BigInt(l.tokens)<=0n) continue;
+          const G=BigInt(l.gbx_sat);
+          const dv=prevG===null?0:Math.abs(Number(G-prevG));
+          pts.push({h:l.height, p:Number(l.gbx_sat)/Number(l.tokens), v:dv, s:'p'});
+          prevG=G;
+        }
+      }catch(_e){}
+      let use=pts.sort((a,b)=>a.h-b.h);
+      if (phaseOnly) use=use.filter(x=>x.s===phaseOnly);
+      if (!use.length) return { ok:true, candles: [] };
+      const out=[]; let cur=null;
+      for (const pt of use){
+        const bucket=Math.floor(pt.h/ib)*ib;
+        if (!cur || cur.b!==bucket || cur.ph!==pt.s){
+          if (cur) out.push(cur);
+          const prev=(out.length&&out[out.length-1].ph===pt.s)?out[out.length-1].close:pt.p;
+          cur={b:bucket, time:now-(tip-bucket)*3000, open:prev, high:pt.p, low:pt.p, close:pt.p, volume_gbx:0, ph:pt.s};
+        }
+        cur.high=Math.max(cur.high,pt.p); cur.low=Math.min(cur.low,pt.p); cur.close=pt.p;
+        cur.volume_gbx+=pt.v/1e8;
+      }
+      out.push(cur);
+      return { ok:true, scanned: tip, candles: out.slice(-limit).map(c=>({time:c.time,open:c.open,high:c.high,low:c.low,close:c.close,volume_gbx:c.volume_gbx,ph:c.ph})) };
     },
     leaderboard(kind, blocks = 28800){
       // federated leaderboard, straight from curve_ops (chain-derived, reorg-safe).

@@ -9,6 +9,9 @@
 <script type="module" src="/crypto-utils-v2.js?v=114"></script>
 <script src="/i18n.js?v=114" defer></script>
 <script src="/v3/nav-i18n.js?v=114" defer></script>
+<script src="/lib/lightweight-charts.standalone.production.js"></script>
+<link rel="stylesheet" href="/lib/price-chart.css">
+<script src="/lib/price-chart.js?v=115" defer></script>
 <style>
 :root{--bg:#1c1610;--card:#2a2218;--card2:#241d13;--line:#3a3025;--gold:#F5CC75;
 --gold-soft:#FFE099;--ink:#eee;--dim:#FFFDF7;--green:#4EE08C;--red:#FF7A6B;--ember:#e8843a;}
@@ -20,7 +23,7 @@ body{margin:0;background:var(--bg);color:var(--ink);
 body[dir="rtl"]{direction:rtl;}
 .wrap{max-width:560px;margin:0 auto;padding:14px;}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;}
-.sect{color:var(--gold);font-weight:800;font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 10px;}
+.sect{color:#FFFDF7;font-weight:800;font-size:13px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 10px;}
 .hdr{display:flex;align-items:center;gap:12px;}
 .hdr .logo{width:52px;height:52px;border-radius:50%;background:var(--card2);border:1px solid var(--line);
  display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--gold);font-weight:800;overflow:hidden;}
@@ -40,7 +43,8 @@ body[dir="rtl"]{direction:rtl;}
 .gbar{height:14px;background:var(--card2);border:1px solid var(--line);border-radius:7px;overflow:hidden;}
 .gbar>i{display:block;height:100%;background:linear-gradient(90deg,#F5CC75,#d9a53f);width:0%;transition:width .5s;}
 .gnote{color:var(--dim);font-size:11px;margin-top:6px;line-height:1.55;}
-canvas{width:100%;height:150px;background:var(--card2);border:1px solid var(--line);border-radius:10px;}
+#chart{width:100%;height:150px;background:var(--card2);border:1px solid var(--line);border-radius:10px;}
+#proChart canvas{width:auto;height:auto;background:transparent;border:none;border-radius:0}
 /* trade */
 .tabs{display:flex;gap:8px;margin-bottom:10px;}
 .tab{flex:1;text-align:center;padding:10px;border-radius:10px;border:1px solid var(--line);
@@ -120,25 +124,38 @@ canvas{width:100%;height:150px;background:var(--card2);border:1px solid var(--li
   <!-- PRICE · OHLC -->
   <div class="card">
     <div class="sect" data-x="s.price">Price · candles</div>
-    <canvas id="candles" width="520" height="170"></canvas>
-    <div class="gnote" data-x="p.note">sat per token — the coin's whole life, curve and pool, from the chain alone.</div>
+    <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+      <button class="t-tf-btn pctb" data-tf="1m" onclick="window.setInterval2&&window.setInterval2('1m')">1m</button>
+      <button class="t-tf-btn pctb" data-tf="5m" onclick="setInterval2('5m')">5m</button>
+      <button class="t-tf-btn pctb" data-tf="15m" onclick="setInterval2('15m')">15m</button>
+      <button class="t-tf-btn pctb active" data-tf="1h" onclick="setInterval2('1h')">1h</button>
+      <button class="t-tf-btn pctb" data-tf="4h" onclick="setInterval2('4h')">4h</button>
+      <button class="t-tf-btn pctb" data-tf="1d" onclick="setInterval2('1d')">1d</button>
+    </div>
+    <div id="proChart" style="width:100%;height:340px"></div>
+    <div style="display:flex;gap:14px;margin-top:8px;font-size:11px;color:#FFFDF7">
+      <span style="color:#F0C060">MA7 <b id="ma7v">—</b></span>
+      <span style="color:#54B8F0">MA14 <b id="ma14v">—</b></span>
+      <span style="color:#A06FFF">MA28 <b id="ma28v">—</b></span>
+      <span style="margin-left:auto" id="chg24"></span>
+    </div>
   </div>
 
   <!-- CHART -->
-  <div class="card">
+  <div class="card" id="curveHistCard">
     <div class="sect" data-x="s.chart">Curve history</div>
     <canvas id="chart" width="520" height="150"></canvas>
     <div class="gnote" data-x="c.note">Reserve over time, read from the chain alone.</div>
   </div>
 
   <!-- RECENT TRADES -->
-  <div class="card">
+  <div class="card" id="tradesCard">
     <div class="sect" data-x="s.trades">Recent trades</div>
     <div id="tradesList" class="gnote">—</div>
   </div>
 
   <!-- TOP HOLDERS -->
-  <div class="card">
+  <div class="card" id="holdersCard">
     <div class="sect" data-x="s.holders">Top holders</div>
     <div id="holdersList" class="gnote">—</div>
   </div>
@@ -290,6 +307,7 @@ const tt=k=>(T[L]&&T[L][k])||T.en[k]||k;
 if(L==='ar')document.body.setAttribute('dir','rtl');
 function applyLang(){for(const el of document.querySelectorAll('[data-x]'))el.innerHTML=tt(el.getAttribute('data-x'));}
 applyLang();
+(function(){const tc=document.getElementById('tradesCard');if(tc&&tc.parentNode){tc.parentNode.appendChild(tc);}})();
 window.addEventListener('pageshow',ev=>{if(ev.persisted)location.reload();});
 
 /* ── helpers ── */
@@ -351,7 +369,7 @@ function render(){
   const grad=D.status==='graduated';
   $('cBadge').textContent=grad?'GRADUATED':'LIVE';
   $('cBadge').className='badge '+(grad?'grad':'live');
-  $('rPrice').textContent=priceOf(D.reserve_sat).toFixed(8)+' sat/token';
+  $('rPrice').textContent=(priceOf(D.reserve_sat)*0.01).toFixed(4)+' \u00b5GBX/token';
   $('rLiq').textContent=fmt(D.reserve_sat,2)+' GBX';
   $('rSold').textContent=fmtT(D.sold_tokens)+' ('+D.sold_pct+'%)';
   $('rHolders').textContent=D.holders;
@@ -363,13 +381,14 @@ function render(){
     $('gGraduated').style.display='block';
     if(D.pool){ // dual phase: the market lives on, sourced from the AMM pool
       $('tradeCard').style.display='block';
-      $('rPrice').textContent=(Number(D.pool.gbx_sat)/Number(D.pool.tokens)).toFixed(8)+' sat/token';
+      $('rPrice').textContent=(Number(D.pool.gbx_sat)/Number(D.pool.tokens)*0.01).toFixed(4)+' \u00b5GBX/token';
       $('rLiq').textContent=fmt(D.pool.gbx_sat,2)+' GBX';
       document.querySelector('[data-x="r.liq"]').textContent='AMM';
       document.querySelector('[data-x="r.sold"]').textContent=tt('r.circ');
       document.querySelector('[data-x="i.fee"]').textContent=tt('i.fee2');
       $('rSold').textContent=(1000000000-Number(D.pool.tokens)).toLocaleString();
       $('gBarWrap').style.display='none';$('gNote').style.display='none';
+      var _ch=document.getElementById('curveHistCard');if(_ch)_ch.style.display='none';
     } else {
       $('tradeCard').style.display='none';
     }
@@ -377,14 +396,28 @@ function render(){
   drawChart();
   loadExtras();
 }
-let _exT=0;
+let _exT=0, _pcInit=false;
+function initProChart(){
+  if(_pcInit)return;
+  if(!window.PriceChart||!D){ setTimeout(initProChart,300); return; }
+  _pcInit=true;
+  const ph=(D.status==='graduated')?'&phase=p':'';
+  window.PriceChart.init({
+    container:'proChart', height:340, defaultTf:'1h', pollMs:10000,
+    usdMultiplier:function(){return 0.01;}, displayDecimals:2, precision:2, minMove:0.01, unitLabel:'\u00b5GBX',
+    fitContent:true, showVolume:true, storageKey:'gbx_coinx_chartType',
+    candlesUrl:function(){ return '/api/candles/'+cid+(ph?('?x=1'+ph):''); },
+    els:{ma7:'ma7v',ma14:'ma14v',ma28:'ma28v',change:'chg24'}
+  });
+  document.querySelectorAll('.t-tf-btn').forEach(function(b){b.addEventListener('click',function(){if(window.PriceChart)window.PriceChart.setTimeframe(this.dataset.tf);});});
+}
 async function loadExtras(){
   if(Date.now()-_exT<10000)return; _exT=Date.now();
   try{
     const gj=async p=>{for(let i=0;i<20&&!window.GBXRead;i++)await new Promise(r=>setTimeout(r,100));
       return window.GBXRead?await window.GBXRead.json(p):await (await fetch(p)).json();};
     const [cd,td]=await Promise.all([gj('/api/candles/'+cid+'?interval=600'),gj('/api/trades/'+cid)]);
-    drawCandles((cd&&cd.candles)||[]);
+    initProChart();
     renderTrades((td&&td.trades)||[]);
   }catch(e){}
   renderHolders();
@@ -392,19 +425,30 @@ async function loadExtras(){
 function drawCandles(cs){
   const cv=$('candles'); if(!cv)return; const ctx=cv.getContext('2d');
   ctx.clearRect(0,0,cv.width,cv.height);
+  // graduated: the pool IS the market — show only pool-phase candles (no fake transition dump)
+  if(D&&D.status==='graduated'){const pp=cs.filter(c=>c.ph==='p');if(pp.length)cs=pp;}
   if(cs.length<1)return;
-  const lo=Math.min(...cs.map(c=>c.l)), hi=Math.max(...cs.map(c=>c.h))*1.02||1;
-  const W=cv.width-16, H=cv.height-20, X=i=>8+W*(i+0.5)/cs.length, Y=p=>8+H*(1-(p-lo)/Math.max(1e-9,hi-lo));
+  const fmtP=v=>v>=100?Math.round(v).toLocaleString('en-US'):v.toFixed(v<1?4:2);
+  const lo=Math.min(...cs.map(c=>c.l))*0.98, hi=Math.max(...cs.map(c=>c.h))*1.02||1;
+  const R=46, W=cv.width-R-8, H=cv.height-24, X=i=>8+W*(i+0.5)/cs.length, Y=p=>10+H*(1-(p-lo)/Math.max(1e-9,hi-lo)), AX=cv.width-R+4;
+  // grid + price axis (4 levels)
+  ctx.font='10px monospace';ctx.lineWidth=1;
+  for(let g=0;g<4;g++){const pv=lo+(hi-lo)*g/3, y=Y(pv);
+    ctx.strokeStyle='rgba(255,253,247,.14)';ctx.beginPath();ctx.moveTo(8,y);ctx.lineTo(cv.width-R,y);ctx.stroke();
+    ctx.fillStyle='#FFFDF7';ctx.fillText(fmtP(pv),AX,y+3);}
   const bw=Math.max(2,Math.min(14,W/cs.length*0.6));
   cs.forEach((c,i)=>{
     const up=c.c>=c.o, col=up?'#4EE08C':'#FF5C5C';
-    ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=1;
+    ctx.strokeStyle=col;ctx.fillStyle=col;
     ctx.beginPath();ctx.moveTo(X(i),Y(c.h));ctx.lineTo(X(i),Y(c.l));ctx.stroke();
     const y1=Y(Math.max(c.o,c.c)), y2=Y(Math.min(c.o,c.c));
     ctx.fillRect(X(i)-bw/2, y1, bw, Math.max(1,y2-y1));
   });
-  ctx.fillStyle='#9a8c6f';ctx.font='10px monospace';
-  ctx.fillText(hi.toFixed(hi<10?4:0),8,14);ctx.fillText(lo.toFixed(lo<10?4:0),8,cv.height-6);
+  // last price marker
+  const last=cs[cs.length-1].c, ly=Y(last);
+  ctx.strokeStyle='rgba(245,204,117,.8)';ctx.setLineDash([3,3]);
+  ctx.beginPath();ctx.moveTo(8,ly);ctx.lineTo(cv.width-R,ly);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='#FFE099';ctx.fillRect(cv.width-R+1,ly-8,R-2,14);ctx.fillStyle='#1c1610';ctx.fillText(fmtP(last),AX,ly+3);
 }
 function renderTrades(ts){
   const el=$('tradesList'); if(!el)return;
@@ -482,9 +526,9 @@ function showImpact(q,getStr,feeStr){
   const p=q.impactPct;
   $('iPct').textContent=(p>=0?'+':'')+p.toFixed(2)+'%';
   $('iPct').className='pct '+(Math.abs(p)>=10?'hot':Math.abs(p)>=2?'warm':'cool');
-  $('iArrow').textContent=q.priceBefore.toFixed(8)+' → '+q.priceAfter.toFixed(8)+' GBX/token';
+  $('iArrow').textContent=(q.priceBefore*0.01).toFixed(4)+' → '+(q.priceAfter*0.01).toFixed(4)+' \u00b5GBX/token';
   $('iGet').textContent=getStr;
-  $('iAvg').textContent=q.avgPrice.toFixed(8)+' GBX/token';
+  $('iAvg').textContent=(q.avgPrice*0.01).toFixed(4)+' \u00b5GBX/token';
   $('iFee').textContent=feeStr;
   $('iWarn').className='warn'+(Math.abs(p)>=10?' on':'');
   $('impactCard').style.display='block';
