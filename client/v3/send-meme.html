@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1c1610">
+<title>GoldBrix · Send memecoin</title>
+<link rel="icon" href="/favicon.ico">
+<script src="/vendor/html5-qrcode.min.js?v=114"></script>
+<script src="/v3/gbx-session.js?v=119"></script>
+<script src="/v3/gbx-read.js?v=121"></script>
+<script type="module" src="/crypto-utils-v2.js?v=119"></script>
+<style>
+:root{--bg:#0f0c08;--card:#241d14;--card2:#2c2418;--line:#4a3d2a;--gold:#FFD98A;--goldB:#FFE9B8;--ink:#FFFDF7;--green:#57FF9E;--red:#FF6B5C}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg)}
+body{color:var(--ink);font-family:'JetBrains Mono','Courier New',ui-monospace,monospace;padding:14px 12px 90px}
+.wrap{max-width:600px;margin:0 auto}
+.card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+.sect{color:var(--ink);font-weight:800;font-size:12px;letter-spacing:.18em;text-transform:uppercase;margin:0 0 12px}
+label{display:block;font-size:.72rem;letter-spacing:.1em;color:var(--ink);opacity:.9;margin-bottom:6px;text-transform:uppercase}
+select,input{width:100%;padding:14px;background:#1a150e;border:1px solid var(--line);border-radius:12px;color:var(--ink);font-family:inherit;font-size:.95rem}
+select:focus,input:focus{outline:none;border-color:var(--gold)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;font-size:.85rem}
+.k{opacity:.9;font-size:.78rem;letter-spacing:.06em}
+.v{font-weight:800}
+.gold{color:var(--goldB)}
+.btn{width:100%;background:linear-gradient(180deg,#FFE9B8,#FFD98A);color:#1c1610;border:none;border-radius:14px;padding:16px;font-family:inherit;font-size:1rem;font-weight:800;letter-spacing:.08em;cursor:pointer;margin-top:6px}
+.btn:disabled{opacity:.45}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--gold)}
+.pcts{display:flex;gap:8px;margin-top:8px}
+.pct{flex:1;background:none;border:1px solid var(--line);border-radius:10px;color:var(--gold);padding:9px;font-family:inherit;font-size:.75rem;font-weight:800;cursor:pointer}
+.msg{margin-top:12px;padding:12px;border-radius:10px;font-size:.85rem;display:none;line-height:1.5}
+.msg.err{background:rgba(255,107,92,.12);color:var(--red);border:1px solid rgba(255,107,92,.4)}
+.msg.ok{background:rgba(87,255,158,.12);color:var(--green);border:1px solid rgba(87,255,158,.4);word-break:break-all}
+.msg.info{background:rgba(255,217,138,.10);color:var(--ink);border:1px solid var(--line)}
+.note{font-size:.72rem;opacity:.85;line-height:1.6;margin-top:10px}
+.scan{width:100%;margin-top:8px;background:none;border:1px dashed var(--line);border-radius:12px;color:var(--gold);padding:12px;font-family:inherit;font-size:.78rem;font-weight:800;letter-spacing:.08em;cursor:pointer}
+#qrModal{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9998;display:none;align-items:center;justify-content:center;padding:16px}
+#qrModal .box{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:18px;padding:16px;width:100%;max-width:420px}
+#qrReader{width:100%;border-radius:12px;overflow:hidden}
+a.back{color:var(--gold);text-decoration:none;font-size:.8rem;font-weight:800;letter-spacing:.1em;display:inline-block;margin-bottom:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<a class="back" href="/v3/wallet.html" id="backL">← WALLET</a>
+<div class="card">
+  <div class="sect" id="tTitle">Send memecoin</div>
+  <label id="lCoin">Coin</label>
+  <select id="coin"><option>…</option></select>
+  <div class="row"><span class="k" id="lBal">Balance</span><span class="v gold" id="bal">—</span></div>
+  <label id="lTo" style="margin-top:12px">Recipient public key</label>
+  <input id="to" placeholder="02…" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <button class="scan" id="scan">SCAN</button>
+  <div class="note" id="nTo">A memecoin is held by a key, so a recipient is identified by their public key — an address will not do.</div>
+  <label id="lAmt" style="margin-top:12px">Amount</label>
+  <input id="amt" inputmode="numeric" placeholder="0" autocomplete="off">
+  <div class="pcts">
+    <button class="pct" data-p="25">25%</button><button class="pct" data-p="50">50%</button>
+    <button class="pct" data-p="75">75%</button><button class="pct" data-p="100">MAX</button>
+  </div>
+  <div class="row" style="margin-top:10px"><span class="k" id="lFee">Network fee</span><span class="v" id="fee">0.0005 GBX</span></div>
+  <button class="btn" id="go" disabled>SEND</button>
+  <div class="msg" id="msg"></div>
+</div>
+</div>
+<div id="qrModal"><div class="box">
+  <div class="sect" id="qrTitle" style="margin-bottom:12px">Scan</div>
+  <div id="qrReader"></div>
+  <button class="btn ghost" id="qrClose" style="margin-top:12px">Cancel</button>
+</div></div>
+<script type="module">
+import * as F from '/gbx-launchpad-flow.mjs';
+import * as C from '/gbx-curve.mjs';
+const L=(function(){try{return localStorage.getItem('gbx_lang')||localStorage.getItem('goldbrix_lang')||'en';}catch(e){return 'en';}})();
+const T={
+en:{title:'Send memecoin',coin:'Coin',bal:'Balance',to:'Recipient public key',amt:'Amount',fee:'Network fee',send:'SEND',back:'← WALLET',
+ note:'A memecoin is held by a key, so a recipient is identified by their public key — an address will not do.',
+ none:'no memecoins held',locked:'Unlock your wallet first',badKey:'That is not a public key. Ask the recipient for theirs — 66 characters, starting with 02 or 03.',
+ badAmt:'Enter an amount above zero.',tooMuch:'More than this holding contains.',self:'That key is your own.',
+ scan:'SCAN',cancel:'Cancel',noCam:'Camera not available',reading:'Reading your coins…',working:'Signing and publishing…',sent:'Sent. Transaction:',failed:'Not sent:',split:'This holding is split across several coins on the chain; this send can use the largest one, which holds'},
+ro:{title:'Trimite memecoin',coin:'Monedă',bal:'Sold',to:'Cheia publică a destinatarului',amt:'Sumă',fee:'Taxă de rețea',send:'TRIMITE',back:'← PORTOFEL',
+ note:'Un memecoin e ținut de o cheie, deci destinatarul se identifică prin cheia lui publică — o adresă nu funcționează.',
+ none:'niciun memecoin deținut',locked:'Deblochează întâi portofelul',badKey:'Aceea nu e o cheie publică. Cere-i destinatarului cheia lui — 66 de caractere, care începe cu 02 sau 03.',
+ badAmt:'Introdu o sumă mai mare ca zero.',tooMuch:'Mai mult decât conține această deținere.',self:'Cheia aceea e a ta.',
+ scan:'SCANEAZĂ',cancel:'Anulează',noCam:'Camera nu e disponibilă',reading:'Se citesc monedele tale…',working:'Se semnează și se publică…',sent:'Trimis. Tranzacția:',failed:'Nu s-a trimis:',split:'Deținerea e împărțită în mai multe monede pe lanț; trimiterea poate folosi cea mai mare, care conține'},
+de:{title:'Memecoin senden',coin:'Münze',bal:'Guthaben',to:'Öffentlicher Schlüssel des Empfängers',amt:'Betrag',fee:'Netzgebühr',send:'SENDEN',back:'← WALLET',
+ note:'Ein Memecoin gehört einem Schlüssel, daher wird der Empfänger über seinen öffentlichen Schlüssel bestimmt — eine Adresse genügt nicht.',
+ none:'keine Memecoins vorhanden',locked:'Entsperre zuerst deine Wallet',badKey:'Das ist kein öffentlicher Schlüssel. Frage den Empfänger nach seinem — 66 Zeichen, beginnend mit 02 oder 03.',
+ badAmt:'Gib einen Betrag über null ein.',tooMuch:'Mehr als dieser Bestand enthält.',self:'Dieser Schlüssel ist dein eigener.',
+ scan:'SCANNEN',cancel:'Abbrechen',noCam:'Kamera nicht verfügbar',reading:'Deine Münzen werden gelesen…',working:'Wird signiert und veröffentlicht…',sent:'Gesendet. Transaktion:',failed:'Nicht gesendet:',split:'Dieser Bestand ist auf der Kette aufgeteilt; dieser Versand kann den größten Teil nutzen, der enthält'},
+zh:{title:'发送模因币',coin:'币种',bal:'余额',to:'接收方公钥',amt:'金额',fee:'网络费',send:'发送',back:'← 钱包',
+ note:'模因币由密钥持有，因此接收方以其公钥标识——地址不可用。',
+ none:'没有持有模因币',locked:'请先解锁钱包',badKey:'那不是公钥。请向接收方索取其公钥——66 个字符，以 02 或 03 开头。',
+ badAmt:'请输入大于零的金额。',tooMuch:'超过此持仓所含数量。',self:'那是你自己的密钥。',
+ scan:'扫描',cancel:'取消',noCam:'摄像头不可用',reading:'正在读取你的币…',working:'正在签名并发布…',sent:'已发送。交易：',failed:'未发送：',split:'该持仓在链上分为多份；本次发送可使用最大的一份，其中包含'},
+ar:{title:'إرسال عملة ميم',coin:'العملة',bal:'الرصيد',to:'المفتاح العام للمستلم',amt:'المبلغ',fee:'رسوم الشبكة',send:'إرسال',back:'← المحفظة',
+ note:'تُحفظ عملة الميم بمفتاح، لذا يُعرَّف المستلم بمفتاحه العام — العنوان لا يكفي.',
+ none:'لا توجد عملات ميم',locked:'افتح قفل محفظتك أولاً',badKey:'هذا ليس مفتاحاً عاماً. اطلب من المستلم مفتاحه — 66 حرفاً يبدأ بـ 02 أو 03.',
+ badAmt:'أدخل مبلغاً أكبر من صفر.',tooMuch:'أكثر مما تحتويه هذه الحيازة.',self:'هذا المفتاح مفتاحك أنت.',
+ scan:'مسح',cancel:'إلغاء',noCam:'الكاميرا غير متاحة',reading:'جارٍ قراءة عملاتك…',working:'جارٍ التوقيع والنشر…',sent:'تم الإرسال. المعاملة:',failed:'لم يتم الإرسال:',split:'هذه الحيازة مقسّمة على السلسلة؛ يمكن لهذا الإرسال استخدام أكبر جزء، وهو يحتوي'}};
+const tt=k=>(T[L]&&T[L][k])||T.en[k]||k;
+if(L==='ar')document.body.dir='rtl';
+const $=i=>document.getElementById(i);
+$('tTitle').textContent=tt('title');$('lCoin').textContent=tt('coin');$('lBal').textContent=tt('bal');
+$('lTo').textContent=tt('to');$('lAmt').textContent=tt('amt');$('lFee').textContent=tt('fee');
+$('go').textContent=tt('send');$('backL').textContent=tt('back');$('nTo').textContent=tt('note');
+function say(kind,txt){const m=$('msg');m.className='msg '+kind;m.textContent=txt;m.style.display='block';}
+function hide(){$('msg').style.display='none';}
+const N=n=>Number(n).toLocaleString('en-US');
+async function publish(rawtx){
+  const nodes=(window.GBX_NODES||[]).slice();
+  if(!nodes.length)throw new Error('no node');
+  let reason=null;
+  for(const n of nodes){
+    let r,body;
+    try{
+      r=await fetch(String(n).replace(/\/+$/,'')+'/broadcast',{method:'POST',cache:'no-store',
+        headers:{'content-type':'application/json'},body:JSON.stringify({rawtx})});
+      body=await r.json().catch(()=>null);
+    }catch(e){continue;}
+    const id=body&&(body.txid||body.tx_hash);
+    if(id)return id;
+    const msg=body&&(body.error||body.message);
+    if(msg){reason=String(msg).replace(/\s+/g,' ').trim();break;}
+  }
+  throw new Error(reason||'no node accepted it');
+}
+async function ready(){for(let i=0;i<40&&!window.GBXRead;i++)await new Promise(r=>setTimeout(r,100));
+  if(window.GBXReady)try{await window.GBXReady;}catch(e){}}
+async function crypto_(){for(let i=0;i<40&&!(window.GoldbrixCrypto&&window.GoldbrixCrypto.deriveKeypairFromMnemonic);i++)await new Promise(r=>setTimeout(r,100));
+  return !!(window.GoldbrixCrypto&&window.GoldbrixCrypto.deriveKeypairFromMnemonic);}
+let wallet=null,keys=null,pkHex='',secp=null,spkU=null,held=[],cur=null,holding=null;
+async function boot(){
+  await ready();
+  wallet=(window.GBXSession&&window.GBXSession.activeWallet)?window.GBXSession.activeWallet():null;
+  if(!wallet||!wallet.mnemonic){say('err',tt('locked'));
+    setTimeout(()=>location.href='/v3/unlock.html?next='+encodeURIComponent(location.pathname),1400);return;}
+  if(!await crypto_())return;
+  keys=await window.GoldbrixCrypto.deriveKeypairFromMnemonic(wallet.mnemonic);
+  pkHex=Array.from(new Uint8Array(keys.publicKey),x=>x.toString(16).padStart(2,'0')).join('');
+  secp=(await import('/vendor/secp256k1.mjs')).default;
+  const hm=await import('/vendor/gbx-h160.mjs');
+  const pk=new Uint8Array(keys.publicKey);
+  const h=hm.ripemd160(hm.sha256(pk));
+  spkU=new Uint8Array(22);spkU[1]=0x14;spkU.set(h,2);
+  const mc=await window.GBXRead.json('/api/my-coins/'+pkHex);
+  held=(mc&&mc.held||[]).filter(x=>Number(x.amount)>0);
+  const sel=$('coin');
+  if(!held.length){sel.innerHTML='<option>'+tt('none')+'</option>';return;}
+  sel.innerHTML=held.map(h2=>'<option value="'+h2.coin_id+'">$'+h2.ticker+' · '+N(h2.amount)+'</option>').join('');
+  sel.addEventListener('change',pick);
+  await pick();
+  $('go').disabled=false;
+}
+async function pick(){
+  hide();holding=null;
+  cur=held.find(x=>x.coin_id===$('coin').value)||held[0];
+  $('bal').textContent=N(cur.amount)+' '+cur.ticker;
+  const d=await window.GBXRead.json('/api/curves/'+cur.coin_id);
+  const mine=(d.holders_list||[]).find(x=>x.pk===pkHex);
+  const list=(mine&&mine.utxo_list||[]).slice().sort((a,b)=>Number(b.amount)-Number(a.amount));
+  if(!list.length)return;
+  holding={txid:list[0].txid,vout:list[0].vout,amount:BigInt(list[0].amount)};
+  if(list.length>1)say('info',tt('split')+' '+N(list[0].amount)+' '+cur.ticker+'.');
+}
+$('scan').textContent=tt('scan');$('qrTitle').textContent=tt('scan');$('qrClose').textContent=tt('cancel');
+let qr=null;
+function closeQR(){const m=$('qrModal');
+  if(qr&&qr.isScanning){qr.stop().then(()=>{m.style.display='none';}).catch(()=>{m.style.display='none';});}
+  else m.style.display='none';}
+$('qrClose').addEventListener('click',closeQR);
+$('qrModal').addEventListener('click',e=>{if(e.target===$('qrModal'))closeQR();});
+$('scan').addEventListener('click',()=>{
+  if(typeof Html5Qrcode==='undefined'){say('err',tt('noCam'));return;}
+  $('qrModal').style.display='flex';
+  if(!qr)qr=new Html5Qrcode('qrReader');
+  qr.start({facingMode:'environment'},{fps:10,qrbox:250},txt=>{
+    /* a receive code carries the key itself; anything else is handed over as
+       typed so the sender sees exactly what was read */
+    const v=String(txt||'').trim(), m=v.match(/0[23][0-9a-fA-F]{64}/);
+    $('to').value=m?m[0].toLowerCase():v;
+    closeQR();hide();
+  },()=>{}).catch(()=>{say('err',tt('noCam'));$('qrModal').style.display='none';});
+});
+document.querySelectorAll('.pct').forEach(b=>b.addEventListener('click',()=>{
+  if(!holding)return;
+  const p=Number(b.getAttribute('data-p'));
+  $('amt').value=(holding.amount*BigInt(p)/100n).toString();
+}));
+$('go').addEventListener('click',async()=>{
+  hide();
+  const to=$('to').value.trim().toLowerCase();
+  if(!/^0[23][0-9a-f]{64}$/.test(to)){say('err',tt('badKey'));return;}
+  if(to===pkHex){say('err',tt('self'));return;}
+  if(!holding){say('err',tt('none'));return;}
+  let amt;try{amt=BigInt($('amt').value.trim()||'0');}catch(e){say('err',tt('badAmt'));return;}
+  if(amt<=0n){say('err',tt('badAmt'));return;}
+  if(amt>holding.amount){say('err',tt('tooMuch'));return;}
+  $('go').disabled=true;say('info',tt('reading'));
+  try{
+    /* an address with a long history takes a while to scan the first time */
+    const u=await window.GBXRead.json('/api/utxos/'+wallet.address+'?limit=1000',{timeout:45000});
+    const utxos=(u.unspents||[]).filter(x=>x.spendable!==false)
+      .map(x=>({txid:x.txid,vout:x.vout,value8:Math.round(x.amount*1e8)}))
+      .sort((a,b)=>b.value8-a.value8);
+    say('info',tt('working'));
+    const built=await F.buildTokenSendTx({cid:C.unhex(cur.coin_id),holding,tokensToSend:amt,
+      toPubkey:C.unhex(to),utxos,pkU:new Uint8Array(keys.publicKey),p2wpkhSpkOf:()=>spkU});
+    const inputs=built.inputs.map((x,i)=>i===0?{...x,kind:'token',ws:C.unhex(built.tokenWsHex)}:{...x,kind:'p2wpkh'});
+    const derSig=c=>{const tr=x=>{let i=0;while(i<31&&x[i]===0)i++;let v=x.subarray(i);if(v[0]&0x80)v=Uint8Array.of(0,...v);return v;};
+      const r=tr(c.subarray(0,32)),s=tr(c.subarray(32,64));
+      return Uint8Array.of(0x30,4+r.length+s.length,0x02,r.length,...r,0x02,s.length,...s);};
+    const sign=d=>derSig(secp.sign(d,new Uint8Array(keys.privateKey)));
+    const bytes=F.buildCurveTx(inputs,built.outs,new Uint8Array(keys.publicKey),sign);
+    /* published by hand across the known nodes: a rejection carries its reason
+       in the body even when the status is not a success, and that reason is
+       what the sender needs to see */
+    const txid=await publish(C.hex(bytes));
+    say('ok',tt('sent')+' '+txid);
+    $('amt').value='';
+    setTimeout(async()=>{try{
+      const mc=await window.GBXRead.json('/api/my-coins/'+pkHex);
+      held=(mc&&mc.held||[]).filter(x=>Number(x.amount)>0);
+      if(held.length){$('coin').innerHTML=held.map(h2=>'<option value="'+h2.coin_id+'">$'+h2.ticker+' · '+N(h2.amount)+'</option>').join('');
+        await pick();}
+    }catch(e){}},6000);
+  }catch(e){say('err',tt('failed')+' '+(e&&e.message||e));}
+  $('go').disabled=false;
+});
+boot();
+window.addEventListener('pageshow',e=>{if(e.persisted)location.reload();});
+</script>
+</body>
+</html>

@@ -9,7 +9,7 @@
 <script src="/promo-banner.js?v=115" defer></script>
 <script src="/v3/nav-i18n.js?v=115" defer></script>
 <script src="/v3/gbx-session.js?v=119"></script>
-<script src="/v3/gbx-read.js?v=119"></script>
+<script src="/v3/gbx-read.js?v=121"></script>
 <script src="/v3/gbx-lp.js?v=119"></script>
 <script type="module" src="/crypto-utils-v2.js?v=119"></script>
 <style>
@@ -20,8 +20,10 @@ body{color:var(--ink);font-family:'JetBrains Mono','Courier New',ui-monospace,mo
 .wrap{max-width:600px;margin:0 auto}
 .card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 0 26px rgba(255,217,138,.10)}
 .sect{color:var(--ink);font-weight:800;font-size:12px;letter-spacing:.18em;text-transform:uppercase;margin:0 0 12px}
-.pk{font-size:.72rem;word-break:break-all;color:var(--ink);opacity:.85}
-.adr{font-size:.86rem;word-break:break-all;color:var(--gold);margin-top:8px;font-weight:700}
+.pk{font-size:.72rem;word-break:break-all;color:var(--ink);opacity:.85;cursor:pointer;padding:6px;margin:-6px;border-radius:8px}
+.pk:active,.adr:active{background:rgba(255,217,138,.12)}
+.cpd{color:var(--green);font-weight:800}
+.adr{font-size:.86rem;word-break:break-all;color:var(--gold);margin-top:8px;font-weight:700;cursor:pointer;padding:6px;margin-left:-6px;margin-right:-6px;border-radius:8px}
 .huge{font-size:2.1rem;font-weight:800;color:var(--goldB);letter-spacing:-.02em;line-height:1.1}
 .usd{font-size:1rem;color:var(--ink);margin-top:4px}
 .row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:.9rem}
@@ -32,9 +34,17 @@ body{color:var(--ink);font-family:'JetBrains Mono','Courier New',ui-monospace,mo
 .gold{color:var(--gold)}
 .big{font-size:1.35rem;font-weight:800;color:var(--goldB)}
 .acts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
-.act{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:14px;padding:12px 6px;text-align:center;text-decoration:none;color:var(--ink);font-size:.62rem;font-weight:800;letter-spacing:.1em}
-.act .ic{display:block;font-size:1.4rem;margin-bottom:6px}
-.act:active{border-color:var(--gold)}
+.act{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:14px;padding:13px 5px;text-align:center;text-decoration:none;color:var(--ink);font-size:.6rem;font-weight:800;letter-spacing:.08em;cursor:pointer;font-family:inherit;display:block}
+.act .ic{width:40px;height:40px;border-radius:12px;margin:0 auto 7px;display:flex;align-items:center;justify-content:center;font-size:1.25rem}
+.act:active{border-color:var(--gold);transform:scale(.97)}
+.a-recv .ic{background:rgba(122,184,255,.14);color:#7AB8FF}
+.a-send .ic{background:rgba(199,122,255,.14);color:#C77AFF}
+.a-buy  .ic{background:rgba(87,255,158,.14);color:#57FF9E}
+.a-sell .ic{background:rgba(255,107,92,.14);color:#FF6B5C}
+.a-conv .ic{background:rgba(255,217,138,.18);color:#FFD98A}
+.a-meme .ic{background:rgba(255,176,85,.16);color:#FFB055}
+.a-fav  .ic{background:rgba(245,204,117,.16);color:#F5CC75}
+.a-fold .ic{background:rgba(59,130,246,.16);color:#7AB8FF}
 .btns{display:flex;gap:10px;margin-top:14px}
 .btn{flex:1;background:none;border:1px solid var(--line);border-radius:12px;color:var(--gold);font-size:.78rem;font-weight:800;padding:13px;min-height:46px;cursor:pointer;font-family:inherit;letter-spacing:.1em}
 .btn.on{background:var(--gold);color:#1c1610;border-color:var(--gold)}
@@ -125,21 +135,29 @@ a.coin{color:var(--gold);text-decoration:none}
 (function(){
 var L=localStorage.getItem('gbx_lang')||localStorage.getItem('goldbrix_lang')||'en';
 var T={
-en:{title:'Account',bal:'Balance',pnl:'Portfolio',burn:'Burns',hold:'Holdings',crt:'Created',act:'Activity',none:'nothing here yet',bought:'Bought',sold:'Sold',created:'Created',grad:'Graduated',refund:'Refund',follow:'FOLLOW',following:'FOLLOWING',share:'SHARE',copied:'COPIED',value:'value',cost:'cost',unreal:'unrealised',real:'realised',rank:'rank',of:'of',burned:'burned',noprice:'no price yet',recv:'RECEIVE',send:'SEND',buy:'BUY GBX',sell:'SELL GBX',conv:'CONVERT',memes:'MY MEMES',favs:'FAVORITES',fold:'FOLLOWED',live:'live',graduated:'graduated',locked:'WALLET LOCKED',unlock:'UNLOCK'},
-ro:{title:'Cont',bal:'Sold',pnl:'Portofoliu',burn:'Arderi',hold:'Dețineri',crt:'Create',act:'Activitate',none:'nimic încă',bought:'Cumpărat',sold:'Vândut',created:'Creat',grad:'Graduat',refund:'Refund',follow:'URMĂREȘTE',following:'URMĂRIT',share:'DISTRIBUIE',copied:'COPIAT',value:'valoare',cost:'cost',unreal:'nerealizat',real:'realizat',rank:'loc',of:'din',burned:'ars',noprice:'fără preț încă',recv:'PRIMEȘTE',send:'TRIMITE',buy:'CUMPĂRĂ GBX',sell:'VINDE GBX',conv:'CONVERSIE',memes:'MEMELE MELE',favs:'FAVORITE',fold:'URMĂRITE',live:'activ',graduated:'graduat',locked:'PORTOFEL BLOCAT',unlock:'DEBLOCHEAZĂ'},
-de:{title:'Konto',bal:'Guthaben',pnl:'Portfolio',burn:'Verbrennungen',hold:'Bestände',crt:'Erstellt',act:'Aktivität',none:'noch nichts',bought:'Gekauft',sold:'Verkauft',created:'Erstellt',grad:'Graduiert',refund:'Erstattung',follow:'FOLGEN',following:'GEFOLGT',share:'TEILEN',copied:'KOPIERT',value:'Wert',cost:'Kosten',unreal:'nicht realisiert',real:'realisiert',rank:'Rang',of:'von',burned:'verbrannt',noprice:'noch kein Preis',recv:'EMPFANGEN',send:'SENDEN',buy:'GBX KAUFEN',sell:'GBX VERKAUFEN',conv:'TAUSCHEN',memes:'MEINE MEMES',favs:'FAVORITEN',fold:'GEFOLGT',live:'aktiv',graduated:'graduiert',locked:'WALLET GESPERRT',unlock:'ENTSPERREN'},
-zh:{title:'账户',bal:'余额',pnl:'投资组合',burn:'销毁',hold:'持仓',crt:'创建',act:'活动',none:'暂无',bought:'买入',sold:'卖出',created:'创建',grad:'毕业',refund:'退款',follow:'关注',following:'已关注',share:'分享',copied:'已复制',value:'价值',cost:'成本',unreal:'未实现',real:'已实现',rank:'排名',of:'共',burned:'已销毁',noprice:'暂无价格',recv:'接收',send:'发送',buy:'买入 GBX',sell:'卖出 GBX',conv:'兑换',memes:'我的代币',favs:'收藏',fold:'已关注',live:'活跃',graduated:'已毕业',locked:'钱包已锁定',unlock:'解锁'},
-ar:{title:'الحساب',bal:'الرصيد',pnl:'المحفظة',burn:'الحرق',hold:'الحيازات',crt:'المُنشأة',act:'النشاط',none:'لا شيء بعد',bought:'شراء',sold:'بيع',created:'إنشاء',grad:'تخرّج',refund:'استرداد',follow:'متابعة',following:'متابع',share:'مشاركة',copied:'تم النسخ',value:'القيمة',cost:'التكلفة',unreal:'غير محقق',real:'محقق',rank:'الترتيب',of:'من',burned:'محروق',noprice:'لا يوجد سعر بعد',recv:'استلام',send:'إرسال',buy:'شراء GBX',sell:'بيع GBX',conv:'تحويل',memes:'عملاتي',favs:'المفضلة',fold:'المتابَعون',live:'نشط',graduated:'متخرج',locked:'المحفظة مقفلة',unlock:'فتح القفل'}};
+en:{title:'Account',bal:'Balance',pnl:'Portfolio',burn:'Burns',hold:'Holdings',crt:'Created',act:'Activity',none:'nothing here yet',bought:'Bought',sold:'Sold',created:'Created',grad:'Graduated',refund:'Refund',follow:'FOLLOW',following:'FOLLOWING',share:'SHARE',copy:'TAP TO COPY',copied:'COPIED',value:'value',cost:'cost',unreal:'unrealised',real:'realised',rank:'rank',of:'of',burned:'burned',noprice:'no price yet',recv:'RECEIVE',send:'SEND',buy:'BUY GBX',sell:'SELL GBX',conv:'CONVERT',memes:'MY MEMES',favs:'FAVORITES',fold:'FOLLOWED',live:'live',graduated:'graduated',viewAll:'VIEW ALL ON EXPLORER',chains:'MULTI-CHAIN',locked:'WALLET LOCKED',unlock:'UNLOCK'},
+ro:{title:'Cont',bal:'Sold',pnl:'Portofoliu',burn:'Arderi',hold:'Dețineri',crt:'Create',act:'Activitate',none:'nimic încă',bought:'Cumpărat',sold:'Vândut',created:'Creat',grad:'Graduat',refund:'Refund',follow:'URMĂREȘTE',following:'URMĂRIT',share:'DISTRIBUIE',copy:'ATINGE PENTRU A COPIA',copied:'COPIAT',value:'valoare',cost:'cost',unreal:'nerealizat',real:'realizat',rank:'loc',of:'din',burned:'ars',noprice:'fără preț încă',recv:'PRIMEȘTE',send:'TRIMITE',buy:'CUMPĂRĂ GBX',sell:'VINDE GBX',conv:'CONVERSIE',memes:'MEMELE MELE',favs:'FAVORITE',fold:'URMĂRITE',live:'activ',graduated:'graduat',viewAll:'VEZI TOT ÎN EXPLORER',chains:'MULTI-LANȚ',locked:'PORTOFEL BLOCAT',unlock:'DEBLOCHEAZĂ'},
+de:{title:'Konto',bal:'Guthaben',pnl:'Portfolio',burn:'Verbrennungen',hold:'Bestände',crt:'Erstellt',act:'Aktivität',none:'noch nichts',bought:'Gekauft',sold:'Verkauft',created:'Erstellt',grad:'Graduiert',refund:'Erstattung',follow:'FOLGEN',following:'GEFOLGT',share:'TEILEN',copy:'ZUM KOPIEREN TIPPEN',copied:'KOPIERT',value:'Wert',cost:'Kosten',unreal:'nicht realisiert',real:'realisiert',rank:'Rang',of:'von',burned:'verbrannt',noprice:'noch kein Preis',recv:'EMPFANGEN',send:'SENDEN',buy:'GBX KAUFEN',sell:'GBX VERKAUFEN',conv:'TAUSCHEN',memes:'MEINE MEMES',favs:'FAVORITEN',fold:'GEFOLGT',live:'aktiv',graduated:'graduiert',viewAll:'ALLES IM EXPLORER',chains:'MULTI-CHAIN',locked:'WALLET GESPERRT',unlock:'ENTSPERREN'},
+zh:{title:'账户',bal:'余额',pnl:'投资组合',burn:'销毁',hold:'持仓',crt:'创建',act:'活动',none:'暂无',bought:'买入',sold:'卖出',created:'创建',grad:'毕业',refund:'退款',follow:'关注',following:'已关注',share:'分享',copy:'点按复制',copied:'已复制',value:'价值',cost:'成本',unreal:'未实现',real:'已实现',rank:'排名',of:'共',burned:'已销毁',noprice:'暂无价格',recv:'接收',send:'发送',buy:'买入 GBX',sell:'卖出 GBX',conv:'兑换',memes:'我的代币',favs:'收藏',fold:'已关注',live:'活跃',graduated:'已毕业',viewAll:'在浏览器中查看全部',chains:'多链',locked:'钱包已锁定',unlock:'解锁'},
+ar:{title:'الحساب',bal:'الرصيد',pnl:'المحفظة',burn:'الحرق',hold:'الحيازات',crt:'المُنشأة',act:'النشاط',none:'لا شيء بعد',bought:'شراء',sold:'بيع',created:'إنشاء',grad:'تخرّج',refund:'استرداد',follow:'متابعة',following:'متابع',share:'مشاركة',copy:'انقر للنسخ',copied:'تم النسخ',value:'القيمة',cost:'التكلفة',unreal:'غير محقق',real:'محقق',rank:'الترتيب',of:'من',burned:'محروق',noprice:'لا يوجد سعر بعد',recv:'استلام',send:'إرسال',buy:'شراء GBX',sell:'بيع GBX',conv:'تحويل',memes:'عملاتي',favs:'المفضلة',fold:'المتابَعون',live:'نشط',graduated:'متخرج',viewAll:'عرض الكل في المستكشف',chains:'متعدد السلاسل',locked:'المحفظة مقفلة',unlock:'فتح القفل'}};
 var tt=function(k){return (T[L]&&T[L][k])||T.en[k]||k;};
 if(L==='ar')document.body.dir='rtl';
 var $=function(i){return document.getElementById(i);};
 function S(i,v){var e=$(i);if(e)e.textContent=v;}
 S('tTitle',tt('title'));S('tBal',tt('bal'));S('tPnl',tt('pnl'));S('tBurn',tt('burn'));
 S('tHold',tt('hold'));S('tCrt',tt('crt'));S('tAct',tt('act'));
-$('expLink').textContent='VIEW ALL ON EXPLORER ↗';
-var pk=(new URLSearchParams(location.search).get('pk')||'').toLowerCase();
-if(!/^[0-9a-f]{66}$/.test(pk)){S('pkFull','?');return;}
+$('expLink').textContent=tt('viewAll')+' \u2197';
+/* inside the app shell the query travels in the hash, not in the search */
+function qparam(k){var qs=location.search,h=(location.hash||'').indexOf('?');
+  if(h>=0)qs='?'+location.hash.slice(h+1);
+  return new URLSearchParams(qs).get(k)||'';}
+var pk=qparam('pk').toLowerCase();
+if(!/^[0-9a-f]{66}$/.test(pk)){
+  var own='';try{own=localStorage.getItem('gbx_my_pk')||'';}catch(e){}
+  if(/^[0-9a-f]{66}$/.test(own))pk=own; else {S('pkFull','?');return;}
+}
 S('pkFull',pk);
+copyable($('pkFull'),pk);
 /* single read point for raw base-unit fields returned by the API */
 function base(v){return Number(v||0)/1e8;}
 function N(n,d){if(d==null)d=2;return Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});}
@@ -156,6 +174,17 @@ var TIP=0;
 function ago(h){if(!TIP||!h)return '';var s=(TIP-h)*3;
   if(s<60)return Math.max(0,Math.floor(s))+'s';if(s<3600)return Math.floor(s/60)+'m';
   if(s<86400)return Math.floor(s/3600)+'h';return Math.floor(s/86400)+'d';}
+function copyable(el,txt){
+  if(!el)return;
+  el.title=tt('copy');
+  el.addEventListener('click',function(){
+    function done(){var o=el.textContent;el.textContent=tt('copied');el.classList.add('cpd');
+      setTimeout(function(){el.textContent=o;el.classList.remove('cpd');},1200);}
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done).catch(function(){});return;}
+    var ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done();}catch(e){}ta.remove();
+  });
+}
 function lsGet(k){try{return JSON.parse(localStorage.getItem(k)||'[]');}catch(e){return [];}}
 function lsPut(k,a){try{localStorage.setItem(k,JSON.stringify(a));}catch(e){}}
 function toggler(key,btn,onTxt,offTxt){
@@ -199,21 +228,58 @@ async function myPk(){
     return window.__gbxMyPk;
   }catch(e){return null;}
 }
+function showFollowed(){
+  var keys=lsGet('gbx_followed_pk');
+  var body=keys.length?keys.map(function(k){
+    var a=(window.GoldbrixCrypto&&window.GoldbrixCrypto.addressFromPublicKey)?window.GoldbrixCrypto.addressFromPublicKey(k):null;
+    return '<a class="h" style="text-decoration:none;color:inherit" href="/v3/profile-x.html?pk='+k+'">'
+      +'<span class="av">@</span><span class="hn"><span class="ht">'+esc(a||(k.slice(0,10)+'…'))+'</span>'
+      +'<span class="hs">'+esc(k.slice(0,16))+'…</span></span></a>';
+  }).join(''):('<div class="muted">'+esc(tt('none'))+'</div>');
+  var m=document.getElementById('foldModal');
+  if(!m){m=document.createElement('div');m.id='foldModal';
+    m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9997;display:flex;align-items:flex-end;justify-content:center';
+    m.addEventListener('click',function(e){if(e.target===m)m.remove();});
+    document.body.appendChild(m);}
+  m.innerHTML='<div style="background:linear-gradient(180deg,var(--card2),var(--card));width:100%;max-width:600px;max-height:80vh;overflow:auto;border-radius:20px 20px 0 0;border:1px solid var(--line);padding:18px">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'
+    +'<span class="sect" style="margin:0">'+esc(tt('fold'))+'</span>'
+    +'<span id="foldX" style="color:var(--gold);font-size:24px;cursor:pointer;padding:0 8px">&times;</span></div>'
+    +body+'</div>';
+  var x=document.getElementById('foldX');
+  if(x)x.addEventListener('click',function(){m.remove();});
+}
 function lockedUI(){
+  hideSocial();
   $('ownerActs').innerHTML='<div class="card" style="text-align:center">'
     +'<div class="sect">'+esc(tt('locked'))+'</div>'
     +'<a class="btn" style="display:block;text-decoration:none;padding:15px" href="/v3/unlock.html?next='
     +encodeURIComponent(location.pathname+location.search)+'">'+esc(tt('unlock'))+'</a></div>';
 }
+function hideSocial(){
+  /* following or bookmarking your own account has no meaning */
+  ['favBtn','folBtn'].forEach(function(i){var e=$(i);if(e)e.style.display='none';});
+  var sh=$('shrBtn');if(sh)sh.style.flex='1';
+}
 function ownerUI(){
-  var A=[['/v3/receive.html','⬇',tt('recv')],['/v3/send.html','➡',tt('send')],
-         ['/v3/swap.html?dir=buy','⬆',tt('buy')],['/v3/swap.html?dir=sell','⬇',tt('sell')],
-         ['/v3/swap.html','⇄',tt('conv')],['/v3/my-coins-x.html','◈',tt('memes')],
-         ['/v3/favorites.html','★',tt('favs')],['/v3/wallet.html','👁',tt('fold')]];
+  hideSocial();
+  var A=[['/v3/receive-usdc.html','↓',tt('recv'),'a-recv'],['/v3/send.html','→',tt('send'),'a-send'],
+         ['/v3/swap.html?dir=buy','↑',tt('buy'),'a-buy'],['/v3/swap.html?dir=sell','↓',tt('sell'),'a-sell'],
+         ['#convert','⇄',tt('conv'),'a-conv'],['/v3/my-coins-x.html','◈',tt('memes'),'a-meme'],
+         ['/v3/favorites.html','★',tt('favs'),'a-fav'],['#followed','👁',tt('fold'),'a-fold']];
   $('ownerActs').innerHTML='<div class="acts">'+A.map(function(a){
-    return '<a class="act" href="'+a[0]+'"><span class="ic">'+a[1]+'</span>'+esc(a[2])+'</a>';}).join('')+'</div>';
+    return '<a class="act '+a[3]+'" href="'+a[0]+'"><span class="ic">'+a[1]+'</span>'+esc(a[2])+'</a>';}).join('')+'</div>';
+  /* conversion between chain assets lives in its own module; it injects its own markup */
+  var fb2=$('ownerActs').querySelector('.a-fold');
+  if(fb2)fb2.addEventListener('click',function(e){e.preventDefault();showFollowed();});
+  var cb=$('ownerActs').querySelector('.a-conv');
+  if(cb)cb.addEventListener('click',function(e){e.preventDefault();
+    if(window.openConvertModal){window.openConvertModal();return;}
+    var sc=document.createElement('script');sc.src='/v3/convert-ui.js?v=115';
+    sc.onload=function(){if(window.openConvertModal)window.openConvertModal();};
+    document.head.appendChild(sc);});
   var cw=$('chainWrap');
-  cw.innerHTML='<div class="card"><div class="sect">MULTI-CHAIN</div><div id="tokensList" class="muted">…</div></div>';
+  cw.innerHTML='<div class="card"><div class="sect">'+esc(tt('chains'))+'</div><div id="tokensList" class="muted">…</div></div>';
   var m=document.createElement('script');m.type='module';m.src='/multichain-utils.js?v=115';document.head.appendChild(m);
   var c=document.createElement('script');c.src='/v3/chain-balances.js?v=115';c.onload=function(){
     if(window.loadChainBalances&&window.__gbxMyWallet)try{window.loadChainBalances(window.__gbxMyWallet);}catch(e){}};
@@ -234,7 +300,7 @@ async function go(){
   for(var i=0;i<40&&!(window.GoldbrixCrypto&&window.GoldbrixCrypto.addressFromPublicKey);i++)await new Promise(function(r){setTimeout(r,100);});
   if(window.GoldbrixCrypto&&window.GoldbrixCrypto.addressFromPublicKey)addr=window.GoldbrixCrypto.addressFromPublicKey(pk);
   if(addr){
-    $('adrFull').innerHTML='<a class="coin" href="/v3/explorer.html?q='+encodeURIComponent(addr)+'">'+esc(addr)+'</a>';
+    S('adrFull',addr);copyable($('adrFull'),addr);
     $('expLink').href='/v3/explorer.html?q='+encodeURIComponent(addr);
     gj('/api/address/'+addr).then(function(b){
       if(b&&b.balance_gbx){S('balG',N(b.balance_gbx)+' GBX');
@@ -330,6 +396,8 @@ async function go(){
 go();
 if(window.__SPA_PATH2ROUTE){var n=$('pxNav');if(n)n.style.display='none';}
 window.addEventListener('pageshow',function(e){if(e.persisted)location.reload();});
+window['gbxRefresh_profile']=function(){var a=qparam('pk').toLowerCase();
+  if(a&&a!==pk)location.reload();};
 })();
 </script>
 </body>

@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="/v3/style.css">
 <script src="/v3/gbx-session.js?v=114"></script>
 <script src="/qrcode.min.js"></script>
+<script type="module" src="/crypto-utils-v2.js?v=119"></script>
 <script type="module" src="/multichain-utils.js?v=114"></script>
 <style>
   body { background:#13100b; color:#f3ead7; font-family:'JetBrains Mono',ui-monospace,monospace; margin:0; }
@@ -43,11 +44,19 @@
   <div class="hero-sub" id="heroSub">ALL YOUR ADDRESSES</div>
 
   <div class="mc-card mc-card--gbx">
-    <div class="mc-head"><span class="mc-chip mc-chip--gbx">◆</span> <span id="gbxLabel">GoldBrix (GBX + Memecoins)</span></div>
+    <div class="mc-head"><span class="mc-chip mc-chip--gbx">◆</span> <span id="gbxLabel">GoldBrix (GBX)</span></div>
     <div class="mc-qr"><div id="qrGbx"></div></div>
     <div class="mc-addr" id="gbxAddr">…</div>
     <div class="mc-note" id="gbxNote">Receives GBX + all GoldBrix memecoins</div>
     <button class="mc-copy" id="copyGbx" onclick="copyAddr('gbx')">📋 <span>Copy</span></button>
+  </div>
+
+  <div class="mc-card mc-card--gbx">
+    <div class="mc-head"><span class="mc-chip mc-chip--gbx">◈</span> <span id="memeLabel">Memecoins</span></div>
+    <div class="mc-qr"><div id="qrMeme"></div></div>
+    <div class="mc-addr" id="memeAddr">…</div>
+    <div class="mc-note" id="memeNote">public key</div>
+    <button class="mc-copy" id="copyMeme" onclick="copyAddr('meme')">📋 <span>Copy</span></button>
   </div>
 
   <div class="mc-card">
@@ -66,17 +75,17 @@
     <button class="mc-copy" id="copySol" onclick="copyAddr('sol')">📋 <span>Copy</span></button>
   </div>
 
-  <div class="warn"><b id="warnTitle">IMPORTANT</b> · <span id="warnBody">Each address receives ONLY what it says. GBX/memecoins → GoldBrix card. USDC → EVM/Solana. Wrong network = permanent loss.</span></div>
+  <div class="warn"><b id="warnTitle">IMPORTANT</b> · <span id="warnBody">Each card receives ONLY what it says. GBX → GoldBrix address. Memecoins → public key. USDC → EVM/Solana. Wrong network = permanent loss.</span></div>
   <div class="ftr">v3 · GOLDBRIX · MULTI-CHAIN</div>
 </div>
 
 <script>
 const T = {
-  en: { back:'Wallet', title:'Receive', sub:'ALL YOUR ADDRESSES', gbx:'GoldBrix (GBX + Memecoins)', gbxNote:'Receives GBX + all GoldBrix memecoins', evm:'Ethereum / EVM', evmNote:'USDC on Base · Arbitrum · BSC · Ethereum', sol:'Solana', solNote:'USDC on Solana', copy:'Copy', copied:'✓ Copied!', warnTitle:'IMPORTANT', warnBody:'Each address receives ONLY what it says. GBX/memecoins → GoldBrix card. USDC → EVM/Solana. Wrong network = permanent loss.' },
-  ro: { back:'Portofel', title:'Primește', sub:'TOATE ADRESELE TALE', gbx:'GoldBrix (GBX + Memecoins)', gbxNote:'Primește GBX + toate memecoins GoldBrix', evm:'Ethereum / EVM', evmNote:'USDC pe Base · Arbitrum · BSC · Ethereum', sol:'Solana', solNote:'USDC pe Solana', copy:'Copiază', copied:'✓ Copiat!', warnTitle:'IMPORTANT', warnBody:'Fiecare adresă primește DOAR ce scrie. GBX/memecoins → cardul GoldBrix. USDC → EVM/Solana. Rețea greșită = pierdere permanentă.' },
-  de: { back:'Wallet', title:'Empfangen', sub:'ALLE DEINE ADRESSEN', gbx:'GoldBrix (GBX + Memecoins)', gbxNote:'Empfängt GBX + alle GoldBrix-Memecoins', evm:'Ethereum / EVM', evmNote:'USDC auf Base · Arbitrum · BSC · Ethereum', sol:'Solana', solNote:'USDC auf Solana', copy:'Kopieren', copied:'✓ Kopiert!', warnTitle:'WICHTIG', warnBody:'Jede Adresse empfängt NUR das Angegebene. GBX/Memecoins → GoldBrix-Karte. USDC → EVM/Solana. Falsches Netzwerk = dauerhafter Verlust.' },
-  zh: { back:'钱包', title:'接收', sub:'您的所有地址', gbx:'GoldBrix (GBX + 模因币)', gbxNote:'接收 GBX + 所有 GoldBrix 模因币', evm:'以太坊 / EVM', evmNote:'USDC 在 Base · Arbitrum · BSC · 以太坊', sol:'Solana', solNote:'USDC 在 Solana', copy:'复制', copied:'✓ 已复制!', warnTitle:'重要', warnBody:'每个地址仅接收所示资产。GBX/模因币 → GoldBrix 卡。USDC → EVM/Solana。网络错误 = 永久损失。' },
-  ar: { back:'محفظة', title:'استقبال', sub:'جميع عناوينك', gbx:'GoldBrix (GBX + ميمكوينز)', gbxNote:'يستقبل GBX + جميع عملات GoldBrix الميمية', evm:'Ethereum / EVM', evmNote:'USDC على Base · Arbitrum · BSC · Ethereum', sol:'Solana', solNote:'USDC على Solana', copy:'نسخ', copied:'✓ تم النسخ!', warnTitle:'هام', warnBody:'كل عنوان يستقبل فقط ما هو مذكور. GBX/الميمكوينز → بطاقة GoldBrix. USDC → EVM/Solana. شبكة خاطئة = خسارة دائمة.' }
+  en: { back:'Wallet', title:'Receive', sub:'ALL YOUR ADDRESSES', gbx:'GoldBrix (GBX)', gbxNote:'Receives GBX only', meme:'Memecoins', memeNote:'A memecoin is held by a key: this is your public key, not an address', evm:'Ethereum / EVM', evmNote:'USDC on Base · Arbitrum · BSC · Ethereum', sol:'Solana', solNote:'USDC on Solana', copy:'Copy', copied:'✓ Copied!', warnTitle:'IMPORTANT', warnBody:'Each card receives ONLY what it says. GBX → GoldBrix address. Memecoins → public key. USDC → EVM/Solana.' },
+  ro: { back:'Portofel', title:'Primește', sub:'TOATE ADRESELE TALE', gbx:'GoldBrix (GBX)', gbxNote:'Primește doar GBX', meme:'Memecoins', memeNote:'Un memecoin e ținut de o cheie: aceasta e cheia ta publică, nu o adresă', evm:'Ethereum / EVM', evmNote:'USDC pe Base · Arbitrum · BSC · Ethereum', sol:'Solana', solNote:'USDC pe Solana', copy:'Copiază', copied:'✓ Copiat!', warnTitle:'IMPORTANT', warnBody:'Fiecare card primește DOAR ce scrie. GBX → adresa GoldBrix. Memecoins → cheia publică. USDC → EVM/Solana.' },
+  de: { back:'Wallet', title:'Empfangen', sub:'ALLE DEINE ADRESSEN', gbx:'GoldBrix (GBX)', gbxNote:'Empfängt nur GBX', meme:'Memecoins', memeNote:'Ein Memecoin gehört einem Schlüssel: dies ist dein öffentlicher Schlüssel, keine Adresse', evm:'Ethereum / EVM', evmNote:'USDC auf Base · Arbitrum · BSC · Ethereum', sol:'Solana', solNote:'USDC auf Solana', copy:'Kopieren', copied:'✓ Kopiert!', warnTitle:'WICHTIG', warnBody:'Jede Karte empfängt NUR das Angegebene. GBX → GoldBrix-Adresse. Memecoins → öffentlicher Schlüssel. USDC → EVM/Solana.' },
+  zh: { back:'钱包', title:'接收', sub:'您的所有地址', gbx:'GoldBrix (GBX)', gbxNote:'仅接收 GBX', meme:'模因币', memeNote:'模因币由密钥持有：这是你的公钥，不是地址', evm:'以太坊 / EVM', evmNote:'USDC 在 Base · Arbitrum · BSC · 以太坊', sol:'Solana', solNote:'USDC 在 Solana', copy:'复制', copied:'✓ 已复制!', warnTitle:'重要', warnBody:'每张卡仅接收所示资产。GBX → GoldBrix 地址。模因币 → 公钥。USDC → EVM/Solana。' },
+  ar: { back:'محفظة', title:'استقبال', sub:'جميع عناوينك', gbx:'GoldBrix (GBX)', gbxNote:'يستقبل GBX فقط', meme:'عملات الميم', memeNote:'تُحفظ عملة الميم بمفتاح: هذا مفتاحك العام، وليس عنواناً', evm:'Ethereum / EVM', evmNote:'USDC على Base · Arbitrum · BSC · Ethereum', sol:'Solana', solNote:'USDC على Solana', copy:'نسخ', copied:'✓ تم النسخ!', warnTitle:'هام', warnBody:'كل بطاقة تستقبل ما هو مذكور فقط. GBX → عنوان GoldBrix. عملات الميم → المفتاح العام. USDC → EVM/Solana.' }
 };
 let currentLang = localStorage.getItem('gbx_lang') || 'en';
 function t(k){ return (T[currentLang] && T[currentLang][k]) || T.en[k] || k; }
@@ -98,6 +107,9 @@ function applyLang(){
   document.getElementById('warnTitle').textContent = tt.warnTitle;
   document.getElementById('warnBody').textContent = tt.warnBody;
   document.querySelector('#copyGbx span').textContent = tt.copy;
+  document.querySelector('#copyMeme span').textContent = tt.copy;
+  document.getElementById('memeLabel').textContent = tt.meme;
+  document.getElementById('memeNote').textContent = tt.memeNote;
   document.querySelector('#copyEvm span').textContent = tt.copy;
   document.querySelector('#copySol span').textContent = tt.copy;
 }
@@ -117,7 +129,7 @@ function renderQR(id, text){
 }
 function copyAddr(kind){
   const addr = addrs[kind];
-  const map = { gbx:'#copyGbx span', evm:'#copyEvm span', sol:'#copySol span' };
+  const map = { gbx:'#copyGbx span', meme:'#copyMeme span', evm:'#copyEvm span', sol:'#copySol span' };
   const btn = document.querySelector(map[kind]);
   navigator.clipboard.writeText(addr).then(()=>{ const o = btn.textContent; btn.textContent = t('copied'); setTimeout(()=>{ btn.textContent = o; }, 1500); });
 }
@@ -128,6 +140,19 @@ window.gbxRefresh_receive = async function(){
   addrs.gbx = w.address;
   document.getElementById('gbxAddr').textContent = addrs.gbx;
   renderQR('qrGbx', addrs.gbx);
+  /* a memecoin lives in a script that carries the key itself, so the key is
+     what a sender needs; an address cannot be turned back into one */
+  (async function(){
+    try{
+      for(var i=0;i<40 && !(window.GoldbrixCrypto && window.GoldbrixCrypto.deriveKeypairFromMnemonic);i++)
+        await new Promise(function(r){setTimeout(r,100);});
+      if(!(window.GoldbrixCrypto && window.GoldbrixCrypto.deriveKeypairFromMnemonic)) return;
+      var kp = await window.GoldbrixCrypto.deriveKeypairFromMnemonic(w.mnemonic);
+      addrs.meme = Array.from(new Uint8Array(kp.publicKey), function(x){return x.toString(16).padStart(2,'0');}).join('');
+      document.getElementById('memeAddr').textContent = addrs.meme;
+      renderQR('qrMeme', addrs.meme);
+    }catch(e){}
+  })();
   let tries=0;
   while(!(window.GoldbrixMultichain && window.GoldbrixMultichain.deriveEVM) && tries<80){ await new Promise(r=>setTimeout(r,100)); tries++; }
   if(!(window.GoldbrixMultichain && window.GoldbrixMultichain.deriveEVM)){

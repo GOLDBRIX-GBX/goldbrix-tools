@@ -121,7 +121,7 @@ input::-moz-placeholder, textarea::-moz-placeholder {
 <meta name="theme-color" content="#F5CC75">
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/goldbrix-brand-180.png">
     <script src="/v3/gbx-session.js?v=114"></script>
-    <script src="/v3/gbx-read.js?v=119"></script>
+    <script src="/v3/gbx-read.js?v=121"></script>
 <script src="/gbx-update-check.js" defer></script>
     <script src="/gbx-native-bridge.js" defer></script>
       <script src="/i18n.js?v=114" defer></script>
@@ -357,20 +357,29 @@ async function getCoinList(){
   return _coinListCache;
 }
 async function loadMemecoinsBg(){
+  /* Holdings come from the chain index, keyed by the public key: the old
+     custodial route is closed and an address cannot be turned into a key. */
   try {
-    const r = await fetch('https://goldbrix.app/launchpad/wallet/' + encodeURIComponent(activeWallet.address) + '/holdings');
-    const d = await r.json();
+    for (let i=0;i<40 && !(window.GBXRead && window.GoldbrixCrypto && window.GoldbrixCrypto.deriveKeypairFromMnemonic);i++){
+      await new Promise(r=>setTimeout(r,100));
+    }
+    if (!(window.GBXRead && window.GoldbrixCrypto && window.GoldbrixCrypto.deriveKeypairFromMnemonic)) return;
+    if (!window.__gbxMyPk) {
+      const kp = await window.GoldbrixCrypto.deriveKeypairFromMnemonic(activeWallet.mnemonic);
+      window.__gbxMyPk = Array.from(new Uint8Array(kp.publicKey), x => x.toString(16).padStart(2,'0')).join('');
+    }
+    const d = await window.GBXRead.json('/api/my-coins/' + window.__gbxMyPk);
     const sel = document.getElementById('tokenSelect');
-    (d.holdings || []).forEach(h => {
-      const bal = Number(h.balance) || 0;
+    (d.held || []).forEach(h => {
+      const bal = Number(h.amount) || 0;
       if (bal <= 0) return;
       if ([...sel.options].some(o=>o.value.startsWith('NATIVE|'+h.ticker+'|'))) return;
       const opt = document.createElement('option');
       opt.value = 'NATIVE|' + h.ticker + '|' + bal + '|' + h.coin_id;
-      opt.textContent = '$' + h.ticker + ' \u00b7 ' + bal.toLocaleString('en-US',{maximumFractionDigits:4});
+      opt.textContent = '$' + h.ticker + ' \u00b7 ' + bal.toLocaleString('en-US',{maximumFractionDigits:0});
       sel.appendChild(opt);
     });
-  } catch(e){ console.warn('[memecoins bg]', e); }
+  } catch(e){ console.warn('[memecoins]', e); }
 }
 
 async function loadEvmHoldingsBg(){
@@ -586,23 +595,10 @@ async function doSend() {
       txHash = (res && res.hash) || 'broadcasted';
     } else if (selectedToken.type === 'NATIVE') {
       // === NATIVE MEMECOIN XFER on-chain ===
-      const r = await fetch('https://goldbrix.app/launchpad/native/transfer', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          coin_id: selectedToken.coin_id,
-          sender_address: activeWallet.address,
-          recipient_address: to,
-          tokens_amount: amt
-        })
-      });
-      const d = await r.json();
-      if (!d.ok) {
-        const errMsg = d.error || 'unknown';
-        const balInfo = d.your_balance !== undefined ? ' (have ' + d.your_balance + ')' : '';
-        throw new Error(errMsg + balInfo);
-      }
-      txHash = d.tx_hash || 'pending';
+      /* a memecoin moves under a key, not an address, and the transaction is
+         built and signed on this device: that flow has its own screen */
+      location.href='/v3/send-meme.html';
+      return;
     }
 
     document.getElementById('successAmt').textContent = amt.toLocaleString('en-US', {maximumFractionDigits: 4}) + ' ' + selectedToken.ticker;

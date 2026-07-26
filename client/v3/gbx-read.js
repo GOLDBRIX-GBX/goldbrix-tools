@@ -64,16 +64,21 @@
     return out.length ? out : SEED.slice();
   }
 
-  function _fetch(url, ms){
+  function _fetch(url, ms, opts){
     return new Promise(function(resolve, reject){
       var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
       var to = setTimeout(function(){ if (ctl) ctl.abort(); reject(new Error('timeout')); }, ms || TIMEOUT_MS);
-      fetch(url, ctl ? {signal:ctl.signal, cache:'no-store'} : {cache:'no-store'})
+      /* a caller may need to write as well as read (publishing a signed
+         transaction), so its own options are carried through */
+      var init = {cache:'no-store'};
+      if (opts) for (var k in opts) if (Object.prototype.hasOwnProperty.call(opts,k)) init[k]=opts[k];
+      if (ctl) init.signal = ctl.signal;
+      fetch(url, init)
         .then(function(r){ clearTimeout(to); if(!r.ok){ reject(new Error('http '+r.status)); return; } resolve(r); })
         .catch(function(e){ clearTimeout(to); reject(e); });
     });
   }
-  function _fetchNode(base, path, ms){ return _fetch(trim(base)+path, ms); }
+  function _fetchNode(base, path, ms, opts){ return _fetch(trim(base)+path, ms, opts); }
 
   // '/nodes.json' is the copy shipped with the client (installed app or any
   // mirror): resolvable without depending on a remote host. Failure = silent.
@@ -114,18 +119,18 @@
     return _bootP;
   }
 
-  async function _rotateRaw(path){
+  async function _rotateRaw(path, opts, ms){
     var nodes = _ordered(), lastErr = null;
     for (var i=0; i<nodes.length; i++){
-      try { var r = await _fetchNode(nodes[i], path); _ok(nodes[i]); return r; }
+      try { var r = await _fetchNode(nodes[i], path, ms, opts); _ok(nodes[i]); return r; }
       catch(e){ _fail(nodes[i]); lastErr = e; }
     }
     throw (lastErr || new Error('all nodes down'));
   }
 
-  async function _rotate(path){
+  async function _rotate(path, opts, ms){
     await ensure();
-    return await _rotateRaw(path);
+    return await _rotateRaw(path, opts, ms);
   }
 
   async function _quorum(path, field){
@@ -161,7 +166,16 @@
   window.gbxRead = function(path, opts){
     opts = opts || {};
     if (opts.quorum && opts.field) return _quorum(path, opts.field);
-    return _rotate(path);
+    /* routing options stay here; everything else belongs to the request itself */
+    var req = null, ms = null;
+    for (var k in opts) if (Object.prototype.hasOwnProperty.call(opts,k)){
+      if (k === 'quorum' || k === 'field') continue;
+      /* a few reads are genuinely slow on a busy address and deserve their
+         own patience rather than the default one */
+      if (k === 'timeout'){ ms = opts[k]; continue; }
+      (req = req || {})[k] = opts[k];
+    }
+    return _rotate(path, req, ms);
   };
 })();
 
