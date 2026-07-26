@@ -41,7 +41,9 @@
     if(sEl&&!sEl.innerHTML){
       try{
         var cd=await window.GBXRead.json('/api/candles/'+id+'?interval=1h');
-        var cl=((cd&&cd.candles)||[]).map(function(x){return Number(x.c!==undefined?x.c:x.close);}).filter(function(p){return p>0;});
+        var all=((cd&&cd.candles)||[]); var ph=(st&&st.phase==='pool')?'p':'c';
+        var sel=all.filter(function(x){return !x.ph || x.ph===ph;}); if(sel.length<2) sel=all;
+        var cl=sel.map(function(x){return Number(x.c!==undefined?x.c:x.close);}).filter(function(p){return p>0;});
         if(cl.length>=2)sEl.innerHTML=spark(cl,cl[cl.length-1]>=cl[0]);
       }catch(e){}
     }

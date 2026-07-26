@@ -345,7 +345,13 @@ function openTokenIndex(dbPath){
         coin_id:r.coin_id, ticker:r.ticker||null, name:r.name||null,
         amount:String(r.amount), utxos:r.utxos }));
       const created = q.createdBy.all(pkHex).map(r => curveView({...r, txid:null, vout:null, holders:undefined}, tip));
-      return { scanned: tip, pk: pkHex, held, created };
+      let ops=[];
+      try{ ops = db.prepare(`SELECT o.height, o.txid, o.coin_id, o.op, o.amount, o.tokens_out, o.burn_sat, m.ticker
+                             FROM curve_ops o LEFT JOIN coin_meta m ON m.coin_id=o.coin_id
+                             WHERE o.pk=? ORDER BY o.height DESC, o.rowid DESC LIMIT 200`).all(pkHex)
+                 .map(r=>({height:r.height, txid:r.txid, coin_id:r.coin_id, ticker:r.ticker||null, op:r.op,
+                           amount:String(r.amount), tokens:String(r.tokens_out), burn_sat:String(r.burn_sat)})); }catch(_e){}
+      return { scanned: tip, pk: pkHex, held, created, ops };
     },
     coin(coinId, limit = 100){
       if (!/^[0-9a-f]{64}$/.test(coinId)) return null;

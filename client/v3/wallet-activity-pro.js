@@ -130,7 +130,16 @@
     if(!list) return;
     if(!list.dataset.loaded) list.innerHTML='<div class="tx-empty">'+t('loading')+'</div>';
     try{
+      var d={activity:[]}, mc=null;
+      try{ if(!window.__gbxMyPk && window.GoldbrixCrypto){ var w0=(window.GBXSession&&window.GBXSession.activeWallet&&window.GBXSession.activeWallet())||null; if(w0&&w0.mnemonic){ var kp0=await window.GoldbrixCrypto.deriveKeypairFromMnemonic(w0.mnemonic); window.__gbxMyPk=Array.from(new Uint8Array(kp0.publicKey),function(x){return x.toString(16).padStart(2,'0');}).join(''); } } }catch(_e0){}
+      try{ if(!window.__gbxMyPk){ for(var _w=0;_w<40 && !window.GoldbrixCrypto;_w++){ await new Promise(function(r){setTimeout(r,150);}); }
+        var _w1=(window.GBXSession&&window.GBXSession.activeWallet&&window.GBXSession.activeWallet())||null;
+        if(window.GoldbrixCrypto && _w1 && _w1.mnemonic){ var _k=await window.GoldbrixCrypto.deriveKeypairFromMnemonic(_w1.mnemonic);
+          window.__gbxMyPk=Array.from(new Uint8Array(_k.publicKey),function(x){return x.toString(16).padStart(2,'0');}).join(''); } }
+      }catch(_e2){}
+      try{ if(window.__gbxMyPk && window.GBXRead){ mc=await window.GBXRead.json('/api/my-coins/'+window.__gbxMyPk);
       d.activity=((mc&&mc.ops)||[]).map(function(o){var M={C:'COIN_CREATE',B:'BUY',S:'SELL',R:'COIN_REFUND',G:'COIN_GRADUATE',P:'BUY',Q:'SELL'};var ty=M[o.op]||'BUY';var g=(Number(o.amount)||0)/1e8;return {type:ty,ticker:o.ticker||'',coin_id:o.coin_id,coin_amount:Number(o.tokens)||0,gbx_amount:g,amount:g,counterparty:'',timestamp:Date.now()-Math.max(0,((mc.scanned||o.height)-o.height))*3000,tx_hash:o.txid||'',status:'completed'};});
+      } }catch(_e1){}
       let acts=(d.activity||[]);
       // ISTORIC ON-CHAIN (autonom, cross-device): GBX din nod + USDC din Base
       try{
