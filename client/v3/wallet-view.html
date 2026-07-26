@@ -180,7 +180,7 @@ async function loadData(silent){
   document.getElementById('memeBtn').href='/v3/my-coins.html?addr='+ADDR;
   var gbxBal=0;
   try{
-    // asteapta gbx-read.js (scriptul se incarca dupa inline-ul curent)
+    // asteapta gbx-read.js?v=119 (scriptul se incarca dupa inline-ul curent)
     for(var _w=0;!window.gbxRead&&_w<40;_w++){await new Promise(function(res){setTimeout(res,100);});}
     if(window.gbxRead){var r=await window.gbxRead('/address/'+ADDR, {quorum:true, field:'spendable_gbx'});var d=await r.json();gbxBal=parseFloat(d.spendable_gbx||d.balance_gbx||0)||0;}
     else{var r2=await fetch(API+'/api/address/'+ADDR);var d2=await r2.json();gbxBal=parseFloat(d2.spendable_gbx||d2.balance_gbx||0)||0;}
@@ -223,7 +223,7 @@ loadChart();
 // auto-refresh silentios la 15s
 setInterval(function(){loadData(true);loadChart();},15000);
 </script>
-<script src="/v3/gbx-read.js?v=113"></script>
-<script src="/v3/pwa.js?v=113"></script>
+<script src="/v3/gbx-read.js?v=119"></script>
+<script src="/v3/pwa.js?v=114"></script>
 </body>
 </html>

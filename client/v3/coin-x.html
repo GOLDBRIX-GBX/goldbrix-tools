@@ -504,7 +504,7 @@ function renderTrades(ts){
   };
   const F=window.__gbxTradeFilter||'all';
   const fts=F==='all'?ts:ts.filter(t=>sizeOf(t)===F);
-  el.innerHTML=fts.slice(0,25).map(t=>{
+  var _h=fts.slice(0,25).map(t=>{
     const buy=(t.op==='B'||t.op==='P'||t.op==='C'), sell=(t.op==='S'||t.op==='Q');
     const lbl=buy?(t.op==='C'?tt('o.create'):tt('t.buy')):(sell?tt('t.sell'):(t.op==='G'?tt('o.grad'):tt('o.refund')));
     const col=buy?'#57FF9E':(sell?'#FF6B5C':'var(--gold)');
@@ -517,7 +517,7 @@ function renderTrades(ts){
       '<span style="flex:1">'+amt+'</span>'+
       '<span style="opacity:1">'+who+'</span>'+
       '<span style="opacity:.85">#'+t.height+'</span></div>';
-  }).join('');
+  }).join('');if(el.innerHTML!==_h)el.innerHTML=_h;
 }
 function renderHolders(){
   const el=$('holdersList'); if(!el)return;
@@ -840,7 +840,7 @@ window.addEventListener('pageshow',function(e){if(e.persisted)location.reload();
 document.addEventListener('visibilitychange',function(){if(!document.hidden)draw();});
 })();
 </script>
-<script src="/v3/gbx-read.js?v=114" defer></script>
+<script src="/v3/gbx-read.js?v=119" defer></script>
   <script src="/promo-banner.js?v=114" defer></script>
 </body>
 </html>

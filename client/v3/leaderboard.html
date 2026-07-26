@@ -1,280 +1,163 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<link rel="prefetch" href="/v3/wallet.html"><link rel="prefetch" href="/v3/trade.html"><link rel="prefetch" href="/v3/launch.html"><link rel="prefetch" href="/v3/burns.html"><link rel="prefetch" href="/v3/settings.html"><link rel="prefetch" href="/v3/favorites.html"><link rel="prefetch" href="/v3/leaderboard.html"><link rel="prefetch" href="/v3/style.css"><link rel="dns-prefetch" href="https://goldbrix.app">
-<link rel="preconnect" href="https://goldbrix.app" crossorigin>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>🏆 Leaderboard · GoldBrix</title>
-<link rel="icon" type="image/png" sizes="32x32" href="/assets/coin/gbx-coin-32.png">
-<link rel="stylesheet" href="/v3/style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#1c1610">
+<title>Leaderboard · GoldBrix</title>
+<link rel="icon" href="/favicon.ico">
 <style>
-  /* Silent refresh */
-  #lbList * { animation-duration: 0s !important; transition: none !important; }
-
-  .lb-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; padding: 4px; background: var(--bg-card); border-radius: var(--r-md); border: 1px solid var(--border); }
-  .lb-tab { padding: 11px 4px; border: none; background: transparent; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size:12px; font-weight: 700; letter-spacing: 0.08em; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
-  .lb-tab.active { background: linear-gradient(135deg, var(--gold) 0%, var(--gold-deep) 100%); color: #000; box-shadow: 0 3px 14px rgba(245,204,117,0.3); }
-
-  .lb-period { display: flex; gap: 4px; margin-bottom: 12px; }
-  .lb-period-btn { flex: 1; padding: 8px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size:11px; font-weight: 700; letter-spacing: 0.1em; border-radius: 8px; cursor: pointer; }
-  .lb-period-btn.active { background: var(--gold-deep); color: #000; border-color: var(--gold); }
-
-  .lb-list { display: flex; flex-direction: column; gap: 6px; min-height: 200px; }
-  .lb-row { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--bg-card); border-radius: var(--r-md); border: 1px solid var(--border); cursor: pointer; transition: border-color 0.15s; }
-  .lb-row:hover { border-color: var(--gold); }
-  .lb-row.rank-1 { background: linear-gradient(135deg, rgba(255,215,0,0.1) 0%, var(--bg-card) 60%); border-color: rgba(255,215,0,0.3); }
-  .lb-row.rank-2 { background: linear-gradient(135deg, rgba(192,192,192,0.08) 0%, var(--bg-card) 60%); border-color: rgba(192,192,192,0.3); }
-  .lb-row.rank-3 { background: linear-gradient(135deg, rgba(205,127,50,0.08) 0%, var(--bg-card) 60%); border-color: rgba(205,127,50,0.3); }
-
-  .lb-rank { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--bg-elevated); font-family: 'JetBrains Mono', monospace; font-size:14px; font-weight: 800; color: var(--text-muted); flex-shrink: 0; }
-  .lb-rank.gold { background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); color: #000; box-shadow: 0 0 12px rgba(255,215,0,0.5); }
-  .lb-rank.silver { background: linear-gradient(135deg, #E0E0E0 0%, #A0A0A0 100%); color: #000; }
-  .lb-rank.bronze { background: linear-gradient(135deg, #CD7F32 0%, #8B4513 100%); color: #fff; }
-
-  .lb-info { flex: 1; min-width: 0; }
-  .lb-info-main { font-family: 'JetBrains Mono', monospace; font-size:14px; font-weight: 800; color: var(--text-primary); word-break: break-all; }
-  .lb-info-sub { font-family: 'JetBrains Mono', monospace; font-size:11px; color: var(--text-muted); margin-top: 2px; letter-spacing: 0.04em; }
-
-  .lb-val { text-align: right; font-family: 'JetBrains Mono', monospace; flex-shrink: 0; }
-  .lb-val-primary { font-size: 14px; font-weight: 800; color: var(--gold-bright); }
-  .lb-val-secondary { font-size:11px; color: var(--text-muted); margin-top: 2px; }
-
-  .lb-img { width: 36px; height: 36px; border-radius: 10px; object-fit: cover; background: var(--bg-elevated); border: 1px solid var(--border); flex-shrink: 0; }
-
-  .empty-state { padding: 30px 14px; text-align: center; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size:13px; }
-  .err { color: var(--red); }
-
-/* V4.9 — Visible placeholders (added 2026-05-27) */
-input::placeholder, textarea::placeholder,
-input::-webkit-input-placeholder, textarea::-webkit-input-placeholder,
-input::-moz-placeholder, textarea::-moz-placeholder {
-  color: #eee !important;
-  opacity: 1 !important;
-}
-
+:root{--bg:#1c1610;--card:#2a2218;--card2:#241d13;--line:#3a3025;--gold:#FFD98A;--ink:#FFFDF7;--green:#57FF9E;--red:#FF6B5C;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;background:var(--bg)}
+body{color:var(--ink);font-family:'Courier New',ui-monospace,monospace;padding:14px 12px 90px;}
+.sect{color:#FFFDF7;font-weight:800;font-size:13px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 10px;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px;}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.tab{background:var(--card2);border:1px solid var(--line);border-radius:10px;color:#FFFDF7;padding:10px 4px;font-size:.72rem;font-weight:700;letter-spacing:.06em;cursor:pointer;font-family:inherit;touch-action:manipulation;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tab.active{border-color:var(--gold);color:var(--gold)}
+.per{display:flex;gap:6px;margin-bottom:12px}
+.pbtn{flex:1;background:var(--card2);border:1px solid var(--line);border-radius:8px;color:#FFFDF7;padding:8px 0;font-size:.7rem;font-weight:700;letter-spacing:.08em;cursor:pointer;font-family:inherit;touch-action:manipulation}
+.pbtn.active{border-color:var(--gold);color:var(--gold)}
+.row{display:flex;align-items:center;gap:10px;padding:11px 10px;background:var(--card2);border:1px solid var(--line);border-radius:12px;margin-bottom:8px;text-decoration:none;color:var(--ink)}
+.row.r1{background:linear-gradient(135deg,rgba(255,217,138,.14) 0%,var(--card2) 60%);border-color:rgba(255,217,138,.55)}
+.row.r2{background:linear-gradient(135deg,rgba(220,220,220,.10) 0%,var(--card2) 60%);border-color:rgba(220,220,220,.45)}
+.row.r3{background:linear-gradient(135deg,rgba(215,150,80,.12) 0%,var(--card2) 60%);border-color:rgba(215,150,80,.5)}
+.rk{min-width:34px;text-align:center;font-weight:800;font-size:1rem}
+.main{flex:1;min-width:0}
+.m1{font-weight:700;font-size:.86rem;color:var(--gold);text-decoration:underline dotted;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m1.coin{color:var(--gold)}
+.m2{font-size:.72rem;color:#FFFDF7;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.val{text-align:right;white-space:nowrap}
+.v1{font-weight:800;font-size:.9rem;color:#FFFDF7;font-variant-numeric:tabular-nums}
+.v1.burn{color:var(--red)}.v1.grn{color:var(--green)}
+.v2{font-size:.66rem;letter-spacing:.06em;color:#FFFDF7;text-transform:uppercase;margin-top:2px}
+.empty{padding:22px;text-align:center;color:#FFFDF7}
+.scan{text-align:center;font-size:.7rem;color:#FFFDF7;margin-top:6px}
+.nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid var(--line);padding:6px 2px calc(6px + env(safe-area-inset-bottom));z-index:50}
+.nav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.92}
+.nav a.on{color:var(--gold);opacity:1}
+.nav span.ic{font-size:18px}
 </style>
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#F5CC75">
-<link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/goldbrix-brand-180.png">
-    <script src="/gbx-update-check.js" defer></script>
-    <script src="/gbx-native-bridge.js" defer></script>
-      <script src="/i18n.js?v=113" defer></script>
-  <script src="/v3/gbx-read.js?v=113" defer></script>
-  <script src="/promo-banner.js?v=113" defer></script>
-<style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
-<script src="/v3/nav-i18n.js?v=113" defer></script>
+<script src="/i18n.js?v=115" defer></script>
+<script src="/v3/gbx-read.js?v=119" defer></script>
+<script src="/v3/nav-i18n.js?v=115" defer></script>
 </head>
 <body>
-<div class="v3-app">
-  <div class="v3-topbar">
-    <button class="v3-back" onclick="history.back()">‹</button>
-    <div class="v3-title">🏆 Leaderboard</div>
-  </div>
-
-  <div class="v3-content">
-    <div class="lb-tabs">
-      <button class="lb-tab active" data-tab="burners" onclick="setTab('burners')">🔥 BURNERS</button>
-      <button class="lb-tab" data-tab="coins" onclick="setTab('coins')">💎 COINS</button>
-      <button class="lb-tab" data-tab="traders" onclick="setTab('traders')">📈 TRADERS</button>
-    </div>
-
-    <div class="lb-period" id="periodBar">
-      <button class="lb-period-btn active" data-p="24h" onclick="setPeriod('24h')">24H</button>
-      <button class="lb-period-btn" data-p="7d" onclick="setPeriod('7d')">7D</button>
-      <button class="lb-period-btn" data-p="all" onclick="setPeriod('all')">ALL TIME</button>
-    </div>
-
-    <div class="lb-list" id="lbList">
-      <div class="empty-state" data-t="loadingMsg">Loading...</div>
-    </div>
-  </div>
-
-  
+<div class="sect" id="pgTitle">Leaderboard</div>
+<div class="tabs">
+  <button class="tab active" data-tab="burners" id="tabB">BURNERS</button>
+  <button class="tab" data-tab="traders" id="tabT">TRADERS</button>
+  <button class="tab" data-tab="coins" id="tabC">COINS</button>
 </div>
+<div class="per" id="perBar">
+  <button class="pbtn" data-p="28800">24H</button>
+  <button class="pbtn" data-p="201600">7D</button>
+  <button class="pbtn active" data-p="0" id="pAll">ALL TIME</button>
+</div>
+<div id="list"><div class="empty" id="loadMsg">Loading…</div></div>
+<div class="scan" id="scanNote"></div>
+
+<nav class="nav">
+  <a href="/"><span class="ic">🏠</span><span data-t="navHome">HOME</span></a>
+  <a href="/v3/wallet.html"><span class="ic">👤</span><span data-t="navWallet">WALLET</span></a>
+  <a href="/v3/trade.html"><span class="ic">📊</span><span data-t="navTrade">TRADE</span></a>
+  <a href="/v3/launch.html"><span class="ic">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
+  <a class="on" href="/v3/leaderboard.html"><span class="ic">🔥</span><span data-t="navBurns">BURNS</span></a>
+  <a href="/v3/explorer.html"><span class="ic">🔍</span><span data-t="navExplorer">EXPLORER</span></a>
+  <a href="/v3/settings.html"><span class="ic">⚙️</span><span data-t="navSettings">SETTINGS</span></a>
+</nav>
 
 <script>
-const API = 'https://goldbrix.app';
-const LBT=(function(){var L='en';try{L=(localStorage.getItem('gbx_lang')||localStorage.getItem('goldbrix_lang')||'en').slice(0,2);}catch(e){}
+(function(){
+var L='en';try{L=(localStorage.getItem('gbx_lang')||localStorage.getItem('goldbrix_lang')||'en').slice(0,2);}catch(e){}
 if(L==='ar'){try{document.documentElement.dir='rtl';}catch(e){}}
 var T={
- en:{title:'\ud83c\udfc6 Leaderboard',burners:'\ud83d\udd25 BURNERS',coins:'\ud83d\udc8e COINS',traders:'\ud83d\udcc8 TRADERS',all:'ALL TIME',nodata:'No data yet',loading:'Loading...'},
- ro:{title:'\ud83c\udfc6 Clasament',burners:'\ud83d\udd25 ARZ\u0102TORI',coins:'\ud83d\udc8e MONEDE',traders:'\ud83d\udcc8 TRADERI',all:'TOT TIMPUL',nodata:'Nicio dat\u0103 \u00eenc\u0103',loading:'Se \u00eencarc\u0103...'},
- de:{title:'\ud83c\udfc6 Bestenliste',burners:'\ud83d\udd25 BURNER',coins:'\ud83d\udc8e COINS',traders:'\ud83d\udcc8 TRADER',all:'GESAMT',nodata:'Noch keine Daten',loading:'L\u00e4dt...'},
- zh:{title:'\ud83c\udfc6 \u6392\u884c\u699c',burners:'\ud83d\udd25 \u9500\u6bc1\u699c',coins:'\ud83d\udc8e \u5e01\u79cd\u699c',traders:'\ud83d\udcc8 \u4ea4\u6613\u699c',all:'\u5168\u90e8',nodata:'\u6682\u65e0\u6570\u636e',loading:'\u52a0\u8f7d\u4e2d...'},
- ar:{title:'\ud83c\udfc6 \u0644\u0648\u062d\u0629 \u0627\u0644\u0635\u062f\u0627\u0631\u0629',burners:'\ud83d\udd25 \u0627\u0644\u062d\u0627\u0631\u0642\u0648\u0646',coins:'\ud83d\udc8e \u0627\u0644\u0639\u0645\u0644\u0627\u062a',traders:'\ud83d\udcc8 \u0627\u0644\u0645\u062a\u062f\u0627\u0648\u0644\u0648\u0646',all:'\u0643\u0644 \u0627\u0644\u0648\u0642\u062a',nodata:'\u0644\u0627 \u0628\u064a\u0627\u0646\u0627\u062a \u0628\u0639\u062f',loading:'\u062c\u0627\u0631\u064d \u0627\u0644\u062a\u062d\u0645\u064a\u0644...'}
-};return T[L]||T.en;})();
-(function(){function q(sel){return document.querySelector(sel);}
- var m=[['.v3-title','title'],['[data-tab="burners"]','burners'],['[data-tab="coins"]','coins'],['[data-tab="traders"]','traders'],['[data-p="all"]','all']];
- m.forEach(function(p){var el=q(p[0]); if(el) el.textContent=LBT[p[1]];});
- var ld=q('[data-t="loadingMsg"]'); if(ld) ld.textContent=LBT.loading;})();
-let currentTab = 'burners';
-let currentPeriod = '24h';
-let firstLoad = true;
+en:{title:'Leaderboard',burners:'BURNERS',traders:'TRADERS',coins:'COINS',all:'ALL TIME',nodata:'No data yet',loading:'Loading…',burned:'GBX burned',trades:'trades',bought:'bought',liq:'AMM liquidity',price:'price',scanned:'chain scanned to block'},
+ro:{title:'Clasament',burners:'ARZĂTORI',traders:'TRADERI',coins:'MONEDE',all:'TOT TIMPUL',nodata:'Nicio dată încă',loading:'Se încarcă…',burned:'GBX arși',trades:'tranzacții',bought:'cumpărat',liq:'Lichiditate AMM',price:'preț',scanned:'lanț scanat până la blocul'},
+de:{title:'Bestenliste',burners:'BURNER',traders:'TRADER',coins:'COINS',all:'GESAMT',nodata:'Noch keine Daten',loading:'Lädt…',burned:'GBX verbrannt',trades:'Trades',bought:'gekauft',liq:'AMM-Liquidität',price:'Preis',scanned:'Chain gelesen bis Block'},
+zh:{title:'排行榜',burners:'销毁榜',traders:'交易榜',coins:'币种榜',all:'全部',nodata:'暂无数据',loading:'加载中…',burned:'已销毁 GBX',trades:'笔交易',bought:'买入',liq:'AMM 流动性',price:'价格',scanned:'链已扫描至区块'},
+ar:{title:'لوحة الصدارة',burners:'الحارقون',traders:'المتداولون',coins:'العملات',all:'كل الوقت',nodata:'لا بيانات بعد',loading:'جارٍ التحميل…',burned:'GBX محروق',trades:'صفقات',bought:'شراء',liq:'سيولة AMM',price:'السعر',scanned:'تم مسح السلسلة حتى الكتلة'}};
+var t=T[L]||T.en;
+document.getElementById('pgTitle').textContent=t.title;
+document.getElementById('tabB').textContent=t.burners;
+document.getElementById('tabT').textContent=t.traders;
+document.getElementById('tabC').textContent=t.coins;
+document.getElementById('pAll').textContent=t.all;
+document.getElementById('loadMsg').textContent=t.loading;
 
-function fmt(n, d) {
-  if (typeof n !== 'number' || isNaN(n)) return '0';
-  if (d === undefined) d = 2;
-  if (n >= 1e9) return (n/1e9).toFixed(2) + 'B';
-  if (n >= 1e6) return (n/1e6).toFixed(2) + 'M';
-  if (n >= 1e3) return (n/1e3).toFixed(2) + 'K';
-  return n.toFixed(d);
-}
+var tab='burners', per=0;
+function $(i){return document.getElementById(i);}
+function gbx(sat){var n=Number(sat)/1e8;
+  if(n>=1000000)return (n/1000000).toFixed(2)+'M';
+  if(n>=10000)return (n/1000).toFixed(1)+'K';
+  if(n>=1000)return n.toLocaleString('en-US',{maximumFractionDigits:0});
+  return n.toFixed(n>=100?0:(n>=1?2:4));}
+function shortPk(pk){return pk.slice(0,6)+'…'+pk.slice(-4);}
+function medal(r){return r===1?'🥇':(r===2?'🥈':(r===3?'🥉':('#'+r)));}
+function rcls(r){return r<=3?(' r'+r):'';}
+async function gj(p){for(var i=0;i<20&&!window.GBXRead;i++)await new Promise(function(r){setTimeout(r,100);});
+  return window.GBXRead?await window.GBXRead.json(p):await (await fetch(p)).json();}
 
-function rankClass(r) {
-  if (r === 1) return 'gold';
-  if (r === 2) return 'silver';
-  if (r === 3) return 'bronze';
-  return '';
-}
-
-function rankIcon(r) {
-  if (r === 1) return '🥇';
-  if (r === 2) return '🥈';
-  if (r === 3) return '🥉';
-  return '#' + r;
-}
-
-function setTab(tab) {
-  currentTab = tab;
-  document.querySelectorAll('.lb-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-  // Coins tab doesn't use period — hide period bar
-  document.getElementById('periodBar').style.display = (tab === 'coins') ? 'none' : 'flex';
-  firstLoad = true;
-  load();
-}
-
-function setPeriod(p) {
-  currentPeriod = p;
-  document.querySelectorAll('.lb-period-btn').forEach(b => b.classList.toggle('active', b.dataset.p === p));
-  firstLoad = true;
-  load();
-}
-
-async function load() {
-  const list = document.getElementById('lbList');
-  if (firstLoad) list.innerHTML = '<div class="empty-state">'+LBT.loading+'</div>';
-
-  try {
-    let url;
-    if (currentTab === 'burners') {
-      url = API + '/v2/memecoin/leaderboard/burners?period=' + currentPeriod + '&limit=50';
-    } else if (currentTab === 'coins') {
-      url = API + '/v2/memecoin/leaderboard/coins?metric=market_cap&limit=50';
+async function load(){
+  var el=$('list');
+  try{
+    var html='';
+    if(tab==='coins'){
+      var j=await gj('/api/pools');
+      var ps=(j&&j.pools)||[];
+      ps.sort(function(a,b){return Number(b.gbx_sat)-Number(a.gbx_sat);});
+      if(!ps.length){el.innerHTML='<div class="empty">'+t.nodata+'</div>';return;}
+      html=ps.slice(0,50).map(function(p,i){
+        var r=i+1, mu=(Number(p.price_sat)/100).toFixed(2);
+        return '<a class="row'+rcls(r)+'" href="/v3/coin-x.html?coin='+p.coin_id+'">'+
+          '<div class="rk">'+medal(r)+'</div>'+
+          '<div class="main"><div class="m1 coin">$'+(p.ticker||'?')+'</div>'+
+          '<div class="m2">'+(p.name||'')+' · '+t.price+' '+mu+' µGBX</div></div>'+
+          '<div class="val"><div class="v1 grn">'+gbx(p.gbx_sat)+' GBX</div>'+
+          '<div class="v2">'+t.liq+'</div></div></a>';
+      }).join('');
+      if(j&&j.scanned)$('scanNote').textContent=t.scanned+' '+Number(j.scanned).toLocaleString('en-US');
     } else {
-      url = API + '/v2/memecoin/leaderboard/trades?period=' + currentPeriod + '&limit=50';
+      var q='/api/leaderboard?kind='+tab+(per>0?('&blocks='+per):'&blocks=0');
+      var j2=await gj(q);
+      var items=(j2&&j2.items)||[];
+      if(!items.length){el.innerHTML='<div class="empty">'+t.nodata+'</div>';return;}
+      html=items.slice(0,50).map(function(it,i){
+        var r=i+1;
+        var v1,v2,m2;
+        if(tab==='burners'){v1='<div class="v1 burn">'+gbx(it.burned_sat)+' 🔥</div>';v2=t.burned;m2='';}
+        else{v1='<div class="v1 grn">'+it.trades+'</div>';v2=t.trades;m2=t.bought+' '+gbx(it.gbx_sat)+' GBX';}
+        return '<a class="row'+rcls(r)+'" href="/v3/profile-x.html?pk='+it.pk+'">'+
+          '<div class="rk">'+medal(r)+'</div>'+
+          '<div class="main"><div class="m1">'+shortPk(it.pk)+'</div>'+
+          (m2?'<div class="m2">'+m2+'</div>':'')+'</div>'+
+          '<div class="val">'+v1+'<div class="v2">'+v2+'</div></div></a>';
+      }).join('');
+      if(j2&&j2.scanned)$('scanNote').textContent=t.scanned+' '+Number(j2.scanned).toLocaleString('en-US');
     }
-
-    const r = await fetch(url);
-    const d = await r.json();
-
-    let items = d.burners || d.coins || d.traders || d.trades || [];
-
-    if (!d.ok || items.length === 0) {
-      list.innerHTML = '<div class="empty-state">'+LBT.nodata+'</div>';
-      firstLoad = false;
-      return;
-    }
-
-    // Build new HTML
-    const newHtml = items.slice(0, 50).map((item, i) => renderRow(item, i + 1)).join('');
-
-    // Only update if changed (silent refresh)
-    if (list.innerHTML !== newHtml) {
-      list.innerHTML = newHtml;
-    }
-
-    firstLoad = false;
-  } catch(e) {
-    if (firstLoad) list.innerHTML = '<div class="empty-state err">Load failed: ' + e.message + '</div>';
-  }
+    el.innerHTML=html;
+  }catch(e){el.innerHTML='<div class="empty">'+t.nodata+'</div>';}
 }
 
-function renderRow(item, rank) {
-  const cls = rankClass(rank);
-  const rowCls = rank <= 3 ? 'rank-' + rank : '';
-
-  if (currentTab === 'burners') {
-    return '<div class="lb-row ' + rowCls + '" onclick="goAddress(\'' + item.address + '\')">' +
-      '<div class="lb-rank ' + cls + '">' + rankIcon(rank) + '</div>' +
-      '<div class="lb-info">' +
-      '<div class="lb-info-main">' + (item.address_short || item.address.slice(0,12)+'...'+item.address.slice(-6)) + '</div>' +
-      '<div class="lb-info-sub">' + (item.trade_count || 0) + ' txs · vol ' + fmt(item.total_volume_gbx || 0, 2) + ' GBX</div>' +
-      '</div>' +
-      '<div class="lb-val">' +
-      '<div class="lb-val-primary">' + fmt(item.total_burned_gbx || 0, 4) + ' 🔥</div>' +
-      '<div class="lb-val-secondary">GBX BURNED</div>' +
-      '</div>' +
-      '</div>';
-  } else if (currentTab === 'coins') {
-    const img = item.image_url ? ('<img class="lb-img" src="' + item.image_url + '" alt="">') : '<div class="lb-img" style="display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:800;">' + (item.ticker||'?').charAt(0) + '</div>';
-    return '<div class="lb-row ' + rowCls + '" onclick="goCoin(\'' + (item.ticker||'') + '\')">' +
-      '<div class="lb-rank ' + cls + '">' + rankIcon(rank) + '</div>' +
-      img +
-      '<div class="lb-info">' +
-      '<div class="lb-info-main">$' + (item.ticker || '?') + '</div>' +
-      '<div class="lb-info-sub">' + (item.name || '') + '</div>' +
-      '</div>' +
-      '<div class="lb-val">' +
-      '<div class="lb-val-primary">' + fmt(item.market_cap_gbx || 0, 2) + ' GBX</div>' +
-      '<div class="lb-val-secondary">MARKET CAP</div>' +
-      '</div>' +
-      '</div>';
-  } else {
-    return '<div class="lb-row ' + rowCls + '" onclick="goAddress(\'' + item.address + '\')">' +
-      '<div class="lb-rank ' + cls + '">' + rankIcon(rank) + '</div>' +
-      '<div class="lb-info">' +
-      '<div class="lb-info-main">' + (item.address_short || item.address.slice(0,12)+'...'+item.address.slice(-6)) + '</div>' +
-      '<div class="lb-info-sub">' + (item.trade_count || item.tx_count || 0) + ' trades</div>' +
-      '</div>' +
-      '<div class="lb-val">' +
-      '<div class="lb-val-primary">' + fmt(item.total_volume_gbx || item.volume_gbx || 0, 2) + '</div>' +
-      '<div class="lb-val-secondary">VOLUME GBX</div>' +
-      '</div>' +
-      '</div>';
-  }
-}
-
-function goAddress(addr) {
-  if (!addr) return;
-  var _u='/v3/wallet-view.html?addr='+addr; if(!(window.__spaNavTo&&window.__spaNavTo(_u))) window.location.href=_u;
-}
-async function goCoin(ticker) {
-  if (!ticker) return;
-  try {
-    const r = await fetch('https://goldbrix.app/v2/memecoin/list?limit=2000');
-    const d = await r.json();
-    const coins = d.coins || d || [];
-    const match = coins.find(c => (c.ticker||'').toUpperCase() === ticker.toUpperCase());
-    if (match && match.id) {
-      window.location.href = '/v3/trade.html?coin=' + match.id;
-      return;
-    }
-  } catch(e){}
-  // Fallback: pass ticker directly (backend may handle it)
-  window.location.href = '/v3/trade.html?coin=' + ticker;
-}
-
-window.setTab = setTab;
-window.setPeriod = setPeriod;
-window.goAddress = goAddress;
-window.goCoin = goCoin;
-
-// Initial + silent polling
-load();
-setInterval(load, 30000);
+document.querySelectorAll('.tab').forEach(function(b){
+  b.addEventListener('click',function(){
+    tab=b.dataset.tab;
+    document.querySelectorAll('.tab').forEach(function(x){x.className='tab'+(x===b?' active':'');});
+    $('perBar').style.display=(tab==='coins')?'none':'flex';
+    load();
+  });
+});
+document.querySelectorAll('.pbtn').forEach(function(b){
+  b.addEventListener('click',function(){
+    per=Number(b.dataset.p);
+    document.querySelectorAll('.pbtn').forEach(function(x){x.className='pbtn'+(x===b?' active':'');});
+    load();
+  });
+});
+window.addEventListener('pageshow',function(e){if(e.persisted)location.reload();});
+load();setInterval(load,30000);
+})();
 </script>
-<script src="/v3/pwa.js?v=113" defer></script>
-
-<nav class="v3-final-nav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:999;">
-  <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
-  <a href="/v3/wallet.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">👤</span><span data-t="navWallet">WALLET</span></a>
-  <a href="/v3/trade.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#F5CC75;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:1;"><span style="font-size:18px;">📊</span><span data-t="navTrade">TRADE</span></a>
-  <a href="/v3/launch.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🚀</span><span data-t="navLaunch">LAUNCH</span></a>
-  <a href="/v3/burns.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">🔥</span><span data-t="navBurns">BURNS</span></a>
-  <a href="/v3/settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;opacity:0.7;"><span style="font-size:18px;">⚙</span><span data-t="navSettings">SETTINGS</span></a>
-</nav>
-<style>body { padding-bottom: 76px !important; }</style>
-
 </body>
 </html>
