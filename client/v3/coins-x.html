@@ -123,7 +123,7 @@ html,body{margin:0;background:#171310}
     var pools = {};
     try { var pd = window.GBXRead ? await window.GBXRead.json('/api/pools') : await (await fetch('/api/pools')).json();
           (pd.pools||[]).forEach(function(q){ pools[q.coin_id]=q; }); } catch(e){}
-    try { var lr = await fetch('/api/lp-registry').then(function(x){return x.json();});
+    try { var lr = (window.GBXRead ? await window.GBXRead.json('/api/lp-registry') : {});
           tipReal = lr.updated_height || 0; } catch(e){}
     if (tipReal > 0 && tipReal < ACTIVATION_HEIGHT){
       // countdown ONLY from the real chain tip — never from a syncing index
@@ -172,6 +172,7 @@ html,body{margin:0;background:#171310}
 })();
 </script>
 <script src="/v3/gbx-read.js?v=119" defer></script>
+<script src="/v3/gbx-lp.js?v=119" defer></script>
   <script src="/promo-banner.js?v=114" defer></script>
 </body>
 </html>

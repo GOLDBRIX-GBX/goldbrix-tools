@@ -316,6 +316,7 @@ input::-moz-placeholder, textarea::-moz-placeholder {
     <script src="/gbx-native-bridge.js" defer></script>
       <script src="/v3/gbx-session.js?v=114"></script>
     <script src="/v3/gbx-read.js?v=119"></script>
+    <script src="/v3/gbx-lp.js?v=119"></script>
       <script src="/i18n.js?v=114" defer></script>
   <script src="/promo-banner.js?v=114" defer></script>
 <style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
@@ -500,8 +501,8 @@ const T = {
 
 let currentLang = localStorage.getItem('gbx_lang') || 'en';
 let activeWallet = null;
-let GBX_USD = 0.10;
-let _gbxPricePromise=null;(function(){async function _g(){try{if(!window.GBXRead)return;const reg=await window.GBXRead.json('/api/lp-registry');const eps=((reg&&(reg.lps||reg.entries))||[]).map(function(x){return x.url||x.endpoint;}).filter(Boolean);const qs=await Promise.all(eps.slice(0,5).map(function(u){return fetch(u.replace(/\/$/,'')+'/quote?usd=1',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});}));const px=qs.map(function(q){return q&&Number(q.gbx_price_usd||q.price_usd||0);}).filter(function(v){return v>0;}).sort(function(a,b){return a-b;});GBX_USD=px.length?px[Math.floor(px.length/2)]:0;}catch(e){GBX_USD=0;}}_gbxPricePromise=_g();setInterval(_g,30000);})();
+let GBX_USD = 0; /* federated: set from the on-chain LP registry, never a fixed figure */
+let _gbxPricePromise=null;(function(){async function _g(){var v=0;try{v=window.GBXLp?(await window.GBXLp.priceUsd()):0;}catch(e){v=0;}window.GBX_USD_FED=v;GBX_USD=v;}_gbxPricePromise=_g();setInterval(_g,30000);})();
 
 function t(k) { return (T[currentLang] && T[currentLang][k]) || T.en[k] || k; }
 
@@ -1175,8 +1176,13 @@ if (typeof _origSwitch === 'function'){
   const roAddr = urlParams.get('ro_addr') || urlParams.get('viewAddr');
   if (!roAddr || !/^bn1q[a-z0-9]{30,50}$/i.test(roAddr)) return;
   
-  let GBX_USD = 0.10;
-  let _gbxPriceP=Promise.resolve();
+  /* Token balances live on a public key, and a key cannot be derived from
+     an address. The key of the account being viewed therefore comes from
+     the link only - never from this device, because showing the local
+     wallet's holdings under someone else's address would state a falsehood. */
+  const roPk = (function(){var v=urlParams.get('pk')||'';return /^[0-9a-f]{66}$/i.test(v)?v.toLowerCase():null;})();
+  let GBX_USD = 0;
+  let _gbxPriceP=(async function(){for(var i=0;i<40&&!window.GBX_USD_FED;i++)await new Promise(function(r){setTimeout(r,100);});GBX_USD=window.GBX_USD_FED||0;})();
   
   const _roT={
     en:{back:'← BACK TO TRADE',live:'LIVE',portfolio:'TOTAL VALUE',readOnly:'READ-ONLY',gbxAsset:'GoldBrix · GBX',gbxBuyHint:'Tap to buy GBX →',tokens:'Token Holdings',noTokens:'No tokens held',copied:'Address copied!',native:'NATIVE',graduated:'GRADUATED',sortValue:'Value',loading:'Loading...',recentTx:'Recent Transactions',noTx:'No transactions yet',received:'Received',confirmed:'Confirmed',pending:'Pending',justNow:'just now',tapToTrade:'Tap to trade'},
@@ -1303,7 +1309,7 @@ if (typeof _origSwitch === 'function'){
     
     let holdings = [];
     try {
-      const r = { ok:true, json: async () => ({ holdings: (window.__gbxMyPk ? ((await window.GBXRead.json('/api/my-coins/' + window.__gbxMyPk).catch(()=>null))||{}).held || [] : []).map(h=>({coin_id:h.coin_id,ticker:h.ticker,name:h.name,balance:Number(h.amount)||0})) }) };
+      const r = { ok:true, json: async () => ({ holdings: (roPk ? ((await window.GBXRead.json('/api/my-coins/' + roPk).catch(()=>null))||{}).held || [] : []).map(h=>({coin_id:h.coin_id,ticker:h.ticker,name:h.name,balance:Number(h.amount)||0})) }) };
       const d = await r.json();
       holdings = d.holdings || [];
     } catch(e){}
@@ -1407,7 +1413,7 @@ if (typeof _origSwitch === 'function'){
   async function loadTxHistory(){
     const txList = document.getElementById('roTxList');
     try {
-      const r = { ok:true, json: async () => ({ trades: (window.__gbxMyPk ? ((await window.GBXRead.json('/api/my-coins/' + window.__gbxMyPk).catch(()=>null))||{}).ops || [] : []).map(o=>({coin_id:o.coin_id,ticker:o.ticker,side:(o.op==='B'||o.op==='P')?'buy':'sell',gbx_amount:(Number(o.amount)||0)/1e8,coin_amount:Number(o.tokens)||0,created_at:0,height:o.height,txid:o.txid})) }) };
+      const r = { ok:true, json: async () => ({ trades: (roPk ? ((await window.GBXRead.json('/api/my-coins/' + roPk).catch(()=>null))||{}).ops || [] : []).map(o=>({coin_id:o.coin_id,ticker:o.ticker,side:(o.op==='B'||o.op==='P')?'buy':'sell',gbx_amount:(Number(o.amount)||0)/1e8,coin_amount:Number(o.tokens)||0,created_at:0,height:o.height,txid:o.txid})) }) };
       const dd = await r.json();
       let txs = Array.isArray(dd) ? dd : (dd.trades || []);
       if (!txs.length){
@@ -1523,8 +1529,8 @@ window.addEventListener('storage', e => { if (e.key && e.key.indexOf('lang') > -
   if (!roAddr || !/^bn1q[a-z0-9]{30,50}$/i.test(roAddr)) return;
 
   const API = 'https://goldbrix.app';
-  let GBX_USD = 0.10;
-  let _gbxPriceP=Promise.resolve();
+  let GBX_USD = 0;
+  let _gbxPriceP=(async function(){for(var i=0;i<40&&!window.GBX_USD_FED;i++)await new Promise(function(r){setTimeout(r,100);});GBX_USD=window.GBX_USD_FED||0;})();
 
   const I18N = {
     en: { follow:'⭐ FOLLOW', following:'✓ FOLLOWING', pnlTitle:'📊 PORTFOLIO P&L', noTrades:'No trades yet', loadFailed:'Load failed', buy:'BUY', sell:'SELL', tokens:'tokens', rank:'RANK', of:'of', burners:'burners', burnTxs:'burn txs' },
@@ -1731,7 +1737,7 @@ async function _v49PreloadCoinMeta() {
 _v49PreloadCoinMeta();
 setInterval(_v49PreloadCoinMeta, 30000);
 </script>
-<script type="module" src="/crypto-utils-v2.js?v=115"></script>
+<script type="module" src="/crypto-utils-v2.js?v=119"></script>
 <script src="/v3/wallet-holdings-pro.js?v=116" defer></script>
 <script src="/v3/wallet-activity-pro.js?v=118" defer></script>
 

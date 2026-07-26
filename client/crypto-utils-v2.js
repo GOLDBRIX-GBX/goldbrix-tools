@@ -305,6 +305,22 @@ async function decryptString(encrypted, password, saltHex) {
   return dec.decode(plainBuf);
 }
 
+// An account is identified by its public key: the address is one of its
+// projections and cannot be reversed back into a key. Deriving the address
+// from a key is therefore always possible, offline, with no network and no
+// server - which is why the key is the identifier used across the app.
+function addressFromPublicKey(pubkeyHex) {
+  const hex = String(pubkeyHex || '').toLowerCase();
+  if (!/^[0-9a-f]{66}$/.test(hex)) return null;
+  try {
+    const { address } = bitcoin.payments.p2wpkh({
+      pubkey: Buffer.from(hex, 'hex'),
+      network: GOLDBRIX_NETWORK
+    });
+    return address || null;
+  } catch (e) { return null; }
+}
+
 // ============================================================
 // STEP 4: Expose globally
 // ============================================================
@@ -313,6 +329,7 @@ window.GoldbrixCrypto = {
   deriveAddressFromMnemonic,
   generateNewWallet,
   deriveKeypairFromMnemonic,
+  addressFromPublicKey,
   fetchUtxos,
   sendGBX,
   network: GOLDBRIX_NETWORK,
