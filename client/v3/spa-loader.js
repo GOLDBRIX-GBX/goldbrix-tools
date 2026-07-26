@@ -30,7 +30,7 @@
   var curRoute = null;
 
   var MAP = {
-    home:'/home.html', wallet:'/v3/wallet.html', explorer:'/v3/explorer.html',
+    home:'/home.html', wallet:'/v3/profile-x.html', explorer:'/v3/explorer.html',
     trade:'/v3/coins-x.html', launch:'/v3/launch-x.html', /* consensus launchpad X pages; on-page guard until height 2720000 */ burns:'/v3/burns.html',
     settings:'/v3/settings.html', gbx:'/v3/gbx.html',
     receive:'/v3/receive-usdc.html', favorites:'/v3/favorites.html',
