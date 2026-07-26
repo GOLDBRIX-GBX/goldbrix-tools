@@ -43,7 +43,7 @@ export function curveSell(reserve, tokensIn){ reserve=BigInt(reserve); tokensIn=
 
 // ── honest quote with REAL price impact (pure curve math, no server) ──────────
 // Spot price of 1 token in GBX-sat = dGBX/dTokens = K/(V_GBX_SAT+R)^2 (x*y=k).
-// All BigInt in sats; ratios returned as JS numbers only for display.
+// All BigInt in base units; ratios returned as JS numbers only for display.
 export function spotPriceSat(reserve){
   // marginal GBX-sat paid for the next token = dGBX/dTokens.
   // tokens(R) = V_TOKENS - K/(V_GBX_SAT+R)  =>  dTokens/dR = K/cur^2

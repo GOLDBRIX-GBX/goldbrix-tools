@@ -17,7 +17,7 @@ export const DUST_SAT = 546n;
 export const CREATE_FEE_SAT = 50000n;   // flat, generous network fee for the create tx
 export const META_FEE_SAT   = 20000n;   // flat network fee for the metadata tx
 
-// Honest local preview — pure math, zero server. Amounts in satoshi (BigInt).
+// Honest local preview — pure math, zero server. Amounts in base units (BigInt).
 export function previewCreate(devBuySat){
   const gross = BigInt(devBuySat);
   if (gross < 1n) throw new Error('dev buy must be at least 1');

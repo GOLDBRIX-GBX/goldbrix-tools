@@ -59,7 +59,7 @@ function openTokenIndex(dbPath){
                        WHERE coin_id=? ORDER BY height ASC LIMIT ?`),
     };
   } catch (_e) { pq = null; }
-  // honest graduation math — mirror of the scanner/consensus (BigInt, sats)
+  // honest graduation math — mirror of the scanner/consensus (BigInt, base units)
   const N=20n, R_MIN=200000000000n, K=201600, V_GBX=3000000000000n, V_TOKENS=1073000000n, KCURVE=V_GBX*V_TOKENS, CURVE_TOKENS=800000000n;
   function curveView(r, tip){
     const R=BigInt(r.reserve), M=BigInt(r.m);
@@ -79,7 +79,7 @@ function openTokenIndex(dbPath){
     return { coin_id:r.coin_id, ticker:r.ticker||null, name:r.name||null,
              pool_txid:r.txid, pool_vout:r.vout, height:r.height,
              gbx_sat:String(r.gbx_sat), tokens:String(r.tokens),
-             // spot price in sat per token (integer floor; quoting uses x*y=k)
+             // spot price in base units per token (integer floor; quoting uses x*y=k)
              price_sat: BigInt(r.tokens) > 0n ? (BigInt(r.gbx_sat)/BigInt(r.tokens)).toString() : '0' };
   }
   return {
@@ -118,7 +118,7 @@ function openTokenIndex(dbPath){
           amount:String(r.amount), tokens:String(r.tokens_out), burn_sat:String(r.burn_sat)})) };
     },
     coinCandles(coinId, interval = 1200, limit = 96){
-      // OHLC in sat/token from the coin's own life: curve_log (spot from reserve)
+      // OHLC in base units per token from the coin's own life: curve_log (spot from reserve)
       // + pool_log (spot = gbx/tokens). interval in blocks (1200 blocks ~ 1h at 3s).
       if (!/^[0-9a-f]{64}$/.test(coinId)) return null;
       const pts=[];
