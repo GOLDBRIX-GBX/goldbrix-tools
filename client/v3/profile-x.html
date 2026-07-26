@@ -64,6 +64,14 @@ body{color:var(--ink);font-family:'JetBrains Mono','Courier New',ui-monospace,mo
 .section-heading{display:flex;align-items:center;gap:10px;margin:16px 0 8px}
 .section-heading::after{content:'';flex:1;height:1px;background:var(--line)}
 .section-heading__label{font-size:11px;font-weight:800;letter-spacing:.15em;color:var(--ink);text-transform:uppercase}
+.wsel{display:flex;align-items:center;gap:11px;padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.wsel:last-child{border-bottom:none}
+.wsel.on .wn{color:var(--goldB)}
+.wdot{width:10px;height:10px;border-radius:50%;flex:0 0 10px;background:var(--line)}
+.wsel.on .wdot{background:var(--green);box-shadow:0 0 8px rgba(87,255,158,.6)}
+.wn{flex:1;min-width:0;font-size:.86rem;font-weight:800;color:var(--ink)}
+.wa{font-size:.72rem;opacity:.85;display:block;font-weight:400;margin-top:2px}
+.wadd{background:none;border:1px solid var(--line);border-radius:10px;color:var(--gold);font-size:.7rem;font-weight:800;padding:8px 14px;cursor:pointer;font-family:inherit;letter-spacing:.08em}
 .chain-note{font-size:10px;line-height:1.5;text-align:center;padding:10px 4px 0;color:var(--ink);opacity:.85}
 .ht{display:block;font-size:.95rem;font-weight:800;color:var(--gold)}
 .hs{display:block;font-size:.72rem;color:var(--ink);opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
@@ -94,6 +102,7 @@ a.coin{color:var(--gold);text-decoration:none}
   <div class="btns"><button class="btn" id="favBtn">☆</button><button class="btn" id="folBtn">FOLLOW</button><button class="btn" id="shrBtn">SHARE</button></div>
 </div>
 <div id="ownerActs"></div>
+<div id="walletsWrap"></div>
 <div class="card">
   <div class="sect" id="tBal">Balance</div>
   <div class="huge" id="balG">—</div>
@@ -135,11 +144,11 @@ a.coin{color:var(--gold);text-decoration:none}
 (function(){
 var L=localStorage.getItem('gbx_lang')||localStorage.getItem('goldbrix_lang')||'en';
 var T={
-en:{title:'Account',bal:'Balance',pnl:'Portfolio',burn:'Burns',hold:'Holdings',crt:'Created',act:'Activity',none:'nothing here yet',bought:'Bought',sold:'Sold',created:'Created',grad:'Graduated',refund:'Refund',follow:'FOLLOW',following:'FOLLOWING',share:'SHARE',copy:'TAP TO COPY',copied:'COPIED',value:'value',cost:'cost',unreal:'unrealised',real:'realised',rank:'rank',of:'of',burned:'burned',noprice:'no price yet',recv:'RECEIVE',send:'SEND',buy:'BUY GBX',sell:'SELL GBX',conv:'CONVERT',memes:'MY MEMES',favs:'FAVORITES',fold:'FOLLOWED',live:'live',graduated:'graduated',viewAll:'VIEW ALL ON EXPLORER',chains:'MULTI-CHAIN',locked:'WALLET LOCKED',unlock:'UNLOCK'},
-ro:{title:'Cont',bal:'Sold',pnl:'Portofoliu',burn:'Arderi',hold:'Dețineri',crt:'Create',act:'Activitate',none:'nimic încă',bought:'Cumpărat',sold:'Vândut',created:'Creat',grad:'Graduat',refund:'Refund',follow:'URMĂREȘTE',following:'URMĂRIT',share:'DISTRIBUIE',copy:'ATINGE PENTRU A COPIA',copied:'COPIAT',value:'valoare',cost:'cost',unreal:'nerealizat',real:'realizat',rank:'loc',of:'din',burned:'ars',noprice:'fără preț încă',recv:'PRIMEȘTE',send:'TRIMITE',buy:'CUMPĂRĂ GBX',sell:'VINDE GBX',conv:'CONVERSIE',memes:'MEMELE MELE',favs:'FAVORITE',fold:'URMĂRITE',live:'activ',graduated:'graduat',viewAll:'VEZI TOT ÎN EXPLORER',chains:'MULTI-LANȚ',locked:'PORTOFEL BLOCAT',unlock:'DEBLOCHEAZĂ'},
-de:{title:'Konto',bal:'Guthaben',pnl:'Portfolio',burn:'Verbrennungen',hold:'Bestände',crt:'Erstellt',act:'Aktivität',none:'noch nichts',bought:'Gekauft',sold:'Verkauft',created:'Erstellt',grad:'Graduiert',refund:'Erstattung',follow:'FOLGEN',following:'GEFOLGT',share:'TEILEN',copy:'ZUM KOPIEREN TIPPEN',copied:'KOPIERT',value:'Wert',cost:'Kosten',unreal:'nicht realisiert',real:'realisiert',rank:'Rang',of:'von',burned:'verbrannt',noprice:'noch kein Preis',recv:'EMPFANGEN',send:'SENDEN',buy:'GBX KAUFEN',sell:'GBX VERKAUFEN',conv:'TAUSCHEN',memes:'MEINE MEMES',favs:'FAVORITEN',fold:'GEFOLGT',live:'aktiv',graduated:'graduiert',viewAll:'ALLES IM EXPLORER',chains:'MULTI-CHAIN',locked:'WALLET GESPERRT',unlock:'ENTSPERREN'},
-zh:{title:'账户',bal:'余额',pnl:'投资组合',burn:'销毁',hold:'持仓',crt:'创建',act:'活动',none:'暂无',bought:'买入',sold:'卖出',created:'创建',grad:'毕业',refund:'退款',follow:'关注',following:'已关注',share:'分享',copy:'点按复制',copied:'已复制',value:'价值',cost:'成本',unreal:'未实现',real:'已实现',rank:'排名',of:'共',burned:'已销毁',noprice:'暂无价格',recv:'接收',send:'发送',buy:'买入 GBX',sell:'卖出 GBX',conv:'兑换',memes:'我的代币',favs:'收藏',fold:'已关注',live:'活跃',graduated:'已毕业',viewAll:'在浏览器中查看全部',chains:'多链',locked:'钱包已锁定',unlock:'解锁'},
-ar:{title:'الحساب',bal:'الرصيد',pnl:'المحفظة',burn:'الحرق',hold:'الحيازات',crt:'المُنشأة',act:'النشاط',none:'لا شيء بعد',bought:'شراء',sold:'بيع',created:'إنشاء',grad:'تخرّج',refund:'استرداد',follow:'متابعة',following:'متابع',share:'مشاركة',copy:'انقر للنسخ',copied:'تم النسخ',value:'القيمة',cost:'التكلفة',unreal:'غير محقق',real:'محقق',rank:'الترتيب',of:'من',burned:'محروق',noprice:'لا يوجد سعر بعد',recv:'استلام',send:'إرسال',buy:'شراء GBX',sell:'بيع GBX',conv:'تحويل',memes:'عملاتي',favs:'المفضلة',fold:'المتابَعون',live:'نشط',graduated:'متخرج',viewAll:'عرض الكل في المستكشف',chains:'متعدد السلاسل',locked:'المحفظة مقفلة',unlock:'فتح القفل'}};
+en:{title:'Account',bal:'Balance',pnl:'Portfolio',burn:'Burns',hold:'Holdings',crt:'Created',act:'Activity',none:'nothing here yet',bought:'Bought',sold:'Sold',created:'Created',grad:'Graduated',refund:'Refund',follow:'FOLLOW',following:'FOLLOWING',share:'SHARE',wallets:'MY WALLETS',addW:'+ ADD',newW:'Create new wallet',impW:'Import existing wallet',cancel:'Cancel',copy:'TAP TO COPY',copied:'COPIED',value:'value',cost:'cost',unreal:'unrealised',real:'realised',rank:'rank',of:'of',burned:'burned',noprice:'no price yet',recv:'RECEIVE',send:'SEND',buy:'BUY GBX',sell:'SELL GBX',conv:'CONVERT',memes:'MY MEMES',favs:'FAVORITES',fold:'FOLLOWED',live:'live',graduated:'graduated',viewAll:'VIEW ALL ON EXPLORER',chains:'MULTI-CHAIN',locked:'WALLET LOCKED',unlock:'UNLOCK'},
+ro:{title:'Cont',bal:'Sold',pnl:'Portofoliu',burn:'Arderi',hold:'Dețineri',crt:'Create',act:'Activitate',none:'nimic încă',bought:'Cumpărat',sold:'Vândut',created:'Creat',grad:'Graduat',refund:'Refund',follow:'URMĂREȘTE',following:'URMĂRIT',share:'DISTRIBUIE',wallets:'PORTOFELELE MELE',addW:'+ ADAUGĂ',newW:'Creează portofel nou',impW:'Importă portofel existent',cancel:'Anulează',copy:'ATINGE PENTRU A COPIA',copied:'COPIAT',value:'valoare',cost:'cost',unreal:'nerealizat',real:'realizat',rank:'loc',of:'din',burned:'ars',noprice:'fără preț încă',recv:'PRIMEȘTE',send:'TRIMITE',buy:'CUMPĂRĂ GBX',sell:'VINDE GBX',conv:'CONVERSIE',memes:'MEMELE MELE',favs:'FAVORITE',fold:'URMĂRITE',live:'activ',graduated:'graduat',viewAll:'VEZI TOT ÎN EXPLORER',chains:'MULTI-LANȚ',locked:'PORTOFEL BLOCAT',unlock:'DEBLOCHEAZĂ'},
+de:{title:'Konto',bal:'Guthaben',pnl:'Portfolio',burn:'Verbrennungen',hold:'Bestände',crt:'Erstellt',act:'Aktivität',none:'noch nichts',bought:'Gekauft',sold:'Verkauft',created:'Erstellt',grad:'Graduiert',refund:'Erstattung',follow:'FOLGEN',following:'GEFOLGT',share:'TEILEN',wallets:'MEINE WALLETS',addW:'+ HINZUFÜGEN',newW:'Neue Wallet erstellen',impW:'Vorhandene Wallet importieren',cancel:'Abbrechen',copy:'ZUM KOPIEREN TIPPEN',copied:'KOPIERT',value:'Wert',cost:'Kosten',unreal:'nicht realisiert',real:'realisiert',rank:'Rang',of:'von',burned:'verbrannt',noprice:'noch kein Preis',recv:'EMPFANGEN',send:'SENDEN',buy:'GBX KAUFEN',sell:'GBX VERKAUFEN',conv:'TAUSCHEN',memes:'MEINE MEMES',favs:'FAVORITEN',fold:'GEFOLGT',live:'aktiv',graduated:'graduiert',viewAll:'ALLES IM EXPLORER',chains:'MULTI-CHAIN',locked:'WALLET GESPERRT',unlock:'ENTSPERREN'},
+zh:{title:'账户',bal:'余额',pnl:'投资组合',burn:'销毁',hold:'持仓',crt:'创建',act:'活动',none:'暂无',bought:'买入',sold:'卖出',created:'创建',grad:'毕业',refund:'退款',follow:'关注',following:'已关注',share:'分享',wallets:'我的钱包',addW:'+ 添加',newW:'创建新钱包',impW:'导入已有钱包',cancel:'取消',copy:'点按复制',copied:'已复制',value:'价值',cost:'成本',unreal:'未实现',real:'已实现',rank:'排名',of:'共',burned:'已销毁',noprice:'暂无价格',recv:'接收',send:'发送',buy:'买入 GBX',sell:'卖出 GBX',conv:'兑换',memes:'我的代币',favs:'收藏',fold:'已关注',live:'活跃',graduated:'已毕业',viewAll:'在浏览器中查看全部',chains:'多链',locked:'钱包已锁定',unlock:'解锁'},
+ar:{title:'الحساب',bal:'الرصيد',pnl:'المحفظة',burn:'الحرق',hold:'الحيازات',crt:'المُنشأة',act:'النشاط',none:'لا شيء بعد',bought:'شراء',sold:'بيع',created:'إنشاء',grad:'تخرّج',refund:'استرداد',follow:'متابعة',following:'متابع',share:'مشاركة',wallets:'محافظي',addW:'+ إضافة',newW:'إنشاء محفظة جديدة',impW:'استيراد محفظة موجودة',cancel:'إلغاء',copy:'انقر للنسخ',copied:'تم النسخ',value:'القيمة',cost:'التكلفة',unreal:'غير محقق',real:'محقق',rank:'الترتيب',of:'من',burned:'محروق',noprice:'لا يوجد سعر بعد',recv:'استلام',send:'إرسال',buy:'شراء GBX',sell:'بيع GBX',conv:'تحويل',memes:'عملاتي',favs:'المفضلة',fold:'المتابَعون',live:'نشط',graduated:'متخرج',viewAll:'عرض الكل في المستكشف',chains:'متعدد السلاسل',locked:'المحفظة مقفلة',unlock:'فتح القفل'}};
 var tt=function(k){return (T[L]&&T[L][k])||T.en[k]||k;};
 if(L==='ar')document.body.dir='rtl';
 var $=function(i){return document.getElementById(i);};
@@ -256,6 +265,47 @@ function lockedUI(){
     +'<a class="btn" style="display:block;text-decoration:none;padding:15px" href="/v3/unlock.html?next='
     +encodeURIComponent(location.pathname+location.search)+'">'+esc(tt('unlock'))+'</a></div>';
 }
+function walletsUI(){
+  var u=null;try{u=window.GBXSession&&window.GBXSession.get?window.GBXSession.get():null;}catch(e){}
+  var ws=(u&&u.wallets)||[];
+  if(!ws.length)return;
+  var act=u.activeWalletId;
+  var rows=ws.map(function(w){
+    var on=(w.id===act);
+    return '<div class="wsel'+(on?' on':'')+'" data-id="'+esc(w.id)+'">'
+      +'<span class="wdot"></span><span class="wn">'+esc(w.name||w.label||'Wallet')
+      +'<span class="wa">'+esc(String(w.address||'').slice(0,12)+'…'+String(w.address||'').slice(-6))+'</span></span>'
+      +(on?'<span class="gold">\u2713</span>':'')+'</div>';
+  }).join('');
+  $('walletsWrap').innerHTML='<div class="card">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
+    +'<span class="sect" style="margin:0">'+esc(tt('wallets'))+'</span>'
+    +'<button class="wadd" id="wAdd">'+esc(tt('addW'))+'</button></div>'+rows+'</div>';
+  $('wAdd').addEventListener('click',function(){showAddWallet();});
+  $('walletsWrap').querySelectorAll('.wsel').forEach(function(el){
+    el.addEventListener('click',function(){
+      var id=el.getAttribute('data-id');
+      if(id===act)return;
+      /* the page follows the key, so switching wallet means opening that key */
+      try{if(window.GBXSession&&window.GBXSession.setActive)window.GBXSession.setActive(id);}catch(e){}
+      try{localStorage.removeItem('gbx_my_pk');}catch(e){}
+      window.__gbxMyPk=null;
+      location.href='/v3/profile-x.html';
+    });
+  });
+}
+function showAddWallet(){
+  var m=document.createElement('div');
+  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9997;display:flex;align-items:flex-end;justify-content:center';
+  m.addEventListener('click',function(e){if(e.target===m)m.remove();});
+  m.innerHTML='<div style="background:linear-gradient(180deg,var(--card2),var(--card));width:100%;max-width:600px;border-radius:20px 20px 0 0;border:1px solid var(--line);padding:18px">'
+    +'<div class="sect">'+esc(tt('addW'))+'</div>'
+    +'<a class="btn" style="display:block;text-decoration:none;text-align:center;margin-bottom:10px" href="/v3/create-wallet.html?mode=add">'+esc(tt('newW'))+'</a>'
+    +'<a class="btn" style="display:block;text-decoration:none;text-align:center;margin-bottom:10px" href="/v3/import-wallet.html?mode=add">'+esc(tt('impW'))+'</a>'
+    +'<button class="btn" id="awX" style="background:none;border:1px solid var(--line);color:var(--gold)">'+esc(tt('cancel'))+'</button></div>';
+  document.body.appendChild(m);
+  m.querySelector('#awX').addEventListener('click',function(){m.remove();});
+}
 function hideSocial(){
   /* following or bookmarking your own account has no meaning */
   ['favBtn','folBtn'].forEach(function(i){var e=$(i);if(e)e.style.display='none';});
@@ -263,6 +313,7 @@ function hideSocial(){
 }
 function ownerUI(){
   hideSocial();
+  walletsUI();
   var A=[['/v3/receive-usdc.html','↓',tt('recv'),'a-recv'],['/v3/send.html','→',tt('send'),'a-send'],
          ['/v3/swap.html?dir=buy','↑',tt('buy'),'a-buy'],['/v3/swap.html?dir=sell','↓',tt('sell'),'a-sell'],
          ['#convert','⇄',tt('conv'),'a-conv'],['/v3/my-coins-x.html','◈',tt('memes'),'a-meme'],
