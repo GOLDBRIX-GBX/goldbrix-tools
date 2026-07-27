@@ -52,7 +52,7 @@ server=1
 listen=1
 txindex=1
 EOF</pre>
-<p>Peers are discovered automatically via DNS seed <code>seed.goldbrix.app</code>. No manual configuration needed.</p>
+<p>Peers are discovered from the chain itself: the installer reads the on-chain node registry (<code>GBX:NODE</code>) through any node that answers, asks it for its live peers, and writes them as <code>addnode</code> entries. A set of seed nodes is also compiled into the binary. No manual configuration needed, and no single operator to depend on.</p>
 
 <h2>5. Run</h2>
 <pre>goldbrixd -daemon
