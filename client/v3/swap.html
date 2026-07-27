@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Swap · GoldBrix</title>
+<link rel="icon" href="/assets/coin/gbx-coin-32.png">
+<link rel="stylesheet" href="/v3/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script>window.__gbxErr=[];addEventListener("error",function(e){window.__gbxErr.push((e.message||e.type)+" @ "+((e.filename||"").split("/").pop())+":"+(e.lineno||""));},true);</script>
 <script>
 window.GBX_API_BASE='https://goldbrix.app/api'; window.GBX_LP_BASE='https://goldbrix.app/lp';
@@ -151,19 +154,16 @@ window.GBX_LP_ROUTE = (async function(){
 </script>
 <style>
   :root{
-    --bg:#0b0900; --surface:#15110a; --surface-2:#1d1709;
-    --gold:#F0C060; --gold-hi:#FFE099; --gold-deep:#B8860B; --edge:#3a2e12;
-    --ink:#ECE0C4; --muted:#e8dab0; --muted-d:#cbb46e;
-    --buy:#7BD3A0; --sell:#E6A45C; --bad:#E07a6a;
+    --buy:#7BD3A0; --sell:#E6A45C;
     --r:18px;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;background:var(--bg);color:var(--ink);
-    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  html,body{margin:0;background:var(--bg-primary);color:var(--text-primary);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
     -webkit-font-smoothing:antialiased}
   body{min-height:100dvh;display:flex;flex-direction:column;align-items:center;
     padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom))}
-  .num{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-variant-numeric:tabular-nums}
+  .num{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
   body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
     background:radial-gradient(120% 60% at 50% -10%, rgba(240,192,96,.10), transparent 60%)}
   .wrap{position:relative;z-index:1;width:100%;max-width:430px;margin:auto 0}
@@ -173,72 +173,72 @@ window.GBX_LP_ROUTE = (async function(){
   .mark{width:32px;height:32px;flex:0 0 32px;border-radius:50%;object-fit:cover;
     box-shadow:0 0 0 1px var(--gold-deep), 0 2px 8px -2px #000}
   .back-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;flex:0 0 36px;
-    border-radius:10px;background:var(--surface,#1a1408);border:1px solid var(--edge,#3a3025);
+    border-radius:10px;background:var(--bg-card);border:1px solid var(--border);
     color:var(--gold-hi,#f0c060);font-size:20px;text-decoration:none;line-height:1;
     transition:all .15s;cursor:pointer}
   .back-btn:active{transform:scale(0.94)}
-  .back-btn:hover{border-color:var(--gold-deep);background:var(--surface-2,#221a0c)}
-  .brand{font-weight:700;letter-spacing:.14em;font-size:14px;color:var(--gold-hi);text-transform:uppercase}
-  .brand small{display:block;letter-spacing:.32em;font-size:9px;color:var(--muted-d);font-weight:600}
-  .lang{margin-left:auto;background:transparent;border:1px solid var(--edge);color:var(--muted);
+  .back-btn:hover{border-color:var(--gold-deep);background:var(--bg-elevated)}
+  .brand{font-weight:700;letter-spacing:.14em;font-size:14px;color:var(--gold-bright);text-transform:uppercase}
+  .brand small{display:block;letter-spacing:.32em;font-size:9px;color:var(--gold-dim);font-weight:600}
+  .lang{margin-left:auto;background:transparent;border:1px solid var(--border);color:var(--text-muted);
     border-radius:999px;padding:6px 10px;font-size:12px;letter-spacing:.08em}
-  .seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--surface);
-    border:1px solid var(--edge);border-radius:999px;padding:4px;margin-bottom:14px}
-  .seg button{appearance:none;border:0;background:transparent;color:var(--muted);
+  .seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--bg-card);
+    border:1px solid var(--border);border-radius:999px;padding:4px;margin-bottom:14px}
+  .seg button{appearance:none;border:0;background:transparent;color:var(--text-muted);
     padding:11px 8px;border-radius:999px;font-weight:700;font-size:14px;letter-spacing:.1em;
     text-transform:uppercase;cursor:pointer;transition:.18s}
-  .seg button[aria-selected="true"]{background:linear-gradient(180deg,var(--surface-2),#120d05);
-    color:var(--gold-hi);box-shadow:inset 0 0 0 1px var(--gold-deep)}
+  .seg button[aria-selected="true"]{background:linear-gradient(180deg,var(--bg-elevated),#120d05);
+    color:var(--gold-bright);box-shadow:inset 0 0 0 1px var(--gold-deep)}
   .seg3{grid-template-columns:1fr 1fr 1fr;margin-top:-8px}
   .seg3 button{font-size:13px;letter-spacing:.06em;padding:9px 6px}
-  .card{background:linear-gradient(180deg,var(--surface),#0f0b04);
-    border:1px solid var(--edge);border-radius:var(--r);padding:18px 16px;
+  .card{background:linear-gradient(180deg,var(--bg-card),#0f0b04);
+    border:1px solid var(--border);border-radius:var(--r);padding:18px 16px;
     box-shadow:0 1px 0 rgba(255,224,153,.06) inset, 0 18px 40px -24px #000}
   .field{display:flex;flex-direction:column;gap:7px}
   .field + .field{margin-top:12px}
-  .lbl{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-  .amt{display:flex;align-items:baseline;gap:10px;border:1px solid var(--edge);
+  .lbl{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted)}
+  .amt{display:flex;align-items:baseline;gap:10px;border:1px solid var(--border);
     background:#0d0a03;border-radius:14px;padding:14px 14px}
-  .amt input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--gold-hi);
+  .amt input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--gold-bright);
     font-size:30px;font-weight:600;letter-spacing:-.01em}
-  .amt input::placeholder{color:var(--muted-d)}
-  .amt .tk{font-size:14px;font-weight:700;letter-spacing:.1em;color:var(--muted)}
+  .amt input::placeholder{color:var(--gold-dim)}
+  .amt .tk{font-size:14px;font-weight:700;letter-spacing:.1em;color:var(--text-muted)}
   .recv{display:flex;justify-content:space-between;align-items:baseline;
-    padding:13px 14px;border:1px dashed var(--edge);border-radius:14px;background:#0d0a03}
-  .recv .v{font-size:21px;font-weight:600;color:var(--ink)}
-  .recv .v.muted{color:var(--muted-d)}
-  .rate{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);
+    padding:13px 14px;border:1px dashed var(--border);border-radius:14px;background:#0d0a03}
+  .recv .v{font-size:21px;font-weight:600;color:var(--text-primary)}
+  .recv .v.muted{color:var(--gold-dim)}
+  .rate{display:flex;justify-content:space-between;font-size:11.5px;color:var(--text-muted);
     margin:11px 2px 2px}
-  .rate b{color:var(--ink);font-weight:600}
-  .atomic{margin:16px 0 4px;padding:14px;border:1px solid var(--edge);border-radius:14px;
+  .rate b{color:var(--text-primary);font-weight:600}
+  .atomic{margin:16px 0 4px;padding:14px;border:1px solid var(--border);border-radius:14px;
     background:repeating-linear-gradient(180deg,#0d0a03,#0d0a03 22px,#0c0902 22px,#0c0902 44px)}
   .atomic[hidden]{display:none}
   .step{display:flex;align-items:center;gap:12px;height:30px;position:relative}
-  .dot{width:11px;height:11px;border-radius:50%;border:2px solid var(--muted-d);flex:0 0 11px;
-    background:var(--bg);transition:.25s;z-index:1}
+  .dot{width:11px;height:11px;border-radius:50%;border:2px solid var(--gold-dim);flex:0 0 11px;
+    background:var(--bg-primary);transition:.25s;z-index:1}
   .step:not(:last-child)::before{content:"";position:absolute;left:5px;top:24px;width:1px;height:18px;
-    background:var(--muted-d)}
+    background:var(--gold-dim)}
   .step.on .dot{border-color:var(--gold);box-shadow:0 0 0 4px rgba(240,192,96,.14)}
   .step.done .dot{background:var(--gold);border-color:var(--gold)}
   .step.done:not(:last-child)::before{background:var(--gold-deep)}
-  .step.fail .dot{border-color:var(--bad);background:var(--bad)}
-  .step .t{font-size:12.5px;color:var(--muted)}
-  .step.on .t,.step.done .t{color:var(--ink)}
+  .step.fail .dot{border-color:var(--red);background:var(--red)}
+  .step .t{font-size:12.5px;color:var(--text-muted)}
+  .step.on .t,.step.done .t{color:var(--text-primary)}
   .step .k{margin-left:auto;font-size:11px;letter-spacing:.12em;color:var(--gold-deep);text-transform:uppercase}
   .step.done .k{color:var(--gold-deep)}
   .cta{width:100%;margin-top:16px;border:0;border-radius:14px;padding:16px;cursor:pointer;
     font-size:15px;font-weight:800;letter-spacing:.06em;color:#241a04;
-    background:linear-gradient(180deg,var(--gold-hi),var(--gold));
+    background:linear-gradient(180deg,var(--gold-bright),var(--gold));
     box-shadow:0 1px 0 #fff5 inset, 0 10px 24px -12px var(--gold-deep);transition:.15s}
   .cta:active{transform:translateY(1px)}
   .cta:disabled{filter:grayscale(.5) brightness(.7);cursor:not-allowed;box-shadow:none}
-  .note{margin:13px 2px 0;font-size:11.5px;line-height:1.5;color:var(--muted)}
+  .note{margin:13px 2px 0;font-size:11.5px;line-height:1.5;color:var(--text-muted)}
   .note b{color:var(--gold)}
   .err{margin-top:12px;padding:11px 13px;border-radius:12px;font-size:12.5px;line-height:1.45;
     border:1px solid #5a2a22;background:#1c0f0a;color:#f0b3a6}
   .err[hidden]{display:none}
   .ok{border-color:#2c4a36;background:#0e1a12;color:#9fe0b8}
-  footer{margin:16px 2px 0;font-size:10.5px;letter-spacing:.06em;color:var(--muted-d);text-align:center}
+  footer{margin:16px 2px 0;font-size:10.5px;letter-spacing:.06em;color:var(--gold-dim);text-align:center}
   [dir="rtl"] .step .k{margin-left:0;margin-right:auto}
   [dir="rtl"] .rate, [dir="rtl"] .recv{direction:rtl}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -300,11 +300,11 @@ input, textarea, .copyable, [data-copyable], .addr, .hash, .txid, code, .gbx-amo
       <span data-i="rate">Rate</span>
       <span><b id="rate" class="num">—</b> · <span data-i="fee">spread</span> <b id="spread" class="num">—</b></span>
     </div>
-    <div id="mktRow" class="rate" style="font-size:13px;color:var(--muted,#9a9a9a)" hidden>
+    <div id="mktRow" class="rate" style="font-size:13px;color:var(--text-muted)" hidden>
       <span data-i="piMkt">Market</span>
       <span><b id="mktPrice" class="num">—</b></span>
     </div>
-    <div id="priceInfoBox" style="margin-top:6px;font-size:10.5px;line-height:1.5;color:var(--muted);border-top:1px solid rgba(255,255,255,.08);padding-top:6px">
+    <div id="priceInfoBox" style="margin-top:6px;font-size:10.5px;line-height:1.5;color:var(--text-muted);border-top:1px solid rgba(255,255,255,.08);padding-top:6px">
       <span id="piToggle" data-i="piHow" title="V40" style="cursor:pointer;color:var(--accent,#F0C060);font-weight:600">How is the price set?</span>
       <div id="piBody" style="display:block;margin-top:5px"></div>
     </div>
@@ -885,16 +885,16 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
         const usdBS=(Number(p.usdcAmount||0)/1e6).toLocaleString();
         const box=document.createElement('div'); box.style.cssText='border:1px solid var(--gold-deep,#b8860b);border-radius:12px;padding:12px;margin-top:12px;background:rgba(184,134,11,.06)';
         const m=document.createElement('div'); m.style.marginBottom='8px'; m.textContent='BUY Solana în așteptare — revendică GBX ('+usdBS+' USDC)'; box.appendChild(m);
-        const btn=document.createElement('button'); btn.className='cta'; btn.type='button'; btn.textContent='Revendică GBX';
+        const btn=document.createElement('button'); btn.className='cta'; btn.type='button'; btn.textContent=RT('rgbtn');
         btn.onclick=async()=>{
-          btn.disabled=true; btn.textContent='Se revendică…';
+          btn.disabled=true; btn.textContent=RT('rgdoing');
           try{
             const w=activeWallet(); if(!w){ location.href='/v3/unlock.html'; return; }
             await GBX_LP_ENSURE(C); const client=window.GoldbrixModB.makeInAppClient({ crypto:window.GoldbrixCrypto, multichain:window.GoldbrixMultichain, GoldbrixEVM:window.GoldbrixEVM, gatewayBase:C.gateway, evmRpc:C.evmRpc, chainId:C.chainId, htlcAddr:C.htlc, usdcAddr:C.usdc, lpEvmAddr:C.lpEvm, fetchUtxos:window.GoldbrixCrypto.fetchUtxos });
             const r=await client.claimGbxForBuy({ mnemonic:w.mnemonic, hashlock:p.hashlock, secret:p.secret, minGbx8:1, maxPolls:8 });
             try{ const _h=JSON.parse(localStorage.getItem('gbx_swaps_history')||'[]'); _h.unshift({type:'GBX_BUY',chain:'solana',gbx_amount:0,usdc:(Number(p.usdcAmount||0)/1e6),tx_hash:(r&&r.txid)||'',timestamp:Date.now(),status:'completed'}); localStorage.setItem('gbx_swaps_history',JSON.stringify(_h.slice(0,100))); }catch(_e){}
             localStorage.removeItem(k); box.innerHTML='<div style="color:#2e7d32">GBX revendicat ✓ '+(r&&r.txid?('('+r.txid.slice(0,12)+'…)'):'')+'</div>';
-          }catch(e){ btn.disabled=false; btn.textContent='Revendică GBX'; let er=box.querySelector('.recerr'); if(!er){ er=document.createElement('div'); er.className='recerr'; er.style.cssText='color:#b03a2e;margin-top:6px;font-size:14px'; box.appendChild(er);} er.textContent='Eroare: '+humanError(e); }
+          }catch(e){ btn.disabled=false; btn.textContent=RT('rgbtn'); let er=box.querySelector('.recerr'); if(!er){ er=document.createElement('div'); er.className='recerr'; er.style.cssText='color:#b03a2e;margin-top:6px;font-size:14px'; box.appendChild(er);} er.textContent=RT('err')+humanError(e); }
         };
         box.appendChild(btn); rec.appendChild(box); continue;
       }
