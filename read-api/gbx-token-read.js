@@ -27,7 +27,7 @@ function openTokenIndex(dbPath){
                         FROM curves c LEFT JOIN coin_meta m ON m.coin_id=c.coin_id
                                        LEFT JOIN coin_meta2 m2 ON m2.coin_id=c.coin_id
                         ORDER BY c.height DESC`),
-    curveOne: db.prepare(`SELECT c.coin_id, c.txid, c.vout, c.reserve, c.m, c.h_m, c.height, c.status,
+    curveOne: db.prepare(`SELECT c.coin_id, c.creator_pk, c.txid, c.vout, c.reserve, c.m, c.h_m, c.height, c.status,
                                  m.ticker, m.name, m2.desc descr, m2.links
                           FROM curves c LEFT JOIN coin_meta m ON m.coin_id=c.coin_id
                                         LEFT JOIN coin_meta2 m2 ON m2.coin_id=c.coin_id
@@ -69,7 +69,7 @@ function openTokenIndex(dbPath){
     const bar = mLive ? (M*N > R_MIN ? M*N : R_MIN) : R_MIN;
     const soldTok = V_TOKENS - (KCURVE/(V_GBX+R));
     return { coin_id:r.coin_id, ticker:r.ticker||null, name:r.name||null, status:r.status,
-             desc:r.descr||null, links:r.links||null,
+             desc:r.descr||null, links:r.links||null, creator_pk:r.creator_pk||null,
              curve_txid:r.txid, curve_vout:r.vout, height:r.height,
              reserve_sat:R.toString(), m_sat:M.toString(), h_m:r.h_m, m_live:mLive,
              bar_sat:bar.toString(),

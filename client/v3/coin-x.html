@@ -118,6 +118,15 @@ body[dir="rtl"]{direction:rtl;}
       <div class="row"><span class="k" data-x="r.sold">Tokens sold</span><span class="v" id="rSold">—</span></div>
       <div class="row"><span class="k" data-x="r.holders">Holders</span><span class="v" id="rHolders">—</span></div>
     </div>
+    <div id="mDesc" style="display:none;color:var(--text-primary);font-size:13px;line-height:1.6;margin-top:10px"></div>
+    <div id="mLinks" style="display:none;margin-top:6px"></div>
+    <button id="mAdd" class="pctb" style="display:none;margin-top:10px;flex:none;padding:7px 14px" data-x="m.add">Add description</button>
+    <div id="mForm" style="display:none;margin-top:10px">
+      <textarea class="inp" id="mDescIn" maxlength="150" rows="2" style="width:100%;resize:none;font-family:inherit;margin-bottom:6px"></textarea>
+      <input class="inp" id="mLinksIn" maxlength="64" style="width:100%;margin-bottom:8px" placeholder="x.com/… t.me/… https://…">
+      <button id="mSend" class="pctb" style="flex:none;padding:7px 14px" data-x="m.write">Write on chain</button>
+      <div class="gnote" id="mMsg"></div>
+    </div>
   </div>
 
   <!-- HONEST GRADUATION -->
@@ -249,11 +258,12 @@ body[dir="rtl"]{direction:rtl;}
 <script type="module">
 import * as F from '/gbx-launchpad-flow.mjs';
 import * as C from '/gbx-curve.mjs';
+import { buildFundTx } from '/gbx-htlc.mjs';
 
 /* ── i18n ── */
 const L=(()=>{try{return localStorage.getItem('gbx_lang')||localStorage.getItem('goldbrix_lang')||'en';}catch(e){return 'en';}})();
 const T={
-en:{loading:'reading the chain…','r.price':'Price','r.liq':'Curve liquidity','r.sold':'Tokens sold','r.holders':'Holders',
+en:{loading:'reading the chain…','m.add':'Add description','m.write':'Write on chain','m.done':'Written. It appears once the chain confirms it.','m.err':'Could not write. Nothing was sent.','r.price':'Price','r.liq':'Curve liquidity','r.sold':'Tokens sold','r.holders':'Holders',
  's.grad':'Graduation · honest',
  'g.note':'The target is alive: it is 20× the largest trade of the last ~7 days (never less than 2,000 GBX). A whale raising the price raises its own bar. No fixed sum, ever.',
  'g.done':'Graduated — the liquidity moved to the open pool. This history is the curve\u2019s life.',
@@ -270,7 +280,7 @@ en:{loading:'reading the chain…','r.price':'Price','r.liq':'Curve liquidity','
  'b.grad':'GRADUATE THE COIN','e.amt':'Enter a valid amount','e.net':'Network unavailable. Nothing was sent. Try again.',
  'e.funds':'Insufficient available funds or a previous transaction is still confirming.','e.max':'Amount too large for one transaction right now — try a smaller amount.','e.busy':'The chain is processing your previous trade. Try again in a few seconds.','e.err':'Something went wrong. Nothing was lost. Try again.','e.wallet':'Wallet locked — unlocking…','e.notlive':'Test mode: the launchpad rules are not active on the network yet. Nothing was sent.',
  'e.notoken':'You hold no tokens of this coin on this device.','sent':'Sent. The chain will confirm in seconds.'},
-ro:{loading:'citesc lanțul…','r.price':'Preț','r.liq':'Lichiditatea curbei','r.sold':'Tokens vânduți','r.holders':'Deținători',
+ro:{loading:'citesc lanțul…','m.add':'Adaugă descriere','m.write':'Scrie pe lanț','m.done':'Scris. Apare după ce lanțul confirmă.','m.err':'Nu s-a putut scrie. Nimic nu a fost trimis.','r.price':'Preț','r.liq':'Lichiditatea curbei','r.sold':'Tokens vânduți','r.holders':'Deținători',
  's.grad':'Graduare · onestă',
  'g.note':'Ținta e vie: e 20× cel mai mare trade din ultimele ~7 zile (niciodată sub 2.000 GBX). Balena care urcă prețul își urcă propriul prag. Nicio sumă fixă, niciodată.',
  'g.done':'Graduat — lichiditatea s-a mutat în pool-ul deschis. Istoricul de aici e viața curbei.',
@@ -287,7 +297,7 @@ ro:{loading:'citesc lanțul…','r.price':'Preț','r.liq':'Lichiditatea curbei',
  'b.grad':'GRADUEAZĂ MONEDA','e.amt':'Introdu o sumă validă','e.net':'Rețea indisponibilă. Nu s-a trimis nimic. Încearcă din nou.',
  'e.funds':'Fonduri insuficiente sau o tranzacție anterioară e încă în confirmare.','e.max':'Suma e prea mare pentru o singură tranzacție acum — încearcă o sumă mai mică.','e.busy':'Lanțul procesează tranzacția ta anterioară. Reîncearcă în câteva secunde.','e.err':'A apărut o problemă. Nu s-a pierdut nimic. Încearcă din nou.','e.wallet':'Portofel blocat — deblocare…','e.notlive':'Mod de test: regulile launchpad-ului nu sunt încă active în rețea. Nu s-a trimis nimic.',
  'e.notoken':'Nu deții tokens ai acestui coin pe acest dispozitiv.','sent':'Trimis. Lanțul confirmă în câteva secunde.'},
-de:{loading:'lese die Chain…','r.price':'Preis','r.liq':'Kurven-Liquidität','r.sold':'Verkaufte Tokens','r.holders':'Halter',
+de:{loading:'lese die Chain…','m.add':'Beschreibung hinzufügen','m.write':'Auf die Chain schreiben','m.done':'Geschrieben. Erscheint nach Bestätigung der Chain.','m.err':'Konnte nicht schreiben. Nichts wurde gesendet.','r.price':'Preis','r.liq':'Kurven-Liquidität','r.sold':'Verkaufte Tokens','r.holders':'Halter',
  's.grad':'Graduierung · ehrlich',
  'g.note':'Das Ziel lebt: es ist 20× der größte Trade der letzten ~7 Tage (nie unter 2.000 GBX). Ein Wal, der den Preis hebt, hebt seine eigene Latte. Nie eine feste Summe.',
  'g.done':'Graduiert — die Liquidität ist in den offenen Pool gewandert. Diese Historie ist das Leben der Kurve.',
@@ -304,7 +314,7 @@ de:{loading:'lese die Chain…','r.price':'Preis','r.liq':'Kurven-Liquidität','
  'b.grad':'MÜNZE GRADUIEREN','e.amt':'Gültigen Betrag eingeben','e.net':'Netzwerk nicht erreichbar. Nichts wurde gesendet.',
  'e.funds':'Unzureichende verfügbare Mittel oder eine vorherige Transaktion wird noch bestätigt.','e.max':'Betrag derzeit zu groß für eine Transaktion — versuche einen kleineren Betrag.','e.busy':'Die Chain verarbeitet deinen vorherigen Trade. Versuche es in wenigen Sekunden erneut.','e.err':'Etwas ist schiefgelaufen. Nichts ging verloren. Versuche es erneut.','e.wallet':'Wallet gesperrt — entsperren…','e.notlive':'Testmodus: Die Launchpad-Regeln sind im Netzwerk noch nicht aktiv. Nichts wurde gesendet.',
  'e.notoken':'Du hältst keine Tokens dieser Münze auf diesem Gerät.','sent':'Gesendet. Die Chain bestätigt in Sekunden.'},
-zh:{loading:'正在读取链…','r.price':'价格','r.liq':'曲线流动性','r.sold':'已售代币','r.holders':'持有者',
+zh:{loading:'正在读取链…','m.add':'添加描述','m.write':'写入链上','m.done':'已写入。链上确认后显示。','m.err':'写入失败。未发送任何内容。','r.price':'价格','r.liq':'曲线流动性','r.sold':'已售代币','r.holders':'持有者',
  's.grad':'毕业 · 诚实',
  'g.note':'目标是活的：为最近约7天最大交易的20倍（绝不低于2,000 GBX）。鲸鱼抬价即抬高自己的门槛。永无固定金额。',
  'g.done':'已毕业——流动性已进入开放池。这段历史是曲线的一生。',
@@ -321,7 +331,7 @@ zh:{loading:'正在读取链…','r.price':'价格','r.liq':'曲线流动性','r
  'b.grad':'让币毕业','e.amt':'请输入有效金额','e.net':'网络不可用。未发送任何内容。',
  'e.funds':'可用资金不足，或上一笔交易仍在确认中。','e.max':'当前单笔交易金额过大——请尝试较小的金额。','e.busy':'链正在处理你上一笔交易。请几秒后重试。','e.err':'出现问题。没有任何损失。请重试。','e.wallet':'钱包已锁定——正在解锁…','e.notlive':'测试模式：启动板规则尚未在网络上激活。未发送任何内容。',
  'e.notoken':'此设备上没有该币的代币。','sent':'已发送。链将在数秒内确认。'},
-ar:{loading:'قراءة السلسلة…','r.price':'السعر','r.liq':'سيولة المنحنى','r.sold':'الرموز المباعة','r.holders':'الحائزون',
+ar:{loading:'قراءة السلسلة…','m.add':'أضف وصفًا','m.write':'اكتب على السلسلة','m.done':'كُتب. يظهر بعد تأكيد السلسلة.','m.err':'تعذّرت الكتابة. لم يُرسل شيء.','r.price':'السعر','r.liq':'سيولة المنحنى','r.sold':'الرموز المباعة','r.holders':'الحائزون',
  's.grad':'التخرج · بأمانة',
  'g.note':'الهدف حي: إنه 20× أكبر صفقة في آخر ~7 أيام (لا يقل أبداً عن 2,000 GBX). الحوت الذي يرفع السعر يرفع عتبته. لا مبلغ ثابت أبداً.',
  'g.done':'تخرجت — انتقلت السيولة إلى المجمع المفتوح. هذا التاريخ هو حياة المنحنى.',
@@ -400,6 +410,48 @@ function priceOf(reserveSat){ return C.spotPriceSat(BigInt(reserveSat)); }
 function render(){
   $('cTick').textContent='$'+(D.ticker||cid.slice(0,8).toUpperCase());
   $('cName').textContent=D.name||('coin '+cid.slice(0,16)+'…');
+  if(D.desc){ $('mDesc').textContent=D.desc; $('mDesc').style.display='block'; }
+  if(D.links){
+    const box=$('mLinks'); box.textContent='';
+    for(const t of D.links.split(/\s+/).filter(Boolean)){
+      const ok=/^(x\.com\/|t\.me\/|https:\/\/)/.test(t);
+      if(ok){ const a2=document.createElement('a'); a2.href=t.startsWith('https://')?t:'https://'+t;
+        a2.target='_blank'; a2.rel='noopener'; a2.textContent=t;
+        a2.style.cssText='color:var(--gold);margin-inline-end:12px;text-decoration:none'; box.appendChild(a2); }
+      else { const sp=document.createElement('span'); sp.textContent=t;
+        sp.style.cssText='color:var(--text-muted);margin-inline-end:12px'; box.appendChild(sp); }
+    }
+    box.style.display='block';
+  }
+  (async()=>{try{
+    const w=loadWallet();
+    if(w && !D.desc && !D.links && D.creator_pk){
+      const k=await window.GoldbrixCrypto.deriveKeypairFromMnemonic(w.mnemonic);
+      if(C.hex(new Uint8Array(k.publicKey))===D.creator_pk) $('mAdd').style.display='inline-block';
+    }
+  }catch(e){}})();
+  $('mAdd').onclick=()=>{ $('mAdd').style.display='none'; $('mForm').style.display='block'; };
+  $('mSend').onclick=async()=>{
+    try{
+      const d2=$('mDescIn').value.trim(), l2=$('mLinksIn').value.trim();
+      if(!d2 && !l2) return;
+      if(new TextEncoder().encode(d2).length>150 || new TextEncoder().encode(l2).length>64){ $('mMsg').textContent=tt('m.err'); return; }
+      $('mSend').disabled=true; $('mMsg').textContent='\u2026';
+      wallet=loadWallet(); if(!wallet){ toast(tt('e.wallet')); $('mSend').disabled=false; return; }
+      await ensureKeys();
+      const pkU=new Uint8Array(keys.publicKey);
+      const sign=d=>derSig(secp.sign(d,new Uint8Array(keys.privateKey)));
+      const raw=await window.GoldbrixCrypto.fetchUtxos(wallet.address, 0.001);
+      const utxos=raw.filter(u=>u.spendable!==false).map(u=>({txid:u.txid,vout:u.vout,value8:Math.round(u.amount*1e8)}));
+      const m2=F.buildMeta2Tx({cidHex:cid, desc:d2, links:l2, utxos, pkU,
+        buildFundTx, sign, p2wpkhSpkOf:()=>spkU});
+      const txid=await gwBroadcast(m2.txHex);
+      $('mForm').style.display='none';
+      if(d2){ $('mDesc').textContent=d2; $('mDesc').style.display='block'; }
+      $('mMsg').style.display='block';
+      $('mMsg').textContent=tt('m.done')+' \u00b7 '+txid.slice(0,16)+'\u2026';
+    }catch(e){ $('mMsg').textContent=tt('m.err'); $('mSend').disabled=false; console.warn('[meta2]',e); }
+  };
   $('cLogo').textContent=(D.ticker||'?').slice(0,1);
   try{const lg=localStorage.getItem('gbx_logo_'+cid);if(lg)$('cLogo').innerHTML='<img src="'+lg+'">';}catch(e){}
   const grad=D.status==='graduated';
