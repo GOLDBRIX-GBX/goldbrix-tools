@@ -237,6 +237,51 @@ async function _mpRefresh() {
   return spent;
 }
 
+// Peer bootstrap for new nodes. The chain layer inherits the on-chain discovery
+// of the federated layer: a node found through the GBX:NODE registry serves the
+// peers it already gossips over P2P, so a fresh install needs no DNS seed and no
+// fixed host. Public addresses only. Cached 60s - a new node asks once.
+let _peersCache = null;
+async function getPeers() {
+  if (_peersCache && Date.now() - _peersCache.ts < 60000) return _peersCache.data;
+  let raw = [];
+  try { raw = JSON.parse(await runCli(['getnodeaddresses', '0'])); } catch (e) { raw = []; }
+  const isPublic = (a) => {
+    if (!a) return false;
+    if (a.indexOf(':') !== -1) return true;
+    const q = a.split('.').map(Number);
+    if (q.length !== 4 || q.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) return false;
+    if (q[0] === 0 || q[0] === 10 || q[0] === 127) return false;
+    if (q[0] === 172 && q[1] >= 16 && q[1] <= 31) return false;
+    if (q[0] === 192 && q[1] === 168) return false;
+    if (q[0] === 169 && q[1] === 254) return false;
+    if (q[0] === 100 && q[1] >= 64 && q[1] <= 127) return false;
+    return true;
+  };
+  const seen = new Set(); const peers = [];
+  for (const x of raw) {
+    if (!x || !x.address || !x.port) continue;
+    if (x.network !== 'ipv4' && x.network !== 'ipv6') continue;
+    if (!isPublic(x.address)) continue;
+    const key = x.address + ':' + x.port;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    peers.push({
+      address: x.address,
+      port: x.port,
+      network: x.network,
+      services: x.services ?? null,
+      full: ((Number(x.services) || 0) & 1) === 1,
+      last_seen: x.time ?? null,
+    });
+    if (peers.length >= 200) break;
+  }
+  peers.sort((a, b) => (b.last_seen || 0) - (a.last_seen || 0));
+  const data = { count: peers.length, full_count: peers.filter((x) => x.full).length, peers };
+  _peersCache = { ts: Date.now(), data };
+  return data;
+}
+
 const SUMMARY_CACHE = new Map(); const SUMMARY_TTL = 30*1000;
 async function getAddressSummary(address) {
   const _sc = SUMMARY_CACHE.get(address);
@@ -573,6 +618,10 @@ const server = http.createServer(async (req, res) => {
         return res.end(JSON.stringify({updated_height: reg.scanned_height, nodes: reg.nodes}));
       } catch(e){ res.writeHead(200,{'Content-Type':'application/json'}); return res.end('{"updated_height":0,"nodes":{}}'); }
     }
+    if (req.method === 'GET' && url.pathname === '/api/peers') {
+      return sendJson(res, 200, await getPeers());
+    }
+
     if (req.method === 'GET' && url.pathname === '/api/status') {
       return sendJson(res, 200, await getStatus());
     }
