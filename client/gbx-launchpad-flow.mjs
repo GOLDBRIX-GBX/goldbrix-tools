@@ -8,7 +8,7 @@
 //   curve script  — the declared (M, h_M) script round-trips byte-identically
 import { curveFee, curveBuy, curveWitnessScript, parseCurveWitnessScript,
          tokenWitnessScript, intentPayload, parseIntentFromScriptHex,
-         metaPayload, parseMetaFromScriptHex, burnScript, p2wsh, hex, unhex }
+         metaPayload, parseMetaFromScriptHex, metaPayload2, parseMeta2FromScriptHex, burnScript, p2wsh, hex, unhex }
   from './gbx-curve.mjs';
 import { verifyPow, POWLIMIT_MAIN } from './gbx-pow.mjs';
 import { coinIdFromOutpoint, transferPayload } from './gbx-curve.mjs';
@@ -97,6 +97,24 @@ export function buildMetaTx({ cidHex, ticker, name, utxos, pkU,
   const back = parseMetaFromScriptHex(hex(spkMeta));
   if (back === null || back.cid !== cidHex || back.ticker !== ticker || back.name !== name)
     throw new Error('verifyOwnMeta: round-trip failed');
+  const { ins, sum } = selectUtxos(utxos, META_FEE_SAT + DUST_SAT);
+  const change = sum - META_FEE_SAT;
+  const outputs = [
+    { spk: p2wpkhSpkOf(pkU), value8: Number(change) },
+    { spk: spkMeta,          value8: 0 },
+  ];
+  const txBytes = buildFundTx({ utxos: ins, userPubkey: pkU, outputs, nLockTime: 0 }, sign);
+  return { txHex: hex(txBytes) };
+}
+
+// Coin description + links (GBX:M v2). Creator-only by index rule; signed on device.
+export function buildMeta2Tx({ cidHex, desc, links, utxos, pkU,
+                               buildFundTx, sign, p2wpkhSpkOf }){
+  const m = metaPayload2(unhex(cidHex), desc, links);
+  const spkMeta = opReturn(m.raw);
+  const back = parseMeta2FromScriptHex(hex(spkMeta));
+  if (back === null || hex(back.cid) !== cidHex || back.desc !== (desc||'') || back.links !== (links||''))
+    throw new Error('verifyOwnMeta2: round-trip failed');
   const { ins, sum } = selectUtxos(utxos, META_FEE_SAT + DUST_SAT);
   const change = sum - META_FEE_SAT;
   const outputs = [

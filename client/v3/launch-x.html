@@ -113,6 +113,12 @@ body[dir="rtl"]{direction:rtl;}
     <input class="inp" id="lTicker" maxlength="10" autocomplete="off" spellcheck="false"
       style="text-transform:uppercase;letter-spacing:.2em;">
     <div class="err" id="tickErr"></div>
+
+    <div class="lbl"><span data-x="f.desc">Description (optional)</span><span id="descCount">0/150</span></div>
+    <textarea class="inp" id="lDesc" maxlength="150" rows="2" autocomplete="off" spellcheck="false" style="resize:none;font-family:inherit"></textarea>
+    <div class="lbl"><span data-x="f.links">Links (optional)</span><span id="linkCount">0/64</span></div>
+    <input class="inp" id="lLinks" maxlength="64" autocomplete="off" spellcheck="false" placeholder="x.com/… t.me/… https://…">
+    <div class="hint" data-x="desc.hint">Written on the chain by your key. Forever.</div>
   </div>
 
   <!-- FIRST BUY -->
@@ -173,7 +179,7 @@ import { buildFundTx } from '/gbx-htlc.mjs';
 /* ── i18n (5 languages, inline, complete) ── */
 const L = (()=>{ try{ return localStorage.getItem('gbx_lang') || localStorage.getItem('goldbrix_lang') || 'en'; }catch(e){ return 'en'; } })();
 const T = {
-en:{hero:'A COIN IS BORN OF WORK',law:'no fee kept · everything burned · refunds are law',
+en:{hero:'A COIN IS BORN OF WORK',law:'no fee kept · everything burned · refunds are law', 'f.desc':'Description (optional)','f.links':'Links (optional)','desc.hint':'Written on the chain by your key. Forever.','e.desc':'Description or links too long for the chain',
  's.identity':'Coin identity','logo.tap':'tap to add a logo<br>(optional)',
  'logo.hint':'The logo stays on this device. Name and ticker live on the chain, forever.',
  'f.name':'Name','f.ticker':'Ticker','s.buy':'Your first buy',
@@ -194,7 +200,7 @@ en:{hero:'A COIN IS BORN OF WORK',law:'no fee kept · everything burned · refun
  'e.stale':'The chain moved on — forging again with a fresh block…',
 'e.logo':'Could not read that image. Try another one.',
  'mining':'FORGING…','stopped':'Stopped. Nothing was sent.'},
-ro:{hero:'O MONEDĂ SE NAȘTE DIN MUNCĂ',law:'zero comision păstrat · totul ars · refundul e lege',
+ro:{hero:'O MONEDĂ SE NAȘTE DIN MUNCĂ',law:'zero comision păstrat · totul ars · refundul e lege', 'f.desc':'Descriere (opțional)','f.links':'Linkuri (opțional)','desc.hint':'Scrisă pe lanț cu cheia ta. Pentru totdeauna.','e.desc':'Descrierea sau linkurile sunt prea lungi pentru lanț',
  's.identity':'Identitatea monedei','logo.tap':'atinge pentru logo<br>(opțional)',
  'logo.hint':'Logo-ul rămâne pe acest dispozitiv. Numele și tickerul trăiesc pe lanț, pentru totdeauna.',
  'f.name':'Nume','f.ticker':'Ticker','s.buy':'Prima ta cumpărare',
@@ -215,7 +221,7 @@ ro:{hero:'O MONEDĂ SE NAȘTE DIN MUNCĂ',law:'zero comision păstrat · totul a
  'e.stale':'Lanțul a avansat — forjăm din nou cu un bloc proaspăt…',
 'e.logo':'Imaginea nu a putut fi citită. Încearcă alta.',
  'mining':'FORJEZ…','stopped':'Oprit. Nu s-a trimis nimic.'},
-de:{hero:'EINE MÜNZE WIRD AUS ARBEIT GEBOREN',law:'keine Gebühr behalten · alles verbrannt · Erstattung ist Gesetz',
+de:{hero:'EINE MÜNZE WIRD AUS ARBEIT GEBOREN',law:'keine Gebühr behalten · alles verbrannt · Erstattung ist Gesetz', 'f.desc':'Beschreibung (optional)','f.links':'Links (optional)','desc.hint':'Mit deinem Schlüssel auf der Chain geschrieben. Für immer.','e.desc':'Beschreibung oder Links zu lang für die Chain',
  's.identity':'Identität der Münze','logo.tap':'tippen für ein Logo<br>(optional)',
  'logo.hint':'Das Logo bleibt auf diesem Gerät. Name und Ticker leben für immer auf der Chain.',
  'f.name':'Name','f.ticker':'Ticker','s.buy':'Dein erster Kauf',
@@ -236,7 +242,7 @@ de:{hero:'EINE MÜNZE WIRD AUS ARBEIT GEBOREN',law:'keine Gebühr behalten · al
  'e.stale':'Die Chain ist weitergezogen — wir schmieden mit einem frischen Block neu…',
 'e.logo':'Bild konnte nicht gelesen werden. Versuche ein anderes.',
  'mining':'SCHMIEDE…','stopped':'Gestoppt. Nichts wurde gesendet.'},
-zh:{hero:'币生于工作',law:'不留手续费 · 全部销毁 · 退款是法则',
+zh:{hero:'币生于工作',law:'不留手续费 · 全部销毁 · 退款是法则', 'f.desc':'描述（可选）','f.links':'链接（可选）','desc.hint':'由你的密钥写入链上，永久保存。','e.desc':'描述或链接过长，无法写入链上',
  's.identity':'币的身份','logo.tap':'点击添加标志<br>（可选）',
  'logo.hint':'标志保存在本设备上。名称和代码将永远留在链上。',
  'f.name':'名称','f.ticker':'代码','s.buy':'你的首次买入',
@@ -257,7 +263,7 @@ zh:{hero:'币生于工作',law:'不留手续费 · 全部销毁 · 退款是法�
  'e.stale':'链已前进——正在用新区块重新锻造…',
 'e.logo':'无法读取该图片。请换一张。',
  'mining':'锻造中…','stopped':'已停止。未发送任何内容。'},
-ar:{hero:'العملة تولد من العمل',law:'لا عمولة محتفظ بها · كل شيء يُحرق · الاسترداد قانون',
+ar:{hero:'العملة تولد من العمل',law:'لا عمولة محتفظ بها · كل شيء يُحرق · الاسترداد قانون', 'f.desc':'الوصف (اختياري)','f.links':'روابط (اختيارية)','desc.hint':'تُكتب على السلسلة بمفتاحك. إلى الأبد.','e.desc':'الوصف أو الروابط أطول من حد السلسلة',
  's.identity':'هوية العملة','logo.tap':'اضغط لإضافة شعار<br>(اختياري)',
  'logo.hint':'يبقى الشعار على هذا الجهاز. الاسم والرمز يعيشان على السلسلة إلى الأبد.',
  'f.name':'الاسم','f.ticker':'الرمز','s.buy':'شراؤك الأول',
@@ -405,6 +411,8 @@ function refreshPreview(){
   $('btnGo').disabled = (ok===false) || mining;
 }
 for (const id of ['lName','lTicker','devBuyGbx']) $(id).addEventListener('input',refreshPreview);
+for (const [i,c,mx] of [['lDesc','descCount',150],['lLinks','linkCount',64]])
+  $(i).addEventListener('input',()=>{ $(c).textContent=new TextEncoder().encode($(i).value).length+'/'+mx; });
 
 /* ── kiln UI ── */
 const NBRICKS=18;
@@ -454,6 +462,8 @@ async function forge(){
   if (mining) return;
   const name=$('lName').value.trim();
   const ticker=$('lTicker').value;
+    const desc2=$('lDesc').value.trim(), links2=$('lLinks').value.trim();
+    if (new TextEncoder().encode(desc2).length>150 || new TextEncoder().encode(links2).length>64){ toast(tt('e.desc')); return; }
   const sat=gbxToSat($('devBuyGbx').value);
   wallet=loadWallet();
   if (wallet===null){ toast(tt('e.wallet'));
@@ -512,6 +522,15 @@ async function forge(){
       buildFundTx, sign, p2wpkhSpkOf:()=>spkU});
     const metaTxid=await gwBroadcast(m.txHex);
     setStep('stMeta','ok');
+
+    if (desc2 || links2){
+      try{
+        const utxos3=[{txid: metaTxid, vout:0, value8:Number(change)-Number(F.META_FEE_SAT)}];
+        const m2=F.buildMeta2Tx({cidHex:plan.cidHex, desc:desc2, links:links2, utxos:utxos3, pkU,
+          buildFundTx, sign, p2wpkhSpkOf:()=>spkU});
+        await gwBroadcast(m2.txHex);
+      }catch(e){ console.warn('[meta2]', e); }
+    }
 
     // honest local memory: logo lives on this device, keyed by the coin id
     try{ if(logoData) localStorage.setItem('gbx_logo_'+plan.cidHex, logoData); }catch(e){}
