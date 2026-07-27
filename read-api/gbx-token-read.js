@@ -21,14 +21,16 @@ function openTokenIndex(dbPath){
                              WHERE coin_id=? AND spent_height IS NULL`),
     // curves live from the chain (launchpad scanner tables)
     curves: db.prepare(`SELECT c.coin_id, c.txid, c.vout, c.reserve, c.m, c.h_m, c.height, c.status,
-                               m.ticker, m.name,
+                               m.ticker, m.name, m2.desc descr, m2.links,
                                (SELECT COUNT(DISTINCT pk) FROM token_utxos t
                                  WHERE t.coin_id=c.coin_id AND t.spent_height IS NULL) holders
                         FROM curves c LEFT JOIN coin_meta m ON m.coin_id=c.coin_id
+                                       LEFT JOIN coin_meta2 m2 ON m2.coin_id=c.coin_id
                         ORDER BY c.height DESC`),
     curveOne: db.prepare(`SELECT c.coin_id, c.txid, c.vout, c.reserve, c.m, c.h_m, c.height, c.status,
-                                 m.ticker, m.name
+                                 m.ticker, m.name, m2.desc descr, m2.links
                           FROM curves c LEFT JOIN coin_meta m ON m.coin_id=c.coin_id
+                                        LEFT JOIN coin_meta2 m2 ON m2.coin_id=c.coin_id
                           WHERE c.coin_id=?`),
     // my-coins: what a pubkey holds / created — straight from the chain
     heldBy: db.prepare(`SELECT t.coin_id, SUM(CAST(t.amount AS INTEGER)) amount, COUNT(*) utxos,
@@ -67,6 +69,7 @@ function openTokenIndex(dbPath){
     const bar = mLive ? (M*N > R_MIN ? M*N : R_MIN) : R_MIN;
     const soldTok = V_TOKENS - (KCURVE/(V_GBX+R));
     return { coin_id:r.coin_id, ticker:r.ticker||null, name:r.name||null, status:r.status,
+             desc:r.descr||null, links:r.links||null,
              curve_txid:r.txid, curve_vout:r.vout, height:r.height,
              reserve_sat:R.toString(), m_sat:M.toString(), h_m:r.h_m, m_live:mLive,
              bar_sat:bar.toString(),

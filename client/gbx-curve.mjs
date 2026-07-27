@@ -215,6 +215,9 @@ export function intentPayload(op, cid, amount, tokensOut, pk){
 export const META_VER = 1;
 export const META_TICKER_MAX = 10;
 export const META_NAME_MAX = 50;
+export const META2_VER = 2;
+export const META2_DESC_MAX = 150;
+export const META2_LINKS_MAX = 64;
 // -- transfer declaration: 'GBX:T:'+ver(1)+cid(32)+amount(8 BE)+pk_recipient(33).
 // A token output is a P2WSH commitment that cannot be reversed, so a plain
 // transfer is invisible to any index: the sender's holding drops and nobody's
@@ -247,6 +250,42 @@ export function metaPayload(cid, ticker, name){
   const script = cat(Uint8Array.of(OP.RETURN), push(raw));
   return { raw, script };
 }
+// ── coin description + links on chain: 'GBX:M:'+ver=2+cid(32)+dLen(1)+desc+
+// lLen(1)+links. Valid ONLY if signed by the creator pk. First on chain wins.
+export function metaPayload2(cid, desc, links){
+  const d = new TextEncoder().encode(desc||'');
+  const l = new TextEncoder().encode(links||'');
+  if (cid.length !== 32) throw new Error('cid must be 32 bytes');
+  if (d.length > META2_DESC_MAX) throw new Error('desc 0-150 bytes');
+  if (l.length > META2_LINKS_MAX) throw new Error('links 0-64 bytes');
+  if (d.length + l.length === 0) throw new Error('desc or links required');
+  const tag = new TextEncoder().encode('GBX:M:');
+  const raw = cat(tag, Uint8Array.of(META2_VER), cid, Uint8Array.of(d.length), d, Uint8Array.of(l.length), l);
+  const script = cat(Uint8Array.of(OP.RETURN), push(raw));
+  return { raw, script };
+}
+export function parseMeta2FromScriptHex(spkHex){
+  const b = unhex(spkHex);
+  if (b.length < 2 || b[0] !== OP.RETURN) return null;
+  let d;
+  if (b[1] <= 75) d = b.subarray(2);
+  else if (b[1] === 0x4c) d = b.subarray(3);
+  else return null;
+  const tag = new TextEncoder().encode('GBX:M:');
+  if (d.length < 41) return null;
+  for (let i = 0; i < 6; i++) if (d[i] !== tag[i]) return null;
+  if (d[6] !== META2_VER) return null;
+  const cid = d.subarray(7, 39);
+  const dLen = d[39];
+  if (dLen > META2_DESC_MAX || d.length < 41 + dLen) return null;
+  const desc = new TextDecoder().decode(d.subarray(40, 40 + dLen));
+  const lLen = d[40 + dLen];
+  if (lLen > META2_LINKS_MAX || d.length !== 41 + dLen + lLen) return null;
+  if (dLen + lLen === 0) return null;
+  const links = new TextDecoder().decode(d.subarray(41 + dLen));
+  return { cid, desc, links };
+}
+
 // Self-verify mirror: parse an OP_RETURN spk exactly like the indexer. null = not meta.
 export function parseMetaFromScriptHex(spkHex){
   const b = unhex(spkHex);

@@ -121,6 +121,28 @@ function parseMeta(tx){
   }
   return null;
 }
+// ── coin description + links: 'GBX:M:'+ver=2+cid(32)+dLen(1)+desc+lLen(1)+links.
+// Valid ONLY if the tx is signed by the creator pk. First on chain wins.
+function parseMeta2(tx){
+  for (const o of tx.vout){
+    const hex = (o.scriptPubKey && o.scriptPubKey.hex) || '';
+    if (!hex.startsWith('6a')) continue;
+    let data;
+    try { [data] = readPush(Buffer.from(hex,'hex'), 1); } catch { continue; }
+    if (!data.subarray(0,6).equals(Buffer.from('GBX:M:'))) continue;
+    if (data.length < 41 || data[6] !== 0x02) continue;
+    const cid = data.subarray(7,39);
+    const dLen = data[39];
+    if (dLen > 150 || data.length < 41+dLen) continue;
+    const desc = data.subarray(40, 40+dLen).toString('utf8');
+    const lLen = data[40+dLen];
+    if (lLen > 64 || data.length !== 41+dLen+lLen) continue;
+    if (dLen + lLen === 0) continue;
+    const links = data.subarray(41+dLen).toString('utf8');
+    return { cid: cid.toString('hex'), desc, links };
+  }
+  return null;
+}
 function witnessPks(tx){
   const out = new Set();
   for (const vin of (tx.vin||[])){
@@ -264,6 +286,9 @@ CREATE INDEX IF NOT EXISTS tu_live ON token_utxos(coin_id, pk) WHERE spent_heigh
 CREATE TABLE IF NOT EXISTS coin_meta(
   coin_id TEXT PRIMARY KEY, ticker TEXT NOT NULL, name TEXT NOT NULL,
   txid TEXT NOT NULL, height INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS coin_meta2(
+  coin_id TEXT PRIMARY KEY, desc TEXT NOT NULL DEFAULT '',
+  links TEXT NOT NULL DEFAULT '', txid TEXT NOT NULL, height INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS curves(
   coin_id TEXT PRIMARY KEY, creator_pk TEXT NOT NULL DEFAULT '',
   txid TEXT NOT NULL, vout INTEGER NOT NULL,
@@ -312,6 +337,9 @@ const q = {
   mTicker:  db.prepare('SELECT coin_id FROM coin_meta WHERE ticker=?'),
   mPut:     db.prepare('INSERT OR IGNORE INTO coin_meta(coin_id,ticker,name,txid,height) VALUES(?,?,?,?,?)'),
   mRb:      db.prepare('DELETE FROM coin_meta WHERE height>?'),
+  m2Get:    db.prepare('SELECT desc,links FROM coin_meta2 WHERE coin_id=?'),
+  m2Put:    db.prepare('INSERT OR IGNORE INTO coin_meta2(coin_id,desc,links,txid,height) VALUES(?,?,?,?,?)'),
+  m2Rb:     db.prepare('DELETE FROM coin_meta2 WHERE height>?'),
   cPk:      db.prepare('SELECT creator_pk FROM curves WHERE coin_id=?'),
   cSetPk:   db.prepare('UPDATE curves SET creator_pk=? WHERE coin_id=?'),
   cPut:     db.prepare(`INSERT INTO curves(coin_id,txid,vout,reserve,m,h_m,height,status)
@@ -355,6 +383,7 @@ const rollbackTo = db.transaction(h => {
   q.rbNew.run(h); q.rbSpent.run(h); q.rbBlk.run(h);
   q.cRb.run(h);
   q.mRb.run(h);
+  q.m2Rb.run(h);
   q.opRb.run(h);
   q.pRb.run(h);
   for (const {coin_id} of q.pAllIds.all()){
@@ -449,6 +478,13 @@ const applyBlock = db.transaction((h, blk) => {
       if (row && row.creator_pk && witnessPks(tx).has(row.creator_pk)
           && !q.mGet.get(meta.cid) && !q.mTicker.get(meta.ticker))
         q.mPut.run(meta.cid, meta.ticker, meta.name, tx.txid, h);
+    }
+    const meta2 = parseMeta2(tx);
+    if (meta2){
+      const row2 = q.cPk.get(meta2.cid);
+      if (row2 && row2.creator_pk && witnessPks(tx).has(row2.creator_pk)
+          && !q.m2Get.get(meta2.cid))
+        q.m2Put.run(meta2.cid, meta2.desc, meta2.links, tx.txid, h);
     }
     // A declared transfer credits the recipient only when the output proves it.
     if (!it){
