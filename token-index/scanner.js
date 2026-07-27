@@ -76,6 +76,28 @@ function parseIntent(tx){
   }
   return null;
 }
+// -- transfer declaration: 'GBX:T:'+ver(1)+cid(32)+amount(8 BE)+pk_recipient(33).
+// A token output is a P2WSH commitment that cannot be reversed, so a plain
+// transfer is invisible here: the sender's holding is spent and nobody's rises.
+// The declaration names the movement. It is NOT trusted: the token script is
+// rebuilt from (cid, amount, recipient) and must match a real output of the
+// same transaction. A false declaration therefore mints nothing.
+function parseTransfer(tx){
+  for (const o of tx.vout){
+    const hex = (o.scriptPubKey && o.scriptPubKey.hex) || '';
+    if (!hex.startsWith('6a')) continue;
+    let data;
+    try { [data] = readPush(Buffer.from(hex,'hex'), 1); } catch { continue; }
+    if (data.length !== 80) continue;
+    if (!data.subarray(0,6).equals(Buffer.from('GBX:T:'))) continue;
+    if (data[6] !== 1) continue;
+    const amount = data.readBigUInt64BE(39);
+    if (amount <= 0n) continue;
+    return { cid: data.subarray(7,39), amount, pk: data.subarray(47,80) };
+  }
+  return null;
+}
+
 // ── coin metadata (name/ticker) from the chain alone: 'GBX:M:'+ver(1)+cid(32)+
 // tLen(1)+ticker+nLen(1)+name. Valid ONLY if the tx is signed by the creator pk
 // from the CREATE intent (P2WPKH witness reveals it). First on chain wins.
@@ -276,6 +298,9 @@ const q = {
   pruneBlk: db.prepare('DELETE FROM blocks WHERE height < ?'),
   spend:    db.prepare('UPDATE token_utxos SET spent_height=? WHERE txid=? AND vout=? AND spent_height IS NULL'),
   insert:   db.prepare('INSERT OR IGNORE INTO token_utxos(txid,vout,coin_id,pk,amount,height) VALUES(?,?,?,?,?,?)'),
+  // Spend is recorded before a transfer is read, so the holding being moved is
+  // already marked spent: the lookup must not filter on that.
+  tuGet:    db.prepare('SELECT coin_id, amount FROM token_utxos WHERE txid=? AND vout=?'),
   rbNew:    db.prepare('DELETE FROM token_utxos WHERE height > ?'),
   rbSpent:  db.prepare('UPDATE token_utxos SET spent_height=NULL WHERE spent_height > ?'),
   rbBlk:    db.prepare('DELETE FROM blocks WHERE height > ?'),
@@ -424,6 +449,29 @@ const applyBlock = db.transaction((h, blk) => {
       if (row && row.creator_pk && witnessPks(tx).has(row.creator_pk)
           && !q.mGet.get(meta.cid) && !q.mTicker.get(meta.ticker))
         q.mPut.run(meta.cid, meta.ticker, meta.name, tx.txid, h);
+    }
+    // A declared transfer credits the recipient only when the output proves it.
+    if (!it){
+      const tr = parseTransfer(tx);
+      if (tr && !(LAUNCH_H > 0 && h < LAUNCH_H)){
+        const credit = (pkHex, amt) => {
+          const spk = p2wsh(tokenWS(tr.cid, amt, Buffer.from(pkHex,'hex')));
+          for (const o of tx.vout)
+            if (o.scriptPubKey.hex === spk)
+              q.insert.run(tx.txid, o.n, tr.cid.toString('hex'), pkHex, amt.toString(), h);
+        };
+        credit(tr.pk.toString('hex'), tr.amount);
+        // What the sender keeps is part of the same move. The spent holdings are
+        // known, so the remainder is arithmetic, not a claim -- and it still has
+        // to match an output before it counts.
+        let spentIn = 0n;
+        for (const vin of (tx.vin || [])){
+          const prev = q.tuGet.get(vin.txid, vin.vout);
+          if (prev && prev.coin_id === tr.cid.toString('hex')) spentIn += BigInt(prev.amount);
+        }
+        const back = spentIn - tr.amount;
+        if (back > 0n) for (const pkHex of witnessPks(tx)) credit(pkHex, back);
+      }
     }
     if (!it || !'CBPSRQ'.includes(it.op) || it.tokensOut <= 0n) continue;  // C,B,P mint; S,R,Q return change  // C,B,P mint tokens; S,R return change — every one of them creates a token UTXO
     if (LAUNCH_H > 0 && h < LAUNCH_H) continue; // pre-activation X ops are NOT consensus-guarded -> never minted

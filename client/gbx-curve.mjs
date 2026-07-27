@@ -215,6 +215,26 @@ export function intentPayload(op, cid, amount, tokensOut, pk){
 export const META_VER = 1;
 export const META_TICKER_MAX = 10;
 export const META_NAME_MAX = 50;
+// -- transfer declaration: 'GBX:T:'+ver(1)+cid(32)+amount(8 BE)+pk_recipient(33).
+// A token output is a P2WSH commitment that cannot be reversed, so a plain
+// transfer is invisible to any index: the sender's holding drops and nobody's
+// rises. This declaration makes the movement readable. It is NOT consensus --
+// the tag is not the curve tag, so a node ignores it entirely. An index MUST
+// verify it against a real output before believing it: rebuild the token
+// script from (cid, amount, recipient) and require a matching scriptPubKey.
+// A false declaration therefore produces nothing.
+export const TRANSFER_VER = 1;
+export function transferPayload(cid, amount, pkTo){
+  if (cid.length !== 32) throw new Error('cid must be 32 bytes');
+  if (pkTo.length !== 33) throw new Error('recipient key must be 33 bytes');
+  if (amount <= 0n) throw new Error('amount must be positive');
+  const tag = new TextEncoder().encode('GBX:T:');
+  const raw = cat(tag, Uint8Array.of(TRANSFER_VER), cid, be8(amount), pkTo);
+  if (raw.length !== 80) throw new Error('payload size');
+  const script = cat(Uint8Array.of(OP.RETURN), push(raw));
+  return { raw, script };
+}
+
 export function metaPayload(cid, ticker, name){
   const t = new TextEncoder().encode(ticker);
   const n = new TextEncoder().encode(name);

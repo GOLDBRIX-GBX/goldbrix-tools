@@ -11,7 +11,7 @@ import { curveFee, curveBuy, curveWitnessScript, parseCurveWitnessScript,
          metaPayload, parseMetaFromScriptHex, burnScript, p2wsh, hex, unhex }
   from './gbx-curve.mjs';
 import { verifyPow, POWLIMIT_MAIN } from './gbx-pow.mjs';
-import { coinIdFromOutpoint } from './gbx-curve.mjs';
+import { coinIdFromOutpoint, transferPayload } from './gbx-curve.mjs';
 
 export const DUST_SAT = 546n;
 export const CREATE_FEE_SAT = 50000n;   // flat, generous network fee for the create tx
@@ -177,6 +177,33 @@ export async function buildSellTx({ curve, holding, tokensInSat, utxos, pkU, K,
            tokenWsHex: hex(tokenWitnessScript(curve.cid, BigInt(holding.amount), pkU)),
            inputs: [{txid: curve.txid, vout: curve.vout, value8: Number(curve.reserve)},
                     {txid: holding.txid, vout: holding.vout, value8: Number(DUST_SAT)}, ...ins],
+           outs };
+}
+
+// TRANSFER: a token holding moves like the coin it is — one signature, no intent.
+// Consensus treats this as an ordinary spend; the client must keep the arithmetic
+// honest itself: tokens out never exceed tokens in.
+export async function buildTokenSendTx({ cid, holding, tokensToSend, toPubkey, utxos, pkU, p2wpkhSpkOf }){
+  const have = BigInt(holding.amount), send = BigInt(tokensToSend);
+  if (send <= 0n) throw new Error('amount must be positive');
+  if (send > have) throw new Error('not enough tokens');
+  const rest = have - send;
+  const { ins, sum } = selectUtxos(utxos, TRADE_FEE_SAT + DUST_SAT + (rest > 0n ? DUST_SAT : 0n));
+  const need = TRADE_FEE_SAT + DUST_SAT + (rest > 0n ? DUST_SAT : 0n);
+  const change = sum + DUST_SAT - need;
+  const outs = [];
+  outs.push({ spk: await p2wsh(tokenWitnessScript(cid, send, toPubkey)), value8: Number(DUST_SAT) });
+  if (rest > 0n)
+    outs.push({ spk: await p2wsh(tokenWitnessScript(cid, rest, pkU)), value8: Number(DUST_SAT) });
+  if (change > DUST_SAT) outs.push({ spk: p2wpkhSpkOf(pkU), value8: Number(change) });
+  // The move is legal without this, but unreadable: a token output commits to a
+  // script hash nobody can reverse, so an index sees the sender lose and no one
+  // gain. The declaration names (coin, amount, recipient) and is checked against
+  // the outputs above before any index believes it.
+  outs.push({ spk: transferPayload(cid, send, toPubkey).script, value8: 0 });
+  return { sent: send, rest,
+           tokenWsHex: hex(tokenWitnessScript(cid, have, pkU)),
+           inputs: [{txid: holding.txid, vout: holding.vout, value8: Number(DUST_SAT)}, ...ins],
            outs };
 }
 
