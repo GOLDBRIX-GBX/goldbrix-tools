@@ -3,21 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1c1610">
 <title>GoldBrix · Launch</title>
-<link rel="icon" href="/favicon.ico">
+<link rel="icon" href="/assets/coin/gbx-coin-32.png">
+<link rel="stylesheet" href="/v3/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script type="module" src="/crypto-utils-v2.js?v=119"></script>
 <script src="/gbx-update-check.js" defer></script>
 <script src="/gbx-native-bridge.js" defer></script>
 <script src="/i18n.js?v=114" defer></script>
 <script src="/v3/nav-i18n.js?v=115" defer></script>
 <style>
-:root{
-  --bg:#1c1610; --card:#2a2218; --card2:#241d13; --line:#3a3025;
-  --gold:#F5CC75; --gold-soft:#FFE099; --ink:#eee; --dim:#FFFDF7;
-  --green:#4EE08C; --red:#FF7A6B; --ember:#e8843a;
-}
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-body{margin:0;background:var(--bg);color:var(--ink);
+body{margin:0;background:var(--bg-primary);color:var(--text-primary);
   font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-size:14px;
   padding-bottom:86px;}
 body[dir="rtl"]{direction:rtl;}
@@ -25,56 +23,56 @@ body[dir="rtl"]{direction:rtl;}
 .hero{padding:22px 4px 16px;text-align:center;}
 .hero .brick{display:inline-block;font-size:26px;letter-spacing:.02em;
   color:var(--gold);font-weight:800;}
-.hero .law{margin-top:6px;color:var(--dim);font-size:12px;letter-spacing:.12em;}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+.hero .law{margin-top:6px;color:var(--text-muted);font-size:12px;letter-spacing:.12em;}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;
   padding:16px;margin-bottom:14px;}
 .sect{color:var(--gold);font-weight:800;font-size:12px;letter-spacing:.14em;
   text-transform:uppercase;margin:0 0 10px;}
-.lbl{display:flex;justify-content:space-between;color:var(--gold-soft);
+.lbl{display:flex;justify-content:space-between;color:var(--gold-bright);
   font-size:12px;margin:10px 0 5px;}
-.inp{width:100%;background:var(--card2);border:1px solid var(--line);
-  border-radius:9px;color:var(--ink);padding:11px 12px;font:inherit;outline:none;}
+.inp{width:100%;background:var(--bg-input);border:1px solid var(--border);
+  border-radius:9px;color:var(--text-primary);padding:11px 12px;font:inherit;outline:none;}
 .inp:focus{border-color:var(--gold);}
-.hint{color:var(--dim);font-size:11px;margin-top:5px;line-height:1.5;}
+.hint{color:var(--text-muted);font-size:11px;margin-top:5px;line-height:1.5;}
 .err{color:var(--red);font-size:11px;min-height:14px;margin-top:4px;}
 .row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;}
-.row .k{color:var(--gold-soft);}
-.row .v{color:var(--ink);font-weight:700;}
+.row .k{color:var(--gold-bright);}
+.row .v{color:var(--text-primary);font-weight:700;}
 .row .v.gold{color:var(--gold);}
 .row .v.green{color:var(--green);}
-.logoBox{width:84px;height:84px;border-radius:50%;background:var(--card2);
-  border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;
-  margin:0 auto 8px;cursor:pointer;overflow:hidden;color:var(--dim);font-size:11px;
+.logoBox{width:84px;height:84px;border-radius:50%;background:var(--bg-input);
+  border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;
+  margin:0 auto 8px;cursor:pointer;overflow:hidden;color:var(--text-muted);font-size:11px;
   text-align:center;line-height:1.4;}
 .logoBox img{width:100%;height:100%;object-fit:cover;}
 /* ── THE KILN — the signature: work made visible ── */
 .kiln{display:none;background:linear-gradient(180deg,#241a0e 0%,#2a2218 100%);
   border:1px solid #4a3520;border-radius:14px;padding:18px 16px;margin-bottom:14px;}
 .kiln.on{display:block;}
-.kiln .title{color:var(--ember);font-weight:800;letter-spacing:.14em;font-size:12px;
+.kiln .title{color:var(--orange);font-weight:800;letter-spacing:.14em;font-size:12px;
   text-transform:uppercase;}
 .bricks{display:flex;gap:4px;margin:14px 0 10px;height:16px;}
 .bricks span{flex:1;background:#3a2c1a;border-radius:3px;transition:background .3s;}
-.bricks span.hot{background:var(--ember);box-shadow:0 0 8px rgba(232,132,58,.6);
+.bricks span.hot{background:var(--orange);box-shadow:0 0 8px rgba(232,132,58,.6);
   animation:glow 1.2s ease-in-out infinite alternate;}
 @keyframes glow{from{filter:brightness(.85);}to{filter:brightness(1.25);}}
-.kstats{display:flex;justify-content:space-between;color:var(--gold-soft);font-size:12px;}
-.kstats b{color:var(--ink);}
-.knote{color:var(--dim);font-size:11px;margin-top:8px;line-height:1.5;}
+.kstats{display:flex;justify-content:space-between;color:var(--gold-bright);font-size:12px;}
+.kstats b{color:var(--text-primary);}
+.knote{color:var(--text-muted);font-size:11px;margin-top:8px;line-height:1.5;}
 .steps{margin-top:10px;}
-.step{display:flex;gap:8px;align-items:center;padding:4px 0;font-size:12px;color:var(--dim);}
+.step{display:flex;gap:8px;align-items:center;padding:4px 0;font-size:12px;color:var(--text-muted);}
 .step.ok{color:var(--green);}
-.step.run{color:var(--gold-soft);}
-.step .dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+.step.run{color:var(--gold-bright);}
+.step .dot{width:7px;height:7px;border-radius:50%;background:var(--border);}
 .step.ok .dot{background:var(--green);}
 .step.run .dot{background:var(--gold);animation:glow 1s infinite alternate;}
 .btn{width:100%;border:0;border-radius:12px;padding:15px;font:inherit;font-weight:800;
   letter-spacing:.08em;cursor:pointer;background:linear-gradient(90deg,#F5CC75,#d9a53f);
   color:#241d13;}
 .btn:disabled{opacity:.45;cursor:default;}
-.btn.stop{background:var(--card2);color:var(--red);border:1px solid var(--red);}
+.btn.stop{background:var(--bg-input);color:var(--red);border:1px solid var(--red);}
 .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);
-  background:#111;color:var(--gold-soft);border:1px solid var(--line);
+  background:#111;color:var(--gold-bright);border:1px solid var(--border);
   border-radius:10px;padding:10px 16px;font-size:13px;opacity:0;pointer-events:none;
   transition:opacity .25s;max-width:90%;z-index:300;}
 .toast.show{opacity:1;}
@@ -82,10 +80,10 @@ body[dir="rtl"]{direction:rtl;}
 .done.on{display:block;}
 .done .big{font-size:40px;}
 .done .name{color:var(--gold);font-weight:800;font-size:18px;margin:6px 0 2px;}
-.done .tick{color:var(--gold-soft);font-size:14px;}
-.txid{word-break:break-all;color:var(--dim);font-size:11px;margin:10px 0;
+.done .tick{color:var(--gold-bright);font-size:14px;}
+.txid{word-break:break-all;color:var(--text-muted);font-size:11px;margin:10px 0;
   user-select:text;-webkit-user-select:text;}
-.footer{color:var(--dim);font-size:11px;text-align:center;letter-spacing:.1em;
+.footer{color:var(--text-muted);font-size:11px;text-align:center;letter-spacing:.1em;
   line-height:1.7;margin:16px 0;}
 @media (prefers-reduced-motion: reduce){
   .bricks span.hot,.step.run .dot{animation:none;}
