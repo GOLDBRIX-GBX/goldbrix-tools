@@ -5,37 +5,38 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#1c1610">
 <title>Leaderboard · GoldBrix</title>
-<link rel="icon" href="/favicon.ico">
+<link rel="icon" href="/assets/coin/gbx-coin-32.png">
+<link rel="stylesheet" href="/v3/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#1c1610;--card:#2a2218;--card2:#241d13;--line:#3a3025;--gold:#FFD98A;--ink:#FFFDF7;--green:#57FF9E;--red:#FF6B5C;}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{margin:0;background:var(--bg)}
-body{color:var(--ink);font-family:'Courier New',ui-monospace,monospace;padding:14px 12px 90px;}
-.sect{color:#FFFDF7;font-weight:800;font-size:13px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 10px;}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px;}
+html,body{margin:0;background:var(--bg-primary)}
+body{color:var(--text-primary);font-family:'JetBrains Mono',ui-monospace,monospace;padding:14px 12px 90px;}
+.sect{color:var(--text-muted);font-weight:800;font-size:13px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 10px;}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px;}
 .tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
-.tab{background:var(--card2);border:1px solid var(--line);border-radius:10px;color:#FFFDF7;padding:10px 4px;font-size:.72rem;font-weight:700;letter-spacing:.06em;cursor:pointer;font-family:inherit;touch-action:manipulation;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tab{background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text-muted);padding:10px 4px;font-size:.72rem;font-weight:700;letter-spacing:.06em;cursor:pointer;font-family:inherit;touch-action:manipulation;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tab.active{border-color:var(--gold);color:var(--gold)}
 .per{display:flex;gap:6px;margin-bottom:12px}
-.pbtn{flex:1;background:var(--card2);border:1px solid var(--line);border-radius:8px;color:#FFFDF7;padding:8px 0;font-size:.7rem;font-weight:700;letter-spacing:.08em;cursor:pointer;font-family:inherit;touch-action:manipulation}
+.pbtn{flex:1;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-muted);padding:8px 0;font-size:.7rem;font-weight:700;letter-spacing:.08em;cursor:pointer;font-family:inherit;touch-action:manipulation}
 .pbtn.active{border-color:var(--gold);color:var(--gold)}
-.row{display:flex;align-items:center;gap:10px;padding:11px 10px;background:var(--card2);border:1px solid var(--line);border-radius:12px;margin-bottom:8px;text-decoration:none;color:var(--ink)}
-.row.r1{background:linear-gradient(135deg,rgba(255,217,138,.14) 0%,var(--card2) 60%);border-color:rgba(255,217,138,.55)}
-.row.r2{background:linear-gradient(135deg,rgba(220,220,220,.10) 0%,var(--card2) 60%);border-color:rgba(220,220,220,.45)}
-.row.r3{background:linear-gradient(135deg,rgba(215,150,80,.12) 0%,var(--card2) 60%);border-color:rgba(215,150,80,.5)}
+.row{display:flex;align-items:center;gap:10px;padding:11px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;text-decoration:none;color:var(--text-primary)}
+.row.r1{background:linear-gradient(135deg,rgba(255,217,138,.14) 0%,var(--bg-input) 60%);border-color:rgba(255,217,138,.55)}
+.row.r2{background:linear-gradient(135deg,rgba(220,220,220,.10) 0%,var(--bg-input) 60%);border-color:rgba(220,220,220,.45)}
+.row.r3{background:linear-gradient(135deg,rgba(215,150,80,.12) 0%,var(--bg-input) 60%);border-color:rgba(215,150,80,.5)}
 .rk{min-width:34px;text-align:center;font-weight:800;font-size:1rem}
 .main{flex:1;min-width:0}
 .m1{font-weight:700;font-size:.86rem;color:var(--gold);text-decoration:underline dotted;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .m1.coin{color:var(--gold)}
-.m2{font-size:.72rem;color:#FFFDF7;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m2{font-size:.72rem;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .val{text-align:right;white-space:nowrap}
-.v1{font-weight:800;font-size:.9rem;color:#FFFDF7;font-variant-numeric:tabular-nums}
+.v1{font-weight:800;font-size:.9rem;color:var(--text-muted);font-variant-numeric:tabular-nums}
 .v1.burn{color:var(--red)}.v1.grn{color:var(--green)}
-.v2{font-size:.66rem;letter-spacing:.06em;color:#FFFDF7;text-transform:uppercase;margin-top:2px}
-.empty{padding:22px;text-align:center;color:#FFFDF7}
-.scan{text-align:center;font-size:.7rem;color:#FFFDF7;margin-top:6px}
-.nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid var(--line);padding:6px 2px calc(6px + env(safe-area-inset-bottom));z-index:50}
-.nav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.92}
+.v2{font-size:.66rem;letter-spacing:.06em;color:var(--text-muted);text-transform:uppercase;margin-top:2px}
+.empty{padding:22px;text-align:center;color:var(--text-muted)}
+.scan{text-align:center;font-size:.7rem;color:var(--text-muted);margin-top:6px}
+.nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--bg-card);border-top:1px solid var(--border);padding:6px 2px calc(6px + env(safe-area-inset-bottom));z-index:50}
+.nav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:var(--text-muted);font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.92}
 .nav a.on{color:var(--gold);opacity:1}
 .nav span.ic{font-size:18px}
 </style>
@@ -159,5 +160,7 @@ window.addEventListener('pageshow',function(e){if(e.persisted)location.reload();
 load();setInterval(load,30000);
 })();
 </script>
+<script src="/v3/gbx-autolock.js" defer></script>
+<script src="/promo-banner.js?v=114" defer></script>
 </body>
 </html>
