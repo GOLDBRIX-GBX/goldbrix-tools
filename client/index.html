@@ -119,7 +119,7 @@
   .coin-meta { text-align: right; font-family: 'JetBrains Mono', monospace; }
   .coin-price { font-weight: 800; font-size: 12px; color: #fff; }
   .coin-stats { font-size: 10px; color: #FFE099; margin-top: 2px; }
-  .new-badge { background: #1DB954; color: #fff; padding: 1px 5px; border-radius: 4px; font-size: 8px; font-weight: 700; }
+  .new-badge { background: #4EE08C; color: #fff; padding: 1px 5px; border-radius: 4px; font-size: 8px; font-weight: 700; }
 
   /* BUBBLE MAP */
   .bubble-wrap { position: relative; height: 240px; margin: 0 14px 16px; background: radial-gradient(ellipse at center, #0d1a0d 0%, #1c1610 75%); border: 1px solid #2a2218; border-radius: 14px; overflow: hidden; }
@@ -592,8 +592,8 @@ window.GBXFed=(function(){
         var ch = c.change_24h;
         var chHtml;
         if (ch == null) chHtml = '<div class="coin-stats" style="color:#fff;">-- 24h</div>';
-        else if (ch > 0) chHtml = '<div class="coin-stats" style="color:#1DB954;font-weight:800;">↑ +'+ch.toFixed(2)+'%</div>';
-        else chHtml = '<div class="coin-stats" style="color:#FF3B3B;font-weight:800;">↓ '+ch.toFixed(2)+'%</div>';
+        else if (ch > 0) chHtml = '<div class="coin-stats" style="color:#4EE08C;font-weight:800;">↑ +'+ch.toFixed(2)+'%</div>';
+        else chHtml = '<div class="coin-stats" style="color:#FF7A6B;font-weight:800;">↓ '+ch.toFixed(2)+'%</div>';
         var mcGbx = c.reserve_gbx||0; // honest: pool/curve liquidity, no synthetic cap
         var meta = '<div class="coin-price">'+fmt(mcGbx,2)+' GBX</div>'+chHtml;
         return '<div class="coin-row" onclick="window.location.href=\'/v3/trade.html?coin='+c.id+'\'">' +
@@ -631,7 +631,7 @@ window.GBXFed=(function(){
       var ratio = Math.sqrt((c.reserve_gbx || 0.001) / maxRes);
       var r = rMin + (rMax - rMin) * ratio;
       var ch = c.change_24h;
-      var color = (ch != null && ch > 0) ? '#1DB954' : (ch != null && ch < 0) ? '#FF3B3B' : '#F5CC75';
+      var color = (ch != null && ch > 0) ? '#4EE08C' : (ch != null && ch < 0) ? '#FF7A6B' : '#F5CC75';
       var fill = (ch != null && ch > 0) ? 'rgba(29,185,84,0.18)' : (ch != null && ch < 0) ? 'rgba(255,59,59,0.18)' : 'rgba(245,204,117,0.18)';
       var cp = cache[c.id];
       return {
@@ -837,9 +837,9 @@ function _gbxActiveAddr(){
 
 <!-- ═══ PROMOTE COIN MODAL (V4.9 restored) ═══ -->
 <div id="mPromote" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:99999;backdrop-filter:blur(8px);align-items:flex-start;justify-content:center;overflow-y:auto;padding:40px 16px;">
-  <div style="background:#0a0a0a;border:1px solid #1a1a1a;border-radius:16px;max-width:480px;width:100%;color:#fff;">
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid #1a1a1a;">
-      <h2 style="margin:0;font-size:16px;color:#F0C060;" data-t="promo_title">🚀 Promote a Coin</h2>
+  <div style="background:#1c1610;border:1px solid #3a3025;border-radius:16px;max-width:480px;width:100%;color:#fff;">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid #3a3025;">
+      <h2 style="margin:0;font-size:16px;color:#F5CC75;" data-t="promo_title">🚀 Promote a Coin</h2>
       <button onclick="closePromoteModal()" style="background:transparent;border:none;color:#fff;font-size:24px;cursor:pointer;">×</button>
     </div>
 
@@ -854,9 +854,9 @@ function _gbxActiveAddr(){
     <!-- Step 2: Select tier -->
     <div id="promoStep2" style="display:none;padding:16px;">
       <div style="font-size:10px;color:#bbb;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;" data-t="promo_step2">Step 2 of 3 · Choose duration</div>
-      <div style="background:#000;border:1px solid #1a1a1a;border-radius:10px;padding:10px;margin-bottom:12px;">
+      <div style="background:#000;border:1px solid #3a3025;border-radius:10px;padding:10px;margin-bottom:12px;">
         <div style="font-size:10px;color:#bbb;" data-t="promo_promoting">Promoting:</div>
-        <div style="color:#F0C060;font-weight:700;font-family:'JetBrains Mono',monospace;" id="promoSelectedTicker">--</div>
+        <div style="color:#F5CC75;font-weight:700;font-family:'JetBrains Mono',monospace;" id="promoSelectedTicker">--</div>
         <div style="color:#bbb;font-size:11px;" id="promoSelectedName">--</div>
       </div>
       <div id="promoTierList"></div>
@@ -866,28 +866,28 @@ function _gbxActiveAddr(){
     <!-- Step 3: Confirm + redirect to wallet -->
     <div id="promoStep3" style="display:none;padding:16px;">
       <div style="font-size:10px;color:#bbb;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;" data-t="promo_step3">Step 3 of 3 · Confirm payment</div>
-      <div style="background:#000;border:1px solid #1a1a1a;border-radius:12px;padding:14px;margin-bottom:14px;">
-        <div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #1a1a1a;margin-bottom:10px;">
+      <div style="background:#000;border:1px solid #3a3025;border-radius:12px;padding:14px;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #3a3025;margin-bottom:10px;">
           <span style="color:#bbb;font-size:11px;" data-t="promo_coin">Coin</span>
-          <span id="promoPayCoin" style="color:#F0C060;font-weight:700;font-family:'JetBrains Mono',monospace;">--</span>
+          <span id="promoPayCoin" style="color:#F5CC75;font-weight:700;font-family:'JetBrains Mono',monospace;">--</span>
         </div>
-        <div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #1a1a1a;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #3a3025;margin-bottom:10px;">
           <span style="color:#bbb;font-size:11px;" data-t="promo_duration">Duration</span>
           <span id="promoPayHours" style="color:#fff;font-weight:600;font-family:'JetBrains Mono',monospace;">--</span>
         </div>
-        <div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #1a1a1a;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #3a3025;margin-bottom:10px;">
           <span style="color:#bbb;font-size:11px;" data-t="promo_usd_value">USD Value</span>
           <span id="promoPayUsd" style="color:#fff;font-weight:600;font-family:'JetBrains Mono',monospace;">--</span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="color:#F0C060;font-size:12px;font-weight:700;" data-t="promo_total_burn">Total to Burn</span>
-          <span id="promoPayGbx" style="color:#F0C060;font-weight:700;font-size:18px;font-family:'JetBrains Mono',monospace;">--</span>
+          <span style="color:#F5CC75;font-size:12px;font-weight:700;" data-t="promo_total_burn">Total to Burn</span>
+          <span id="promoPayGbx" style="color:#F5CC75;font-weight:700;font-size:18px;font-family:'JetBrains Mono',monospace;">--</span>
         </div>
       </div>
       <div style="background:rgba(240,192,96,0.08);border:1px solid rgba(240,192,96,0.25);border-radius:10px;padding:10px;margin-bottom:12px;font-size:11px;color:#FFE099;line-height:1.5;">
         🔥 100% real on-chain burn. Click below to open your wallet pre-filled with exact amount + address.
       </div>
-      <button id="promoPayBtn" onclick="executePromotePayment()" style="width:100%;padding:14px;background:linear-gradient(135deg,#F0C060,#d4a040);color:#000;border:none;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;" data-t="promo_pay_btn">⚡ OPEN WALLET TO PAY</button>
+      <button id="promoPayBtn" onclick="executePromotePayment()" style="width:100%;padding:14px;background:linear-gradient(135deg,#F5CC75,#d4a040);color:#000;border:none;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;" data-t="promo_pay_btn">⚡ OPEN WALLET TO PAY</button>
       <button onclick="document.getElementById('promoStep3').style.display='none';document.getElementById('promoStep2').style.display='block';" style="width:100%;padding:10px;margin-top:8px;background:transparent;border:1px solid #333;color:#fff;border-radius:8px;cursor:pointer;" data-t="promo_back">← Back</button>
     </div>
   </div>
@@ -925,7 +925,7 @@ async function loadPromoteCoinList() {
     if (inp) inp.value = '';
     filterPromoteCoins();
   } catch(e) {
-    list.innerHTML = '<div style="text-align:center;padding:20px;color:#ff6b6b;">' + ((window.t&&window.t('promo_failed'))||'Failed') + '</div>';
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:#FF7A6B;">' + ((window.t&&window.t('promo_failed'))||'Failed') + '</div>';
   }
 }
 
@@ -944,10 +944,10 @@ function filterPromoteCoins() {
     return;
   }
   list.innerHTML = coins.slice(0, 50).map(c => `
-    <div onclick="selectPromoteCoin('${c.id}','${(c.ticker||'').replace(/'/g,'')}','${(c.name||'').replace(/'/g,'')}')" style="display:flex;align-items:center;gap:10px;padding:10px;background:#0a0a0a;border:1px solid #1a1a1a;border-radius:10px;margin-bottom:6px;cursor:pointer;">
-      <div style="width:36px;height:36px;border-radius:50%;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:14px;color:#F0C060;font-weight:700;overflow:hidden;flex:0 0 36px;"><img loading="lazy" src="${c.image_url||('https://goldbrix.app/launchpad/coin/'+c.id+'/image')}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.parentNode.textContent='${(c.ticker||'?')[0]}';"></div>
+    <div onclick="selectPromoteCoin('${c.id}','${(c.ticker||'').replace(/'/g,'')}','${(c.name||'').replace(/'/g,'')}')" style="display:flex;align-items:center;gap:10px;padding:10px;background:#1c1610;border:1px solid #3a3025;border-radius:10px;margin-bottom:6px;cursor:pointer;">
+      <div style="width:36px;height:36px;border-radius:50%;background:#3a3025;display:flex;align-items:center;justify-content:center;font-size:14px;color:#F5CC75;font-weight:700;overflow:hidden;flex:0 0 36px;"><img loading="lazy" src="${c.image_url||('https://goldbrix.app/launchpad/coin/'+c.id+'/image')}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.parentNode.textContent='${(c.ticker||'?')[0]}';"></div>
       <div style="flex:1;min-width:0;">
-        <div style="color:#F0C060;font-weight:700;font-family:'JetBrains Mono',monospace;font-size:13px;">$${c.ticker||'?'}</div>
+        <div style="color:#F5CC75;font-weight:700;font-family:'JetBrains Mono',monospace;font-size:13px;">$${c.ticker||'?'}</div>
         <div style="color:#fff;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.name||''}</div>
       </div>
     </div>
@@ -973,17 +973,17 @@ async function loadPromoteTiers() {
     list.innerHTML = data.tiers.map(t => {
       const m = meta[t.code] || {};
       const pop = t.code === '24h', best = t.code === '7d';
-      const bc = pop ? '#F0C060' : (best ? '#5cd68b' : '#1a1a1a');
-      return `<div onclick="selectPromoteTier('${t.code}')" style="background:#0a0a0a;border:1px solid ${bc};border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer;position:relative;">
-        ${m.tag ? `<div style="position:absolute;top:-9px;right:12px;background:${pop?'#F0C060':(best?'#5cd68b':'#666')};color:#000;font-size:9px;font-weight:700;padding:3px 10px;border-radius:10px;">${m.tag}</div>` : ''}
+      const bc = pop ? '#F5CC75' : (best ? '#4EE08C' : '#3a3025');
+      return `<div onclick="selectPromoteTier('${t.code}')" style="background:#1c1610;border:1px solid ${bc};border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer;position:relative;">
+        ${m.tag ? `<div style="position:absolute;top:-9px;right:12px;background:${pop?'#F5CC75':(best?'#4EE08C':'#666')};color:#000;font-size:9px;font-weight:700;padding:3px 10px;border-radius:10px;">${m.tag}</div>` : ''}
         <div style="display:flex;justify-content:space-between;align-items:flex-start;">
           <div><div style="font-size:15px;font-weight:700;color:#fff;">${m.label}</div></div>
-          <div style="text-align:right;"><div style="font-size:22px;color:#F0C060;font-weight:700;font-family:'JetBrains Mono',monospace;">$${t.usd}</div><div style="font-size:9px;color:#bbb;font-family:'JetBrains Mono',monospace;margin-top:4px;">${t.gbx.toLocaleString()} GBX</div></div>
+          <div style="text-align:right;"><div style="font-size:22px;color:#F5CC75;font-weight:700;font-family:'JetBrains Mono',monospace;">$${t.usd}</div><div style="font-size:9px;color:#bbb;font-family:'JetBrains Mono',monospace;margin-top:4px;">${t.gbx.toLocaleString()} GBX</div></div>
         </div>
       </div>`;
     }).join('');
   } catch(e) {
-    list.innerHTML = '<div style="color:#ff6b6b;text-align:center;padding:14px;">Failed</div>';
+    list.innerHTML = '<div style="color:#FF7A6B;text-align:center;padding:14px;">Failed</div>';
   }
 }
 
