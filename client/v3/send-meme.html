@@ -5,66 +5,161 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#1c1610">
 <title>GoldBrix · Send memecoin</title>
-<link rel="icon" href="/favicon.ico">
+
 <script src="/vendor/html5-qrcode.min.js?v=114"></script>
 <script src="/v3/gbx-session.js?v=119"></script>
 <script src="/v3/gbx-read.js?v=121"></script>
 <script type="module" src="/crypto-utils-v2.js?v=119"></script>
+<link rel="stylesheet" href="/v3/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="icon" href="/assets/coin/gbx-coin-32.png">
 <style>
-:root{--bg:#0f0c08;--card:#241d14;--card2:#2c2418;--line:#4a3d2a;--gold:#FFD98A;--goldB:#FFE9B8;--ink:#FFFDF7;--green:#57FF9E;--red:#FF6B5C}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bg)}
-body{color:var(--ink);font-family:'JetBrains Mono','Courier New',ui-monospace,monospace;padding:14px 12px 90px}
-.wrap{max-width:600px;margin:0 auto}
-.card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
-.sect{color:var(--ink);font-weight:800;font-size:12px;letter-spacing:.18em;text-transform:uppercase;margin:0 0 12px}
-label{display:block;font-size:.72rem;letter-spacing:.1em;color:var(--ink);opacity:.9;margin-bottom:6px;text-transform:uppercase}
-select,input{width:100%;padding:14px;background:#1a150e;border:1px solid var(--line);border-radius:12px;color:var(--ink);font-family:inherit;font-size:.95rem}
-select:focus,input:focus{outline:none;border-color:var(--gold)}
-.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;font-size:.85rem}
-.k{opacity:.9;font-size:.78rem;letter-spacing:.06em}
-.v{font-weight:800}
-.gold{color:var(--goldB)}
-.btn{width:100%;background:linear-gradient(180deg,#FFE9B8,#FFD98A);color:#1c1610;border:none;border-radius:14px;padding:16px;font-family:inherit;font-size:1rem;font-weight:800;letter-spacing:.08em;cursor:pointer;margin-top:6px}
-.btn:disabled{opacity:.45}
-.btn.ghost{background:none;border:1px solid var(--line);color:var(--gold)}
-.pcts{display:flex;gap:8px;margin-top:8px}
-.pct{flex:1;background:none;border:1px solid var(--line);border-radius:10px;color:var(--gold);padding:9px;font-family:inherit;font-size:.75rem;font-weight:800;cursor:pointer}
-.msg{margin-top:12px;padding:12px;border-radius:10px;font-size:.85rem;display:none;line-height:1.5}
-.msg.err{background:rgba(255,107,92,.12);color:var(--red);border:1px solid rgba(255,107,92,.4)}
-.msg.ok{background:rgba(87,255,158,.12);color:var(--green);border:1px solid rgba(87,255,158,.4);word-break:break-all}
-.msg.info{background:rgba(255,217,138,.10);color:var(--ink);border:1px solid var(--line)}
-.note{font-size:.72rem;opacity:.85;line-height:1.6;margin-top:10px}
-.scan{width:100%;margin-top:8px;background:none;border:1px dashed var(--line);border-radius:12px;color:var(--gold);padding:12px;font-family:inherit;font-size:.78rem;font-weight:800;letter-spacing:.08em;cursor:pointer}
-#qrModal{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9998;display:none;align-items:center;justify-content:center;padding:16px}
-#qrModal .box{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:18px;padding:16px;width:100%;max-width:420px}
-#qrReader{width:100%;border-radius:12px;overflow:hidden}
-a.back{color:var(--gold);text-decoration:none;font-size:.8rem;font-weight:800;letter-spacing:.1em;display:inline-block;margin-bottom:14px}
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; font-family: 'JetBrains Mono', monospace; font-size:12px;
+    letter-spacing: 0.1em; color: var(--text-secondary);
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    border-radius: var(--r-full); transition: all var(--t-fast); margin: 12px 0 16px;
+  }
+  .back-btn:hover { color: var(--gold); border-color: var(--gold-deep); }
+
+  .send-hero { text-align: center; padding: 8px 0 20px; }
+  .send-hero__title { font-family: 'Inter', sans-serif; font-size: 24px; font-weight: 800; color: var(--gold); margin-bottom: 6px; }
+  .send-hero__sub { font-family: 'JetBrains Mono', monospace; font-size:12px; letter-spacing: 0.15em; color: var(--text-secondary); }
+
+  .label { font-family: 'JetBrains Mono', monospace; font-size:12px; color: var(--text-secondary); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; display: block; }
+
+  /* Token selector */
+  .token-select {
+    width: 100%; background: var(--bg-input);
+    border: 1px solid var(--border); border-radius: var(--r-md);
+    padding: 14px 16px; font-size: 14px; color: var(--text-primary);
+    font-family: 'Inter', sans-serif; cursor: pointer;
+    -webkit-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23F5CC75' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 16px center;
+    padding-right: 40px;
+  }
+  .token-select:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-glow); }
+
+  .balance-line {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'JetBrains Mono', monospace; font-size:12px;
+    color: var(--text-muted); margin-top: 6px;
+  }
+  .max-btn {
+    background: var(--bg-elevated); border: 1px solid var(--gold-deep);
+    color: var(--gold); padding: 4px 10px; border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace; font-size:11px;
+    letter-spacing: 0.1em; cursor: pointer;
+  }
+  .max-btn:hover { background: var(--gold-glow); }
+
+  .fee-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--r-md); padding: 14px; margin: 16px 0;
+  }
+  .fee-row { display: flex; justify-content: space-between; align-items: center; font-size:14px; padding: 4px 0; }
+  .fee-row__label { color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size:12px; letter-spacing: 0.08em; }
+  .fee-row__val { color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+  .fee-row--total .fee-row__val { color: var(--gold); font-size: 14px; }
+
+  .step { display: none; }
+  .step.active { display: block; animation: fadeIn 0.3s; }
+
+  .pending-box { text-align: center; padding: 40px 20px; }
+  .pending-box__loader { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .success-box { text-align: center; padding: 32px 20px; }
+  .success-box__icon { font-size: 64px; margin-bottom: 16px; }
+  .ab-bar{ margin-top:6px; }
+  .ab-btn{ background:var(--bg-elevated,#1a1a1a); color:var(--text-secondary,#888); border:1px solid #333; border-radius:8px; padding:6px 12px; font-size:14px; cursor:pointer; }
+  .ab-caret{ font-size:11px; }
+  .ab-list{ margin-top:8px; background:var(--bg-elevated,#1a1a1a); border:1px solid #333; border-radius:8px; padding:6px; }
+  .ab-empty{ color:var(--text-secondary,#888); font-size:13px; padding:8px; text-align:center; }
+  .ab-item{ display:flex; align-items:center; justify-content:space-between; padding:8px; border-radius:6px; }
+  .ab-item__tap{ display:flex; flex-direction:column; cursor:pointer; flex:1; }
+  .ab-item__tap b{ color:var(--text-primary,#fff); font-size:14px; }
+  .ab-item__tap small{ color:var(--text-secondary,#888); font-size:12px; font-family:"JetBrains Mono",monospace; }
+  .ab-item__del{ background:none; border:none; color:var(--red,#FF3B3B); font-size:14px; cursor:pointer; padding:4px 8px; }
+  .ab-add{ width:100%; margin-top:6px; background:none; border:1px dashed #444; color:var(--primary,#F0C060); border-radius:6px; padding:8px; font-size:14px; cursor:pointer; }
+  .success-box__title { font-size: 22px; font-weight: 800; color: var(--green); margin-bottom: 8px; }
+  .success-box__tx { margin-top: 16px; padding: 12px; background: var(--bg-elevated); border-radius: var(--r-md); font-family: 'JetBrains Mono', monospace; font-size:12px; color: var(--text-secondary); word-break: break-all; }
+
+  .error-msg { margin: 10px 0; padding: 12px; background: rgba(255, 122, 107, 0.1); border: 1px solid var(--red-dim); border-radius: var(--r-md); color: var(--red); font-size:14px; display: none; }
+  .error-msg.show { display: block; }
+
+  .lock-overlay { position: fixed; inset: 0; background: var(--bg-primary); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+  .loader-small { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; }
+
+  .qr-scan-btn{display:inline-flex;align-items:center;gap:6px;background:#F0C060;color:#000;padding:10px 16px;border:none;border-radius:8px;font-weight:700;margin-top:8px;cursor:pointer;font-size:14px;width:100%;justify-content:center}
+  .qr-scan-btn:hover{background:#F8D480}
+  .qr-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+  .qr-modal-content{background:#1a1a1a;padding:24px;border-radius:16px;max-width:500px;width:100%;text-align:center;border:1px solid #F0C060}
+  .qr-modal-content h3{color:#F0C060;margin-bottom:16px;font-size:20px}
+  #qr-reader{background:#000;border-radius:12px;overflow:hidden}
+  .qr-cancel-btn{background:#333;color:#fff;padding:10px 24px;border:none;border-radius:8px;margin-top:16px;cursor:pointer;font-weight:600;width:100%}
+
+/* V4.9 — Visible placeholders (added 2026-05-27) */
+input::placeholder, textarea::placeholder,
+input::-webkit-input-placeholder, textarea::-webkit-input-placeholder,
+input::-moz-placeholder, textarea::-moz-placeholder {
+  color: #eee !important;
+  opacity: 1 !important;
+}
+
+
+  /* specific to this screen, on the shared variables */
+  .pcts{display:flex;gap:8px;margin-top:8px}
+  .pct{flex:1;background:none;border:1px solid var(--border);border-radius:10px;
+       color:var(--gold);padding:9px;font-family:'JetBrains Mono',monospace;
+       font-size:.75rem;font-weight:800;cursor:pointer}
+  .pct:active{background:var(--bg-hover)}
+  .msg{margin-top:12px;padding:12px;border-radius:10px;font-size:.85rem;display:none;line-height:1.5}
+  .msg.err{background:rgba(255,107,92,.12);color:#FF6B5C;border:1px solid rgba(255,107,92,.4)}
+  .msg.ok{background:rgba(87,255,158,.12);color:#57FF9E;border:1px solid rgba(87,255,158,.4);word-break:break-all}
+  .msg.info{background:rgba(245,204,117,.10);color:var(--text-primary);border:1px solid var(--border)}
+  .note{font-size:.72rem;color:var(--text-primary);opacity:.85;line-height:1.6;margin-top:10px}
+  #qrModal{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9998;display:none;
+           align-items:center;justify-content:center;padding:16px}
+  #qrModal .box{background:var(--bg-card);border:1px solid var(--border);border-radius:18px;
+                padding:16px;width:100%;max-width:420px}
+  #qrReader{width:100%;border-radius:12px;overflow:hidden}
+  .sect{color:var(--text-primary);font-weight:800;font-size:12px;letter-spacing:.18em;
+        text-transform:uppercase;margin:0 0 12px}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;font-size:.85rem}
+  .k{color:var(--text-primary);opacity:.9;font-size:.78rem;letter-spacing:.06em}
+  .v{font-weight:800}
+  .gold{color:var(--gold-bright)}
 </style>
 </head>
 <body>
-<div class="wrap">
-<a class="back" href="/v3/wallet.html" id="backL">← WALLET</a>
-<div class="card">
-  <div class="sect" id="tTitle">Send memecoin</div>
+<div class="v3-app" id="app"><div class="v3-container v3-fade-in">
+<a class="back-btn" href="/app.html#wallet" id="backL">← <span data-t="wallet">Wallet</span></a>
+  <div class="send-hero">
+    <div class="send-hero__title" id="tHero">Send memecoin</div>
+    <div class="send-hero__sub" id="tHeroSub">TRANSFER TO A PUBLIC KEY</div>
+  </div>
+<div class="step active">
   <label id="lCoin">Coin</label>
-  <select id="coin"><option>…</option></select>
-  <div class="row"><span class="k" id="lBal">Balance</span><span class="v gold" id="bal">—</span></div>
-  <label id="lTo" style="margin-top:12px">Recipient public key</label>
-  <input id="to" placeholder="02…" autocomplete="off" autocapitalize="off" spellcheck="false">
-  <button class="scan" id="scan">SCAN</button>
+  <select class="token-select" id="coin"><option>…</option></select>
+  <div class="balance-line"><span><span id="lBal">Balance</span>: <span id="bal">—</span></span></div>
+  <label class="label v3-mt-md" id="lTo">Recipient public key</label>
+  <input class="v3-input" id="to" placeholder="02…" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <button type="button" class="qr-scan-btn" id="scan">📷 SCAN QR</button>
   <div class="note" id="nTo">A memecoin is held by a key, so a recipient is identified by their public key — an address will not do.</div>
-  <label id="lAmt" style="margin-top:12px">Amount</label>
-  <input id="amt" inputmode="numeric" placeholder="0" autocomplete="off">
+  <label class="label v3-mt-md" id="lAmt">Amount</label>
+  <input class="v3-input" id="amt" inputmode="numeric" placeholder="0" autocomplete="off">
   <div class="pcts">
     <button class="pct" data-p="25">25%</button><button class="pct" data-p="50">50%</button>
     <button class="pct" data-p="75">75%</button><button class="pct" data-p="100">MAX</button>
   </div>
-  <div class="row" style="margin-top:10px"><span class="k" id="lFee">Network fee</span><span class="v" id="fee">0.0005 GBX</span></div>
-  <button class="btn" id="go" disabled>SEND</button>
+  <div class="fee-card"><div class="fee-row"><span class="fee-row__label" id="lFee">Network fee</span><span class="fee-row__val" id="fee">0.0005 GBX</span></div></div>
+  <button class="v3-btn v3-btn--primary v3-btn--block v3-btn--lg" id="go" disabled>SEND</button>
   <div class="msg" id="msg"></div>
 </div>
-</div>
+</div></div>
 <div id="qrModal"><div class="box">
   <div class="sect" id="qrTitle" style="margin-bottom:12px">Scan</div>
   <div id="qrReader"></div>
@@ -103,7 +198,7 @@ ar:{title:'إرسال عملة ميم',coin:'العملة',bal:'الرصيد',to
 const tt=k=>(T[L]&&T[L][k])||T.en[k]||k;
 if(L==='ar')document.body.dir='rtl';
 const $=i=>document.getElementById(i);
-$('tTitle').textContent=tt('title');$('lCoin').textContent=tt('coin');$('lBal').textContent=tt('bal');
+const _h=$('tHero'); if(_h)_h.textContent=tt('title');$('lCoin').textContent=tt('coin');$('lBal').textContent=tt('bal');
 $('lTo').textContent=tt('to');$('lAmt').textContent=tt('amt');$('lFee').textContent=tt('fee');
 $('go').textContent=tt('send');$('backL').textContent=tt('back');$('nTo').textContent=tt('note');
 function say(kind,txt){const m=$('msg');m.className='msg '+kind;m.textContent=txt;m.style.display='block';}
@@ -132,6 +227,16 @@ async function ready(){for(let i=0;i<40&&!window.GBXRead;i++)await new Promise(r
 async function crypto_(){for(let i=0;i<40&&!(window.GoldbrixCrypto&&window.GoldbrixCrypto.deriveKeypairFromMnemonic);i++)await new Promise(r=>setTimeout(r,100));
   return !!(window.GoldbrixCrypto&&window.GoldbrixCrypto.deriveKeypairFromMnemonic);}
 let wallet=null,keys=null,pkHex='',secp=null,spkU=null,held=[],cur=null,holding=null;
+function qparam(k){
+  try{
+    const s=new URLSearchParams(location.search).get(k);
+    if(s) return s;
+    const h=location.hash||'';
+    const i=h.indexOf('?');
+    if(i>=0) return new URLSearchParams(h.slice(i+1)).get(k);
+  }catch(e){}
+  return null;
+}
 async function boot(){
   await ready();
   wallet=(window.GBXSession&&window.GBXSession.activeWallet)?window.GBXSession.activeWallet():null;
@@ -150,6 +255,10 @@ async function boot(){
   const sel=$('coin');
   if(!held.length){sel.innerHTML='<option>'+tt('none')+'</option>';return;}
   sel.innerHTML=held.map(h2=>'<option value="'+h2.coin_id+'">$'+h2.ticker+' · '+N(h2.amount)+'</option>').join('');
+  /* Arriving from the send screen with a coin already chosen: in the app shell
+     the query travels in the hash, so both places are read. */
+  const _q=qparam('coin');
+  if(_q && held.some(x=>x.coin_id===_q)) sel.value=_q;
   sel.addEventListener('change',pick);
   await pick();
   $('go').disabled=false;
@@ -232,5 +341,9 @@ $('go').addEventListener('click',async()=>{
 boot();
 window.addEventListener('pageshow',e=>{if(e.persisted)location.reload();});
 </script>
+<script src="/i18n.js?v=114" defer></script>
+<script src="/promo-banner.js?v=114" defer></script>
+<script src="/v3/nav-i18n.js?v=115" defer></script>
+<script src="/v3/gbx-autolock.js" defer></script>
 </body>
 </html>

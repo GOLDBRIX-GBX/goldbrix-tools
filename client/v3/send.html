@@ -346,16 +346,6 @@ async function loadHoldings() {
   loadSolHoldingsBg();
 }
 
-// Memecoins din /trades (ca wallet.html) — in fundal, cu cache la lista
-let _coinListCache = null;
-async function getCoinList(){
-  if (_coinListCache) return _coinListCache;
-  try {
-    const cr = await fetch('https://goldbrix.app/v2/memecoin/list?limit=500');
-    _coinListCache = (await cr.json()).coins || [];
-  } catch(e){ _coinListCache = []; }
-  return _coinListCache;
-}
 async function loadMemecoinsBg(){
   /* Holdings come from the chain index, keyed by the public key: the old
      custodial route is closed and an address cannot be turned into a key. */
@@ -450,7 +440,13 @@ function onTokenChange() {
   } else if (type === 'SOL') {
     selectedToken = { type:'SOL', ticker, balance: Number(balanceStr)||0, dec: Number(extra)||9 };
   } else if (type === 'NATIVE') {
-    selectedToken = { type:'NATIVE', ticker, balance: Number(balanceStr)||0, coin_id: extra==='null'?null:extra };
+    /* A memecoin is held by a key, not by an address, and its transaction is
+       built and signed on this device. That is a different screen, and the
+       recipient field here would reject a key: go there on selection, not on
+       send, so nobody is stopped by a validator meant for addresses. */
+    var _cid = (extra==='null' ? '' : extra);
+    location.href = '/v3/send-meme.html' + (_cid ? ('?coin=' + encodeURIComponent(_cid)) : '');
+    return;
   } else {
     selectedToken = { type:'GBX', ticker:'GBX', balance: Number(balanceStr)||0, coin_id:null };
   }
