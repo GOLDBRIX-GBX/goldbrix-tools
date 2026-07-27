@@ -50,6 +50,49 @@ dbcache=1024
 fallbackfee=0.0001
 CONF
 mkdir -p "$DATADIR/index"
+
+# Peer bootstrap from the federation, not from a fixed host.
+# The node registry lives on chain (GBX:NODE). Any node that answers can hand
+# over the peers it already gossips over P2P, so this install does not depend on
+# a DNS seed, on the seeds baked into the binary, or on any single operator.
+# Silent by design: if nothing answers, the baked-in seeds still apply.
+if ! grep -q '^addnode=' "$DATADIR/goldbrix.conf" 2>/dev/null; then
+  echo "[3b/6] peer bootstrap via on-chain node registry"
+  BOOT_SRC="$TOOLSDIR/nodes.json"
+  ENTRY=""
+  if [ -f "$BOOT_SRC" ]; then
+    ENTRY=$(python3 -c "import json,sys;print(' '.join(json.load(open('$BOOT_SRC')).get('nodes',[])))" 2>/dev/null || true)
+  fi
+  REG=""
+  for u in $ENTRY; do
+    REG=$(curl -fsSL -m 12 "$u/node-registry" 2>/dev/null) && [ -n "$REG" ] && break
+  done
+  NODES=""
+  if [ -n "$REG" ]; then
+    NODES=$(printf '%s' "$REG" | python3 -c "import json,sys;print(' '.join(json.load(sys.stdin).get('nodes',{}).keys()))" 2>/dev/null || true)
+  fi
+  ALL="$NODES $ENTRY"
+  PEERS=""
+  for u in $ALL; do
+    P=$(curl -fsSL -m 15 "$u/peers" 2>/dev/null) || continue
+    PEERS=$(printf '%s' "$P" | python3 -c "
+import json,sys
+try: d=json.load(sys.stdin)
+except Exception: sys.exit(0)
+rows=[x for x in d.get('peers',[]) if x.get('address') and x.get('port')]
+rows.sort(key=lambda x:(not x.get('full'), -(x.get('last_seen') or 0)))
+print('\n'.join('addnode='+x['address']+':'+str(x['port']) for x in rows[:12]))
+" 2>/dev/null || true)
+    [ -n "$PEERS" ] && break
+  done
+  if [ -n "$PEERS" ]; then
+    printf '%s\n' "$PEERS" >> "$DATADIR/goldbrix.conf"
+    echo "PEERS: $(printf '%s\n' "$PEERS" | grep -c '^addnode=') learned from the on-chain federation"
+  else
+    echo "PEERS: federation unreachable - falling back to the seeds baked in the binary"
+  fi
+fi
+
 chown -R gbx:gbx "$DATADIR"
 
 echo "[4/6] read-api + indexer from goldbrix-tools"
@@ -156,7 +199,7 @@ PYJSON
 fi
 
 echo "[6/6] done"
-echo "Sync from genesis starts now (headers via fixed seeds baked in the binary — no central server needed)."
+echo "Sync from genesis starts now (peers learned from the on-chain federation, plus the seeds baked in the binary — no central server, no DNS seed required)."
 echo "Check:   goldbrix-cli -datadir=${DATADIR} getblockchaininfo | grep -e blocks -e verificationprogress"
 echo "Status:  curl -s http://127.0.0.1:8088/api/status"
 echo "When fully synced: expose :8088 behind HTTPS (Caddy/nginx)."
