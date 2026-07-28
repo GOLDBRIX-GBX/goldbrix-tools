@@ -200,8 +200,15 @@ window.GBXFed=(function(){
     });
     return C;
   }
+  var B=null,BT=0;
+  async function burnStats(){
+    if(B&&Date.now()-BT<300000)return B;
+    var d=await j('/api/burns');
+    B={total_gbx:Number(d.chain_total_sat||0)/1e8, utxos:Number(d.chain_burn_utxos||0)};
+    BT=Date.now(); return B;
+  }
   async function stats(){ if(S&&Date.now()-TS<15000)return S; S=await j('/api/stats24'); TS=Date.now(); return S; }
-  return {coins:coins,stats:stats};
+  return {coins:coins,stats:stats,burnStats:burnStats};
 })();
 </script>
   <script src="/promo-banner.js?v=114" defer></script>
@@ -353,16 +360,6 @@ window.GBXFed=(function(){
   </div>
   <div class="promo-cta" style="background:#FF6644;color:#fff;">🔥 →</div>
 </div>
-<!-- PROMOTE BANNER (static, always visible incl. APK) -->
-<div id="promoBanner" class="promo" data-rendered="1" onclick="openPromoteModal()">
-  <div class="promo-img"><span style="font-size:22px;">🚀</span></div>
-  <div class="promo-body">
-    <div class="promo-label"><span data-t="h_promoteTitle">PROMOTE YOUR COIN</span></div>
-    <div class="promo-title"><span data-t="h_promoteSub">Get featured on top</span></div>
-    <div class="promo-sub"><span data-t="h_promoteMeta">From $10 · 1h to 7 days</span></div>
-  </div>
-  <div class="promo-cta"><span data-t="h_promoteBtn">START</span> →</div>
-</div>
 <div id="chatBannerHome" class="promo" style="background:linear-gradient(135deg,rgba(34,170,200,0.18),rgba(20,100,150,0.08));border-color:#1c5a78;cursor:pointer;display:flex;align-items:center;gap:12px;" onclick="window.location.href='/v3/chat.html'">
   <img src="/assets/coin/gbx-coin-48.png" alt="GBX" style="width:42px;height:42px;flex-shrink:0;filter:drop-shadow(0 2px 6px rgba(245,204,117,0.3));">
   <div style="flex:1;min-width:0;">
@@ -411,15 +408,14 @@ window.GBXFed=(function(){
   // TICKER (alternate)
   async function refreshTicker() {
     try {
-      var r = await fetch(API + '/v2/memecoin/burns/stats');
-      var d = await r.json();
-      if (!d.ok) return;
+      var d = await window.GBXFed.burnStats();
+      if (!d) return;
       var _bt=document.getElementById('burnsHomeTotal'), _bs=document.getElementById('burnsHomeSub');
-      if(_bt) _bt.textContent=fmt(d.all_time_gbx,0)+' GBX';
-      if(_bs){ var _L=(localStorage.getItem('gbx_lang')||'en'); var _td={en:'Today',ro:'Astăzi',de:'Heute',zh:'今日',ar:'اليوم'}[_L]||'Today'; _bs.textContent=d.all_time_count+' txs · '+_td+': '+fmt(d.burns_24h_gbx,2); }
+      if(_bt) _bt.textContent=fmt(d.total_gbx,2)+' GBX';
+      if(_bs) _bs.textContent=d.utxos+' UTXO';
       var t = document.getElementById('lt-text');
       if (tickerMode === 0) {
-        t.innerHTML = '🔥 <b style="color:#eee">'+fmt(d.all_time_gbx)+'</b> GBX burned forever · <b>'+d.all_time_count+'</b> txs · TODAY: <b style="color:#ffdd99">'+fmt(d.burns_24h_gbx,4)+'</b>';
+        t.innerHTML = '🔥 <b style="color:#eee">'+fmt(d.total_gbx,2)+'</b> GBX burned forever · <b>'+d.utxos+'</b> UTXO';
       } else if (allCoins.length > 0) {
         var top = allCoins[0];
         t.innerHTML = '📈 TRENDING: <b>$'+top.ticker+'</b> · liq <b>'+fmt(top.reserve_gbx,2)+'</b> GBX · '+(top.name||'').substring(0,20);
@@ -464,8 +460,8 @@ window.GBXFed=(function(){
       document.getElementById('kpi-tvl').textContent = fmtUSD(Number(st.tvl_sat||0)/1e8 * GBX_USD);
       document.getElementById('kpi-vol').textContent = fmtUSD(Number(st.vol24_sat||0)/1e8 * GBX_USD);
       try {
-        var burnsD = await (await fetch(API + '/v2/memecoin/burns/stats')).json();
-        if (burnsD.ok) document.getElementById('kpi-burned').textContent = fmt(burnsD.all_time_gbx,0)+' GBX';
+        var burnsD = await window.GBXFed.burnStats();
+        if (burnsD) document.getElementById('kpi-burned').textContent = fmt(burnsD.total_gbx,0)+' GBX';
       } catch(_) {}
       // GBX-PERF-LOCK Strat3 — scrie KPI in cache pt render instant next load
       try {
@@ -476,45 +472,6 @@ window.GBXFed=(function(){
           vol: document.getElementById('kpi-vol').textContent
         }));
       } catch(_) {}
-    } catch(e) {}
-  }
-
-  // PROMOTE BANNER
-  async function refreshPromo() {
-    try {
-      var box = document.getElementById('promoBanner');
-      // V4.9 anti-flicker: render CTA once, never replace
-      if (box && box.dataset.rendered === '1') return;
-      if (box) box.dataset.rendered = '1';
-      var r = await fetch(API + '/launchpad/promote/active');
-      var d = await r.json();
-      if (false) {  /* V4.9: always show CTA — active coins go in top banner */
-        var p = d.active[0];
-        var coin = allCoins.find(function(c){ return c.id === p.coin_id; }) || {};
-        var mins = Math.floor((p.remaining_seconds||0)/60);
-        var img = coin.image_url ? '<img loading="lazy" src="'+coin.image_url+'" alt="">' : '<span style="color:#F5CC75;font-weight:800;font-size:18px;">'+(p.ticker||'?').charAt(0)+'</span>';
-        box.innerHTML = '<div class="promo" onclick="window.location.href=\'/v3/trade.html?coin='+p.coin_id+'\'">' +
-          '<div class="promo-img">'+img+'</div>' +
-          '<div class="promo-body">' +
-            '<div class="promo-label">⭐ PROMOTED · '+mins+'min left</div>' +
-            '<div class="promo-title">$'+p.ticker+' — '+(p.name||'').substring(0,20)+'</div>' +
-            '<div class="promo-sub">'+(p.tier_code||'')+' tier · paid $'+(p.paid_usd||0)+'</div>' +
-          '</div>' +
-          '<div class="promo-cta">VIEW →</div>' +
-        '</div>';
-        box.style.display = 'block';
-      } else {
-        box.innerHTML = '<div class="promo" onclick="openPromoteModal()">' +
-          '<div class="promo-img"><span style="font-size:22px;">🚀</span></div>' +
-          '<div class="promo-body">' +
-            '<div class="promo-label"><span data-t="h_promoteTitle">PROMOTE YOUR COIN</span></div>' +
-            '<div class="promo-title"><span data-t="h_promoteSub">Get featured on top</span></div>' +
-            '<div class="promo-sub"><span data-t="h_promoteMeta">From $10 · 1h to 7 days</span></div>' +
-          '</div>' +
-          '<div class="promo-cta"><span data-t="h_promoteBtn">START</span> →</div>' +
-        '</div>';
-        box.style.display = 'block';
-      }
     } catch(e) {}
   }
 
@@ -756,7 +713,6 @@ window.GBXFed=(function(){
     try { await refreshKpi(); console.log('[INIT] KPI done, coins:', allCoins.length); } catch(e) { console.error('[KPI ERR]', e); }
     try { await refreshChain(); console.log('[INIT] chain done'); } catch(e) { console.error('[CHAIN INIT ERR]', e); }
     refreshTicker();
-    refreshPromo();
     renderNewLaunches();
     renderGraduated();
     console.log('[INIT] launches rendered');
@@ -771,9 +727,8 @@ window.GBXFed=(function(){
   setInterval(refreshTicker, 20000);
   setInterval(refreshChain, 60000);
   setInterval(refreshKpi, 30000);
-  setInterval(refreshPromo, 30000);
   setInterval(refreshCoinList, 30000);
-  window.__ptrRefresh = function(){ try { return Promise.allSettled([refreshTicker(),refreshChain(),refreshKpi(),refreshPromo(),refreshCoinList()]); } catch(e){ return Promise.resolve(); } };
+  window.__ptrRefresh = function(){ try { return Promise.allSettled([refreshTicker(),refreshChain(),refreshKpi(),refreshCoinList()]); } catch(e){ return Promise.resolve(); } };
   setInterval(function(){ renderNewLaunches(); renderGraduated(); renderBubbles(); }, 30000);
 })();
 </script>
@@ -848,210 +803,7 @@ function _gbxActiveAddr(){
 }
 </script>
 
-<!-- ═══ PROMOTE COIN MODAL (V4.9 restored) ═══ -->
-<div id="mPromote" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:99999;backdrop-filter:blur(8px);align-items:flex-start;justify-content:center;overflow-y:auto;padding:40px 16px;">
-  <div style="background:#1c1610;border:1px solid #3a3025;border-radius:16px;max-width:480px;width:100%;color:#fff;">
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid #3a3025;">
-      <h2 style="margin:0;font-size:16px;color:#F5CC75;" data-t="promo_title">🚀 Promote a Coin</h2>
-      <button onclick="closePromoteModal()" style="background:transparent;border:none;color:#fff;font-size:24px;cursor:pointer;">×</button>
-    </div>
 
-    <!-- Step 1: Select coin -->
-    <div id="promoStep1" style="padding:16px;">
-      <div style="font-size:10px;color:#bbb;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;" data-t="promo_step1">Step 1 of 3 · Select coin</div>
-      <input id="promoSearch" type="text" placeholder="🔍 Search ticker or name..." data-t-ph="promoSearchPh" data-tp="promo_search" oninput="filterPromoteCoins()" style="width:100%;padding:10px;background:#000;border:1px solid #333;color:#fff;border-radius:8px;font-size:13px;margin-bottom:12px;box-sizing:border-box;">
-      <div id="promoCoinCount" style="font-size:10px;color:#bbb;margin-bottom:8px;text-align:center;"></div>
-      <div id="promoCoinList" style="max-height:380px;overflow-y:auto;"></div>
-    </div>
-
-    <!-- Step 2: Select tier -->
-    <div id="promoStep2" style="display:none;padding:16px;">
-      <div style="font-size:10px;color:#bbb;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;" data-t="promo_step2">Step 2 of 3 · Choose duration</div>
-      <div style="background:#000;border:1px solid #3a3025;border-radius:10px;padding:10px;margin-bottom:12px;">
-        <div style="font-size:10px;color:#bbb;" data-t="promo_promoting">Promoting:</div>
-        <div style="color:#F5CC75;font-weight:700;font-family:'JetBrains Mono',monospace;" id="promoSelectedTicker">--</div>
-        <div style="color:#bbb;font-size:11px;" id="promoSelectedName">--</div>
-      </div>
-      <div id="promoTierList"></div>
-      <button onclick="document.getElementById('promoStep2').style.display='none';document.getElementById('promoStep1').style.display='block';" style="width:100%;padding:10px;margin-top:8px;background:transparent;border:1px solid #333;color:#fff;border-radius:8px;cursor:pointer;" data-t="promo_back">← Back</button>
-    </div>
-
-    <!-- Step 3: Confirm + redirect to wallet -->
-    <div id="promoStep3" style="display:none;padding:16px;">
-      <div style="font-size:10px;color:#bbb;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;" data-t="promo_step3">Step 3 of 3 · Confirm payment</div>
-      <div style="background:#000;border:1px solid #3a3025;border-radius:12px;padding:14px;margin-bottom:14px;">
-        <div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #3a3025;margin-bottom:10px;">
-          <span style="color:#bbb;font-size:11px;" data-t="promo_coin">Coin</span>
-          <span id="promoPayCoin" style="color:#F5CC75;font-weight:700;font-family:'JetBrains Mono',monospace;">--</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #3a3025;margin-bottom:10px;">
-          <span style="color:#bbb;font-size:11px;" data-t="promo_duration">Duration</span>
-          <span id="promoPayHours" style="color:#fff;font-weight:600;font-family:'JetBrains Mono',monospace;">--</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #3a3025;margin-bottom:10px;">
-          <span style="color:#bbb;font-size:11px;" data-t="promo_usd_value">USD Value</span>
-          <span id="promoPayUsd" style="color:#fff;font-weight:600;font-family:'JetBrains Mono',monospace;">--</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="color:#F5CC75;font-size:12px;font-weight:700;" data-t="promo_total_burn">Total to Burn</span>
-          <span id="promoPayGbx" style="color:#F5CC75;font-weight:700;font-size:18px;font-family:'JetBrains Mono',monospace;">--</span>
-        </div>
-      </div>
-      <div style="background:rgba(240,192,96,0.08);border:1px solid rgba(240,192,96,0.25);border-radius:10px;padding:10px;margin-bottom:12px;font-size:11px;color:#FFE099;line-height:1.5;">
-        🔥 100% real on-chain burn. Click below to open your wallet pre-filled with exact amount + address.
-      </div>
-      <button id="promoPayBtn" onclick="executePromotePayment()" style="width:100%;padding:14px;background:linear-gradient(135deg,#F5CC75,#d4a040);color:#000;border:none;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;" data-t="promo_pay_btn">⚡ OPEN WALLET TO PAY</button>
-      <button onclick="document.getElementById('promoStep3').style.display='none';document.getElementById('promoStep2').style.display='block';" style="width:100%;padding:10px;margin-top:8px;background:transparent;border:1px solid #333;color:#fff;border-radius:8px;cursor:pointer;" data-t="promo_back">← Back</button>
-    </div>
-  </div>
-</div>
-
-<script>
-// ═══ PROMOTE MODAL FUNCTIONS (V4.9 restored) ═══
-window.allPromoteCoins = [];
-window.selectedPromoteCoin = null;
-window.pendingPromo = null;
-
-async function openPromoteModal() {
-  const modal = document.getElementById('mPromote');
-  if (!modal) return;
-  modal.style.display = 'flex';
-  document.getElementById('promoStep1').style.display = 'block';
-  document.getElementById('promoStep2').style.display = 'none';
-  document.getElementById('promoStep3').style.display = 'none';
-  await loadPromoteCoinList();
-}
-
-function closePromoteModal() {
-  const modal = document.getElementById('mPromote');
-  if (modal) modal.style.display = 'none';
-  window.selectedPromoteCoin = null;
-  window.pendingPromo = null;
-}
-
-async function loadPromoteCoinList() {
-  const list = document.getElementById('promoCoinList');
-  list.innerHTML = '<div style="text-align:center;padding:20px;color:#bbb;font-size:12px;">' + ((window.t&&window.t('promo_loading'))||'Loading...') + '</div>';
-  try {
-    window.allPromoteCoins = (await window.GBXFed.coins()).filter(c => !c.graduated);
-    const inp = document.getElementById('promoSearch');
-    if (inp) inp.value = '';
-    filterPromoteCoins();
-  } catch(e) {
-    list.innerHTML = '<div style="text-align:center;padding:20px;color:#FF7A6B;">' + ((window.t&&window.t('promo_failed'))||'Failed') + '</div>';
-  }
-}
-
-function filterPromoteCoins() {
-  const list = document.getElementById('promoCoinList');
-  const countEl = document.getElementById('promoCoinCount');
-  if (!list) return;
-  const search = (document.getElementById('promoSearch')?.value || '').toLowerCase().trim();
-  let coins = window.allPromoteCoins || [];
-  if (search) {
-    coins = coins.filter(c => (c.ticker||'').toLowerCase().includes(search) || (c.name||'').toLowerCase().includes(search));
-  }
-  if (countEl) countEl.textContent = coins.length + ' coin' + (coins.length !== 1 ? 's' : '');
-  if (coins.length === 0) {
-    list.innerHTML = '<div style="text-align:center;padding:30px;color:#bbb;font-size:11px;">' + ((window.t&&window.t('promo_no_match'))||'No match') + '</div>';
-    return;
-  }
-  list.innerHTML = coins.slice(0, 50).map(c => `
-    <div onclick="selectPromoteCoin('${c.id}','${(c.ticker||'').replace(/'/g,'')}','${(c.name||'').replace(/'/g,'')}')" style="display:flex;align-items:center;gap:10px;padding:10px;background:#1c1610;border:1px solid #3a3025;border-radius:10px;margin-bottom:6px;cursor:pointer;">
-      <div style="width:36px;height:36px;border-radius:50%;background:#3a3025;display:flex;align-items:center;justify-content:center;font-size:14px;color:#F5CC75;font-weight:700;overflow:hidden;flex:0 0 36px;"><img loading="lazy" src="${c.image_url||('https://goldbrix.app/launchpad/coin/'+c.id+'/image')}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.parentNode.textContent='${(c.ticker||'?')[0]}';"></div>
-      <div style="flex:1;min-width:0;">
-        <div style="color:#F5CC75;font-weight:700;font-family:'JetBrains Mono',monospace;font-size:13px;">$${c.ticker||'?'}</div>
-        <div style="color:#fff;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.name||''}</div>
-      </div>
-    </div>
-  `).join('');
-}
-
-function selectPromoteCoin(coinId, ticker, name) {
-  window.selectedPromoteCoin = { id: coinId, ticker, name };
-  document.getElementById('promoSelectedTicker').textContent = '$' + ticker;
-  document.getElementById('promoSelectedName').textContent = name;
-  document.getElementById('promoStep1').style.display = 'none';
-  document.getElementById('promoStep2').style.display = 'block';
-  loadPromoteTiers();
-}
-
-async function loadPromoteTiers() {
-  const list = document.getElementById('promoTierList');
-  list.innerHTML = '<div style="color:#bbb;text-align:center;padding:14px;">Loading...</div>';
-  try {
-    const r = await fetch('https://goldbrix.app/launchpad/promote/pricing');
-    const data = await r.json();
-    const T_ = (k,fb) => (window.t && window.t(k)) || fb; const meta = {'1h':{label:T_('promo_tier_1h','1 Hour'),tag:''},'6h':{label:T_('promo_tier_6h','6 Hours'),tag:''},'24h':{label:T_('promo_tier_24h','24 Hours'),tag:T_('promo_tag_popular','POPULAR ⭐')},'7d':{label:T_('promo_tier_7d','7 Days'),tag:T_('promo_tag_best','Best Value 💎')}};
-    list.innerHTML = data.tiers.map(t => {
-      const m = meta[t.code] || {};
-      const pop = t.code === '24h', best = t.code === '7d';
-      const bc = pop ? '#F5CC75' : (best ? '#4EE08C' : '#3a3025');
-      return `<div onclick="selectPromoteTier('${t.code}')" style="background:#1c1610;border:1px solid ${bc};border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer;position:relative;">
-        ${m.tag ? `<div style="position:absolute;top:-9px;right:12px;background:${pop?'#F5CC75':(best?'#4EE08C':'#666')};color:#000;font-size:9px;font-weight:700;padding:3px 10px;border-radius:10px;">${m.tag}</div>` : ''}
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-          <div><div style="font-size:15px;font-weight:700;color:#fff;">${m.label}</div></div>
-          <div style="text-align:right;"><div style="font-size:22px;color:#F5CC75;font-weight:700;font-family:'JetBrains Mono',monospace;">$${t.usd}</div><div style="font-size:9px;color:#bbb;font-family:'JetBrains Mono',monospace;margin-top:4px;">${t.gbx.toLocaleString()} GBX</div></div>
-        </div>
-      </div>`;
-    }).join('');
-  } catch(e) {
-    list.innerHTML = '<div style="color:#FF7A6B;text-align:center;padding:14px;">Failed</div>';
-  }
-}
-
-async function selectPromoteTier(tierCode) {
-  if (!window.selectedPromoteCoin) return;
-  // Get wallet from sessionStorage (v3 unlocked wallets)
-  let walletAddr = null;
-  try {
-    const unlocked = JSON.parse(sessionStorage.getItem('gbx_unlocked_wallets') || '{}');
-    const wallets = unlocked.wallets || [];
-    if (wallets.length > 0) walletAddr = wallets[0].address;
-  } catch(e) {}
-  if (!walletAddr) {
-    if (confirm((window.t&&window.t('promo_no_wallet'))||'Wallet not unlocked. Open Wallet now?')) {
-      window.location.href = '/v3/wallet.html';
-    }
-    return;
-  }
-  try {
-    const r = await fetch('https://goldbrix.app/launchpad/promote/init', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({coin_id: window.selectedPromoteCoin.id, paid_by: walletAddr, tier_code: tierCode})
-    });
-    const data = await r.json();
-    if (data.error) { alert('Error: ' + data.error); return; }
-    window.pendingPromo = data;
-    document.getElementById('promoPayCoin').textContent = '$' + window.selectedPromoteCoin.ticker;
-    document.getElementById('promoPayHours').textContent = data.duration_hours + 'h';
-    document.getElementById('promoPayUsd').textContent = '$' + data.usd_value;
-    document.getElementById('promoPayGbx').textContent = data.gbx_required.toLocaleString() + ' GBX';
-    document.getElementById('promoStep2').style.display = 'none';
-    document.getElementById('promoStep3').style.display = 'block';
-  } catch(e) { alert('Init failed: ' + e.message); }
-}
-
-function executePromotePayment() {
-  const promo = window.pendingPromo;
-  if (!promo) return;
-  // Save promo info for callback after send
-  localStorage.setItem('gbx_pending_promo', JSON.stringify({
-    promo_id: promo.promo_id,
-    ticker: window.selectedPromoteCoin.ticker,
-    timestamp: Date.now()
-  }));
-  // Redirect to send.html with prefilled values
-  const params = new URLSearchParams({
-    to: promo.send_gbx_to,
-    amount: promo.gbx_required,
-    memo: 'PROMO:' + promo.promo_id,
-    callback: 'promote_confirm'
-  });
-  window.location.href = '/v3/send.html?' + params.toString();
-}
-</script>
 
 
 <script>
@@ -1126,23 +878,7 @@ function executePromotePayment() {
 })();
 </script>
 
-<script>
-// V4.9 — auto-open promote modal from ?promote=TICKER
-(function gbxPromoteParam(){
-  try{
-    const pp=new URLSearchParams(location.search).get('promote');
-    if(!pp) return;
-    const tryOpen=function(){
-      if(typeof openPromoteModal==='function'){
-        openPromoteModal().then(function(){
-          if(pp!=='1'){ const inp=document.getElementById('promoSearch'); if(inp){ inp.value=pp; if(typeof filterPromoteCoins==='function') filterPromoteCoins(); } }
-        });
-      } else { setTimeout(tryOpen,300); }
-    };
-    setTimeout(tryOpen,600);
-  }catch(e){}
-})();
-</script>
+
 
 </body>
 </html>
