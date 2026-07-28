@@ -25,7 +25,8 @@ html,body{margin:0;background:var(--bg-primary)}
 .cx-root .cx-tick{color:var(--gold);font-weight:bold;font-size:1.02rem;letter-spacing:.05em}
 .cx-root .cx-name{color:var(--text-muted);font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:55%}
 .cx-root .cx-res{color:var(--text-muted);font-size:.85rem}
-.cx-root .cx-meta{display:flex;justify-content:space-between;color:var(--text-muted);font-size:.74rem;margin-top:8px}
+.cx-root .cx-meta{display:flex;justify-content:space-between;gap:10px;color:var(--text-muted);font-size:.74rem;margin-top:8px}
+.cx-root .cx-meta>span:last-child{white-space:nowrap;flex-shrink:0}
 .cx-root .cx-barwrap{background:#0f0c09;border-radius:6px;height:8px;margin-top:10px;overflow:hidden}
 .cx-root .cx-bar{background:linear-gradient(90deg,var(--gold-deep),var(--gold));height:100%;border-radius:6px}
 .cx-root .cx-grad{color:var(--green);font-size:.74rem;letter-spacing:.1em}
@@ -68,35 +69,35 @@ html,body{margin:0;background:var(--bg-primary)}
         loading:'reading the chain…', err:'Index unreachable. The chain itself is unaffected — try again.',
         empty1:'THE CHAIN IS CLEAN', empty2:'No coin exists yet. The first one will be born of WORK — forged on a phone, accepted by consensus.',
         act:'The launchpad activates at block <b>2,720,000</b>{left}. Forging works now; broadcasting opens at activation.',
-        actleft:' — about {d} left', holders:'holders', reserve:'reserve',
+        actleft:' — about {d} left', holders:'holders', holder1:'holder', reserve:'reserve',
         graduated:'GRADUATED — free market', closed:'CLOSED',
         scanned:'chain scanned to block {n}', days:'{x} days', hours:'{x} hours' },
    ro:{ title:'Piețe vii', sub:'fiecare monedă se naște din MUNCĂ · graduarea prin propria adâncime',
         loading:'citesc lanțul…', err:'Indexul nu răspunde. Lanțul în sine e neatins — încearcă din nou.',
         empty1:'LANȚUL E CURAT', empty2:'Nicio monedă încă. Prima se va naște din MUNCĂ — forjată pe telefon, acceptată de consens.',
         act:'Launchpad-ul se activează la blocul <b>2.720.000</b>{left}. Forjarea merge de acum; difuzarea se deschide la activare.',
-        actleft:' — mai sunt circa {d}', holders:'deținători', reserve:'rezervă',
+        actleft:' — mai sunt circa {d}', holders:'deținători', holder1:'deținător', reserve:'rezervă',
         graduated:'GRADUAT — piață liberă', closed:'ÎNCHIS',
         scanned:'lanț scanat până la blocul {n}', days:'{x} zile', hours:'{x} ore' },
    de:{ title:'Lebendige Märkte', sub:'jede Münze entsteht aus ARBEIT · Graduierung durch eigene Tiefe',
         loading:'lese die Kette…', err:'Index nicht erreichbar. Die Kette selbst ist unberührt — bitte erneut versuchen.',
         empty1:'DIE KETTE IST SAUBER', empty2:'Noch keine Münze. Die erste wird aus ARBEIT geboren — am Telefon geschmiedet, vom Konsens akzeptiert.',
         act:'Das Launchpad aktiviert sich bei Block <b>2.720.000</b>{left}. Schmieden geht jetzt; Senden öffnet zur Aktivierung.',
-        actleft:' — noch etwa {d}', holders:'Halter', reserve:'Reserve',
+        actleft:' — noch etwa {d}', holders:'Halter', holder1:'Halter', reserve:'Reserve',
         graduated:'GRADUIERT — freier Markt', closed:'GESCHLOSSEN',
         scanned:'Kette gescannt bis Block {n}', days:'{x} Tage', hours:'{x} Stunden' },
    zh:{ title:'活跃市场', sub:'每枚币都诞生于工作 · 以自身深度毕业',
         loading:'正在读取链…', err:'索引无法访问。链本身不受影响——请重试。',
         empty1:'链是干净的', empty2:'尚无任何币。第一枚将由工作诞生——在手机上锻造，由共识接受。',
         act:'启动台将在区块 <b>2,720,000</b> 激活{left}。现在即可锻造；广播在激活时开放。',
-        actleft:'——还剩约 {d}', holders:'持有者', reserve:'储备',
+        actleft:'——还剩约 {d}', holders:'持有者', holder1:'持有者', reserve:'储备',
         graduated:'已毕业 — 自由市场', closed:'已关闭',
         scanned:'链已扫描至区块 {n}', days:'{x} 天', hours:'{x} 小时' },
    ar:{ title:'أسواق حيّة', sub:'كل عملة تولد من العمل · التخرّج بعمقها الخاص',
         loading:'جارٍ قراءة السلسلة…', err:'الفهرس غير متاح. السلسلة نفسها سليمة — حاول مجددًا.',
         empty1:'السلسلة نظيفة', empty2:'لا توجد أي عملة بعد. الأولى ستولد من العمل — تُصاغ على الهاتف ويقبلها الإجماع.',
         act:'تتفعّل منصة الإطلاق عند الكتلة <b>2,720,000</b>{left}. الصياغة تعمل الآن؛ البث يُفتح عند التفعيل.',
-        actleft:' — بقي نحو {d}', holders:'حاملون', reserve:'احتياطي',
+        actleft:' — بقي نحو {d}', holders:'حاملون', holder1:'حامل', reserve:'احتياطي',
         graduated:'تخرّج — سوق حرّة', closed:'مغلق',
         scanned:'تم مسح السلسلة حتى الكتلة {n}', days:'{x} يومًا', hours:'{x} ساعة' }
   };
@@ -158,9 +159,9 @@ html,body{margin:0;background:var(--bg-primary)}
         var bottom;
         if (c.status === 'live')
           bottom = '<div class="cx-barwrap"><div class="cx-bar" style="width:'+pct+'%"></div></div>'+
-                   '<div class="cx-meta"><span>'+pct.toFixed(2)+'%</span><span>'+(c.holders||0)+' '+tr('holders')+'</span></div>';
+                   '<div class="cx-meta"><span>'+pct.toFixed(2)+'%</span><span>'+(c.holders||0)+' '+tr((c.holders===1)?'holder1':'holders')+'</span></div>';
         else if (c.status === 'graduated')
-          bottom = '<div class="cx-meta"><span class="cx-grad">'+tr('graduated')+(pp&&pp.price_sat?(' \u00b7 '+(Number(pp.price_sat)*0.01).toFixed(2)+' \u00b5GBX'):'')+'</span><span>'+(c.holders||0)+' '+tr('holders')+'</span></div>';
+          bottom = '<div class="cx-meta"><span class="cx-grad">'+tr('graduated')+'</span><span>'+(pp&&pp.price_sat?((Number(pp.price_sat)*0.01).toFixed(2)+' \u00b5GBX \u00b7 '):'')+(c.holders||0)+' '+tr((c.holders===1)?'holder1':'holders')+'</span></div>';
         else
           bottom = '<div class="cx-meta"><span>'+tr('closed')+'</span></div>';
         card.innerHTML = '<div class="cx-row"><span class="cx-ava"></span><span class="cx-tick"></span><span class="cx-name"></span></div>'+
