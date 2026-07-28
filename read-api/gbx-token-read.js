@@ -22,13 +22,15 @@ function openTokenIndex(dbPath){
     // curves live from the chain (launchpad scanner tables)
     curves: db.prepare(`SELECT c.coin_id, c.txid, c.vout, c.reserve, c.m, c.h_m, c.height, c.status,
                                m.ticker, m.name, m2.desc descr, m2.links,
+                               (SELECT 1 FROM coin_logo_full lf WHERE lf.coin_id=c.coin_id) has_logo,
                                (SELECT COUNT(DISTINCT pk) FROM token_utxos t
                                  WHERE t.coin_id=c.coin_id AND t.spent_height IS NULL) holders
                         FROM curves c LEFT JOIN coin_meta m ON m.coin_id=c.coin_id
                                        LEFT JOIN coin_meta2 m2 ON m2.coin_id=c.coin_id
                         ORDER BY c.height DESC`),
     curveOne: db.prepare(`SELECT c.coin_id, c.creator_pk, c.txid, c.vout, c.reserve, c.m, c.h_m, c.height, c.status,
-                                 m.ticker, m.name, m2.desc descr, m2.links
+                                 m.ticker, m.name, m2.desc descr, m2.links,
+                                 (SELECT 1 FROM coin_logo_full lf WHERE lf.coin_id=c.coin_id) has_logo
                           FROM curves c LEFT JOIN coin_meta m ON m.coin_id=c.coin_id
                                         LEFT JOIN coin_meta2 m2 ON m2.coin_id=c.coin_id
                           WHERE c.coin_id=?`),
@@ -47,6 +49,7 @@ function openTokenIndex(dbPath){
     holderUtxos: db.prepare(`SELECT txid, vout, amount FROM token_utxos
                              WHERE coin_id=? AND pk=? AND spent_height IS NULL
                              ORDER BY CAST(amount AS INTEGER) DESC LIMIT 50`),
+    logoFull: db.prepare('SELECT data FROM coin_logo_full WHERE coin_id=?'),
   };
   // AMM pools after graduation (pool-index tables); absent on older DBs -> null.
   let pq = null;
@@ -76,7 +79,7 @@ function openTokenIndex(dbPath){
              progress_pct: bar>0n ? Number(R*10000n/bar)/100 : 0,
              sold_tokens: soldTok.toString(),
              sold_pct: Number(soldTok*10000n/CURVE_TOKENS)/100,
-             holders: r.holders };
+             holders: r.holders, has_logo: r.has_logo ? true : false };
   }
   function poolView(r){
     return { coin_id:r.coin_id, ticker:r.ticker||null, name:r.name||null,
@@ -109,6 +112,10 @@ function openTokenIndex(dbPath){
         const p = pq.one.get(coinId);
         if (p) out.pool = poolView({...p, ticker:r.ticker, name:r.name});
       }
+      try {
+        const lf = q.logoFull.get(coinId);
+        out.logo = lf ? ('data:image/webp;base64,' + Buffer.from(lf.data).toString('base64')) : null;
+      } catch(_e){ out.logo = null; }
       return out;
     },
     coinTrades(coinId, limit = 100){

@@ -181,7 +181,7 @@ const L = (()=>{ try{ return localStorage.getItem('gbx_lang') || localStorage.ge
 const T = {
 en:{hero:'A COIN IS BORN OF WORK',law:'no fee kept · everything burned · refunds are law', 'f.desc':'Description (optional)','f.links':'Links (optional)','desc.hint':'Written on the chain by your key. Forever.','e.desc':'Description or links too long for the chain',
  's.identity':'Coin identity','logo.tap':'tap to add a logo<br>(optional)',
- 'logo.hint':'The logo stays on this device. Name and ticker live on the chain, forever.',
+ 'logo.hint':'The logo is written on the chain at launch - forever, like the name and ticker.',
  'f.name':'Name','f.ticker':'Ticker','s.buy':'Your first buy',
  'buy.why':'The creator buys first. Any amount, from 0.00000001 GBX. The barrier is work, not money.',
  'f.amount':'Amount (GBX)','p.tokens':'Tokens you receive','p.burn':'0.5% burned forever',
@@ -202,7 +202,7 @@ en:{hero:'A COIN IS BORN OF WORK',law:'no fee kept · everything burned · refun
  'mining':'FORGING…','stopped':'Stopped. Nothing was sent.'},
 ro:{hero:'O MONEDĂ SE NAȘTE DIN MUNCĂ',law:'zero comision păstrat · totul ars · refundul e lege', 'f.desc':'Descriere (opțional)','f.links':'Linkuri (opțional)','desc.hint':'Scrisă pe lanț cu cheia ta. Pentru totdeauna.','e.desc':'Descrierea sau linkurile sunt prea lungi pentru lanț',
  's.identity':'Identitatea monedei','logo.tap':'atinge pentru logo<br>(opțional)',
- 'logo.hint':'Logo-ul rămâne pe acest dispozitiv. Numele și tickerul trăiesc pe lanț, pentru totdeauna.',
+ 'logo.hint':'Logo-ul se scrie pe lanț la lansare - pentru totdeauna, ca numele și tickerul.',
  'f.name':'Nume','f.ticker':'Ticker','s.buy':'Prima ta cumpărare',
  'buy.why':'Creatorul cumpără primul. Orice sumă, de la 0,00000001 GBX. Bariera e munca, nu banii.',
  'f.amount':'Sumă (GBX)','p.tokens':'Tokens primiți','p.burn':'0,5% ars pentru totdeauna',
@@ -223,7 +223,7 @@ ro:{hero:'O MONEDĂ SE NAȘTE DIN MUNCĂ',law:'zero comision păstrat · totul a
  'mining':'FORJEZ…','stopped':'Oprit. Nu s-a trimis nimic.'},
 de:{hero:'EINE MÜNZE WIRD AUS ARBEIT GEBOREN',law:'keine Gebühr behalten · alles verbrannt · Erstattung ist Gesetz', 'f.desc':'Beschreibung (optional)','f.links':'Links (optional)','desc.hint':'Mit deinem Schlüssel auf der Chain geschrieben. Für immer.','e.desc':'Beschreibung oder Links zu lang für die Chain',
  's.identity':'Identität der Münze','logo.tap':'tippen für ein Logo<br>(optional)',
- 'logo.hint':'Das Logo bleibt auf diesem Gerät. Name und Ticker leben für immer auf der Chain.',
+ 'logo.hint':'Das Logo wird beim Start auf die Chain geschrieben - für immer, wie Name und Ticker.',
  'f.name':'Name','f.ticker':'Ticker','s.buy':'Dein erster Kauf',
  'buy.why':'Der Ersteller kauft zuerst. Jeder Betrag, ab 0,00000001 GBX. Die Hürde ist Arbeit, nicht Geld.',
  'f.amount':'Betrag (GBX)','p.tokens':'Erhaltene Tokens','p.burn':'0,5% für immer verbrannt',
@@ -244,7 +244,7 @@ de:{hero:'EINE MÜNZE WIRD AUS ARBEIT GEBOREN',law:'keine Gebühr behalten · al
  'mining':'SCHMIEDE…','stopped':'Gestoppt. Nichts wurde gesendet.'},
 zh:{hero:'币生于工作',law:'不留手续费 · 全部销毁 · 退款是法则', 'f.desc':'描述（可选）','f.links':'链接（可选）','desc.hint':'由你的密钥写入链上，永久保存。','e.desc':'描述或链接过长，无法写入链上',
  's.identity':'币的身份','logo.tap':'点击添加标志<br>（可选）',
- 'logo.hint':'标志保存在本设备上。名称和代码将永远留在链上。',
+ 'logo.hint':'标志在发布时写入链上——与名称和代码一样，永久保存。',
  'f.name':'名称','f.ticker':'代码','s.buy':'你的首次买入',
  'buy.why':'创建者先买。任意金额，从 0.00000001 GBX 起。门槛是工作，不是钱。',
  'f.amount':'金额 (GBX)','p.tokens':'你将获得的代币','p.burn':'0.5% 永久销毁',
@@ -265,7 +265,7 @@ zh:{hero:'币生于工作',law:'不留手续费 · 全部销毁 · 退款是法�
  'mining':'锻造中…','stopped':'已停止。未发送任何内容。'},
 ar:{hero:'العملة تولد من العمل',law:'لا عمولة محتفظ بها · كل شيء يُحرق · الاسترداد قانون', 'f.desc':'الوصف (اختياري)','f.links':'روابط (اختيارية)','desc.hint':'تُكتب على السلسلة بمفتاحك. إلى الأبد.','e.desc':'الوصف أو الروابط أطول من حد السلسلة',
  's.identity':'هوية العملة','logo.tap':'اضغط لإضافة شعار<br>(اختياري)',
- 'logo.hint':'يبقى الشعار على هذا الجهاز. الاسم والرمز يعيشان على السلسلة إلى الأبد.',
+ 'logo.hint':'يُكتب الشعار على السلسلة عند الإطلاق - إلى الأبد، مثل الاسم والرمز.',
  'f.name':'الاسم','f.ticker':'الرمز','s.buy':'شراؤك الأول',
  'buy.why':'المنشئ يشتري أولاً. أي مبلغ، من 0.00000001 GBX. الحاجز هو العمل، لا المال.',
  'f.amount':'المبلغ (GBX)','p.tokens':'الرموز التي ستستلمها','p.burn':'0.5% تُحرق للأبد',
@@ -363,10 +363,21 @@ function loadWallet(){
 
 /* ── state ── */
 let wallet=null, keys=null, spkU=null, secp=null;
-let mining=false, worker=null, logoData=null;
+let mining=false, worker=null, logoData=null, logoBytes=null;
 
 /* ── logo (device-only, honest) ── */
 
+/* the form survives a lock or a page switch: silent draft, cleared on success */
+(function(){
+  const K='gbx_launch_draft', F=['lName','lTicker','lDesc','lLinks'];
+  try{ const d=JSON.parse(sessionStorage.getItem(K)||'{}');
+    F.forEach(id=>{ const el=$(id); if(el&&d[id]&&!el.value) el.value=d[id]; }); }catch(_e){}
+  F.forEach(id=>{ const el=$(id); if(!el) return;
+    el.addEventListener('input',()=>{ try{
+      const d={}; F.forEach(i2=>{ const e2=$(i2); if(e2&&e2.value) d[i2]=e2.value; });
+      sessionStorage.setItem(K, JSON.stringify(d)); }catch(_e){} }); });
+  window.__gbxClearLaunchDraft=()=>{ try{ sessionStorage.removeItem(K); }catch(_e){} };
+})();
 $('logoFile').onchange=e=>{
   const f=e.target.files[0]; if(f===undefined) return;
   const img=new Image(), url=URL.createObjectURL(f);
@@ -378,6 +389,20 @@ $('logoFile').onchange=e=>{
     g.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,S,S);
     logoData=c.toDataURL('image/jpeg',0.85);
     $('logoBox').innerHTML='<img src="'+logoData+'">';
+    /* on-chain copy: 64x64 webp under 4KB, written at launch */
+    logoBytes=null;
+    try{
+      const c2=document.createElement('canvas'); c2.width=64; c2.height=64;
+      c2.getContext('2d').drawImage(c,0,0,64,64);
+      (async()=>{
+        let blob=null;
+        for(let q=0.8;q>=0.3;q-=0.15){
+          blob=await new Promise(r=>c2.toBlob(r,'image/webp',q));
+          if(blob && blob.size<=4096) break;
+        }
+        if(blob && blob.size<=4096) logoBytes=new Uint8Array(await blob.arrayBuffer());
+      })();
+    }catch(_e){}
   };
   img.onerror=()=>{ URL.revokeObjectURL(url); toast(tt('e.logo')); };
   img.src=url;
@@ -481,13 +506,14 @@ async function forge(){
     const sign=d=>derSig(secp.sign(d, new Uint8Array(keys.privateKey)));
 
     // funds: need first buy + dust + create fee + meta fee (all shown honestly)
-    const needSat = sat + 546n + F.CREATE_FEE_SAT + F.META_FEE_SAT + 546n;
+    const logoChunks = (logoBytes && logoBytes.length) ? Math.ceil(logoBytes.length/197) : 0;
+    const needSat = sat + 546n + F.CREATE_FEE_SAT + F.META_FEE_SAT + 546n + BigInt(logoChunks)*F.META_FEE_SAT;
     const needGbx = Number(needSat)/1e8;
     const raw=await window.GoldbrixCrypto.fetchUtxos(wallet.address, needGbx);
     const utxos=raw.filter(u=>u.spendable!==false).map(u=>({txid:u.txid,vout:u.vout,value8:Math.round(u.amount*1e8)}));
     const plan=await F.planCreate({utxos, devBuySat:sat});
     const change=plan.sum - plan.gross - 546n - F.CREATE_FEE_SAT;
-    if (change < F.META_FEE_SAT + 546n) throw Object.assign(new Error('BAL'),{needGbx});
+    if (change < F.META_FEE_SAT*BigInt(1+logoChunks) + 546n) throw Object.assign(new Error('BAL'),{needGbx});
 
     // fresh template -> mine -> (re-mine if the chain outran the proof window)
     let tpl, found=null;
@@ -523,25 +549,42 @@ async function forge(){
     const metaTxid=await gwBroadcast(m.txHex);
     setStep('stMeta','ok');
 
+    let chainTxid=metaTxid, chainVal=Number(change)-Number(F.META_FEE_SAT);
     if (desc2 || links2){
       try{
-        const utxos3=[{txid: metaTxid, vout:0, value8:Number(change)-Number(F.META_FEE_SAT)}];
+        const utxos3=[{txid: chainTxid, vout:0, value8: chainVal}];
         const m2=F.buildMeta2Tx({cidHex:plan.cidHex, desc:desc2, links:links2, utxos:utxos3, pkU,
           buildFundTx, sign, p2wpkhSpkOf:()=>spkU});
-        await gwBroadcast(m2.txHex);
+        const m2Txid=await gwBroadcast(m2.txHex);
+        chainTxid=m2Txid; chainVal-=Number(F.META_FEE_SAT);
       }catch(e){ console.warn('[meta2]', e); }
+    }
+    /* the logo is written on the chain, chunk by chunk, signed by the creator */
+    if (logoBytes && logoBytes.length){
+      try{
+        const h16=new Uint8Array(await crypto.subtle.digest('SHA-256', logoBytes)).slice(0,16);
+        const total=Math.ceil(logoBytes.length/197);
+        for(let i=0;i<total;i++){
+          const part=logoBytes.subarray(i*197, Math.min((i+1)*197, logoBytes.length));
+          const lt=F.buildLogoChunkTx({cidHex:plan.cidHex, idx:i, total, hash16:h16, data:part,
+            utxos:[{txid:chainTxid, vout:0, value8:chainVal}], pkU, buildFundTx, sign, p2wpkhSpkOf:()=>spkU});
+          const t=await gwBroadcast(lt.txHex);
+          chainTxid=t; chainVal-=Number(F.META_FEE_SAT);
+        }
+      }catch(e){ console.warn('[logo]', e); }
     }
 
     // honest local memory: logo lives on this device, keyed by the coin id
     try{ if(logoData) localStorage.setItem('gbx_logo_'+plan.cidHex, logoData); }catch(e){}
 
+    if(window.__gbxClearLaunchDraft)window.__gbxClearLaunchDraft();
     $('formCard').style.display='none';
     $('doneName').textContent=name;
     $('doneTick').textContent='$'+ticker;
     $('doneTx').textContent='coin '+plan.cidHex+' · create '+txid+' · name '+metaTxid;
     $('doneCard').classList.add('on');
     $('btnGo').style.display='none'; $('btnStop').style.display='none';
-    $('btnTrade').onclick=()=>location.href='/v3/coin-x.html?coin='+plan.cidHex;
+    $('btnTrade').onclick=()=>{ const u='/v3/coin-x.html?coin='+plan.cidHex; location.href=u; };
   }catch(e){
     if (e && e.message==='BAL'){ toast(tt('e.bal')+' '+(e.needGbx||'').toLocaleString('en-US')+' GBX'); }
     else if (e && (e.message==='NET'||e.message==='LP_UNAVAILABLE'||e.message==='NO_UTXO')){ toast(tt('e.net')); }

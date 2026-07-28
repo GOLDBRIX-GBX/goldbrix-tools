@@ -453,7 +453,9 @@ function render(){
     }catch(e){ $('mMsg').textContent=tt('m.err'); $('mSend').disabled=false; console.warn('[meta2]',e); }
   };
   $('cLogo').textContent=(D.ticker||'?').slice(0,1);
-  try{const lg=localStorage.getItem('gbx_logo_'+cid);if(lg)$('cLogo').innerHTML='<img src="'+lg+'">';}catch(e){}
+  /* the on-chain logo wins; the local copy only helps the creator's own device */
+  if(D.logo){ $('cLogo').innerHTML='<img src="'+D.logo+'" alt="">'; }
+  else { try{const lg=localStorage.getItem('gbx_logo_'+cid);if(lg)$('cLogo').innerHTML='<img src="'+lg+'">';}catch(e){} }
   const grad=D.status==='graduated';
   $('cBadge').textContent=grad?'GRADUATED':'LIVE';
   $('cBadge').className='badge '+(grad?'grad':'live');
@@ -714,7 +716,7 @@ async function findMyHolding(){
 async function execute(){
   wallet=loadWallet();
   if(wallet===null){toast(tt('e.wallet'));
-    setTimeout(()=>location.href='/v3/unlock.html?return='+encodeURIComponent(location.pathname+location.search),1200);return;}
+    setTimeout(()=>{ const u='/v3/unlock.html?return='+encodeURIComponent(location.pathname+location.search); location.href=u; },1200);return;}
   $('btnTrade').disabled=true;$('steps').style.display='block';
   try{
     await ensureKeys();

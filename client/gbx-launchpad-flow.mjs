@@ -12,6 +12,8 @@ import { curveFee, curveBuy, curveWitnessScript, parseCurveWitnessScript,
   from './gbx-curve.mjs';
 import { verifyPow, POWLIMIT_MAIN } from './gbx-pow.mjs';
 import { coinIdFromOutpoint, transferPayload } from './gbx-curve.mjs';
+import { logoChunkPayload, parseLogoChunkFromScriptHex, LOGO_CHUNK_MAX, LOGO_TOTAL_MAX } from './gbx-curve.mjs';
+export { LOGO_CHUNK_MAX, LOGO_TOTAL_MAX } from './gbx-curve.mjs';
 
 export const DUST_SAT = 546n;
 export const CREATE_FEE_SAT = 50000n;   // flat, generous network fee for the create tx
@@ -115,6 +117,25 @@ export function buildMeta2Tx({ cidHex, desc, links, utxos, pkU,
   const back = parseMeta2FromScriptHex(hex(spkMeta));
   if (back === null || hex(back.cid) !== cidHex || back.desc !== (desc||'') || back.links !== (links||''))
     throw new Error('verifyOwnMeta2: round-trip failed');
+  const { ins, sum } = selectUtxos(utxos, META_FEE_SAT + DUST_SAT);
+  const change = sum - META_FEE_SAT;
+  const outputs = [
+    { spk: p2wpkhSpkOf(pkU), value8: Number(change) },
+    { spk: spkMeta,          value8: 0 },
+  ];
+  const txBytes = buildFundTx({ utxos: ins, userPubkey: pkU, outputs, nLockTime: 0 }, sign);
+  return { txHex: hex(txBytes) };
+}
+
+// Coin logo (GBX:L). One transaction per chunk; the page chains them through
+// the change output. Creator-only by index rule; signed on device.
+export function buildLogoChunkTx({ cidHex, idx, total, hash16, data, utxos, pkU,
+                                   buildFundTx, sign, p2wpkhSpkOf }){
+  const m = logoChunkPayload(unhex(cidHex), idx, total, hash16, data);
+  const spkMeta = opReturn(m.raw);
+  const back = parseLogoChunkFromScriptHex(hex(spkMeta));
+  if (back === null || hex(back.cid) !== cidHex || back.idx !== idx || back.total !== total)
+    throw new Error('verifyOwnLogoChunk: round-trip failed');
   const { ins, sum } = selectUtxos(utxos, META_FEE_SAT + DUST_SAT);
   const change = sum - META_FEE_SAT;
   const outputs = [

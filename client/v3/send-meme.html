@@ -241,7 +241,7 @@ async function boot(){
   await ready();
   wallet=(window.GBXSession&&window.GBXSession.activeWallet)?window.GBXSession.activeWallet():null;
   if(!wallet||!wallet.mnemonic){say('err',tt('locked'));
-    setTimeout(()=>location.href='/v3/unlock.html?next='+encodeURIComponent(location.pathname),1400);return;}
+    setTimeout(()=>{ const u='/v3/unlock.html?next='+encodeURIComponent(location.pathname); location.href=u; },1400);return;}
   if(!await crypto_())return;
   keys=await window.GoldbrixCrypto.deriveKeypairFromMnemonic(wallet.mnemonic);
   pkHex=Array.from(new Uint8Array(keys.publicKey),x=>x.toString(16).padStart(2,'0')).join('');

@@ -143,6 +143,26 @@ function parseMeta2(tx){
   }
   return null;
 }
+// ── coin logo chunk: 'GBX:L:'+ver=1+cid(32)+idx(1)+total(1)+hash16(16)+dLen(1)+data.
+// Valid ONLY if the tx is signed by the creator pk. First complete set wins.
+function parseLogoChunk(tx){
+  for (const o of tx.vout){
+    const hex = (o.scriptPubKey && o.scriptPubKey.hex) || '';
+    if (!hex.startsWith('6a')) continue;
+    let data;
+    try { [data] = readPush(Buffer.from(hex,'hex'), 1); } catch { continue; }
+    if (!data.subarray(0,6).equals(Buffer.from('GBX:L:'))) continue;
+    if (data.length < 59 || data[6] !== 0x01) continue;
+    const cid = data.subarray(7,39);
+    const idx = data[39], total = data[40];
+    if (!(total>=1 && total<=21) || idx>=total) continue;
+    const hash16 = data.subarray(41,57);
+    const dLen = data[57];
+    if (!(dLen>=1 && dLen<=197) || data.length !== 58+dLen) continue;
+    return { cid: cid.toString('hex'), idx, total, hash16: hash16.toString('hex'), data: Buffer.from(data.subarray(58)) };
+  }
+  return null;
+}
 function witnessPks(tx){
   const out = new Set();
   for (const vin of (tx.vin||[])){
@@ -286,6 +306,12 @@ CREATE INDEX IF NOT EXISTS tu_live ON token_utxos(coin_id, pk) WHERE spent_heigh
 CREATE TABLE IF NOT EXISTS coin_meta(
   coin_id TEXT PRIMARY KEY, ticker TEXT NOT NULL, name TEXT NOT NULL,
   txid TEXT NOT NULL, height INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS coin_logo(
+  coin_id TEXT NOT NULL, idx INTEGER NOT NULL, total INTEGER NOT NULL,
+  hash16 TEXT NOT NULL, data BLOB NOT NULL, txid TEXT, height INTEGER,
+  PRIMARY KEY(coin_id, idx));
+CREATE TABLE IF NOT EXISTS coin_logo_full(
+  coin_id TEXT PRIMARY KEY, data BLOB NOT NULL, txid TEXT, height INTEGER);
 CREATE TABLE IF NOT EXISTS coin_meta2(
   coin_id TEXT PRIMARY KEY, desc TEXT NOT NULL DEFAULT '',
   links TEXT NOT NULL DEFAULT '', txid TEXT NOT NULL, height INTEGER NOT NULL);
@@ -340,6 +366,12 @@ const q = {
   m2Get:    db.prepare('SELECT desc,links FROM coin_meta2 WHERE coin_id=?'),
   m2Put:    db.prepare('INSERT OR IGNORE INTO coin_meta2(coin_id,desc,links,txid,height) VALUES(?,?,?,?,?)'),
   m2Rb:     db.prepare('DELETE FROM coin_meta2 WHERE height>?'),
+  lgPut:    db.prepare('INSERT OR IGNORE INTO coin_logo(coin_id,idx,total,hash16,data,txid,height) VALUES(?,?,?,?,?,?,?)'),
+  lgAll:    db.prepare('SELECT idx,total,hash16,data FROM coin_logo WHERE coin_id=? ORDER BY idx'),
+  lgFull:   db.prepare('SELECT coin_id FROM coin_logo_full WHERE coin_id=?'),
+  lgFullPut:db.prepare('INSERT OR IGNORE INTO coin_logo_full(coin_id,data,txid,height) VALUES(?,?,?,?)'),
+  lgRb:     db.prepare('DELETE FROM coin_logo WHERE height>?'),
+  lgFullRb: db.prepare('DELETE FROM coin_logo_full WHERE height>?'),
   cPk:      db.prepare('SELECT creator_pk FROM curves WHERE coin_id=?'),
   cSetPk:   db.prepare('UPDATE curves SET creator_pk=? WHERE coin_id=?'),
   cPut:     db.prepare(`INSERT INTO curves(coin_id,txid,vout,reserve,m,h_m,height,status)
@@ -384,6 +416,8 @@ const rollbackTo = db.transaction(h => {
   q.cRb.run(h);
   q.mRb.run(h);
   q.m2Rb.run(h);
+  q.lgRb.run(h);
+  q.lgFullRb.run(h);
   q.opRb.run(h);
   q.pRb.run(h);
   for (const {coin_id} of q.pAllIds.all()){
@@ -485,6 +519,21 @@ const applyBlock = db.transaction((h, blk) => {
       if (row2 && row2.creator_pk && witnessPks(tx).has(row2.creator_pk)
           && !q.m2Get.get(meta2.cid))
         q.m2Put.run(meta2.cid, meta2.desc, meta2.links, tx.txid, h);
+    }
+    const lg = parseLogoChunk(tx);
+    if (lg && !q.lgFull.get(lg.cid)){
+      const rowL = q.cPk.get(lg.cid);
+      if (rowL && rowL.creator_pk && witnessPks(tx).has(rowL.creator_pk)){
+        q.lgPut.run(lg.cid, lg.idx, lg.total, lg.hash16, lg.data, tx.txid, h);
+        const rows = q.lgAll.all(lg.cid);
+        if (rows.length && rows.length === rows[0].total
+            && rows.every(r => r.total === rows[0].total && r.hash16 === rows[0].hash16)){
+          const full = Buffer.concat(rows.map(r => r.data));
+          const want = rows[0].hash16;
+          const got = sha256(full).subarray(0,16).toString('hex');
+          if (got === want) q.lgFullPut.run(lg.cid, full, tx.txid, h);
+        }
+      }
     }
     // A declared transfer credits the recipient only when the output proves it.
     if (!it){

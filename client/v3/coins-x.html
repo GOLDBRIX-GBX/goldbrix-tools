@@ -35,6 +35,7 @@ html,body{margin:0;background:var(--bg-primary)}
 .cx-root .cx-spin{text-align:center;color:var(--text-muted);margin:50px 0;font-size:.85rem}
 .cx-root .cx-err{text-align:center;color:var(--red);margin:40px 0;font-size:.82rem}
 [dir="rtl"] .cx-root .cx-name{text-align:left}
+.cx-ava{width:34px;height:34px;border-radius:50%;background:var(--bg-input);border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;font-weight:700;color:var(--gold);margin-right:8px;flex:0 0 34px;overflow:hidden}.cx-ava img{width:100%;height:100%;object-fit:cover}
 </style>
 </head>
 <body>
@@ -162,15 +163,31 @@ html,body{margin:0;background:var(--bg-primary)}
           bottom = '<div class="cx-meta"><span class="cx-grad">'+tr('graduated')+(pp&&pp.price_sat?(' \u00b7 '+(Number(pp.price_sat)*0.01).toFixed(2)+' \u00b5GBX'):'')+'</span><span>'+(c.holders||0)+' '+tr('holders')+'</span></div>';
         else
           bottom = '<div class="cx-meta"><span>'+tr('closed')+'</span></div>';
-        card.innerHTML = '<div class="cx-row"><span class="cx-tick"></span><span class="cx-name"></span></div>'+
+        card.innerHTML = '<div class="cx-row"><span class="cx-ava"></span><span class="cx-tick"></span><span class="cx-name"></span></div>'+
                          (c.status==='graduated'&&pp ? '<div class="cx-meta"><span>AMM</span><span class="cx-res">'+fmtGBX(pp.gbx_sat)+'</span></div>' : '<div class="cx-meta"><span>'+tr('reserve')+'</span><span class="cx-res">'+fmtGBX(c.reserve_sat||'0')+'</span></div>')+bottom;
         card.querySelector('.cx-tick').textContent = tick;   /* textContent: chain data is untrusted */
         card.querySelector('.cx-name').textContent = name;
+        var ava = card.querySelector('.cx-ava');
+        ava.textContent = (c.ticker||'?').slice(0,1);
+        if (c.has_logo) cxLogo(c.coin_id, ava);
         card.addEventListener('click', function(){ location.href = '/v3/coin-x.html?coin='+encodeURIComponent(c.coin_id); });
         list.appendChild(card);
       });
     }
     if (d.scanned) el('cxScanned').textContent = tr('scanned',{n: d.scanned.toLocaleString(L==='ar'?'ar':L)});
+  }
+  var _cxLogoMem = {};
+  function cxLogo(cid, ava){
+    try{ var k='gbx_lchain_'+cid, hit=_cxLogoMem[cid]||sessionStorage.getItem(k);
+      if(hit){ ava.innerHTML='<img src="'+hit+'" alt="">'; return; } }catch(e){}
+    var get = window.GBXRead ? window.GBXRead.json('/api/curves/'+cid)
+                             : fetch('/api/curves/'+cid).then(function(r){return r.json();});
+    get.then(function(d){
+      if(!d || !d.logo) return;
+      _cxLogoMem[cid]=d.logo;
+      try{ sessionStorage.setItem('gbx_lchain_'+cid, d.logo); }catch(e){}
+      ava.innerHTML='<img src="'+d.logo+'" alt="">';
+    }).catch(function(){});
   }
   cxLoad();
 })();

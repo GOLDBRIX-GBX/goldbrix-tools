@@ -142,7 +142,7 @@ function renderHeld(held){
       '<div class="amt">'+fmt(c.amount)+'<small>'+esc(T('tokens'))+'</small></div></div>';
   }).join('');
   box.querySelectorAll('.coin').forEach(el=>el.addEventListener('click',()=>{
-    location.href='/v3/coin-x.html?coin='+el.dataset.cid;}));
+    { const u='/v3/coin-x.html?coin='+el.dataset.cid; location.href=u; }}));
 }
 
 function renderCreated(created){
@@ -166,7 +166,7 @@ function renderCreated(created){
       '</div>';
   }).join('')+'<div class="gnote">'+esc(T('gnote'))+'</div>';
   box.querySelectorAll('.coin').forEach(el=>el.addEventListener('click',()=>{
-    location.href='/v3/coin-x.html?coin='+el.dataset.cid;}));
+    { const u='/v3/coin-x.html?coin='+el.dataset.cid; location.href=u; }}));
 }
 
 async function main(){

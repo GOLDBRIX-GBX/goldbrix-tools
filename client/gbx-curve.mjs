@@ -324,3 +324,41 @@ export function parseIntentFromScriptHex(spkHex){
   const dv=new DataView(data.buffer,data.byteOffset);
   return { op:String.fromCharCode(data[6]), cid:hex(data.subarray(7,39)),
            amount:dv.getBigUint64(39), tokensOut:dv.getBigUint64(47), pk:hex(data.subarray(55,88)) }; }
+
+// ── coin logo on chain: 'GBX:L:'+ver(1)+cid(32)+idx(1)+total(1)+hash16(16)+dLen(1)+data.
+// The logo is written once by the creator, in chunks, and lives on the chain forever.
+export const LOGO_VER = 1;
+export const LOGO_CHUNK_MAX = 197;      // 255 - 6(tag) -1(ver) -32(cid) -1(idx) -1(total) -16(hash16) -1(dLen)
+export const LOGO_TOTAL_MAX = 21;       // ~4KB logo ceiling
+export const LOGO_BYTES_MAX = LOGO_CHUNK_MAX * LOGO_TOTAL_MAX;
+export function logoChunkPayload(cid, idx, total, hash16, data){
+  if (cid.length !== 32) throw new Error('cid must be 32 bytes');
+  if (!(total >= 1 && total <= LOGO_TOTAL_MAX)) throw new Error('total 1-'+LOGO_TOTAL_MAX);
+  if (!(idx >= 0 && idx < total)) throw new Error('idx out of range');
+  if (hash16.length !== 16) throw new Error('hash16 must be 16 bytes');
+  if (!(data.length >= 1 && data.length <= LOGO_CHUNK_MAX)) throw new Error('chunk 1-'+LOGO_CHUNK_MAX+' bytes');
+  const tag = new TextEncoder().encode('GBX:L:');
+  const raw = cat(tag, Uint8Array.of(LOGO_VER), cid, Uint8Array.of(idx), Uint8Array.of(total), hash16, Uint8Array.of(data.length), data);
+  const script = cat(Uint8Array.of(OP.RETURN), push(raw));
+  return { raw, script };
+}
+export function parseLogoChunkFromScriptHex(spkHex){
+  const b = unhex(spkHex);
+  if (b.length < 2 || b[0] !== OP.RETURN) return null;
+  let d;
+  if (b[1] <= 75) d = b.subarray(2);
+  else if (b[1] === 0x4c) d = b.subarray(3);
+  else return null;
+  const tag = new TextEncoder().encode('GBX:L:');
+  if (d.length < 59) return null;
+  for (let i = 0; i < 6; i++) if (d[i] !== tag[i]) return null;
+  if (d[6] !== LOGO_VER) return null;
+  const cid = d.subarray(7, 39);
+  const idx = d[39], total = d[40];
+  if (!(total >= 1 && total <= LOGO_TOTAL_MAX) || idx >= total) return null;
+  const hash16 = d.subarray(41, 57);
+  const dLen = d[57];
+  if (!(dLen >= 1 && dLen <= LOGO_CHUNK_MAX) || d.length !== 58 + dLen) return null;
+  const data = d.subarray(58, 58 + dLen);
+  return { cid, idx, total, hash16, data };
+}
