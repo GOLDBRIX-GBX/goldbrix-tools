@@ -129,101 +129,144 @@ async function deriveKeypairFromMnemonic(mnemonic) {
   };
 }
 
+async function _fedReadUtxos(address, target){
+  /* Federated read layer first: any live node from the on-chain registry. */
+  if (typeof window==='undefined' || !window.GBXRead) return null;
+  try { if (window.GBXReady) await window.GBXReady; } catch(_e){}
+  try {
+    const est = (target && target>0) ? Math.ceil(target/0.25)+400 : 1000;
+    const lim = Math.min(24000, Math.max(1000, est));
+    const d = await window.GBXRead.json('/api/utxos/'+address+'?limit='+lim, {timeout:120000});
+    const uns = (d && d.unspents) || [];
+    if (!uns.length) return null;
+    return uns;
+  } catch(_e){ return null; }
+}
+
+async function _fedBroadcast(rawtx){
+  /* Any live federated node can accept the transaction; the LP gateway is only a fallback. */
+  if (typeof window==='undefined') return null;
+  try { if (window.GBXReady) await window.GBXReady; } catch(_e){}
+  const nodes=(window.GBX_NODES||[]).slice();
+  for (const n of nodes){
+    let r, body;
+    try {
+      r = await fetch(String(n).replace(/\/+$/,'')+'/broadcast', {method:'POST', cache:'no-store', headers:{'Content-Type':'application/json'}, body:JSON.stringify({rawtx:rawtx})});
+      body = await r.json().catch(function(){return null;});
+    } catch(_e){ continue; }
+    const id = body && (body.txid || body.tx_hash);
+    if (id) return id;
+  }
+  return null;
+}
+
 async function fetchUtxos(address, target) {
+  const fed = await _fedReadUtxos(address, target);
+  if (fed) return fed;
   const res = (target && target>0)
-    ? await _lpFetchFailover(`/utxos/${address}?target=${target}`)
-    : await fetch(`${API_BASE}/utxos/${address}?limit=1000`);
-  if (!res.ok) throw new Error(`UTXO fetch failed: ${res.status}`);
+    ? await _lpFetchFailover('/utxos/'+address+'?target='+target)
+    : await fetch(API_BASE+'/utxos/'+address+'?limit=1000');
+  if (!res.ok) throw new Error('UTXO fetch failed: '+res.status);
   const data = await res.json();
   if (data.target_unmet) { const e = new Error('MAX_PER_TX'); e.maxPerTx = data.max_per_tx; throw e; }
   return data.unspents || [];
 }
 
-async function sendGBX(mnemonic, fromAddress, toAddress, amountGbx, feeRateSatsPerByte = 30) {
+async function sendGBX(mnemonic, fromAddress, toAddress, amountGbx, feeRateSatsPerByte = 30, onProgress = null) {
   const { keypair, address: derivedAddr } = await deriveKeypairFromMnemonic(mnemonic);
   if (derivedAddr !== fromAddress) {
     throw new Error(`Mnemonic mismatch. Derived: ${derivedAddr}, Expected: ${fromAddress}`);
   }
 
-  const utxos = await fetchUtxos(fromAddress, amountGbx + 0.01);  // WITH a target -> LP gateway (large UTXOs + scriptPubKey; read-api limit=1000 only yielded 250 GBX)
+  const utxos = await fetchUtxos(fromAddress, amountGbx + 0.05);
   if (utxos.length === 0) throw new Error('No UTXOs available');
 
-  // V2.21: filter immature coinbase UTXOs (must have 100+ confirmations)
   const matureUtxos = utxos.filter(u => u.spendable !== false);
   if (matureUtxos.length === 0) {
     throw new Error('No mature coins available. Mining rewards need 100 block confirmations.');
   }
 
-  const amountSats = Math.round(amountGbx * 1e8);
-  const sortedUtxos = [...matureUtxos].sort((a, b) =>
+  const sorted = [...matureUtxos].sort((a, b) =>
     Math.round(b.amount * 1e8) - Math.round(a.amount * 1e8)
   );
 
-  const psbt = new bitcoin.Psbt({ network: GOLDBRIX_NETWORK });
-  let totalIn = 0;
-  const selectedUtxos = [];
-  const estimatedFee = 1500;
+  /* The wallet splits a large amount into as many chained transactions as
+     needed (disjoint inputs, broadcast one after another) so the user never
+     sees a per-transaction cap. */
+  const MAX_INPUTS = 1200;
+  let remainingSats = Math.round(amountGbx * 1e8);
+  let idx = 0;
+  const txids = [];
+  let totalFeeSats = 0;
 
-  for (const utxo of sortedUtxos) {
-    const utxoSats = Math.round(utxo.amount * 1e8);
-    psbt.addInput({
-      hash: utxo.txid,
-      index: utxo.vout,
-      witnessUtxo: {
-        script: Buffer.from(utxo.scriptPubKey, 'hex'),
-        value: utxoSats
-      }
-    });
-    selectedUtxos.push(utxo);
-    totalIn += utxoSats;
-    if (totalIn >= amountSats + estimatedFee) break;
-  }
-
-  if (totalIn < amountSats + estimatedFee) {
-    throw new Error(`Insufficient. Have ${totalIn/1e8}, need ${(amountSats+estimatedFee)/1e8}`);
-  }
-
-  psbt.addOutput({ address: toAddress, value: amountSats });
-
-  const estimatedSize = selectedUtxos.length * 68 + 2 * 31 + 11;
-  const fee = estimatedSize * feeRateSatsPerByte;
-  const change = totalIn - amountSats - fee;
-
-  if (change > 546) {
-    psbt.addOutput({ address: fromAddress, value: change });
-  }
-
-  for (let i = 0; i < selectedUtxos.length; i++) {
-    psbt.signInput(i, keypair);
-  }
-  psbt.finalizeAllInputs();
-
-  const _txObj = psbt.extractTransaction();
-  const rawTxHex = _txObj.toHex();
-  const _localTxid = (typeof _txObj.getId === 'function') ? _txObj.getId() : '';
-
-  const broadcastRes = await _lpFetchFailover('/broadcast', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ rawtx: rawTxHex })
-  });
-
-  if (!broadcastRes.ok) {
-    const err = await broadcastRes.text();
-    if (_localTxid && /-27|already in (the )?(utxo set|block ?chain)|transaction already/i.test(err)) {
-      return { txid: _localTxid, rawTx: rawTxHex, fee: fee / 1e8, feeSats: fee, alreadyConfirmed: true };
+  while (remainingSats > 0) {
+    if (idx >= sorted.length) {
+      const e = new Error('INSUFFICIENT');
+      e.shortGbx = remainingSats / 1e8; e.txids = txids.slice();
+      throw e;
     }
-    try{ console.error('GBX_BROADCAST_FAIL:', err); }catch(_e){}
-    throw new Error('BROADCAST_FAILED');
+    const psbt = new bitcoin.Psbt({ network: GOLDBRIX_NETWORK });
+    const batch = [];
+    let totalIn = 0;
+    while (idx < sorted.length && batch.length < MAX_INPUTS) {
+      const u = sorted[idx];
+      const sat = Math.round(u.amount * 1e8);
+      psbt.addInput({
+        hash: u.txid, index: u.vout,
+        witnessUtxo: { script: Buffer.from(u.scriptPubKey, 'hex'), value: sat }
+      });
+      batch.push(u); totalIn += sat; idx++;
+      const feeNow = (batch.length * 68 + 2 * 31 + 11) * feeRateSatsPerByte;
+      if (totalIn >= remainingSats + feeNow) break;
+    }
+    const fee = (batch.length * 68 + 2 * 31 + 11) * feeRateSatsPerByte;
+    const sendSats = Math.min(remainingSats, totalIn - fee);
+    if (sendSats <= 546) {
+      const e = new Error('INSUFFICIENT');
+      e.shortGbx = remainingSats / 1e8; e.txids = txids.slice();
+      throw e;
+    }
+    psbt.addOutput({ address: toAddress, value: sendSats });
+    const change = totalIn - sendSats - fee;
+    if (change > 546) psbt.addOutput({ address: fromAddress, value: change });
+    for (let i = 0; i < batch.length; i++) psbt.signInput(i, keypair);
+    psbt.finalizeAllInputs();
+    const txObj = psbt.extractTransaction();
+    const rawTxHex = txObj.toHex();
+    const localTxid = (typeof txObj.getId === 'function') ? txObj.getId() : '';
+
+    let txid = await _fedBroadcast(rawTxHex);
+    if (!txid) {
+      const res = await _lpFetchFailover('/broadcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rawtx: rawTxHex })
+      });
+      if (!res.ok) {
+        const err = await res.text();
+        if (localTxid && /-27|already in (the )?(utxo set|block ?chain)|transaction already/i.test(err)) {
+          txid = localTxid;
+        } else {
+          try{ console.error('GBX_BROADCAST_FAIL:', err); }catch(_e){}
+          const e = new Error(txids.length ? 'PARTIAL_SEND' : 'BROADCAST_FAILED');
+          e.txids = txids.slice();
+          e.sentGbx = (Math.round(amountGbx * 1e8) - remainingSats) / 1e8;
+          throw e;
+        }
+      } else {
+        const j = await res.json().catch(() => null);
+        txid = (j && j.txid) || localTxid;
+      }
+    }
+    txids.push(txid);
+    remainingSats -= sendSats;
+    totalFeeSats += fee;
+    if (typeof onProgress === 'function') {
+      try { onProgress({ sentGbx: (Math.round(amountGbx * 1e8) - remainingSats) / 1e8, totalGbx: amountGbx, txids: txids.slice() }); } catch (_e) {}
+    }
   }
 
-  const result = await broadcastRes.json();
-  return {
-    txid: result.txid || _localTxid,
-    rawTx: rawTxHex,
-    fee: fee / 1e8,
-    feeSats: fee
-  };
+  return { txid: txids[txids.length - 1], txids: txids, batches: txids.length, fee: totalFeeSats / 1e8, feeSats: totalFeeSats };
 }
 
 /**
