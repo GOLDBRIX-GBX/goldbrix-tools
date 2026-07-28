@@ -9,7 +9,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="/assets/mark/g-mark-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/goldbrix-brand-180.png">
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#F5CC75">
+<meta name="theme-color" content="#1c1610">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -79,7 +79,7 @@ body { padding-bottom: 110px; }
   width: 64px; height: 64px;
   border-radius: 16px;
   border: 2px solid var(--gold);
-  background: url('/assets/brand/goldbrix-brand-180.png') center/cover;
+  background: url('/assets/coin/gbx-coin-256.png') center/cover;
   flex-shrink: 0;
   box-shadow: 0 0 24px rgba(245, 204, 117, 0.3);
 }
@@ -419,7 +419,7 @@ input::-moz-placeholder, textarea::-moz-placeholder {
   <div class="gbx-price-label" data-i18n="price.label">Price USD</div>
   <div class="gbx-price-value" id="gbxPrice">$0.1000</div>
   <div class="gbx-price-change" id="gbxChange">↑ +0.00% 24h</div>
-  <div class="gbx-price-source" data-i18n="price.source">via Onramp Bridge · USDC ↔ GBX</div>
+  <div class="gbx-price-source" data-i18n="price.source">real executed swaps · USDC ↔ GBX</div>
 </div>
 
 <!-- GBX CHART (componenta unica PriceChart — toate functiile, 5 limbi) -->
@@ -500,9 +500,9 @@ input::-moz-placeholder, textarea::-moz-placeholder {
   <div style="background:rgba(245,204,117,0.06);border:1px solid rgba(245,204,117,0.2);border-radius:8px;padding:10px;display:flex;align-items:flex-start;gap:8px;">
     <span style="font-size:12px;">ℹ️</span>
     <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#fff;line-height:1.5;">
-      <strong style="color:#F5CC75;" data-i18n="activity.note_title">PRE-LISTING REFERENCE</strong>
+      <strong style="color:#F5CC75;" data-i18n="activity.note_title">PRICE SOURCE</strong>
       <br>
-      <span data-i18n="activity.note_text">Price $0.10 stable peg until Phase 2 AMM · Real price discovery starts with DEX listing.</span>
+      <span data-i18n="activity.note_text">Every price on this page comes from executed on-chain swaps (L1 HTLC ↔ USDC) — measured, never declared.</span>
     </div>
   </div>
 </div>
@@ -596,10 +596,10 @@ const I18N_gbx = {
     'activity.bridge': 'Bridge + Trades',
     'activity.fees': 'Real on-chain',
     'activity.onchain': 'On-chain',
-    'activity.note_title': 'PRE-LISTING REFERENCE',
-    'activity.note_text': 'Price $0.10 stable peg until Phase 2 AMM · Phase 1.5 LIVE: dev_buy + graduations are REAL on-chain burns · Real price discovery starts with DEX listing.', 'page.badge': 'PoW',
+    'activity.note_title': 'PRICE SOURCE',
+    'activity.note_text': 'Every price comes from executed on-chain swaps (L1 HTLC ↔ USDC) — measured from the chain, never declared.', 'page.badge': 'PoW',
     'status.mining': 'MINING LIVE',
-    'price.label': 'Price USD', 'price.source': 'via Onramp Bridge · USDC ↔ GBX',
+    'price.label': 'Price USD', 'price.source': 'real executed swaps · USDC ↔ GBX',
     'chart.loading': 'LOADING CHART...',
     'mining.title': 'Mining Progress', 'mining.mined': 'Mined', 'mining.max': 'Max',
     'stats.hashrate': 'Hashrate', 'stats.block': 'Block Height',
@@ -616,10 +616,10 @@ const I18N_gbx = {
     'activity.bridge': 'Bridge + Trade-uri',
     'activity.fees': 'Real on-chain',
     'activity.onchain': 'On-chain',
-    'activity.note_title': 'REFERINȚĂ PRE-LISTARE',
-    'activity.note_text': 'Preț $0.10 stabil până la Faza 2 AMM · Faza 1.5 LIVE: dev_buy + graduații sunt arderi REALE on-chain · Descoperirea reală a prețului începe cu listare DEX.', 'page.badge': 'PoW',
+    'activity.note_title': 'SURSA PREȚULUI',
+    'activity.note_text': 'Fiecare preț vine din swap-uri executate on-chain (L1 HTLC ↔ USDC) — măsurat din lanț, niciodată declarat.', 'page.badge': 'PoW',
     'status.mining': 'MINING LIVE',
-    'price.label': 'Preț USD', 'price.source': 'via Onramp Bridge · USDC ↔ GBX',
+    'price.label': 'Preț USD', 'price.source': 'real executed swaps · USDC ↔ GBX',
     'chart.loading': 'SE ÎNCARCĂ GRAFIC...',
     'mining.title': 'Progres Mining', 'mining.mined': 'Minat', 'mining.max': 'Max',
     'stats.hashrate': 'Hashrate', 'stats.block': 'Înălțime Bloc',
@@ -636,10 +636,10 @@ const I18N_gbx = {
     'activity.bridge': 'Bridge + Trades',
     'activity.fees': 'Echt on-chain',
     'activity.onchain': 'On-chain',
-    'activity.note_title': 'VOR-LISTING REFERENZ',
-    'activity.note_text': 'Preis $0.10 stabil bis Phase 2 AMM · Phase 1.5 LIVE: dev_buy + Graduierungen sind ECHTE On-Chain-Burns · Echte Preisfindung beginnt mit DEX-Listing.', 'page.badge': 'PoW',
+    'activity.note_title': 'PREISQUELLE',
+    'activity.note_text': 'Jeder Preis stammt aus ausgeführten On-Chain-Swaps (L1 HTLC ↔ USDC) — gemessen aus der Kette, nie deklariert.', 'page.badge': 'PoW',
     'status.mining': 'MINING LIVE',
-    'price.label': 'Preis USD', 'price.source': 'via Onramp Bridge · USDC ↔ GBX',
+    'price.label': 'Preis USD', 'price.source': 'real executed swaps · USDC ↔ GBX',
     'chart.loading': 'LADE CHART...',
     'mining.title': 'Mining Fortschritt', 'mining.mined': 'Gemined', 'mining.max': 'Max',
     'stats.hashrate': 'Hashrate', 'stats.block': 'Block Höhe',
@@ -656,8 +656,8 @@ const I18N_gbx = {
     'activity.bridge': '桥接+交易',
     'activity.fees': '链上真实',
     'activity.onchain': '链上',
-    'activity.note_title': '预上市参考',
-    'activity.note_text': '价格 $0.10 稳定锚定，直到第二阶段 AMM · 阶段1.5 LIVE: dev_buy + 毕业是真实链上销毁 · 真正的价格发现从 DEX 上市开始。', 'page.badge': 'PoW',
+    'activity.note_title': '价格来源',
+    'activity.note_text': '每个价格都来自已执行的链上兑换（L1 HTLC ↔ USDC）——从链上测量，绝非声明。', 'page.badge': 'PoW',
     'status.mining': '挖矿进行中',
     'price.label': '价格 USD', 'price.source': '通过 Onramp 桥 · USDC ↔ GBX',
     'chart.loading': '加载图表...',
@@ -676,8 +676,8 @@ const I18N_gbx = {
     'activity.bridge': 'الجسر + التداولات',
     'activity.fees': 'حقيقي على السلسلة',
     'activity.onchain': 'على السلسلة',
-    'activity.note_title': 'مرجع ما قبل الإدراج',
-    'activity.note_text': 'السعر 0.10 دولار مستقر حتى المرحلة 2 AMM · المرحلة 1.5 LIVE: dev_buy + التخرج هي حروق حقيقية على السلسلة · يبدأ اكتشاف السعر الحقيقي مع إدراج DEX.', 'page.badge': 'PoW',
+    'activity.note_title': 'مصدر السعر',
+    'activity.note_text': 'كل سعر يأتي من مبادلات منفذة على السلسلة (L1 HTLC ↔ USDC) — يقاس من السلسلة ولا يُعلن أبداً.', 'page.badge': 'PoW',
     'status.mining': 'التعدين مباشر',
     'price.label': 'السعر USD', 'price.source': 'عبر جسر Onramp · USDC ↔ GBX',
     'chart.loading': 'تحميل الرسم البياني...',
@@ -713,8 +713,13 @@ function applyI18n_gbx() {
 // CONFIG
 // ═══════════════════════════════════════════
 const API_GBX = 'https://goldbrix.app';  // GoldBrix chain
-const API_BRIDGE = 'https://goldbrix.app'; // Onramp + Launchpad
-let GBX_PRICE_USD = 0.10; // V7.0 live
+const API_BRIDGE = 'https://goldbrix.app'; // legacy anchor (kept for SPA loader; data reads go through GBXRead)
+async function gj(p){
+  for(var i=0;i<20&&!window.GBXRead;i++)await new Promise(function(r){setTimeout(r,100);});
+  if(window.GBXRead) return await window.GBXRead.json(p);
+  return await (await fetch(p)).json();
+}
+let GBX_PRICE_USD = null; // real executed price only (federated); null until known
 
 // ═══════════════════════════════════════════
 // FORMATTING
@@ -745,104 +750,65 @@ function goBack() {
 // LOAD GBX STATS
 // ═══════════════════════════════════════════
 async function loadGbxStats() {
-  // ═══ ALL LIVE DATA FROM /launchpad/gbx/stats ═══
+  // federated: chain from /api/status, market from /api/gbx/stats (executed trades only)
   try {
-    const r = await fetch(API_BRIDGE + '/launchpad/gbx/stats');
-    if (r.ok) {
-      const d = await r.json();
-      
-      // Block height
-      const block = d.blocks || 0;
-      document.getElementById('statBlock').textContent = '#' + fmtNum(block);
-      const statBlockSub = document.getElementById('statBlockSub');
-      if (statBlockSub) statBlockSub.textContent = block > 0 ? 'Mainnet LIVE' : 'Confirming...';
-      
-      // Supply mined (real from chain)
-      const supply = d.supply_mined_gbx || 0;
-      document.getElementById('miningSupply').textContent = fmtNum(supply);
-      
-      // Mining progress with REAL 15M cap
-      const maxSupply = d.max_supply_gbx || 15000000;
-      const pct = (supply / maxSupply) * 100;
-      document.getElementById('miningPct').textContent = pct.toFixed(2) + '%';
-      document.getElementById('miningFill').style.width = pct.toFixed(2) + '%';
-      
-      // Hashrate (KH/s or MH/s based on size)
-      const hps = d.networkhashps || 0;
-      let hashStr;
-      if (hps > 1e9) hashStr = (hps/1e9).toFixed(2) + ' GH/s';
-      else if (hps > 1e6) hashStr = (hps/1e6).toFixed(2) + ' MH/s';
-      else if (hps > 1e3) hashStr = (hps/1e3).toFixed(1) + ' KH/s';
-      else hashStr = hps.toFixed(0) + ' H/s';
-      document.getElementById('statHashrate').textContent = hashStr;
-      
-      // Price (live from bridge reference)
-      const price = d.price_usd || 0.10; GBX_PRICE_USD = price;
+    const st = await gj('/api/status');
+    const block = st.best_block_height || 0;
+    document.getElementById('statBlock').textContent = '#' + fmtNum(block);
+    const statBlockSub = document.getElementById('statBlockSub');
+    if (statBlockSub) statBlockSub.textContent = st.synced ? 'Mainnet LIVE' : 'Syncing...';
+
+    const supply = Number(st.circulating_gbx || 0);
+    document.getElementById('miningSupply').textContent = fmtNum(supply);
+    const maxSupply = 15000000;
+    const pct = (supply / maxSupply) * 100;
+    document.getElementById('miningPct').textContent = pct.toFixed(2) + '%';
+    document.getElementById('miningFill').style.width = pct.toFixed(2) + '%';
+
+    const hps = Number(st.networkhashps || 0);
+    let hashStr;
+    if (hps > 1e9) hashStr = (hps/1e9).toFixed(2) + ' GH/s';
+    else if (hps > 1e6) hashStr = (hps/1e6).toFixed(2) + ' MH/s';
+    else if (hps > 1e3) hashStr = (hps/1e3).toFixed(1) + ' KH/s';
+    else hashStr = hps ? hps.toFixed(0) + ' H/s' : '—';
+    document.getElementById('statHashrate').textContent = hashStr;
+
+    let mk = null;
+    try { mk = await gj('/api/gbx/stats'); } catch(_) {}
+    if (mk && mk.trades > 0 && mk.last_price_usd) {
+      const price = Number(mk.last_price_usd); GBX_PRICE_USD = price;
       document.getElementById('gbxPrice').textContent = '$' + price.toFixed(4);
-      
-      // Market Cap (real calculated)
-      document.getElementById('statMcap').textContent = fmtUsd(d.market_cap_usd || 0);
-      
-      // FDV (real calculated with 15M)
-      const fdvUsd = d.fdv_usd || 0;
-      let fdvStr;
-      if (fdvUsd >= 1e6) fdvStr = '$' + (fdvUsd/1e6).toFixed(2) + 'M';
-      else if (fdvUsd >= 1e3) fdvStr = '$' + (fdvUsd/1e3).toFixed(1) + 'K';
-      else fdvStr = '$' + fdvUsd.toFixed(0);
-      document.getElementById('statFdv').textContent = fdvStr;
-      
-      // 24H Volume (real from trades)
-      document.getElementById('statVol').textContent = fmtUsd(d.volume_24h_usd || 0);
-      
-      // ═══ ALSO update Activity Cards ═══
+      document.getElementById('statMcap').textContent = fmtUsd(supply * price);
+      const fdvUsd = maxSupply * price;
+      document.getElementById('statFdv').textContent = fdvUsd >= 1e6 ? '$' + (fdvUsd/1e6).toFixed(2) + 'M' : fmtUsd(fdvUsd);
+      document.getElementById('statVol').textContent = fmtUsd(Number(mk.volume_24h_usd||0));
       const actVol = document.getElementById('actVol24h');
-      if (actVol) {
-        const vol = d.volume_24h_usd || 0;
-        actVol.textContent = vol >= 1e6 ? '$' + (vol/1e6).toFixed(2) + 'M' : 
-                              vol >= 1e3 ? '$' + (vol/1e3).toFixed(1) + 'K' :
-                              '$' + vol.toFixed(0);
-      }
+      if (actVol) { const vol = Number(mk.volume_24h_usd||0); actVol.textContent = vol >= 1e6 ? '$' + (vol/1e6).toFixed(2) + 'M' : vol >= 1e3 ? '$' + (vol/1e3).toFixed(1) + 'K' : '$' + vol.toFixed(0); }
       const actTxns = document.getElementById('actTxns24h');
-      if (actTxns) actTxns.textContent = fmtNum(d.txns_24h || 0);
-      
-      // 24H Transactions (real)
-      document.getElementById('statTxns').textContent = fmtNum(d.txns_24h || 0);
-      
-      // Last update indicator (optional)
-      console.log('[GBX] Stats updated:', new Date().toLocaleTimeString());
+      if (actTxns) actTxns.textContent = fmtNum(Number(mk.trades_24h||0));
+      document.getElementById('statTxns').textContent = fmtNum(Number(mk.trades_24h||0));
+    } else {
+      GBX_PRICE_USD = null;
+      ['gbxPrice','statMcap','statFdv','statVol','statTxns'].forEach(function(id){ var el=document.getElementById(id); if(el) el.textContent='—'; });
     }
   } catch(e) {
-    console.warn('[gbx] stats fetch failed:', e);
+    console.warn('[gbx] federated stats failed:', e);
   }
-  
-  // ═══ BURNS FROM /launchpad/burns/total ═══
+
+  // burns — federated /api/burns (chain-measured)
   try {
-    const r = await fetch(API_BRIDGE + '/launchpad/burns/total');
-    if (r.ok) {
-      const b = await r.json();
-      const burned = parseFloat(b.total_burned_gbx || 0);
-      const events = b.events_count || 0;
-      const burned24h = parseFloat(b.burned_24h || 0);
-      
-      // ═══ HONEST DISPLAY: REAL on-chain burns as headline ═══
-      const realBurns = parseFloat(b.real_burns_gbx || 0);
-      const virtualTotal = Math.max(0, burned - realBurns);
-      // Show REAL as the headline number (this is the TRUTH)
-      document.getElementById('burnTotal').textContent = fmt(realBurns) + ' GBX';
-      const elVirtual = document.getElementById('burnVirtual');
-      if (elVirtual) elVirtual.textContent = fmt(virtualTotal);
-      
-      // ═══ Also update Activity Burns 24H ═══
-      const actBurns = document.getElementById('actBurns24h');
-      if (actBurns) {
-        const realAmount = parseFloat(b.real_burns_gbx || 0);
-        actBurns.textContent = realAmount > 0 ? fmt(realAmount) + ' GBX' : '0 GBX';
-      }
-      document.getElementById('burnUsd').textContent = fmtUsd(parseFloat(b.real_burns_gbx || 0) * GBX_PRICE_USD) + ' USD value';
-    }
+    const b = await gj('/api/burns');
+    const realBurns = Number(b.chain_total_sat || 0) / 1e8;
+    document.getElementById('burnTotal').textContent = fmt(realBurns) + ' GBX';
+    const elVirtual = document.getElementById('burnVirtual');
+    if (elVirtual) elVirtual.textContent = fmt(0);
+    const actBurns = document.getElementById('actBurns24h');
+    if (actBurns) actBurns.textContent = Number(b.chain_burn_utxos||0) + ' UTXO';
+    const bu = document.getElementById('burnUsd');
+    if (bu) bu.textContent = (GBX_PRICE_USD ? fmtUsd(realBurns * GBX_PRICE_USD) + ' USD value' : '—');
   } catch(e) {
-    document.getElementById('burnTotal').textContent = '0 GBX';
-    document.getElementById('burnUsd').textContent = '$0 USD value';
+    document.getElementById('burnTotal').textContent = '—';
+    const bu = document.getElementById('burnUsd'); if (bu) bu.textContent = '—';
   }
 }
 
@@ -863,7 +829,7 @@ async function loadGbxStats() {
   (function _startChart(){
     if (!window.PriceChart) { setTimeout(_startChart, 200); return; }
     PriceChart.init({
-      candlesUrl: function(){ return API_BRIDGE + '/launchpad/gbx/candles'; },
+      candlesUrl: function(){ return (window.GBX_LAST_NODE||'https://goldbrix.app/api')+'/gbx/candles'; },
       usdMultiplier: function(){ return 1; },
       defaultChartType: 'candles', storageKey: 'gbx_chart_native',
       fitContent: true,
@@ -878,7 +844,7 @@ async function loadGbxStats() {
     try{ applyI18n_gbx(); }catch(e){}
     try{ loadGbxStats(); }catch(e){}
     try{ if(window.PriceChart) PriceChart.init({
-      candlesUrl: function(){ return API_BRIDGE + '/launchpad/gbx/candles'; },
+      candlesUrl: function(){ return (window.GBX_LAST_NODE||'https://goldbrix.app/api')+'/gbx/candles'; },
       usdMultiplier: function(){ return 1; },
       defaultChartType: 'candles', storageKey: 'gbx_chart_native',
       fitContent: true,

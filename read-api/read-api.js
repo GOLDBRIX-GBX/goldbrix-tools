@@ -124,6 +124,8 @@ async function getStatus() {
   try {
     const blockchain = JSON.parse(await runCli(['getblockchaininfo']));
     const peers = Number(await runCli(['getconnectioncount']));
+    let hashps = null;
+    try { hashps = Number(await runCli(['getnetworkhashps'])); } catch (e) {}
     let utxo = { txouts: null, circulating_gbx: null };
     try { utxo = await getUtxoSet(); } catch (e) { console.warn('[utxoset]', e.message); }
 
@@ -135,6 +137,7 @@ async function getStatus() {
       txouts: utxo.txouts,
       circulating_gbx: utxo.circulating_gbx,
       peer_count: peers,
+      networkhashps: hashps,
       synced: blockchain.initialblockdownload === false,
       updated_at: Math.floor(Date.now() / 1000),
     };

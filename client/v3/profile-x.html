@@ -104,10 +104,15 @@ a.coin{color:var(--gold);text-decoration:none}
 </div>
 <div id="ownerActs"></div>
 <div id="walletsWrap"></div>
-<div class="card">
+<div class="card" onclick="(function(){var u='/v3/gbx.html';window.location.href=u;})()" style="cursor:pointer;">
   <div class="sect" id="tBal">Balance</div>
-  <div class="huge" id="balG">—</div>
-  <div class="usd" id="balU"></div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <img src="/assets/coin/gbx-coin-96.png" alt="GBX" style="width:40px;height:40px;border-radius:50%;flex-shrink:0;box-shadow:0 0 12px rgba(245,204,117,0.35);">
+    <div style="min-width:0;">
+      <div class="huge" id="balG">—</div>
+      <div class="usd" id="balU"></div>
+    </div>
+  </div>
 </div>
 <div class="card">
   <div class="sect" id="tPnl">Portfolio</div>
