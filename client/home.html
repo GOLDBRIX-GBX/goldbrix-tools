@@ -95,9 +95,18 @@
   .nl-meta { font-size: 9px; color: #eee; margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
 
   /* SEARCH */
-  .search-wrap { padding: 0 14px 10px; }
-  .search-input { width: 100%; background: #111; border: 1px solid #3a3025; color: #fff; padding: 11px 14px; border-radius: 10px; font-size: 13px; font-family: 'JetBrains Mono', monospace; }
-  .search-input:focus { outline: none; border-color: #F5CC75; }
+  .search-wrap { padding: 4px 14px 12px; }
+  .search-box { position: relative; }
+  .search-ico { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none; opacity: .9; }
+  .search-box .search-input { padding-right: 44px; }
+  .search-results { margin-top: 8px; }
+  .search-results .sr-row { display: flex; align-items: center; gap: 10px; background: #1c1610; border: 1px solid var(--gold-dim, #D4A85A); border-radius: 10px; padding: 10px 12px; margin-bottom: 6px; cursor: pointer; }
+  .search-results .sr-t { color: var(--gold, #F5CC75); font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+  .search-results .sr-n { color: #FFFDF7; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  .search-results .sr-none { color: var(--gold-bright, #FFE099); font-size: 12px; padding: 8px 4px; font-family: 'JetBrains Mono', monospace; }
+  .search-input { width: 100%; background: linear-gradient(135deg, #1c1610, #241c12); border: 1px solid var(--gold-dim, #D4A85A); color: #FFFDF7; padding: 13px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; font-family: 'JetBrains Mono', monospace; box-shadow: 0 2px 10px rgba(0,0,0,0.35); transition: border-color .15s, box-shadow .15s; }
+  .search-input::placeholder { color: var(--gold-bright, #FFE099); opacity: 1; }
+  .search-input:focus { outline: none; border-color: var(--gold, #F5CC75); box-shadow: 0 0 0 3px var(--gold-glow, rgba(245,204,117,0.20)); }
 
   /* FILTERS */
   .filters { padding: 0 14px 12px; display: flex; flex-wrap: wrap; gap: 7px; }
@@ -286,9 +295,16 @@ window.GBXFed=(function(){
 </div>
 
 <!-- PROMOTE BANNER -->
+<div class="search-wrap">
+  <div class="search-box">
+    <input class="search-input" id="searchInput" type="text" placeholder="Search coins by name or ticker..." data-t-ph="searchPh" oninput="filterCoins()" autocomplete="off">
+    <span class="search-ico">🔍</span>
+  </div>
+  <div class="search-results" id="searchResults" style="display:none;"></div>
+</div>
 <div class="sec-title">🫧 <span data-t="h_liveMarket">LIVE MARKET MAP</span></div>
 <div class="bubble-wrap" id="bubbleWrap"><div class="loading">Loading bubbles...</div></div>
-<div class="sec-title">🆕 NEW <span data-t="h_newLaunches">NEW LAUNCHES</span></div>
+<div class="sec-title">🆕 <span data-t="h_newLaunches">NEW LAUNCHES</span></div>
 <div class="new-launches" id="newLaunches"><div class="loading">Loading...</div></div>
 <!-- ROAD TO GRADUATION — harta interactiva identica, dimensiune = % graduation -->
 <div class="sec-title" id="gradMapTitle" style="display:none;">🎓 <span id="gradMapTitleTxt">ROAD TO GRADUATION</span></div>
@@ -376,10 +392,7 @@ window.GBXFed=(function(){
 <div class="sec-title" id="gradSecTitle" style="display:none;">🎓 <span data-t="h_graduated">GRADUATED · ON AMM</span></div>
 <div class="new-launches" id="graduatedList" style="display:none;"></div>
 
-<!-- SEARCH + FILTERS -->
-<div class="search-wrap">
-  <input class="search-input" id="searchInput" type="text" placeholder="🔍 Search coins by name or ticker..." data-t-ph="searchPh" oninput="filterCoins()">
-</div>
+<!-- SEARCH (moved above market map) -->
 <div class="filters">
   <button class="filter" data-sort="volume" data-t="filterHot">🔥 Hot</button>
   <button class="filter" data-sort="created_at" data-t="filterNew">✨ New</button>
@@ -698,13 +711,33 @@ window.GBXFed=(function(){
     });
   });
 
-  // SEARCH
+  // SEARCH — instant results under the box + filters the big list below
   window.filterCoins = function() {
-    var q = document.getElementById('searchInput').value.toLowerCase();
+    var q = document.getElementById('searchInput').value.toLowerCase().trim();
     document.querySelectorAll('.coin-row').forEach(function(row) {
       var text = row.textContent.toLowerCase();
-      row.style.display = text.includes(q) ? 'flex' : 'none';
+      row.style.display = (!q || text.includes(q)) ? 'flex' : 'none';
     });
+    var box = document.getElementById('searchResults');
+    if (!box) return;
+    if (!q) { box.style.display='none'; box.innerHTML=''; return; }
+    var hits = (allCoins||[]).filter(function(c){
+      return (c.ticker||'').toLowerCase().includes(q) || (c.name||'').toLowerCase().includes(q);
+    }).slice(0,8);
+    if (!hits.length) {
+      var NL={en:'No coins match',ro:'Nicio monedă găsită',de:'Keine Münzen gefunden',zh:'没有匹配的代币',ar:'لا توجد عملات مطابقة'};
+      var L=(localStorage.getItem('gbx_lang')||'en');
+      box.innerHTML = '<div class="sr-none">'+(NL[L]||NL.en)+'</div>';
+    } else {
+      box.innerHTML = hits.map(function(c){
+        var av = c.image_url ? '<img loading="lazy" src="'+c.image_url+'" style="width:26px;height:26px;border-radius:50%;object-fit:cover;">' : '<span style="width:26px;height:26px;border-radius:50%;background:#3a3025;display:inline-flex;align-items:center;justify-content:center;color:var(--gold,#F5CC75);font-weight:800;font-size:12px;">'+((c.ticker||'?')[0])+'</span>';
+        return '<div class="sr-row" data-cid="'+c.id+'">'+av+'<span class="sr-t">$'+(c.ticker||'?')+'</span><span class="sr-n">'+(c.name||'')+'</span><span style="color:var(--gold,#F5CC75);opacity:.7;">→</span></div>';
+      }).join('');
+      box.querySelectorAll('.sr-row').forEach(function(r){
+        r.onclick=function(){ var u='/v3/coin-x.html?coin='+r.dataset.cid; window.location.href=u; };
+      });
+    }
+    box.style.display='block';
   };
 
   // Init sequence
