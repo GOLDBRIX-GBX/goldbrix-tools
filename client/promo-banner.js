@@ -81,7 +81,10 @@
       const nL=lpsR.lps?Object.keys(lpsR.lps).length:0;
       const join={cat:'join',metric:nN+'\ud83d\udd17 '+nL+'\ud83d\udca7'};
       const all=(curvesR.curves||[]);
-      const newest=all.slice().sort((a,b)=>(b.created_height||0)-(a.created_height||0)).slice(0,5)
+      const tip=Number(curvesR.scanned)||0;
+      const NEW_WINDOW=28800; /* 24h of chain at 3s blocks - endogenous */
+      const newest=all.filter(c=>c.status!=='graduated'&&tip&&(tip-(Number(c.height)||0))<=NEW_WINDOW)
+        .sort((a,b)=>(Number(b.height)||0)-(Number(a.height)||0)).slice(0,5)
         .map(c=>({cat:'new',coin_id:c.coin_id,ticker:c.ticker||'?'}));
       const top=all.slice().sort((a,b)=>(Number(b.reserve_sat)||0)-(Number(a.reserve_sat)||0)).slice(0,10)
         .map(c=>({cat:'top',coin_id:c.coin_id,ticker:c.ticker||'?'}));
