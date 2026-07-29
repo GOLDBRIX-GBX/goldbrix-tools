@@ -546,6 +546,14 @@ const applyBlock = db.transaction((h, blk) => {
               q.insert.run(tx.txid, o.n, tr.cid.toString('hex'), pkHex, amt.toString(), h);
         };
         credit(tr.pk.toString('hex'), tr.amount);
+        // The move itself enters the history: one row for the recipient (T),
+        // one for the sender (U). Same source of truth as every curve op.
+        q.opPut.run(h, tx.txid, tr.cid.toString('hex'), 'T', tr.pk.toString('hex'), '0', tr.amount.toString(), '0');
+        for (const senderPk of witnessPks(tx)){
+          if (senderPk === tr.pk.toString('hex')) continue;
+          q.opPut.run(h, tx.txid, tr.cid.toString('hex'), 'U', senderPk, tr.amount.toString(), '0', '0');
+          break;
+        }
         // What the sender keeps is part of the same move. The spent holdings are
         // known, so the remainder is arithmetic, not a claim -- and it still has
         // to match an output before it counts.

@@ -391,11 +391,12 @@ async function go(){
     }).catch(function(){S('balG','—');});
   }
   var mc=null;try{mc=await gj('/api/my-coins/'+pk);}catch(e){}
-  var l1=[];if(addr){try{var _h=await gj('/api/address/'+addr+'/txs');if(Array.isArray(_h))l1=_h.filter(function(x){return x&&x.kind&&Number(x.amount_sats)>0;});}catch(e){}}
+  var l1=[];if(addr){try{var _h=await gj('/api/address/'+addr+'/txs');if(Array.isArray(_h))l1=_h.filter(function(x){return x&&x.kind&&Number(x.amount_sats)>=1000000;});}catch(e){}}
   if(!mc){['pnlBox','holdList','crtList','opsList'].forEach(function(i){S(i,tt('none'));});return;}
   var held={};(mc.held||[]).forEach(function(h){held[h.coin_id]=h;});
   var acc={};
   (mc.ops||[]).forEach(function(o){
+    if(o.op==='T'||o.op==='U')return;
     var a=acc[o.coin_id]||(acc[o.coin_id]={cost:0,tok:0,recv:0,sold:0});
     if(o.op==='B'||o.op==='P'||o.op==='C'){a.cost+=Number(o.amount||0);a.tok+=Number(o.tokens||0);}
     else if(o.op==='S'||o.op==='Q'){a.recv+=Number(o.tokens||0);a.sold+=Number(o.amount||0);a.tok-=Number(o.amount||0);}
@@ -448,6 +449,8 @@ async function go(){
         if(o.op==='B'||o.op==='P'){ evs.push({t:t, gbx:-Number(o.amount||0), coin:o.coin_id, tok:Number(o.tokens||0)}); }
         else if(o.op==='S'||o.op==='Q'){ evs.push({t:t, gbx:Number(o.tokens||0), coin:o.coin_id, tok:-Number(o.amount||0)}); }
         else if(o.op==='C'){ evs.push({t:t, gbx:-Number(o.amount||0), coin:o.coin_id, tok:Number(o.tokens||0)}); }
+        else if(o.op==='T'){ evs.push({t:t, gbx:0, coin:o.coin_id, tok:Number(o.tokens||0)}); }
+        else if(o.op==='U'){ evs.push({t:t, gbx:0, coin:o.coin_id, tok:-Number(o.amount||0)}); }
       });
       evs.sort(function(a,b){return a.t-b.t;});
       // current balances walk backwards -> start state, then forward buckets
@@ -536,6 +539,8 @@ async function go(){
       if(o.op==='B'||o.op==='P'){lbl=tt('bought');cls='dotB';ic='↙';line='<span class="pos">+'+K(Number(o.tokens))+' '+tick+'</span> · <span class="neg">−'+gbx(o.amount)+'</span>';}
       else if(o.op==='S'||o.op==='Q'){lbl=tt('sold');cls='dotS';ic='↗';line='<span class="neg">−'+K(Number(o.amount))+' '+tick+'</span> · <span class="pos">+'+gbx(o.tokens)+'</span>';}
       else if(o.op==='C'){lbl=tt('created');cls='dotO';ic='✦';line='<span class="pos">+'+K(Number(o.tokens))+' '+tick+'</span> · <span class="neg">−'+gbx(o.amount)+'</span>';}
+      else if(o.op==='T'){lbl=tt('recvL');cls='dotB';ic='↙';line='<span class="pos">+'+K(Number(o.tokens))+' '+tick+'</span>';}
+      else if(o.op==='U'){lbl=tt('sentL');cls='dotS';ic='↗';line='<span class="neg">−'+K(Number(o.amount))+' '+tick+'</span>';}
       else if(o.op==='G'){lbl=tt('grad');cls='dotO';ic='◆';line=gbx(o.amount);}
       else{lbl=tt('refund');cls='dotO';ic='↺';line=gbx(o.amount);}
       return '<a class="h" style="text-decoration:none;color:inherit" href="/v3/coin-x.html?coin='+o.coin_id+'">'
