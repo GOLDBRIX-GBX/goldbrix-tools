@@ -122,7 +122,7 @@ function openTokenIndex(dbPath){
       // every consensus-guarded op on this coin, newest first — who bought/sold, from the chain
       if (!/^[0-9a-f]{64}$/.test(coinId)) return null;
       let rows=[];
-      try{ rows = db.prepare('SELECT height, txid, op, pk, amount, tokens_out, burn_sat FROM curve_ops WHERE coin_id=? ORDER BY height DESC, rowid DESC LIMIT ?').all(coinId, Math.min(limit,500)); }catch(_e){ return { ok:true, trades: [] }; }
+      try{ rows = db.prepare('SELECT height, txid, op, pk, amount, tokens_out, burn_sat FROM curve_ops WHERE coin_id=? AND op<>char(84) AND op<>char(85) ORDER BY height DESC, rowid DESC LIMIT ?').all(coinId, Math.min(limit,500)); }catch(_e){ return { ok:true, trades: [] }; }
       return { ok:true, scanned: parseInt(q.meta.get('scanned')?.v ?? '0', 10),
         trades: rows.map(r=>({height:r.height, txid:r.txid, op:r.op, pk:r.pk,
           amount:String(r.amount), tokens:String(r.tokens_out), burn_sat:String(r.burn_sat)})) };
@@ -213,7 +213,7 @@ function openTokenIndex(dbPath){
       const tip = parseInt(q.meta.get('scanned')?.v ?? '0', 10);
       const since = (blocks > 0) ? tip - blocks : -1;
       let ops = [];
-      try{ ops = db.prepare('SELECT * FROM curve_ops WHERE height > ?').all(since); }catch(_e){ return { ok:true, scanned:tip, items:[] }; }
+      try{ ops = db.prepare('SELECT * FROM curve_ops WHERE height > ? AND op<>char(84) AND op<>char(85)').all(since); }catch(_e){ return { ok:true, scanned:tip, items:[] }; }
       if (kind === 'burners'){
         const by={};
         for (const o of ops){ const b=BigInt(o.burn_sat); if(b<=0n) continue;
@@ -345,7 +345,7 @@ function openTokenIndex(dbPath){
         for (let i=1;i<rows.length;i++){ if(rows[i].height>tip-W.d1){ const d=BigInt(rows[i].gbx_sat)-BigInt(rows[i-1].gbx_sat); vol24 += d<0n?-d:d; } }
       }
       let t24={n:0,t:0};
-      try{ t24 = db.prepare('SELECT COUNT(*) n, COUNT(DISTINCT pk) t FROM curve_ops WHERE coin_id=? AND height>=?').get(coinId, tip-W.d1); }catch(_e){}
+      try{ t24 = db.prepare('SELECT COUNT(*) n, COUNT(DISTINCT pk) t FROM curve_ops WHERE coin_id=? AND height>=? AND op<>char(84) AND op<>char(85)').get(coinId, tip-W.d1); }catch(_e){}
       return { scanned:tip, coin_id:coinId, phase, price_sat:price, liquidity_sat:liq, chg, vol24_sat:String(vol24), txns24:t24.n, traders24:t24.t };
     },
     myCoins(pkHex){
