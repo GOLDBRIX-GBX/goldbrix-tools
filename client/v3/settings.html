@@ -215,6 +215,7 @@ input::-moz-placeholder, textarea::-moz-placeholder {
     <script src="/gbx-update-check.js" defer></script>
     <script src="/gbx-native-bridge.js" defer></script>
       <script src="/i18n.js?v=114" defer></script>
+  <script src="/v3/gbx-read.js?v=121"></script>
   <script src="/v3/nav-i18n.js?v=115" defer></script>
 <style id="gbx-hide-ref">
 /* Referrals e pe Home — ascuns în Settings (reversibil: șterge acest bloc) */
@@ -857,13 +858,13 @@ function deleteAll() {
 
 async function loadChainStatus() {
   try {
-    const r = await fetch('https://goldbrix.app/api/status');
+    const r = await (window.gbxRead ? window.gbxRead('/status') : fetch('/api/status'));
     if (r.ok) {
       const d = await r.json();
       const h = d.best_block_height || d.height || d.blocks || '—';
       document.getElementById('blkHeight').textContent = String(h);
     }
-    const rn = await fetch('https://goldbrix.app/gbx-node-info');
+    const rn = await fetch((window.GBX_LAST_NODE||'https://goldbrix.app/api').replace(/\/api$/,'')+'/gbx-node-info');
     if (rn.ok) {
       const dn = await rn.json();
       const sha = (dn.binary_sha256||'').slice(0,8);

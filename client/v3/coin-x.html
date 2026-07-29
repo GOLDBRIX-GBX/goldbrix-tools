@@ -111,6 +111,8 @@ body[dir="rtl"]{direction:rtl;}
         <div class="nm" id="cName">—</div>
       </div>
       <span class="badge live" id="cBadge">LIVE</span>
+      <span id="cFav" style="margin-left:auto;font-size:22px;cursor:pointer;opacity:.5;user-select:none">⭐</span>
+      <span id="cShare" style="margin-left:10px;font-size:20px;cursor:pointer;user-select:none">⤴️</span>
     </div>
     <div class="rows">
       <div class="row"><span class="k" data-x="r.price">Price</span><span class="v gold" id="rPrice">—</span></div>
@@ -354,7 +356,7 @@ if(L==='ar')document.body.setAttribute('dir','rtl');
 function applyLang(){for(const el of document.querySelectorAll('[data-x]'))el.innerHTML=tt(el.getAttribute('data-x'));}
 applyLang();
 (function(){const tc=document.getElementById('tradesCard');if(tc&&tc.parentNode){tc.parentNode.appendChild(tc);}})();
-window.addEventListener('pageshow',ev=>{if(ev.persisted)location.reload();});
+window.addEventListener('pageshow' ,ev=>{if(ev.persisted)location.reload();});
 
 /* ── helpers ── */
 const $=id=>document.getElementById(id);
@@ -394,6 +396,28 @@ function loadWallet(){try{const raw=sessionStorage.getItem('gbx_unlocked_wallets
 
 /* ── state ── */
 const cid=new URLSearchParams(location.search).get('coin')||'';
+(function(){
+  var FK='gbx_favorites';
+  function favs(){try{return JSON.parse(localStorage.getItem(FK)||'[]');}catch(e){return[];}}
+  function paint(){var e=document.getElementById('cFav');if(e)e.style.opacity=favs().indexOf(cid)>=0?'1':'.5';}
+  function hook(){
+    var fe=document.getElementById('cFav');
+    if(fe&&!fe.__gbx){fe.__gbx=1;fe.addEventListener('click',function(){
+      var f=favs(),i=f.indexOf(cid);
+      if(i>=0)f.splice(i,1);else f.push(cid);
+      localStorage.setItem(FK,JSON.stringify(f));paint();
+    });}
+    var se=document.getElementById('cShare');
+    if(se&&!se.__gbx){se.__gbx=1;se.addEventListener('click',function(){
+      var tk=(document.getElementById('cTick')||{}).textContent||'';
+      var u='https://goldbrix.app/v3/coin-x.html?coin='+cid;
+      if(navigator.share){navigator.share({title:tk,text:tk+' on GoldBrix',url:u}).catch(function(){});}
+      else if(navigator.clipboard){navigator.clipboard.writeText(tk+' \u00b7 '+u);se.textContent='\u2713';setTimeout(function(){se.textContent='\u2934\ufe0f';},1200);}
+    });}
+    paint();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hook);else hook();
+})();
 if(!cid){location.replace('/v3/coins-x.html');}
 let D=null, side='buy', wallet=null, keys=null, spkU=null, secp=null, myHolding=null;
 

@@ -163,11 +163,18 @@ async function loadGBX() {
     }
   } catch(e) {}
   document.getElementById('gbxCard').innerHTML =
-    '<div class="coin-card coin-card--gbx" onclick="window.location.href=\'/v3/wallet.html\'">' +
+    '<div class="coin-card coin-card--gbx" onclick="var _u=\'/v3/gbx.html\';window.location.href=_u;">' +
       '<img class="coin-card__img" src="/assets/coin/gbx-coin-128.png" alt="GBX">' +
-      '<div class="coin-card__info"><div class="coin-card__name">GOLDBRIX (GBX)</div><div class="coin-card__meta">' + bal.toLocaleString('en-US',{maximumFractionDigits:4}) + ' GBX · $' + (bal*0.1).toFixed(2) + '</div></div>' +
-      '<div class="coin-card__price">$0.10</div>' +
+      '<div class="coin-card__info" onclick="var _u=\'/v3/gbx.html\';window.location.href=_u;" style="cursor:pointer;"><div class="coin-card__name">GOLDBRIX (GBX)</div><div class="coin-card__meta">' + bal.toLocaleString('en-US',{maximumFractionDigits:4}) + ' GBX · <span id="gbxUsdBal">—</span></div></div>' +
+      '<div class="coin-card__price" id="gbxUsdPx">—</div>' +
     '</div>';
+  window.GBXRead.json('/api/gbx/stats').then(function(s){
+    var px=s&&Number(s.last_price_usd);
+    if(px>0){
+      var pe=document.getElementById('gbxUsdPx');if(pe)pe.textContent='$'+px.toFixed(4);
+      var be=document.getElementById('gbxUsdBal');if(be)be.textContent='$'+(bal*px).toLocaleString('en-US',{maximumFractionDigits:2});
+    }
+  }).catch(function(){});
 }
 
 async function loadFavs() {
@@ -181,9 +188,8 @@ async function loadFavs() {
   list.innerHTML = '<div style="padding:20px;text-align:center;color:#aaa;font:12px monospace;">⏳ Fetching ' + favs.length + ' coin(s)...</div>';
   let coins = [];
   try {
-    const r = await fetch('https://goldbrix.app/v2/memecoin/list');
-    const d = await r.json();
-    coins = d.coins || [];
+    const d = await window.GBXRead.json('/api/curves');
+    coins = d.curves || [];
     } catch(e) {
     list.innerHTML = '<div style="padding:20px;color:#ff4444;font:11px monospace;">FETCH ERROR: ' + e.message + '</div>';
     return;
@@ -201,19 +207,24 @@ async function loadFavs() {
   }
   try {
     list.innerHTML = matched.map(c => {
-      const id = c.coin_id || c.id || '';
+      const id = c.coin_id || '';
       const tk = (c.ticker || 'TOK').toUpperCase();
-      const img = c.image_url || '/assets/coin/gbx-coin-32.png';
-      const mc = (c.market_cap_gbx || 0).toLocaleString('en-US',{maximumFractionDigits:2});
-      const ch = c.change_24h_pct || 0;
-      const chCls = ch > 0 ? 'coin-card__price--green' : (ch < 0 ? 'coin-card__price--red' : '');
-      const chTxt = (ch > 0 ? '+' : '') + ch.toFixed(2) + '%';
+      const img = '/assets/coin/gbx-coin-32.png';
+      const st = c.status === 'graduated' ? 'GRADUATED' : 'LIVE';
+      const chCls = c.status === 'graduated' ? 'coin-card__price--green' : '';
+      const chTxt = st;
       return '<div class="coin-card">' +
-        '<img class="coin-card__img" src="' + img + '" onerror="this.src=\'/assets/coin/gbx-coin-32.png\'">' +
-        '<div class="coin-card__info" onclick="window.location.href=\'/trade.html?coin=' + id + '\'" style="cursor:pointer;"><div class="coin-card__name">$' + tk + '</div><div class="coin-card__meta">MC ' + mc + ' GBX · <span class="' + chCls + '">' + chTxt + '</span></div></div>' +
+        (c.has_logo ? '<img class="coin-card__img" data-cid="' + id + '" src="' + img + '">' : '<span class="coin-card__img" style="display:inline-flex;align-items:center;justify-content:center;background:#3a3025;color:#F5CC75;font-weight:700;border-radius:50%">' + tk.slice(0,1) + '</span>') +
+        '<div class="coin-card__info" onclick="var _u=\'/v3/coin-x.html?coin=' + id + '\';window.location.href=_u;" style="cursor:pointer;"><div class="coin-card__name">$' + tk + '</div><div class="coin-card__meta"><span class="' + chCls + '">' + chTxt + '</span></div></div>' +
         '<span class="coin-card__star" onclick="removeFav(\'' + id + '\')">⭐</span>' +
       '</div>';
     }).join('');
+    matched.forEach(function(cc){
+      if(!cc.has_logo) return;
+      window.GBXRead.json('/api/curves/'+cc.coin_id).then(function(d){
+        if(d&&d.logo){var im=document.querySelector('img[data-cid="'+cc.coin_id+'"]');if(im)im.src=d.logo;}
+      }).catch(function(){});
+    });
     } catch(e) {
     list.innerHTML = '<div style="padding:20px;color:#ff4444;font:11px monospace;">RENDER ERROR: ' + e.message + '</div>';
   }
