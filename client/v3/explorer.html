@@ -164,7 +164,7 @@ async function loadStats() {
       document.getElementById('statHeight').textContent = Number(h).toLocaleString('en-US');
       // REAL circulating (suma UTXO set, <= 15M cap)
       document.getElementById('statSupply').textContent = (d.circulating_gbx != null) ? Math.round(d.circulating_gbx).toLocaleString('en-US') : '—';
-      document.getElementById('statDiff').textContent = (d.difficulty != null) ? Number(d.difficulty).toExponential(2) : '—';
+      document.getElementById('statDiff').textContent = (d.difficulty != null) ? Number(d.difficulty).toLocaleString('en-US',{maximumSignificantDigits:3}) : '—';
       document.getElementById('statTxOut').textContent = (d.txouts != null) ? Number(d.txouts).toLocaleString('en-US') : '—';
     }
   } catch(e) { console.warn('[stats]', e); }
