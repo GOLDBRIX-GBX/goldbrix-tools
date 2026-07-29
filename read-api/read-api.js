@@ -375,6 +375,20 @@ async function getTxVerboseAtHeight(txid, height) {
 }
 
 async function getAddressTxs(address) {
+  // FAST PATH — full history (in/out/mined) from the UTXO index, spent outputs included.
+  try {
+    const hist = gbxIndex.txHistory ? gbxIndex.txHistory(address, 50) : null;
+    if (hist && Array.isArray(hist.txs)) {
+      return hist.txs.map(function(t){ return {
+        txid: t.txid, kind: t.kind,
+        amount_sats: t.amount_sat,
+        amount_gbx: (t.amount_sat/1e8).toFixed(8),
+        confirmations: t.confirmations,
+        coinbase: t.kind === 'mined',
+        height: t.height
+      };});
+    }
+  } catch (e) { console.error('[RA-txs] index history failed, fallback:', e.message); }
   const { scan, info } = await scanAddress(address);
   let unspents = Array.isArray(scan.unspents) ? scan.unspents : [];
   // GBX — hard limit: on addresses with tens of thousands of UTXOs (mining) avoid 200k+ RPCs (hang).
