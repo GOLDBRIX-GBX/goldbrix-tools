@@ -22,6 +22,8 @@ Requires Node.js >= 18 and a synced goldbrix-core node with RPC cookie auth. No 
 
 ## License
 
+Copyright (C) 2026 The GOLDBRIX Project (GBX)
+
 GPL-3.0-or-later — see [COPYING](COPYING). Anyone may read, rebuild and verify this code; any distributed modification must stay open under the same license.
 
 ## Release anchors
