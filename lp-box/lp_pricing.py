@@ -1,9 +1,11 @@
+import os
 # GoldBrix — sursa UNICA de pret/fee (FINAL-FIRST). Importat de gateway SI daemon. Zero drift.
 # price_source=onramp -> pret live R/S (acelasi ca graficul); static -> price_usd din config. Floor = plasa.
 import json, urllib.request
 from lp_env import E
 CONFIG_F=E["CONFIG_F"]
-PRICE_URLS=["http://127.0.0.1:8096/onramp/gbx-price","https://goldbrix.app/onramp/gbx-price"]
+# local price service first; the seed node is only a fallback — any federation node works
+PRICE_URLS=[u for u in [os.environ.get("GBX_PRICE_URL"),"http://127.0.0.1:8096/onramp/gbx-price","https://goldbrix.app/onramp/gbx-price"] if u]
 def _cfg():
     try: return json.load(open(CONFIG_F))
     except: return {"price_usd":0.10,"spread_bps":50,"burn_bps":0,"price_source":"static"}
