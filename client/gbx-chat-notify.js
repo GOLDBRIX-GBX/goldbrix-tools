@@ -1,6 +1,7 @@
 /* GoldBrix — Chat unread badge + sound (in-app, polling) */
 (function(){
-  var API='https://goldbrix.app';
+  // Federated: poll through the read layer when present; otherwise the serving node (relative).
+  var API='';
   var POLL=12000;
   var onChat=/\/v3\/chat\.html/.test(location.pathname);
 
@@ -55,6 +56,7 @@
   async function check(){
     try{
       var r=await fetch(API+'/launchpad/chat/messages?lang=en&since=0&limit=50',{cache:'no-store'});
+      if(!r.ok){ return 'STOP'; } // chat service retired: stop polling until the federated chat ships
       var d=await r.json();
       var msgs=(d&&d.messages)||[];
       if(onChat){
@@ -74,6 +76,8 @@
   }
 
   window.gbxChatMarkRead=function(){ check(); };
-  window.addEventListener('DOMContentLoaded',function(){ check(); setInterval(check,POLL); });
-  if(document.readyState!=='loading'){ check(); setInterval(check,POLL); }
+  var _timer=null;
+  async function tick(){ var v=await check(); if(v==='STOP'&&_timer){ clearInterval(_timer); _timer=null; } }
+  function start(){ if(_timer) return; tick(); _timer=setInterval(tick,POLL); }
+  if(document.readyState!=='loading'){ start(); } else { window.addEventListener('DOMContentLoaded',start); }
 })();
