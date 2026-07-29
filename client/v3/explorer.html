@@ -157,7 +157,7 @@ function applyLang() {
 
 async function loadStats() {
   try {
-    const r = await fetch('https://goldbrix.app/api/status');
+    const r = await window.gbxRead('/status');
     if (r.ok) {
       const d = await r.json();
       const h = d.best_block_height || d.height || d.blocks || 0;
@@ -172,7 +172,7 @@ async function loadStats() {
 
 async function loadBlocks() {
   try {
-    const r = await fetch('https://goldbrix.app/api/status');
+    const r = await window.gbxRead('/status');
     const d = await r.json();
     const tip = d.best_block_height || d.height || d.blocks || 0;
     let html = '';
@@ -180,12 +180,12 @@ async function loadBlocks() {
       const h = tip - i;
       if (h <= 0) break;
       try {
-        const rb = await fetch('https://goldbrix.app/api/block/' + h);
+        const rb = await window.gbxRead('/block/' + h);
         if (rb.ok) {
           const b = await rb.json();
           const hash = b.hash || b.blockhash || '';
           const t = b.time || b.timestamp || 0;
-          const ago = t > 0 ? Math.floor((Date.now()/1000 - t) / 60) + ' min ago' : '—';
+          var _sec=t>0?Math.max(0,Math.floor(Date.now()/1000-t)):-1;const ago=_sec<0?'—':(_sec<60?_sec+'s ago':(_sec<3600?Math.floor(_sec/60)+' min ago':Math.floor(_sec/3600)+'h ago'));
           html += '<div class="block-row"><div class="block-row__num">#' + h + '</div><div class="block-row__info"><div class="block-row__hash">' + hash.slice(0,32) + '...</div><div class="block-row__time">' + ago + '</div></div></div>';
         } else {
           html += '<div class="block-row"><div class="block-row__num">#' + h + '</div><div class="block-row__info"><div class="block-row__hash" data-t="loadingMsg">Loading...</div></div></div>';
@@ -213,10 +213,10 @@ async function doSearch() {
     } catch(e) { result.textContent = (T[currentLang]||T.en).noResult; }
   } else if (q.length === 64) {
     try {
-      const r = await fetch('https://goldbrix.app/api/tx/' + q);
+      const r = await window.gbxRead('/tx/' + q);
       if (r.ok) {
         const d = await r.json();
-        result.innerHTML = '<div style="color:var(--gold);">✓ TX</div>Block: <b>' + (d.blockheight || d.height || '—') + '</b><br>Confirmations: <b>' + (d.confirmations || 0) + '</b>';
+        result.innerHTML = '<div style="color:var(--gold);">✓ TX</div>Block: <b>' + (d.height || '—') + '</b><br>Confirmations: <b>' + (d.confirmations || 0) + '</b><br>Outputs: ' + ((d.outputs||[]).map(function(o){return '<div style="margin-top:4px"><b>'+o.value_gbx+' GBX</b> → <span style="word-break:break-all">'+(o.address||'—')+'</span></div>';}).join(''));
       } else result.textContent = (T[currentLang]||T.en).noResult;
     } catch(e) { result.textContent = (T[currentLang]||T.en).noResult; }
   } else {
@@ -224,7 +224,7 @@ async function doSearch() {
   }
 }
 
-(function init(){ applyLang(); loadStats(); loadBlocks(); setInterval(loadStats, 30000); })();
+(function init(){ applyLang(); loadStats(); loadBlocks(); setInterval(loadStats, 30000); try{var _q=new URLSearchParams(location.search).get('q'); if(_q){var _si=document.getElementById('searchInput'); if(_si){_si.value=_q; doSearch();}}}catch(_e){} })();
 </script>
 <script src="/v3/pwa.js?v=114" defer></script>
 

@@ -66,3 +66,12 @@ function txHistory(address, limit){
 }
 module.exports.txHistory = txHistory;
 
+// txid -> block height, from the UTXO index (every tx creates at least one output;
+// spent rows are kept, so history lookups keep working after outputs are spent).
+function txHeight(txid){
+  const r = db().prepare('SELECT height FROM utxos WHERE txid=? LIMIT 1').get(txid);
+  return r ? r.height : null;
+}
+module.exports.txHeight = txHeight;
+
+

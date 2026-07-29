@@ -664,6 +664,24 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, await getAddressSummary(address));
     }
 
+    const txidMatch = url.pathname.match(/^\/api\/tx\/([0-9a-fA-F]{64})$/);
+    if (req.method === 'GET' && txidMatch) {
+      try {
+        const txid = txidMatch[1].toLowerCase();
+        const h = gbxIndex.txHeight ? gbxIndex.txHeight(txid) : null;
+        if (!h) { res.writeHead(404); return res.end(JSON.stringify({error:'tx not found'})); }
+        const tx = await getTxVerboseAtHeight(txid, h);
+        const tip = Number(await runCli(['getblockcount']));
+        return sendJson(res, 200, {
+          txid, height: h, blockhash: tx?.blockhash ?? null,
+          confirmations: tx && Number.isFinite(Number(tx.confirmations)) ? Number(tx.confirmations) : Math.max(0, tip - h + 1),
+          time: tx?.blocktime ?? tx?.time ?? null,
+          size: tx?.size ?? null,
+          vin: (tx?.vin||[]).length, vout: (tx?.vout||[]).length,
+          outputs: (tx?.vout||[]).map(function(o){ return { n:o.n, value_gbx:Number(o.value||0).toFixed(8), address:(o.scriptPubKey&&(o.scriptPubKey.address||(o.scriptPubKey.addresses&&o.scriptPubKey.addresses[0])))||null }; })
+        });
+      } catch (e) { res.writeHead(500); return res.end(JSON.stringify({error:'tx error'})); }
+    }
     const txMatch = url.pathname.match(/^\/api\/address\/([^/]+)\/txs$/);
     if (req.method === 'GET' && txMatch) {
       const address = decodeURIComponent(txMatch[1]);
