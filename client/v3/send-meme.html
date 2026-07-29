@@ -227,7 +227,7 @@ async function ready(){for(let i=0;i<40&&!window.GBXRead;i++)await new Promise(r
   if(window.GBXReady)try{await window.GBXReady;}catch(e){}}
 async function crypto_(){for(let i=0;i<40&&!(window.GoldbrixCrypto&&window.GoldbrixCrypto.deriveKeypairFromMnemonic);i++)await new Promise(r=>setTimeout(r,100));
   return !!(window.GoldbrixCrypto&&window.GoldbrixCrypto.deriveKeypairFromMnemonic);}
-let wallet=null,keys=null,pkHex='',secp=null,spkU=null,held=[],cur=null,holding=null;
+let wallet=null,keys=null,pkHex='',secp=null,spkU=null,held=[],cur=null,holding=null,holdings=null;
 function qparam(k){
   try{
     const s=new URLSearchParams(location.search).get(k);
@@ -265,7 +265,7 @@ async function boot(){
   $('go').disabled=false;
 }
 async function pick(){
-  hide();holding=null;
+  hide();holding=null;holdings=null;
   cur=held.find(x=>x.coin_id===$('coin').value)||held[0];
   $('bal').textContent=N(cur.amount)+' '+cur.ticker;
   const d=await window.GBXRead.json('/api/curves/'+cur.coin_id);
@@ -273,7 +273,7 @@ async function pick(){
   const list=(mine&&mine.utxo_list||[]).slice().sort((a,b)=>Number(b.amount)-Number(a.amount));
   if(!list.length)return;
   holding={txid:list[0].txid,vout:list[0].vout,amount:BigInt(list[0].amount)};
-  if(list.length>1)say('info',tt('split')+' '+N(list[0].amount)+' '+cur.ticker+'.');
+  holdings=list.map(u=>({txid:u.txid,vout:u.vout,amount:BigInt(u.amount)}));
 }
 $('scan').textContent=tt('scan');$('qrTitle').textContent=tt('scan');$('qrClose').textContent=tt('cancel');
 let qr=null;
@@ -294,10 +294,11 @@ $('scan').addEventListener('click',()=>{
     closeQR();hide();
   },()=>{}).catch(()=>{say('err',tt('noCam'));$('qrModal').style.display='none';});
 });
+function totalHeld(){ return (holdings&&holdings.length)?holdings.reduce((a,h)=>a+h.amount,0n):(holding?holding.amount:0n); }
 document.querySelectorAll('.pct').forEach(b=>b.addEventListener('click',()=>{
   if(!holding)return;
   const p=Number(b.getAttribute('data-p'));
-  $('amt').value=(holding.amount*BigInt(p)/100n).toString();
+  $('amt').value=(totalHeld()*BigInt(p)/100n).toString();
 }));
 $('go').addEventListener('click',async()=>{
   hide();
@@ -305,9 +306,9 @@ $('go').addEventListener('click',async()=>{
   if(!/^0[23][0-9a-f]{64}$/.test(to)){say('err',tt('badKey'));return;}
   if(to===pkHex){say('err',tt('self'));return;}
   if(!holding){say('err',tt('none'));return;}
-  let amt;try{amt=BigInt($('amt').value.trim()||'0');}catch(e){say('err',tt('badAmt'));return;}
+  let amt;try{amt=BigInt(($('amt').value||'0').replace(/[^0-9]/g,'')||'0');}catch(e){say('err',tt('badAmt'));return;}
   if(amt<=0n){say('err',tt('badAmt'));return;}
-  if(amt>holding.amount){say('err',tt('tooMuch'));return;}
+  if(amt>totalHeld()){say('err',tt('tooMuch'));return;}
   $('go').disabled=true;say('info',tt('reading'));
   try{
     /* an address with a long history takes a while to scan the first time */
@@ -316,9 +317,10 @@ $('go').addEventListener('click',async()=>{
       .map(x=>({txid:x.txid,vout:x.vout,value8:Math.round(x.amount*1e8)}))
       .sort((a,b)=>b.value8-a.value8);
     say('info',tt('working'));
-    const built=await F.buildTokenSendTx({cid:C.unhex(cur.coin_id),holding,tokensToSend:amt,
+    const built=await F.buildTokenSendTx({cid:C.unhex(cur.coin_id),holding,holdings,tokensToSend:amt,
       toPubkey:C.unhex(to),utxos,pkU:new Uint8Array(keys.publicKey),p2wpkhSpkOf:()=>spkU});
-    const inputs=built.inputs.map((x,i)=>i===0?{...x,kind:'token',ws:C.unhex(built.tokenWsHex)}:{...x,kind:'p2wpkh'});
+    const nTok=built.tokenInputCount||1;
+    const inputs=built.inputs.map((x,i)=>i<nTok?{...x,kind:'token',ws:C.unhex((built.tokenWsHexes&&built.tokenWsHexes[i])||built.tokenWsHex)}:{...x,kind:'p2wpkh'});
     const derSig=c=>{const tr=x=>{let i=0;while(i<31&&x[i]===0)i++;let v=x.subarray(i);if(v[0]&0x80)v=Uint8Array.of(0,...v);return v;};
       const r=tr(c.subarray(0,32)),s=tr(c.subarray(32,64));
       return Uint8Array.of(0x30,4+r.length+s.length,0x02,r.length,...r,0x02,s.length,...s);};

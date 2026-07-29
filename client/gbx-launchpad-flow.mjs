@@ -222,14 +222,21 @@ export async function buildSellTx({ curve, holding, tokensInSat, utxos, pkU, K,
 // TRANSFER: a token holding moves like the coin it is — one signature, no intent.
 // Consensus treats this as an ordinary spend; the client must keep the arithmetic
 // honest itself: tokens out never exceed tokens in.
-export async function buildTokenSendTx({ cid, holding, tokensToSend, toPubkey, utxos, pkU, p2wpkhSpkOf }){
-  const have = BigInt(holding.amount), send = BigInt(tokensToSend);
+export async function buildTokenSendTx({ cid, holding, holdings, tokensToSend, toPubkey, utxos, pkU, p2wpkhSpkOf }){
+  // One or many token holdings: consensus sums TokensInInputs, the client mirrors it.
+  const hs = (holdings && holdings.length) ? holdings : [holding];
+  const send = BigInt(tokensToSend);
   if (send <= 0n) throw new Error('amount must be positive');
+  // smallest set of holdings, largest first, that covers the amount
+  const sorted = hs.slice().sort((a,b)=> (BigInt(b.amount)<BigInt(a.amount)?-1:1));
+  const used = []; let have = 0n;
+  for (const h of sorted){ if (have >= send) break; used.push(h); have += BigInt(h.amount); }
   if (send > have) throw new Error('not enough tokens');
   const rest = have - send;
+  const tokDust = DUST_SAT * BigInt(used.length);
   const { ins, sum } = selectUtxos(utxos, TRADE_FEE_SAT + DUST_SAT + (rest > 0n ? DUST_SAT : 0n));
   const need = TRADE_FEE_SAT + DUST_SAT + (rest > 0n ? DUST_SAT : 0n);
-  const change = sum + DUST_SAT - need;
+  const change = sum + tokDust - need;
   const outs = [];
   outs.push({ spk: await p2wsh(tokenWitnessScript(cid, send, toPubkey)), value8: Number(DUST_SAT) });
   if (rest > 0n)
@@ -241,8 +248,10 @@ export async function buildTokenSendTx({ cid, holding, tokensToSend, toPubkey, u
   // the outputs above before any index believes it.
   outs.push({ spk: transferPayload(cid, send, toPubkey).script, value8: 0 });
   return { sent: send, rest,
-           tokenWsHex: hex(tokenWitnessScript(cid, have, pkU)),
-           inputs: [{txid: holding.txid, vout: holding.vout, value8: Number(DUST_SAT)}, ...ins],
+           tokenWsHex: hex(tokenWitnessScript(cid, BigInt(used[0].amount), pkU)),
+           tokenWsHexes: used.map(h => hex(tokenWitnessScript(cid, BigInt(h.amount), pkU))),
+           tokenInputCount: used.length,
+           inputs: [...used.map(h => ({txid: h.txid, vout: h.vout, value8: Number(DUST_SAT)})), ...ins],
            outs };
 }
 
