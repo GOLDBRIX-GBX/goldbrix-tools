@@ -108,7 +108,7 @@ const T=k=>TT[L][k]||TT.en[k]||k;
 if(L==='ar')document.body.setAttribute('dir','rtl');
 window.addEventListener('pageshow',e=>{if(e.persisted)location.reload();});
 
-const API='https://goldbrix.app';
+
 const $=id=>document.getElementById(id);
 $('tTitle').textContent=T('title');
 $('tSub').textContent=T('sub');
@@ -182,9 +182,8 @@ async function main(){
     if(!window.GoldbrixCrypto)throw new Error('crypto-not-ready');
     const k=await window.GoldbrixCrypto.deriveKeypairFromMnemonic(w.mnemonic);
     const pkHex=Array.from(new Uint8Array(k.keypair?k.keypair.publicKey:k.publicKey),x=>x.toString(16).padStart(2,'0')).join('');
-    const r=await fetch(API+'/api/my-coins/'+pkHex);
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    const d=await r.json();
+    const d0=await window.GBXRead.json('/api/my-coins/'+pkHex);
+    const d=d0;
     renderHeld(d.held||[]);
     renderCreated(d.created||[]);
     $('scanLine').textContent=T('scanned')+(d.scanned||0);

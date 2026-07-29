@@ -7,7 +7,7 @@
   function badge(ch,bg){ return '<span class="tk-ic" style="background:'+bg+'">'+esc(ch)+'</span>'; }
   var LOGO={ GBX:'/assets/coin/gbx-coin-128.png', USDC:'/assets/usdc/usdc-128.png', ETH:'/v3/icons/eth.svg', BNB:'/v3/icons/bnb.svg', SOL:'/v3/icons/sol.svg' };
   var FB={ GBX:['G','linear-gradient(135deg,#F0C060,#9a6b1a)'], USDC:['$','#2775CA'], ETH:['Ξ','#3c3c4e'] };
-  function fixImg(u){ if(!u) return ''; return String(u).replace(/https?:\/\/[0-9.\-]+\.sslip\.io/i,'https://goldbrix.app'); }
+  function fixImg(u){ return u||''; }
   function fallbackBadge(type,ticker){
     ticker=(ticker||'').toUpperCase();
     if(FB[ticker]) return badge(FB[ticker][0],FB[ticker][1]);
@@ -38,8 +38,19 @@
     if(type==='GBX'||ticker==='GBX') return imgIcon(LOGO.GBX,'GBX','GBX');
     if(LOGO[ticker]) return imgIcon(LOGO[ticker],type,ticker);
     if(imgUrl){ var u=fixImg(imgUrl); if(u) return imgIcon(u,type,ticker); }
-    // memecoin nativ: construieste logo din coin_id (endpoint /launchpad/coin/{id}/image)
-    if(type==='NATIVE' && coinId && coinId!=='null') return imgIcon('https://goldbrix.app/launchpad/coin/'+coinId+'/image',type,ticker);
+    // native memecoin: on-chain logo through the federated layer (async upgrade over the badge)
+    if(type==='NATIVE' && coinId && coinId!=='null'){
+      var f2=fbParts(type,ticker);
+      var ph='<span class="tk-ic" data-logo-cid="'+esc(coinId)+'" style="background:'+esc(f2.bg)+'">'+esc(f2.ch)+'</span>';
+      if(window.GBXRead){
+        window.GBXRead.json('/api/curves/'+coinId).then(function(d){
+          if(d&&d.logo){document.querySelectorAll('[data-logo-cid="'+coinId+'"]').forEach(function(el){
+            var im=document.createElement('img');im.className='tk-ic';im.src=d.logo;im.alt='';
+            el.parentNode.replaceChild(im,el);});}
+        }).catch(function(){});
+      }
+      return ph;
+    }
     return fallbackBadge(type,ticker);
   }
   function injectCSS(){

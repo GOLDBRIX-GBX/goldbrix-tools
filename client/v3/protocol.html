@@ -1226,14 +1226,14 @@ function showToast(msg) {
 // ═══ LOAD LIVE STATS ═══
 async function loadStats() {
   try {
-    const r = await fetch('https://goldbrix.app/launchpad/gbx/stats');
+    const r = await window.gbxRead('/status');
     if (r.ok) {
       const d = await r.json();
-      const mined = d.supply_mined_gbx || 0;
+      const mined = Number(d.circulating_gbx) || 0;
       const pct = (mined / 15000000) * 100;
-      document.getElementById('pStatMined').textContent = mined.toLocaleString();
+      document.getElementById('pStatMined').textContent = Math.round(mined).toLocaleString();
       document.getElementById('pStatMinedPct').textContent = pct.toFixed(2) + '%';
-      document.getElementById('pStatBlock').textContent = '#' + (d.blocks || 0).toLocaleString();
+      document.getElementById('pStatBlock').textContent = '#' + (d.best_block_height || 0).toLocaleString();
       document.getElementById('pStatHashrate').textContent = Math.round((d.networkhashps || 0)/1000) + ' KH/s';
     }
   } catch(e) { console.warn('stats fail:', e); }
