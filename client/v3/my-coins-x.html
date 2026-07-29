@@ -136,7 +136,7 @@ function renderHeld(held){
   box.innerHTML=held.map(c=>{
     const tk=c.ticker?('$'+esc(c.ticker)):esc(c.coin_id.slice(0,8))+'\u2026';
     return '<div class="coin" data-cid="'+esc(c.coin_id)+'">'+
-      '<div class="logo">'+esc((c.ticker||'?').slice(0,2))+'</div>'+
+      '<div class="logo" data-logo-cid="'+esc(c.coin_id||'')+'">'+esc((c.ticker||'?').slice(0,2))+'</div>'+
       '<div class="mid"><div class="tick">'+tk+'</div>'+
       '<div class="nm">'+esc(c.name||'')+'</div></div>'+
       '<div class="amt">'+fmt(c.amount)+'<small>'+esc(T('tokens'))+'</small></div></div>';
@@ -158,7 +158,7 @@ function renderCreated(created){
     const pct=Math.min(100,Number(c.progress_pct||0));
     return '<div class="coin" data-cid="'+esc(c.coin_id)+'" style="display:block;">'+
       '<div style="display:flex;align-items:center;gap:12px;">'+
-      '<div class="logo">'+esc((c.ticker||'?').slice(0,2))+'</div>'+
+      '<div class="logo" data-logo-cid="'+esc(c.coin_id||'')+'">'+esc((c.ticker||'?').slice(0,2))+'</div>'+
       '<div class="mid"><div class="tick">'+tk+'</div>'+
       '<div class="nm">'+esc(c.name||'')+' \u00b7 '+esc(T('reserve'))+' '+fmtGbx(c.reserve_sat)+'</div></div>'+
       '<span class="badge '+(grad?'grad':'live')+'">'+esc(grad?T('grad'):T('live'))+'</span></div>'+
@@ -186,6 +186,7 @@ async function main(){
     const d=d0;
     renderHeld(d.held||[]);
     renderCreated(d.created||[]);
+    hydrateLogos();
     $('scanLine').textContent=T('scanned')+(d.scanned||0);
   }catch(e){
     console.error('[my-coins]',e);
@@ -194,6 +195,17 @@ async function main(){
   }
 }
 main();
+
+function hydrateLogos(){
+  var els=document.querySelectorAll('[data-logo-cid]');
+  var seen={};
+  els.forEach(function(el){var cid=el.getAttribute('data-logo-cid');if(!cid||seen[cid])return;seen[cid]=1;
+    window.GBXRead.json('/api/curves/'+cid).then(function(d){
+      if(d&&d.logo)document.querySelectorAll('[data-logo-cid="'+cid+'"]').forEach(function(e2){
+        e2.innerHTML='<img src="'+d.logo+'" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';});
+    }).catch(function(){});
+  });
+}
 </script>
 <nav id="pgNav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:200;">
   <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>
