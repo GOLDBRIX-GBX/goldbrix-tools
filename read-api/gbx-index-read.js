@@ -49,8 +49,10 @@ module.exports.utxoOne = utxoOne;
 function txHistory(address, limit){
   const tip = tipHeight(); if (tip == null) return null;
   const lim = Math.min(Math.max(parseInt(limit||50,10)||50,1),200);
-  const credits = db().prepare('SELECT height h, SUM(sats) s, MAX(coinbase) cb, MIN(txid) tx FROM utxos WHERE address=? GROUP BY height').all(address);
-  const debits  = db().prepare('SELECT spent_height h, SUM(sats) s FROM utxos WHERE address=? AND spent_height IS NOT NULL GROUP BY spent_height').all(address);
+  // Streaming on (address,height)/(address,spent_height) indexes with LIMIT — stops early
+  // on huge addresses (mining: 1.6M rows) instead of aggregating the full set.
+  const credits = db().prepare('SELECT height h, SUM(sats) s, MAX(coinbase) cb, MIN(txid) tx FROM utxos WHERE address=? GROUP BY height ORDER BY height DESC LIMIT ?').all(address, lim*3);
+  const debits  = db().prepare('SELECT spent_height h, SUM(sats) s FROM utxos WHERE address=? AND spent_height IS NOT NULL GROUP BY spent_height ORDER BY spent_height DESC LIMIT ?').all(address, lim*3);
   const m = new Map();
   for (const r of credits) m.set(r.h, {height:r.h, credit:r.s, debit:0, coinbase:r.cb===1, txid:r.tx});
   for (const r of debits){ const e=m.get(r.h)||{height:r.h,credit:0,debit:0,coinbase:false,txid:null}; e.debit=r.s; m.set(r.h,e); }
