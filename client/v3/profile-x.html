@@ -13,6 +13,9 @@
 <script src="/v3/gbx-session.js?v=119"></script>
 <script src="/v3/gbx-read.js?v=121"></script>
 <script src="/v3/gbx-lp.js?v=119"></script>
+<link rel="stylesheet" href="/lib/price-chart.css">
+<script src="/lib/lightweight-charts.standalone.production.js" defer></script>
+<script src="/lib/price-chart.js?v=123" defer></script>
 <script type="module" src="/crypto-utils-v2.js?v=121"></script>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -117,6 +120,14 @@ a.coin{color:var(--gold);text-decoration:none}
 <div class="card">
   <div class="sect" id="tPnl">Portfolio</div>
   <div id="pnlBox" class="muted">…</div>
+  <div id="phWrap" hidden>
+    <div class="t-tf-bar" style="margin-top:10px">
+      <button class="t-tf-btn active" data-phtf="7d" onclick="window.phSetTf('7d')">7D</button>
+      <button class="t-tf-btn" data-phtf="30d" onclick="window.phSetTf('30d')">30D</button>
+      <button class="t-tf-btn" data-phtf="1y" onclick="window.phSetTf('1y')">1A</button>
+    </div>
+    <div class="t-chart-wrap"><div class="t-chart" id="phChart" style="height:180px"></div></div>
+  </div>
 </div>
 <div class="card">
   <div class="sect" id="tBurn">Burns</div>
@@ -150,11 +161,11 @@ a.coin{color:var(--gold);text-decoration:none}
 (function(){
 var L=localStorage.getItem('gbx_lang')||localStorage.getItem('goldbrix_lang')||'en';
 var T={
-en:{title:'Account',bal:'Balance',pnl:'Portfolio',burn:'Burns',hold:'Holdings',crt:'Created',act:'Activity',none:'nothing here yet',bought:'Bought',sold:'Sold',created:'Created',grad:'Graduated',refund:'Refund',follow:'FOLLOW',following:'FOLLOWING',share:'SHARE',wallets:'MY WALLETS',addW:'+ ADD',newW:'Create new wallet',impW:'Import existing wallet',cancel:'Cancel',copy:'TAP TO COPY',copied:'COPIED',value:'value',cost:'cost',unreal:'unrealised',real:'realised',rank:'rank',of:'of',burned:'burned',noprice:'no price yet',recv:'RECEIVE',send:'SEND',buy:'BUY GBX',sell:'SELL GBX',conv:'CONVERT',memes:'MY MEMES',favs:'FAVORITES',fold:'FOLLOWED',live:'live',graduated:'graduated',viewAll:'VIEW ALL ON EXPLORER',chains:'MULTI-CHAIN',locked:'WALLET LOCKED',unlock:'UNLOCK',sentL:'Sent',recvL:'Received',minedL:'Mined'},
-ro:{title:'Cont',bal:'Sold',pnl:'Portofoliu',burn:'Arderi',hold:'Dețineri',crt:'Create',act:'Activitate',none:'nimic încă',bought:'Cumpărat',sold:'Vândut',created:'Creat',grad:'Graduat',refund:'Refund',follow:'URMĂREȘTE',following:'URMĂRIT',share:'DISTRIBUIE',wallets:'PORTOFELELE MELE',addW:'+ ADAUGĂ',newW:'Creează portofel nou',impW:'Importă portofel existent',cancel:'Anulează',copy:'ATINGE PENTRU A COPIA',copied:'COPIAT',value:'valoare',cost:'cost',unreal:'nerealizat',real:'realizat',rank:'loc',of:'din',burned:'ars',noprice:'fără preț încă',recv:'PRIMEȘTE',send:'TRIMITE',buy:'CUMPĂRĂ GBX',sell:'VINDE GBX',conv:'CONVERSIE',memes:'MEMELE MELE',favs:'FAVORITE',fold:'URMĂRITE',live:'activ',graduated:'graduat',viewAll:'VEZI TOT ÎN EXPLORER',chains:'MULTI-LANȚ',locked:'PORTOFEL BLOCAT',unlock:'DEBLOCHEAZĂ',sentL:'Trimis',recvL:'Primit',minedL:'Minat'},
-de:{title:'Konto',bal:'Guthaben',pnl:'Portfolio',burn:'Verbrennungen',hold:'Bestände',crt:'Erstellt',act:'Aktivität',none:'noch nichts',bought:'Gekauft',sold:'Verkauft',created:'Erstellt',grad:'Graduiert',refund:'Erstattung',follow:'FOLGEN',following:'GEFOLGT',share:'TEILEN',wallets:'MEINE WALLETS',addW:'+ HINZUFÜGEN',newW:'Neue Wallet erstellen',impW:'Vorhandene Wallet importieren',cancel:'Abbrechen',copy:'ZUM KOPIEREN TIPPEN',copied:'KOPIERT',value:'Wert',cost:'Kosten',unreal:'nicht realisiert',real:'realisiert',rank:'Rang',of:'von',burned:'verbrannt',noprice:'noch kein Preis',recv:'EMPFANGEN',send:'SENDEN',buy:'GBX KAUFEN',sell:'GBX VERKAUFEN',conv:'TAUSCHEN',memes:'MEINE MEMES',favs:'FAVORITEN',fold:'GEFOLGT',live:'aktiv',graduated:'graduiert',viewAll:'ALLES IM EXPLORER',chains:'MULTI-CHAIN',locked:'WALLET GESPERRT',unlock:'ENTSPERREN',sentL:'Gesendet',recvL:'Empfangen',minedL:'Gemint'},
-zh:{title:'账户',bal:'余额',pnl:'投资组合',burn:'销毁',hold:'持仓',crt:'创建',act:'活动',none:'暂无',bought:'买入',sold:'卖出',created:'创建',grad:'毕业',refund:'退款',follow:'关注',following:'已关注',share:'分享',wallets:'我的钱包',addW:'+ 添加',newW:'创建新钱包',impW:'导入已有钱包',cancel:'取消',copy:'点按复制',copied:'已复制',value:'价值',cost:'成本',unreal:'未实现',real:'已实现',rank:'排名',of:'共',burned:'已销毁',noprice:'暂无价格',recv:'接收',send:'发送',buy:'买入 GBX',sell:'卖出 GBX',conv:'兑换',memes:'我的代币',favs:'收藏',fold:'已关注',live:'活跃',graduated:'已毕业',viewAll:'在浏览器中查看全部',chains:'多链',locked:'钱包已锁定',unlock:'解锁',sentL:'已发送',recvL:'已接收',minedL:'已挖出'},
-ar:{title:'الحساب',bal:'الرصيد',pnl:'المحفظة',burn:'الحرق',hold:'الحيازات',crt:'المُنشأة',act:'النشاط',none:'لا شيء بعد',bought:'شراء',sold:'بيع',created:'إنشاء',grad:'تخرّج',refund:'استرداد',follow:'متابعة',following:'متابع',share:'مشاركة',wallets:'محافظي',addW:'+ إضافة',newW:'إنشاء محفظة جديدة',impW:'استيراد محفظة موجودة',cancel:'إلغاء',copy:'انقر للنسخ',copied:'تم النسخ',value:'القيمة',cost:'التكلفة',unreal:'غير محقق',real:'محقق',rank:'الترتيب',of:'من',burned:'محروق',noprice:'لا يوجد سعر بعد',recv:'استلام',send:'إرسال',buy:'شراء GBX',sell:'بيع GBX',conv:'تحويل',memes:'عملاتي',favs:'المفضلة',fold:'المتابَعون',live:'نشط',graduated:'متخرج',viewAll:'عرض الكل في المستكشف',chains:'متعدد السلاسل',locked:'المحفظة مقفلة',unlock:'فتح القفل',sentL:'مُرسل',recvL:'مُستلم',minedL:'مُعدَّن'}};
+en:{hist:'History',title:'Account',bal:'Balance',pnl:'Portfolio',burn:'Burns',hold:'Holdings',crt:'Created',act:'Activity',none:'nothing here yet',bought:'Bought',sold:'Sold',created:'Created',grad:'Graduated',refund:'Refund',follow:'FOLLOW',following:'FOLLOWING',share:'SHARE',wallets:'MY WALLETS',addW:'+ ADD',newW:'Create new wallet',impW:'Import existing wallet',cancel:'Cancel',copy:'TAP TO COPY',copied:'COPIED',value:'value',cost:'cost',unreal:'unrealised',real:'realised',rank:'rank',of:'of',burned:'burned',noprice:'no price yet',recv:'RECEIVE',send:'SEND',buy:'BUY GBX',sell:'SELL GBX',conv:'CONVERT',memes:'MY MEMES',favs:'FAVORITES',fold:'FOLLOWED',live:'live',graduated:'graduated',viewAll:'VIEW ALL ON EXPLORER',chains:'MULTI-CHAIN',locked:'WALLET LOCKED',unlock:'UNLOCK',sentL:'Sent',recvL:'Received',minedL:'Mined'},
+ro:{hist:'Istoric',title:'Cont',bal:'Sold',pnl:'Portofoliu',burn:'Arderi',hold:'Dețineri',crt:'Create',act:'Activitate',none:'nimic încă',bought:'Cumpărat',sold:'Vândut',created:'Creat',grad:'Graduat',refund:'Refund',follow:'URMĂREȘTE',following:'URMĂRIT',share:'DISTRIBUIE',wallets:'PORTOFELELE MELE',addW:'+ ADAUGĂ',newW:'Creează portofel nou',impW:'Importă portofel existent',cancel:'Anulează',copy:'ATINGE PENTRU A COPIA',copied:'COPIAT',value:'valoare',cost:'cost',unreal:'nerealizat',real:'realizat',rank:'loc',of:'din',burned:'ars',noprice:'fără preț încă',recv:'PRIMEȘTE',send:'TRIMITE',buy:'CUMPĂRĂ GBX',sell:'VINDE GBX',conv:'CONVERSIE',memes:'MEMELE MELE',favs:'FAVORITE',fold:'URMĂRITE',live:'activ',graduated:'graduat',viewAll:'VEZI TOT ÎN EXPLORER',chains:'MULTI-LANȚ',locked:'PORTOFEL BLOCAT',unlock:'DEBLOCHEAZĂ',sentL:'Trimis',recvL:'Primit',minedL:'Minat'},
+de:{hist:'Verlauf',title:'Konto',bal:'Guthaben',pnl:'Portfolio',burn:'Verbrennungen',hold:'Bestände',crt:'Erstellt',act:'Aktivität',none:'noch nichts',bought:'Gekauft',sold:'Verkauft',created:'Erstellt',grad:'Graduiert',refund:'Erstattung',follow:'FOLGEN',following:'GEFOLGT',share:'TEILEN',wallets:'MEINE WALLETS',addW:'+ HINZUFÜGEN',newW:'Neue Wallet erstellen',impW:'Vorhandene Wallet importieren',cancel:'Abbrechen',copy:'ZUM KOPIEREN TIPPEN',copied:'KOPIERT',value:'Wert',cost:'Kosten',unreal:'nicht realisiert',real:'realisiert',rank:'Rang',of:'von',burned:'verbrannt',noprice:'noch kein Preis',recv:'EMPFANGEN',send:'SENDEN',buy:'GBX KAUFEN',sell:'GBX VERKAUFEN',conv:'TAUSCHEN',memes:'MEINE MEMES',favs:'FAVORITEN',fold:'GEFOLGT',live:'aktiv',graduated:'graduiert',viewAll:'ALLES IM EXPLORER',chains:'MULTI-CHAIN',locked:'WALLET GESPERRT',unlock:'ENTSPERREN',sentL:'Gesendet',recvL:'Empfangen',minedL:'Gemint'},
+zh:{hist:'历史',title:'账户',bal:'余额',pnl:'投资组合',burn:'销毁',hold:'持仓',crt:'创建',act:'活动',none:'暂无',bought:'买入',sold:'卖出',created:'创建',grad:'毕业',refund:'退款',follow:'关注',following:'已关注',share:'分享',wallets:'我的钱包',addW:'+ 添加',newW:'创建新钱包',impW:'导入已有钱包',cancel:'取消',copy:'点按复制',copied:'已复制',value:'价值',cost:'成本',unreal:'未实现',real:'已实现',rank:'排名',of:'共',burned:'已销毁',noprice:'暂无价格',recv:'接收',send:'发送',buy:'买入 GBX',sell:'卖出 GBX',conv:'兑换',memes:'我的代币',favs:'收藏',fold:'已关注',live:'活跃',graduated:'已毕业',viewAll:'在浏览器中查看全部',chains:'多链',locked:'钱包已锁定',unlock:'解锁',sentL:'已发送',recvL:'已接收',minedL:'已挖出'},
+ar:{hist:'السجل',title:'الحساب',bal:'الرصيد',pnl:'المحفظة',burn:'الحرق',hold:'الحيازات',crt:'المُنشأة',act:'النشاط',none:'لا شيء بعد',bought:'شراء',sold:'بيع',created:'إنشاء',grad:'تخرّج',refund:'استرداد',follow:'متابعة',following:'متابع',share:'مشاركة',wallets:'محافظي',addW:'+ إضافة',newW:'إنشاء محفظة جديدة',impW:'استيراد محفظة موجودة',cancel:'إلغاء',copy:'انقر للنسخ',copied:'تم النسخ',value:'القيمة',cost:'التكلفة',unreal:'غير محقق',real:'محقق',rank:'الترتيب',of:'من',burned:'محروق',noprice:'لا يوجد سعر بعد',recv:'استلام',send:'إرسال',buy:'شراء GBX',sell:'بيع GBX',conv:'تحويل',memes:'عملاتي',favs:'المفضلة',fold:'المتابَعون',live:'نشط',graduated:'متخرج',viewAll:'عرض الكل في المستكشف',chains:'متعدد السلاسل',locked:'المحفظة مقفلة',unlock:'فتح القفل',sentL:'مُرسل',recvL:'مُستلم',minedL:'مُعدَّن'}};
 var tt=function(k){return (T[L]&&T[L][k])||T.en[k]||k;};
 if(L==='ar')document.body.dir='rtl';
 var $=function(i){return document.getElementById(i);};
@@ -408,6 +419,63 @@ async function go(){
    +'<div class="row"><span class="k">'+tt('unreal')+'</span><span class="'+(un>=0?'pos':'neg')+'">'+(ok?((un>=0?'+':'')+gbx(un)+(pct===null?'':' · '+(un>=0?'+':'')+N(pct)+'%')):'—')+'</span></div>'
    +'<div class="row"><span class="k">'+tt('real')+'</span><span class="'+(TR>=0?'pos':'neg')+'">'+((TR>=0?'+':'')+gbx(TR))+'</span></div>'
    +(noPrice.length?'<div class="row"><span class="k">'+tt('noprice')+'</span><span class="muted">'+esc(noPrice.join(', '))+'</span></div>':'');
+  // PORTFOLIO HISTORY (s70): client-side from ops x candles + L1 GBX. Honest: "-" when no data.
+  (function(){
+    if(window.__gbxPH) return; window.__gbxPH=1;
+    var IVMAP={'7d':{iv:'1200',ms:3600000,span:604800000},'30d':{iv:'28800',ms:86400000,span:2592000000},'1y':{iv:'28800',ms:86400000,span:31536000000}};
+    var CAND={}; // coin_id -> candles
+    async function coinCandles(id,iv){
+      var k=id+':'+iv; if(CAND[k]) return CAND[k];
+      var raw=[]; try{ var d=await gj('/api/candles/'+id+'?interval='+iv+'&limit=500'); raw=(d&&d.candles)||[]; }catch(e){}
+      CAND[k]=raw.map(function(x){
+        var cl=Number(x.close!=null?x.close:x.c); var tm=Number(x.time!=null?x.time:x.t);
+        if(!(cl>0)||!(tm>0)) return null;
+        if(tm<1e12){ tm=(window.__phTipH&&window.__phTipH>0)? Date.now()-(window.__phTipH-tm)*3000 : null; }
+        return tm?{time:tm, close:cl}:null;
+      }).filter(function(x){return !!x;});
+      return CAND[k];
+    }
+    function pxAt(cs,t){ var px=null; for(var i=0;i<cs.length;i++){ if(cs[i].time<=t) px=cs[i].close; else break; } return px; }
+    window.phBuild=async function(tf){
+      var cfg=IVMAP[tf]||IVMAP['7d'];
+      var now=Date.now(), from=now-cfg.span;
+      // GBX flow from L1 (amount_gbx, height->approx time via 3s blocks) + memecoin ops (height)
+      var tipH=null; try{ var st=await gj('/api/status'); tipH=st&&(st.best_block_height||st.height); }catch(e){}
+      window.__phTipH=tipH;
+      function hT(h){ return (tipH&&h)? now-(tipH-h)*3000 : null; }
+      var evs=[];
+      (mc&&mc.ops||[]).forEach(function(o){ var t=hT(o.height); if(!t) return;
+        if(o.op==='B'||o.op==='P'){ evs.push({t:t, gbx:-Number(o.amount||0), coin:o.coin_id, tok:Number(o.tokens||0)}); }
+        else if(o.op==='S'||o.op==='Q'){ evs.push({t:t, gbx:Number(o.tokens||0), coin:o.coin_id, tok:-Number(o.amount||0)}); }
+        else if(o.op==='C'){ evs.push({t:t, gbx:-Number(o.amount||0), coin:o.coin_id, tok:Number(o.tokens||0)}); }
+      });
+      evs.sort(function(a,b){return a.t-b.t;});
+      // current balances walk backwards -> start state, then forward buckets
+      var tokNow={}; Object.keys(held||{}).forEach(function(id){ tokNow[id]=Number(held[id].amount)||0; });
+      var g=0, tk={}; Object.keys(tokNow).forEach(function(k){tk[k]=tokNow[k];});
+      for(var i=evs.length-1;i>=0;i--){ var e=evs[i]; if(e.t<from) break;
+        g-=e.gbx; if(e.coin&&e.tok) tk[e.coin]=(tk[e.coin]||0)-e.tok; }
+      // candles for involved coins
+      var ids=Object.keys(tk).filter(function(k){return Math.abs(tk[k])>0 || (tokNow[k]||0)>0;});
+      var CS={}; await Promise.all(ids.map(function(id){ return coinCandles(id,cfg.iv).then(function(c){CS[id]=c;}); }));
+      var inW=evs.filter(function(e){return e.t>=from;});
+      var out=[], t0=inW.length?inW[0].t:from, ei=0;
+      // resume state at t0: g,tk already = state at 'from'
+      for(var t=t0;t<=now;t+=cfg.ms){
+        while(ei<evs.length && evs[ei].t<=t){ var e2=evs[ei]; if(e2.t>=from){ g+=e2.gbx; if(e2.coin&&e2.tok) tk[e2.coin]=(tk[e2.coin]||0)+e2.tok; } ei++; }
+        var v=0;
+        for(var j=0;j<ids.length;j++){ var id=ids[j], amt=tk[id]||0; if(amt>0){ var px=pxAt(CS[id]||[],t); if(px>0) v+=base(amt*px); } }
+        out.push({time:t, open:v, high:v, low:v, close:v});
+      }
+      return out;
+    };
+    window.phSetTf=function(tf){
+      document.querySelectorAll('[data-phtf]').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-phtf')===tf); });
+      if(window.PriceChart) PriceChart.init({ container:'phChart', height:180, defaultTf:tf, defaultChartType:'line', storageKey:'gbx_phType', defaultMAOff:true,
+        displayDecimals:2, precision:4, minMove:0.01, pollMs:60000, usdMultiplier:function(){return 1;}, dataProvider:window.phBuild, els:{} });
+    };
+    setTimeout(function(){ try{ var w=document.getElementById('phWrap'); if(w){ w.hidden=false; window.phSetTf('7d'); } }catch(e){} }, 400);
+  })();
   gj('/api/leaderboard?kind=burners&period=all').then(function(d){
     var it=(d&&d.items)||[],i=-1;
     for(var k=0;k<it.length;k++){if(String(it[k].pk).toLowerCase()===pk){i=k;break;}}

@@ -23,6 +23,11 @@ window.PriceChart = (function () {
   function minMove(){ return cfg.minMove!=null ? cfg.minMove : 0.000000001; }
 
   function load(){
+    if(cfg.dataProvider){
+      return Promise.resolve().then(function(){ return cfg.dataProvider(tf); })
+        .then(function(d){ candles=(d&&d.length)?d:[]; draw(); })
+        .catch(function(e){ console.warn('PriceChart provider:', e); candles=[]; draw(); });
+    }
     var base = cfg.candlesUrl();
     var url = base + (base.indexOf('?')>=0?'&':'?') + 'interval='+tf+'&limit=100';
     return fetch(url).then(function(r){return r.json();}).then(function(d){
@@ -32,7 +37,7 @@ window.PriceChart = (function () {
 
   function updateChange(){
     var ch=0;
-    var W={'1m':3600000,'5m':21600000,'15m':43200000,'1h':86400000,'4h':345600000,'1d':2592000000};
+    var W={'1m':3600000,'5m':21600000,'15m':43200000,'1h':86400000,'4h':345600000,'1d':2592000000,'7d':604800000,'30d':2592000000,'1y':31536000000};
     var windowMs=W[tf]||86400000, cutoff=Date.now()-windowMs;
     var inW=(candles||[]).filter(function(c){return c&&c.time>=cutoff;});
     if(inW.length>=2&&inW[0].open>0){ ch=((inW[inW.length-1].close-inW[0].open)/inW[0].open)*100; }
@@ -160,7 +165,7 @@ window.PriceChart = (function () {
   function init(config){
     cfg=config;
     chartType=(localStorage.getItem(cfg.storageKey||'gbx_chartType')||cfg.defaultChartType||'candles');
-    showMA=(localStorage.getItem('gbx_showMA')!=='false');
+    showMA=cfg.defaultMAOff?false:(localStorage.getItem('gbx_showMA')!=='false');
     tf=config.defaultTf||'1m';
     window.setInterval2=setTimeframe; window.toggleChartType=toggleType; window.toggleMA=toggleMA;
     setTimeout(function(){ var b1=$(cfg.els&&cfg.els.iconType),b2=$(cfg.els&&cfg.els.iconMA);
