@@ -5,7 +5,7 @@
 (function() {
   'use strict';
 
-  var APK_URL = 'https://goldbrix.app/downloads/android/latest.apk';
+  var APK_URL = 'https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/download/v31-gbx-launchpad/goldbrix-1.0.114-114.apk';
   var deferredPrompt = null;
 
   function getPlatform() {
