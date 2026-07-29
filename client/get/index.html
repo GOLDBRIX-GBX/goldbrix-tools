@@ -28,9 +28,9 @@
   .badge.gold{color:var(--gold);border-color:rgba(240,192,96,0.4);background:rgba(240,192,96,0.08)}
   .badge.dim{color:var(--txt2);border-color:var(--line);background:rgba(255,255,255,0.02)}
   .newver{font-size:18px;font-weight:800;margin-bottom:4px}
-  .gbx-back{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:12px;z-index:1000;display:inline-flex;align-items:center;gap:8px;padding:10px 16px;background:rgba(20,16,10,0.85);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:999px;color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none}
+  .gbx-back{position:static;display:inline-flex;align-items:center;gap:8px;padding:10px 16px;background:rgba(20,16,10,0.85);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:999px;color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none}
   .gbx-back:active{background:rgba(40,32,20,0.9)}
-  .gbx-x{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:12px;z-index:1000;display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;background:rgba(20,16,10,0.85);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:50%;color:var(--gold);font-size:20px;font-weight:700;cursor:pointer;text-decoration:none;line-height:1}
+  .gbx-x{position:static;display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;background:rgba(20,16,10,0.85);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:50%;color:var(--gold);font-size:20px;font-weight:700;cursor:pointer;text-decoration:none;line-height:1}
   .gbx-x:active{background:rgba(40,32,20,0.9)}
   .btn-dl{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:18px;margin:18px 0 6px;border:none;border-radius:16px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;letter-spacing:1px;color:#1a1200;background:linear-gradient(135deg,var(--gold),#e0a840);box-shadow:0 6px 20px rgba(240,192,96,0.35);transition:transform .15s,box-shadow .15s;text-decoration:none}
   .btn-dl:active{transform:scale(0.98)}
@@ -48,7 +48,8 @@
   .hash:active{background:#0f0c07}
   .note{background:rgba(240,192,96,0.06);border:1px solid rgba(240,192,96,0.25);border-radius:12px;padding:14px;margin-top:16px;font-size:13px;line-height:1.6;color:var(--gold-soft)}
   .note b{color:var(--gold)}
-  .langbar{display:flex;gap:6px;justify-content:center;margin:6px 0 22px;flex-wrap:wrap}
+  .gbx-top{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;align-items:center;gap:8px;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 10px;background:rgba(20,16,10,0.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .langbar{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;flex:1;margin:0}
   .langbar button{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;padding:6px 12px;border-radius:8px;cursor:pointer;background:transparent;border:1px solid var(--line);color:var(--txt2);transition:.15s}
   .langbar button.on{color:#1a1200;background:var(--gold);border-color:var(--gold)}
   .foot{text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--txt2);margin-top:24px;letter-spacing:1px}
@@ -57,16 +58,18 @@
 </style>
 </head>
 <body>
-<a class="gbx-back" id="gbxBack">&larr; <span id="t_back">Back</span></a>
-<a class="gbx-x" id="gbxX">&times;</a>
-<div class="wrap">
+<div class="gbx-top">
+  <a class="gbx-back" id="gbxBack">&larr; <span id="t_back">Back</span></a>
+  <div class="langbar" id="langbar"></div>
+  <a class="gbx-x" id="gbxX">&times;</a>
+</div>
+<div class="wrap" style="padding-top:calc(64px + env(safe-area-inset-top,0px))">
   <div class="hero">
     <img src="/assets/coin/gbx-coin-512.png" alt="GoldBrix">
     <h1>GoldBrix</h1>
     <div class="sub" id="t_subtitle">NON-CUSTODIAL · MAINNET</div>
     <div class="tagline">Real chain. Real burn. Real fairness.</div>
   </div>
-  <div class="langbar" id="langbar"></div>
   <div class="card">
     <div class="badges">
       <span class="badge green" id="t_signed">✓ Signed Release</span>
@@ -75,7 +78,7 @@
     </div>
     <div class="newver" id="t_newver">🚀 New version available!</div>
     <div style="color:var(--txt2);font-size:13px;font-family:'JetBrains Mono',monospace" id="m_changelog">—</div>
-    <a class="btn-dl" id="dlBtn" href="/downloads/android/latest.apk" download>📦 <span id="t_download">DOWNLOAD APK</span></a>
+    <a class="btn-dl" id="dlBtn" href="https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/download/v31-gbx-launchpad/goldbrix-1.0.114-114.apk">📦 <span id="t_download">DOWNLOAD APK</span></a>
     <div class="grid">
       <div><div class="lbl" id="t_version">Version</div><div class="val" id="m_version2">—</div></div>
       <div><div class="lbl" id="t_build">Build</div><div class="val" id="m_build2">—</div></div>
@@ -85,8 +88,8 @@
   </div>
   <div class="card">
     <div class="sec-title">🔗 <span id="t_altlinks">Alternative Download Links</span></div>
-    <a class="dl-link" href="/downloads/android/latest.apk" download>
-      <div><div class="t" id="t_latest">Latest Version</div><div class="p">/downloads/android/latest.apk</div></div><span class="arr">↓</span>
+    <a class="dl-link" href="https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/download/v31-gbx-launchpad/goldbrix-1.0.114-114.apk">
+      <div><div class="t" id="t_latest">Latest Version</div><div class="p">GitHub Release (canonical)</div></div><span class="arr">↓</span>
     </a>
     <a class="dl-link" id="versionedLink" href="#" download>
       <div><div class="t" id="t_versioned">Versioned File</div><div class="p" id="m_versioned_path">—</div></div><span class="arr">↓</span>
@@ -119,21 +122,23 @@ document.querySelectorAll('#langbar button').forEach(function(b){b.classList.tog
 (function(){var bar=document.getElementById('langbar');LANGS.forEach(function(L){var b=document.createElement('button');b.textContent=L[1];b.dataset.l=L[0];b.onclick=function(){applyLang(L[0])};bar.appendChild(b)});applyLang(curLang());})();
 function fmtSize(b){if(!b)return'—';return(b/1048576).toFixed(2)+' MB'}
 function fmtDate(i){if(!i)return'—';try{return new Date(i).toLocaleDateString()}catch(e){return(i.split('T')[0]||'—')}}
-(async function(){try{var r=await fetch('https://goldbrix.app/version.json?t='+Date.now(),{cache:'no-store'});var d=await r.json();var ver=d.version||'—',build=d.build||'—';
+(async function(){try{var r=await fetch('/version.json?t='+Date.now(),{cache:'no-store'});var d=await r.json();var ver=d.version||'—',build=d.build||'—';
 document.getElementById('m_version').textContent='v'+ver;document.getElementById('m_version2').textContent=ver;document.getElementById('m_version3').textContent=ver;
 document.getElementById('m_build').textContent=build;document.getElementById('m_build2').textContent=build;document.getElementById('m_build3').textContent=build;
 document.getElementById('m_changelog').textContent=d.changelog||'';document.getElementById('m_date').textContent=fmtDate(d.releasedAt);document.getElementById('m_sha256').textContent=d.sha256||'—';
-document.getElementById('dlBtn').href='/downloads/android/latest.apk';
+if(d.downloadUrl)document.getElementById('dlBtn').href=d.downloadUrl;
 // GBX — in WebView (APK) atributul download nu merge; deschide in browser extern
 (function(){
-  var ABS='https://goldbrix.app/downloads/android/latest.apk';
+
   function openApk(e){
     if(e){e.preventDefault();}
+    var u=(this&&this.href)||(e&&e.currentTarget&&e.currentTarget.href);
+    if(!u)return false;
     try{
       var P=window.Capacitor&&window.Capacitor.Plugins;
-      if(P&&P.Browser){ P.Browser.open({url:ABS}); return false; }
+      if(P&&P.Browser){ P.Browser.open({url:u}); return false; }
     }catch(_){}
-    window.open(ABS,'_system')||(window.location.href=ABS);
+    window.open(u,'_system')||(window.location.href=u);
     return false;
   }
   var ids=['dlBtn'];
@@ -141,8 +146,8 @@ document.getElementById('dlBtn').href='/downloads/android/latest.apk';
   // si linkurile alternative (toate .apk)
   document.querySelectorAll('a[href*="latest.apk"], a[href*=".apk"]').forEach(function(a){ a.addEventListener('click',openApk); });
 })();
-var vp='/downloads/android/goldbrix-'+ver+'-'+build+'.apk';document.getElementById('versionedLink').href=vp;document.getElementById('m_versioned_path').textContent=vp.replace('/downloads/android/','');
-try{var h=await fetch('/downloads/android/latest.apk',{method:'HEAD'});var len=h.headers.get('content-length');document.getElementById('m_size').textContent=fmtSize(len?parseInt(len):0)}catch(e){document.getElementById('m_size').textContent='~21 MB'}
+var vp=(d&&d.downloadUrl)||('https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/download/v31-gbx-launchpad/goldbrix-'+ver+'-'+build+'.apk');document.getElementById('versionedLink').href=vp;document.getElementById('m_versioned_path').textContent=vp.split('/').pop();
+try{var h=await fetch(vp,{method:'HEAD'});var len=h.headers.get('content-length');document.getElementById('m_size').textContent=fmtSize(len?parseInt(len):0)}catch(e){document.getElementById('m_size').textContent='\u2014'}
 }catch(e){}})();
 function copyHash(id){var txt=document.getElementById(id).textContent;if(!txt||txt==='—')return;navigator.clipboard&&navigator.clipboard.writeText(txt);var t=document.getElementById('toast');t.textContent=(T[curLang()]||T.en).copied;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},1500)}
 
