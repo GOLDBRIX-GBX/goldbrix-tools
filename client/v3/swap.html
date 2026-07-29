@@ -12,28 +12,7 @@
 window.GBX_API_BASE='https://goldbrix.app/api'; window.GBX_LP_BASE='https://goldbrix.app/lp';
 // LP discovery — lps.json + registrul ON-CHAIN (GBX:LP via /lp-registry).
 // Merge dedup pe base_url; intrarile on-chain = minime (health-check /lp-info decide). Failure = silent.
-window.GBX_LPS = async function(){
-  if(window.__GBX_LPS_C && (Date.now()-window.__GBX_LPS_C.ts)<60000) return window.__GBX_LPS_C.lps;
-  var lps=[]; var seen={};
-  try{ var d=await (await fetch('/lps.json',{cache:'no-store'})).json();
-       (d.lps||[]).forEach(function(l){ if(l&&l.base_url&&!seen[l.base_url]){seen[l.base_url]=1;lps.push(l);} }); }catch(_e){}
-  var bases=(window.GBX_NODES||['https://goldbrix.app/api']).slice(0,2);
-  for(var i=0;i<bases.length;i++){
-    try{
-      var c=new AbortController(); var t=setTimeout(function(){c.abort();},4000);
-      var r=await fetch(bases[i].replace(/\/+$/,'')+'/lp-registry',{cache:'no-store',signal:c.signal}); clearTimeout(t);
-      if(!r.ok) continue;
-      var j=await r.json();
-      Object.keys((j&&j.lps)||{}).forEach(function(u){
-        if(u.indexOf('https://')===0 && !seen[u]){ seen[u]=1;
-          lps.push({name:'onchain-lp', base_url:u, chains:['base','arbitrum','solana'], fee_bps:null, onchain:true}); }
-      });
-      break;
-    }catch(_e){}
-  }
-  window.__GBX_LPS_C={ts:Date.now(), lps:lps};
-  return lps;
-};
+window.GBX_LPS = async function(){ try{ return await window.GBXLp.list(); }catch(_e){ return []; } };
 // PER-REQUEST failover across LPs. Any fetch toward a gateway
 // esuat -> re-selectie LP sanatos din lps.json pentru lantul respectiv -> retry o data.
 window.GBX_LP_FETCH = async function(C, pathq){
@@ -317,6 +296,7 @@ input, textarea, .copyable, [data-copyable], .addr, .hash, .txid, code, .gbx-amo
   <footer data-i="foot">Non-custodial · atomic · no one holds your keys</footer>
 </div>
 <script src="/v3/gbx-read.js?v=121"></script>
+<script src="/v3/gbx-lp.js?v=121"></script>
 <script src="/v3/gbx-session.js?v=114"></script>
 <script type="module" src="/crypto-utils-v2.js?v=121"></script>
 <script type="module" src="/multichain-utils.js?v=114"></script>
@@ -537,7 +517,7 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
     if(activeEv==='completed') idx = steps.length-1;
     el.atomic.hidden = false;
     el.atomic.innerHTML = steps.map((s,i)=>{
-      const cls = failed && i===idx ? 'fail' : i<idx ? 'done' : i===idx ? 'on' : '';
+      const cls = failed && i===idx ? 'fail' : (activeEv==='completed') ? 'done' : i<idx ? 'done' : i===idx ? 'on' : '';
       const tag = s[2] ? '<span class="k">'+t(s[2])+'</span>' : '';
       return '<div class="step '+cls+'"><span class="dot"></span><span class="t">'+t(s[1])+'</span>'+tag+'</div>';
     }).join('');
@@ -961,7 +941,7 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
     var t=PI_T[LG];
     if(tg) tg.textContent=t.how;
     try{
-      var _lpbase=(typeof C!=='undefined'&&C.gateway)?C.gateway:(window.GBX_LP_BASE||'/lp'); var r=await fetch(_lpbase+'/lp-info',{cache:'no-store'}); var d=await r.json(); var p=d.price||{};
+      var r=await window.GBX_LP_FETCH((typeof C!=='undefined'&&C&&C.gateway)?C:{gateway:(window.GBX_LP_BASE||'/lp')},'/lp-info'); var d=await r.json(); var p=d.price||{};
       var x=(p.x_usdc!=null)?(+p.x_usdc).toFixed(2):'0.00';
       // numbers speak (live price above, chart, explorer links below). One honest line.
       var head = '• '+(t.piSimple||'');
