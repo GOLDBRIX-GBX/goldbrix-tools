@@ -80,12 +80,11 @@ CREATE TABLE IF NOT EXISTS pool_meta (
 );
 INSERT OR IGNORE INTO pool_meta (key, value, updated_at) VALUES
     ('schema_version','1',strftime('%s','now')),
-    ('pool_fee_pct','5',strftime('%s','now')),
+    ('pool_fee_pct','0',strftime('%s','now')),
     ('pplns_window','2000',strftime('%s','now')),
     ('min_payout_sats','1000000',strftime('%s','now')),
     ('dust_threshold_sats','1000',strftime('%s','now')),
     ('max_outputs_coinbase','1500',strftime('%s','now')),
     ('vardiff_target_sec','20',strftime('%s','now')),
     ('vardiff_min','0.01',strftime('%s','now')),
-    ('vardiff_max','1024',strftime('%s','now')),
-    ('treasury_addr','bn1qqaqug3zac04c8mpnm8g6glgc4z4v39502xdans',strftime('%s','now'));
+    ('vardiff_max','1024',strftime('%s','now'));
