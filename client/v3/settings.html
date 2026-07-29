@@ -280,7 +280,7 @@ input::-moz-placeholder, textarea::-moz-placeholder {
       <span class="item-row__icon">🛡️</span>
       <div class="item-row__info">
         <div class="item-row__title" id="trTitle">Transparency</div>
-        <div class="item-row__sub" id="trSub">Proof of Reserves · Solvency · Deflation</div>
+        <div class="item-row__sub" id="trSub">On-chain liquidity · Burns · Supply</div>
       </div>
       <span class="item-row__arrow">→</span>
     </a>
@@ -289,6 +289,14 @@ input::-moz-placeholder, textarea::-moz-placeholder {
       <div class="item-row__info">
         <div class="item-row__title" id="wpTitle">Whitepaper Protocol</div>
         <div class="item-row__sub" id="wpSub">Tokenomics · Roadmap · Decentralization</div>
+      </div>
+      <span class="item-row__arrow">→</span>
+    </a>
+    <a class="item-row" href="/v3/protocol.html">
+      <span class="item-row__icon">⚡</span>
+      <div class="item-row__info">
+        <div class="item-row__title" id="protoTitle">Protocol Live</div>
+        <div class="item-row__sub" id="protoSub">How it works · Mine · Buy GBX</div>
       </div>
       <span class="item-row__arrow">→</span>
     </a>
@@ -317,6 +325,14 @@ input::-moz-placeholder, textarea::-moz-placeholder {
       <span class="item-row__arrow">→</span>
     </a>
     <script>(function(){var g=localStorage.getItem('gbx_lang')||localStorage.getItem('goldbrix_lang')||'en';var T={en:{t:'Join the Federation',s:'Mine · Run a node · Become an LP'},ro:{t:'Alătură-te Federației',s:'Minează · Rulează un nod · Devino LP'},de:{t:'Tritt der Föderation bei',s:'Minen · Node betreiben · LP werden'},zh:{t:'加入联邦',s:'挖矿 · 运行节点 · 成为 LP'},ar:{t:'انضم إلى الاتحاد',s:'عدِّن · شغّل عقدة · كن مزود سيولة'}};var x=T[g]||T.en;var a=document.getElementById('jnRowTitle'),b=document.getElementById('jnRowSub');if(a)a.textContent=x.t;if(b)b.textContent=x.s;})();</script>
+    <a class="item-row" href="https://github.com/GOLDBRIX-GBX/goldbrix-tools/blob/main/COPYING" target="_blank" rel="noopener">
+      <span class="item-row__icon">⚖️</span>
+      <div class="item-row__info">
+        <div class="item-row__title" id="licTitle">License</div>
+        <div class="item-row__sub" id="licSub">GPL-3.0 · © The GOLDBRIX Project</div>
+      </div>
+      <span class="item-row__arrow">→</span>
+    </a>
     <a class="item-row" href="https://github.com/GOLDBRIX-GBX" target="_blank" rel="noopener">
       <span class="item-row__icon">💻</span>
       <div class="item-row__info">
@@ -466,7 +482,7 @@ const T = {
     pwaFeat: ['✓ Fast loading', '✓ Works offline', '✓ Native app feel'],
     tokenomics: 'Tokenomics & Whitepaper', tokenomicsSub: 'Public docs · Fee model · Decentralization',
     burnTracker: 'Burn Tracker', burnTrackerSub: 'Counter transparent burns live',
-    wp: 'Whitepaper Protocol', wpSub: 'Tokenomics · Roadmap · Decentralization',
+    proto: 'Protocol Live', protoSub: 'How it works · Mine · Buy GBX', lic: 'License', licSub: 'GPL-3.0 · © The GOLDBRIX Project', trSubTxt: 'On-chain liquidity · Burns · Supply', wp: 'Whitepaper Protocol', wpSub: 'Tokenomics · Roadmap · Decentralization',
     expl: 'Block Explorer', explSub: 'Verify on-chain · Public registry',
     gh: 'GitHub Source Code', ghSub: 'Open source · LIVE',
     autonom: 'Autonomous Protocol', autonomSub: 'No team · No admin · Self-sustained',
@@ -503,7 +519,7 @@ const T = {
     pwaFeat: ['✓ Încărcare rapidă', '✓ Funcționează offline', '✓ Senzație nativă'],
     tokenomics: 'Tokenomics & Whitepaper', tokenomicsSub: 'Documente publice · Model taxe · Descentralizare',
     burnTracker: 'Burn Tracker', burnTrackerSub: 'Counter transparent burns live',
-    wp: 'Whitepaper Protocol', wpSub: 'Tokenomics · Roadmap · Descentralizare',
+    proto: 'Protocol Live', protoSub: 'Cum funcționează · Minează · Cumpără GBX', lic: 'Licență', licSub: 'GPL-3.0 · © The GOLDBRIX Project', trSubTxt: 'Lichiditate on-chain · Arderi · Supply', wp: 'Whitepaper Protocol', wpSub: 'Tokenomics · Roadmap · Descentralizare',
     expl: 'Block Explorer', explSub: 'Verifică on-chain · Registru public',
     gh: 'Cod Sursă GitHub', ghSub: 'Open source · LIVE',
     autonom: 'Protocol Autonom', autonomSub: 'Fără echipă · Fără admini · Auto-susținut',
@@ -540,7 +556,7 @@ const T = {
     pwaFeat: ['✓ Schnelles Laden', '✓ Funktioniert offline', '✓ Native App-Gefühl'],
     tokenomics: 'Tokenomics & Whitepaper', tokenomicsSub: 'Öffentliche Dokumente · Gebührenmodell · Dezentralisierung',
     burnTracker: 'Burn Tracker', burnTrackerSub: 'Live transparente Burns',
-    wp: 'Whitepaper Protokoll', wpSub: 'Tokenomics · Roadmap · Dezentralisierung',
+    proto: 'Protokoll Live', protoSub: 'So funktioniert es · Minen · GBX kaufen', lic: 'Lizenz', licSub: 'GPL-3.0 · © The GOLDBRIX Project', trSubTxt: 'On-Chain-Liquidität · Burns · Supply', wp: 'Whitepaper Protokoll', wpSub: 'Tokenomics · Roadmap · Dezentralisierung',
     expl: 'Block Explorer', explSub: 'On-Chain verifizieren · Öffentliches Register',
     gh: 'GitHub Quellcode', ghSub: 'Open Source · LIVE',
     autonom: 'Autonomes Protokoll', autonomSub: 'Kein Team · Keine Admins · Selbsterhaltend',
@@ -577,7 +593,7 @@ const T = {
     pwaFeat: ['✓ 快速加载', '✓ 离线工作', '✓ 原生应用感'],
     tokenomics: '代币经济学和白皮书', tokenomicsSub: '公共文档 · 费用模型 · 去中心化',
     burnTracker: '燃烧追踪器', burnTrackerSub: '透明实时燃烧',
-    wp: '白皮书协议', wpSub: '代币经济 · 路线图 · 去中心化',
+    proto: '协议实况', protoSub: '运作方式 · 挖矿 · 购买 GBX', lic: '许可证', licSub: 'GPL-3.0 · © The GOLDBRIX Project', trSubTxt: '链上流动性 · 销毁 · 供应量', wp: '白皮书协议', wpSub: '代币经济 · 路线图 · 去中心化',
     expl: '区块浏览器', explSub: '链上验证 · 公共注册表',
     gh: 'GitHub 源代码', ghSub: '开源 · LIVE',
     autonom: '自治协议', autonomSub: '无团队 · 无管理员 · 自维持',
@@ -614,7 +630,7 @@ const T = {
     pwaFeat: ['✓ تحميل سريع', '✓ يعمل بدون اتصال', '✓ إحساس بتطبيق أصلي'],
     tokenomics: 'اقتصاديات الرمز والورقة البيضاء', tokenomicsSub: 'وثائق عامة · نموذج الرسوم · اللامركزية',
     burnTracker: 'متعقب الحرق', burnTrackerSub: 'حروق شفافة مباشرة',
-    wp: 'بروتوكول الورقة البيضاء', wpSub: 'الاقتصاد · خارطة الطريق · اللامركزية',
+    proto: 'البروتوكول مباشر', protoSub: 'كيف يعمل · عدِّن · اشترِ GBX', lic: 'الترخيص', licSub: 'GPL-3.0 · © The GOLDBRIX Project', trSubTxt: 'سيولة على السلسلة · الحرق · المعروض', wp: 'بروتوكول الورقة البيضاء', wpSub: 'الاقتصاد · خارطة الطريق · اللامركزية',
     expl: 'مستكشف الكتل', explSub: 'تحقق على السلسلة · سجل عام',
     gh: 'كود مصدر GitHub', ghSub: 'مفتوح المصدر · LIVE',
     autonom: 'بروتوكول مستقل', autonomSub: 'بدون فريق · بدون مسؤولين · مستدام ذاتيا',
@@ -681,6 +697,11 @@ function applyLang() {
     if (el) el.textContent = tt.pwaFeat[i];
   }
 
+  var _pt=document.getElementById('protoTitle'); if(_pt&&tt.proto)_pt.textContent=tt.proto;
+  var _ps=document.getElementById('protoSub'); if(_ps&&tt.protoSub)_ps.textContent=tt.protoSub;
+  var _lt=document.getElementById('licTitle'); if(_lt&&tt.lic)_lt.textContent=tt.lic;
+  var _ls=document.getElementById('licSub'); if(_ls&&tt.licSub)_ls.textContent=tt.licSub;
+  var _ts=document.getElementById('trSub'); if(_ts&&tt.trSubTxt)_ts.textContent=tt.trSubTxt;
   document.getElementById('wpTitle').textContent = tt.wp;
   document.getElementById('wpSub').textContent = tt.wpSub;
   document.getElementById('btTitle').textContent = tt.burnTracker;

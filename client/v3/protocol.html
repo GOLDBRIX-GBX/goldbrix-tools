@@ -76,8 +76,8 @@ body { padding-bottom: 110px; }
 .p-logo {
   width: 80px; height: 80px;
   margin: 0 auto 16px;
-  border-radius: 20px;
-  background: url('/assets/brand/goldbrix-brand-180.png') center/cover;
+  border-radius: 50%;
+  background: url('/assets/coin/gbx-coin-128.png') center/cover;
   box-shadow: 0 0 32px var(--gold-glow);
   border: 2px solid var(--gold);
 }
@@ -756,7 +756,7 @@ input::-moz-placeholder, textarea::-moz-placeholder {
 <div class="p-section">
   <div class="p-section-title"><span class="icon">🚀</span><span data-i18n="cta.title">Get Started</span></div>
   <div class="p-cta-row">
-    <a href="/buy.html" class="p-cta-btn p-cta-buy" data-i18n="cta.buy">🌉 BUY GBX</a>
+    <a href="/v3/swap.html?dir=buy" class="p-cta-btn p-cta-buy" data-i18n="cta.buy">🌉 BUY GBX</a>
     <a href="/v3/burns.html" class="p-cta-btn p-cta-mine" data-i18n="cta.burn">🔥 BURN TRACKER</a>
   </div>
 </div>
@@ -1189,6 +1189,14 @@ function t_protocol(key) {
   return key;
 }
 
+function tProto(key) {
+  var d = I18N_protocol[LANG_protocol] || I18N_protocol.en;
+  var v = d[key];
+  if (v !== undefined && v !== null && v !== '') return v;
+  v = I18N_protocol.en[key];
+  if (v !== undefined && v !== null && v !== '') return v;
+  return key;
+}
 function applyI18n_protocol() {
   if (LANG_protocol === 'ar') {
     document.documentElement.setAttribute('dir', 'rtl');
@@ -1196,7 +1204,7 @@ function applyI18n_protocol() {
   }
   __VROOT_protocol.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
-    const val = t(key);
+    const val = tProto(key);
     if (val && (val.includes('<br>') || val.includes('<strong>'))) {
       el.innerHTML = val;
     } else {
@@ -1242,6 +1250,8 @@ async function loadStats() {
 // INIT
 (function init() {
   applyI18n_protocol();
+  /* i18n.js (deferred) repaints [data-i18n] from its own dictionary after us — reapply ours after load */
+  window.addEventListener('load', function(){ setTimeout(applyI18n_protocol, 50); });
   loadStats();
   setInterval(loadStats, 60000);
 })();
