@@ -15,16 +15,23 @@ globalThis.Buffer = Buffer;
 console.log('[GoldbrixCrypto] Buffer set globally:', typeof Buffer);
 
 // Use dynamic imports so they load AFTER Buffer is set
+// A dropped packet must not kill the wallet: every module import retries.
+async function _imp(path){
+  for (let a=0;a<3;a++){
+    try { return await import(path+(a?('&r='+a):'')); }
+    catch(e){ if(a===2) throw e; await new Promise(r=>setTimeout(r,600*(a+1))); }
+  }
+}
 const [
   bitcoinModule,
   bip39Module,
   bip32Module,
   eccModule
 ] = await Promise.all([
-  import('/vendor/bitcoinjs-lib.mjs?v=1780567102'),
-  import('/vendor/bip39.mjs?v=1780567102'),
-  import('/vendor/bip32.mjs?v=1780567102'),
-  import('/vendor/secp256k1.mjs?v=1780567102')
+  _imp('/vendor/bitcoinjs-lib.mjs?v=1780567102'),
+  _imp('/vendor/bip39.mjs?v=1780567102'),
+  _imp('/vendor/bip32.mjs?v=1780567102'),
+  _imp('/vendor/secp256k1.mjs?v=1780567102')
 ]);
 
 const bitcoin = bitcoinModule.default || bitcoinModule;
