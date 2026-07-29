@@ -78,12 +78,13 @@
     document.head.appendChild(st);
   }
   function rowHTML(value,text){
-    var p=String(value).split('|'); var type=p[0], ticker=p[1]; var extra=p[3]||''; var imgUrl=p[4]||'';
+    var v=String(value), p=v.split('|'); var type=p[0], ticker=p[1]; var extra=p[3]||''; var imgUrl=p[4]||'';
     var parts=String(text).split(' · '); var name=parts[0]; var bal=parts.slice(1).join(' · ');
+    if(/^[0-9a-f]{64}$/i.test(v)){ type='NATIVE'; extra=v; ticker=name.replace(/^\$/,''); }
     return iconFor(type,ticker,imgUrl,extra)+'<span class="tk-name">'+esc(name)+'</span>'+(bal?'<span class="tk-bal">'+esc(bal)+'</span>':'');
   }
   function init(){
-    var sel=document.getElementById('tokenSelect');
+    var sel=document.getElementById('tokenSelect')||document.getElementById('coin');
     if(!sel || sel.dataset.tkInit) return;
     try{
       injectCSS();
