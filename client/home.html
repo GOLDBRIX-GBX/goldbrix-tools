@@ -818,9 +818,7 @@ window.GBXFed=(function(){
         metaEl.parentNode.insertBefore(spark, metaEl);
         tasks.push((async () => {
           try {
-            const r = await fetch('https://goldbrix.app/launchpad/coins/' + coinId + '/candles?interval=1h');
-            if (!r.ok) { spark.innerHTML = '<span style="color:#fff;font-size:10px;">—</span>'; return; }
-            const d = await r.json();
+            const d = await (window.GBXFed && window.GBXFed.j ? window.GBXFed.j('/api/candles/' + coinId + '?interval=1h') : Promise.reject(new Error('fed-missing')));
             const candles = d.candles || (Array.isArray(d) ? d : []);
             const prices = candles.slice(-24).map(c => c.close).filter(v => v != null && !isNaN(v));
             spark.innerHTML = renderSpark(prices);
