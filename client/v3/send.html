@@ -19,6 +19,7 @@
 <link rel="icon" href="/assets/coin/gbx-coin-32.png">
 <link rel="stylesheet" href="/v3/style.css">
 <script src="/gbx-modal.js"></script>
+<script src="/v3/gbx-contacts.js?v=124"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   .back-btn {
@@ -154,8 +155,7 @@ input::-moz-placeholder, textarea::-moz-placeholder {
 
       <label class="label v3-mt-md" id="toLabel" data-t="recipient">Recipient Address</label>
       <input type="text" class="v3-input" id="toAddr" placeholder="bn1q..." autocomplete="off" autocapitalize="off" spellcheck="false">
-      <div id="abBar" class="ab-bar"><button type="button" class="ab-btn" onclick="abToggle()"><span id="abBtnLabel">Contacts</span> <span class="ab-caret">▾</span></button></div>
-      <div id="abList" class="ab-list" style="display:none;"></div>
+      <div id="abHost"></div>
       <button type="button" class="qr-scan-btn" onclick="openQR()">📷 <span id="qrScanBtnLabel">SCAN QR</span></button>
 
       <label class="label v3-mt-md" id="amtLabel">Amount</label>
@@ -253,27 +253,7 @@ function toUnits(amtStr, dec){ const [i,fr='']=String(amtStr).split('.'); return
 
 
 function t(k) { return (T[currentLang] && T[currentLang][k]) || T.en[k] || k; }
-/* ADDRESS BOOK (gbx_contacts, local-only, zero-ownership) */
-const AB={
- en:{contacts:"Saved Contacts",none:"No saved contacts",add:"+ Save current address",name:"Contact name?",saved:"Contact saved",exists:"Already saved",badAddr:"Invalid GoldBrix address",del:"Delete this contact?",offer:"Save {addr} to contacts?"},
- ro:{contacts:"Contacte Salvate",none:"Niciun contact salvat",add:"+ Salveaza adresa curenta",name:"Nume contact?",saved:"Contact salvat",exists:"Deja salvat",badAddr:"Adresa GoldBrix invalida",del:"Stergi acest contact?",offer:"Salvezi {addr} in contacte?"},
- de:{contacts:"Gespeicherte Kontakte",none:"Keine Kontakte",add:"+ Aktuelle Adresse speichern",name:"Kontaktname?",saved:"Gespeichert",exists:"Bereits gespeichert",badAddr:"Ungueltige Adresse",del:"Diesen Kontakt loeschen?",offer:"{addr} speichern?"},
- zh:{contacts:"已存联系人",none:"无已存联系人",add:"+ 保存当前地址",name:"联系人名称?",saved:"已保存",exists:"已存在",badAddr:"无效地址",del:"删除此联系人?",offer:"保存 {addr} 到联系人?"},
- ar:{contacts:"جهات الاتصال المحفوظة",none:"لا جهات اتصال",add:"+ حفظ العنوان",name:"اسم جهة الاتصال؟",saved:"تم الحفظ",exists:"محفوظ مسبقا",badAddr:"عنوان غير صالح",del:"حذف جهة الاتصال؟",offer:"حفظ {addr}؟"}
-};
-function tab(k){ return (AB[currentLang]&&AB[currentLang][k])||AB.en[k]||k; }
-function abLoad(){ try{ return JSON.parse(localStorage.getItem("gbx_contacts")||"[]"); }catch(e){ return []; } }
-function abStore(a){ localStorage.setItem("gbx_contacts", JSON.stringify(a)); }
-function abShort(a){ return a.length>16 ? a.slice(0,10)+"…"+a.slice(-5) : a; }
-async function abValid(addr){ if(!addr||!addr.startsWith("bn1q")||addr.length<40) return false; try{ const r=await window.gbxRead("/address/"+addr); return r.ok; }catch(e){ return false; } }
-function abToggle(){ const el=document.getElementById("abList"); if(!el) return; if(el.style.display==="none"){ abRender(); el.style.display="block"; } else { el.style.display="none"; } }
-function abRender(){ const el=document.getElementById("abList"); if(!el) return; const list=abLoad(); let h=""; if(!list.length){ h+='<div class="ab-empty">'+tab("none")+'</div>'; } list.forEach((c,i)=>{ h+='<div class="ab-item"><span class="ab-item__tap" onclick="abFill('+i+')"><b>'+(c.name||"").replace(/</g,"&lt;")+'</b><small>'+abShort(c.addr)+'</small></span><button class="ab-item__del" onclick="abDelete('+i+')">✕</button></div>'; }); h+='<button type="button" class="ab-add" onclick="abAddCurrent()">'+tab("add")+'</button>'; el.innerHTML=h; }
-function abFill(i){ const c=abLoad()[i]; if(!c) return; const inp=document.getElementById("toAddr"); if(inp) inp.value=c.addr; document.getElementById("abList").style.display="none"; window.gbxHaptic&&gbxHaptic("light"); }
-async function abDelete(i){ if(!(await gbxConfirm(tab("del")))) return; const list=abLoad(); list.splice(i,1); abStore(list); abRender(); }
-async function abAddCurrent(){ const inp=document.getElementById("toAddr"); await abSave((inp&&inp.value||"").trim()); }
-async function abSave(addr){ if(!addr) return; const list=abLoad(); if(list.some(c=>c.addr===addr)){ await gbxAlert(tab("exists")); return; } if(!(await abValid(addr))){ await gbxAlert(tab("badAddr")); return; } const name=((await gbxPrompt(tab("name")))||"").trim(); if(!name) return; list.push({name:name,addr:addr,ts:Date.now()}); abStore(list); window.gbxHaptic&&gbxHaptic("success"); abRender(); const el=document.getElementById("abList"); if(el) el.style.display="block"; }
-async function abMaybeOfferSave(addr){ try{ if(!addr) return; const list=abLoad(); if(list.some(c=>c.addr===addr)) return; if(!(await gbxConfirm(tab("offer").replace("{addr}", abShort(addr))))) return; const name=((await gbxPrompt(tab("name")))||"").trim(); if(!name) return; list.push({name:name,addr:addr,ts:Date.now()}); abStore(list); window.gbxHaptic&&gbxHaptic("success"); }catch(e){} }
-(function(){ try{ var b=document.getElementById("abBtnLabel"); if(b) b.textContent=tab("contacts"); }catch(e){} })();
+/* Address book moved to /v3/gbx-contacts.js (single source, shared with send-meme). */
 
 function applyLang() {
   document.documentElement.lang = currentLang;
@@ -310,6 +290,7 @@ function showError(msg) {
   setTimeout(() => e.classList.remove('show'), 5000);
 }
 
+window.addEventListener('load',function(){ window._ab=window.GBXContacts&&GBXContacts.mount({input:'toAddr',anchor:'abHost',storageKey:'gbx_contacts',kind:'addr',validate:async function(v){ if(!v||!v.startsWith('bn1q')||v.length<40) return false; try{ const r=await window.gbxRead('/address/'+v); return r.ok; }catch(e){ return false; } }}); });
 function checkLock() {
   try{ if(window.GBXSession){ var _w=GBXSession.activeWallet(); if(_w){ activeWallet=_w; return true; } } }catch(e){}
   const unlockedRaw = sessionStorage.getItem('gbx_unlocked_wallets');
@@ -599,7 +580,7 @@ async function doSend() {
 
     document.getElementById('successAmt').textContent = amt.toLocaleString('en-US', {maximumFractionDigits: 4}) + ' ' + selectedToken.ticker;
     document.getElementById('txHash').textContent = 'TX: ' + txHash;
-    showStep('step-success'); window.gbxHaptic&&gbxHaptic('success'); abMaybeOfferSave(to);
+    showStep('step-success'); window.gbxHaptic&&gbxHaptic('success'); try{window._ab&&window._ab.offerSave(to);}catch(e){}
     
     // Save sent TX to localStorage for wallet TX history
     try {

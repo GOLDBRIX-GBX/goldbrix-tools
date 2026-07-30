@@ -148,6 +148,7 @@ input::-moz-placeholder, textarea::-moz-placeholder {
   <div class="balance-line"><span><span id="lBal">Balance</span>: <span id="bal">—</span></span></div>
   <label class="label v3-mt-md" id="lTo">Recipient public key</label>
   <input class="v3-input" id="to" placeholder="02…" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <div id="abHost"></div>
   <button type="button" class="qr-scan-btn" id="scan">📷 SCAN QR</button>
   <div class="note" id="nTo">A memecoin is held by a key, so a recipient is identified by their public key — an address will not do.</div>
   <label class="label v3-mt-md" id="lAmt">Amount</label>
@@ -166,6 +167,7 @@ input::-moz-placeholder, textarea::-moz-placeholder {
   <div id="qrReader"></div>
   <button class="btn ghost" id="qrClose" style="margin-top:12px">Cancel</button>
 </div></div>
+<script src="/v3/gbx-contacts.js?v=124"></script>
 <script type="module">
 import * as F from '/gbx-launchpad-flow.mjs';
 import * as C from '/gbx-curve.mjs';
@@ -261,6 +263,7 @@ async function boot(){
   const _q=qparam('coin');
   if(_q && held.some(x=>x.coin_id===_q)) sel.value=_q;
   sel.addEventListener('change',pick);
+  window._ab=window.GBXContacts&&GBXContacts.mount({input:'to',anchor:'abHost',storageKey:'gbx_meme_contacts',kind:'key',validate:function(v){return Promise.resolve(/^0[23][0-9a-fA-F]{64}$/.test(v));}});
   await pick();
   $('go').disabled=false;
 }
@@ -331,6 +334,7 @@ $('go').addEventListener('click',async()=>{
        what the sender needs to see */
     const txid=await publish(C.hex(bytes));
     say('ok',tt('sent')+' '+txid);
+    try{window._ab&&window._ab.offerSave(($('to').value||'').trim());}catch(e){}
     $('amt').value='';
     setTimeout(async()=>{try{
       const mc=await window.GBXRead.json('/api/my-coins/'+pkHex);
