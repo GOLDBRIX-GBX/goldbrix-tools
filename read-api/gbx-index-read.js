@@ -20,6 +20,24 @@ function scanLikeIndex(address){
 }
 module.exports = { scanLikeIndex, tipHeight };
 
+// Top-N UTXOs straight from SQL: SUM for the totals, ORDER BY sats DESC LIMIT for
+// the rows. Keeps miner-scale addresses (1M+ UTXOs) at index speed instead of
+// materializing every row in JS.
+function scanTopN(address, limit){
+  const tip = tipHeight();
+  if (tip == null) return null;
+  const agg = db().prepare('SELECT COUNT(*) c, COALESCE(SUM(sats),0) t FROM utxos WHERE address=? AND spent_height IS NULL').get(address);
+  const rows = db().prepare('SELECT txid,vout,sats,height,spk,coinbase FROM utxos WHERE address=? AND spent_height IS NULL ORDER BY sats DESC LIMIT ?').all(address, limit);
+  const unspents = rows.map(r=>({
+    txid: r.txid, vout: r.vout, scriptPubKey: r.spk,
+    amount: r.sats/1e8, height: r.height,
+    confirmations: tip - r.height + 1,
+    coinbase: r.coinbase === 1,
+  }));
+  return { success:true, height:tip, total_amount: agg.t/1e8, total_count: agg.c, unspents };
+}
+module.exports.scanTopN = scanTopN;
+
 // Sumar rapid: total/spendable/utxo direct in SQL, fara materializare.
 // spendable = exclude coinbase imatur (<100 conf). NU stie de mempool (ajustat in caller).
 function summaryFast(address){

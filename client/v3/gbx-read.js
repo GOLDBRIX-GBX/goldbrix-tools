@@ -25,6 +25,14 @@
 
   window.GBX_NODES = window.GBX_NODES || [];
 
+  /* The node that served this very page is proven alive: it is always a
+     candidate, and first in line (index 0). In the installed app the origin
+     is not https:// and is skipped. */
+  try { if (location && location.protocol === 'https:') {
+    var _o = trim(location.origin) + '/api';
+    if (window.GBX_NODES.indexOf(_o) === -1) window.GBX_NODES.unshift(_o);
+  } } catch(e){}
+
   function add(n){
     if (!isUrl(n)) return false;
     n = trim(n);
@@ -120,12 +128,12 @@
   }
 
   async function _rotateRaw(path, opts, ms){
-    var nodes = _ordered(), lastErr = null;
+    var nodes = _ordered(), errs = [];
     for (var i=0; i<nodes.length; i++){
       try { var r = await _fetchNode(nodes[i], path, ms, opts); _ok(nodes[i]); return r; }
-      catch(e){ _fail(nodes[i]); lastErr = e; }
+      catch(e){ _fail(nodes[i]); errs.push(nodes[i]+' -> '+(e && e.message ? e.message : e)); }
     }
-    throw (lastErr || new Error('all nodes down'));
+    throw new Error('all nodes failed for '+path+': '+errs.join(' | '));
   }
 
   async function _rotate(path, opts, ms){

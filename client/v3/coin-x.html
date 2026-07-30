@@ -385,10 +385,14 @@ async function bases(){if(_bases)return _bases;const out=[];
  }catch(e){}
  if(out.length===0)for(const o of origins)out.push(o+'/lp');
  _bases=out;return out;}
-async function gwGet(p){let last=null;for(const b of await bases()){try{const r=await fetch(b+p);if(r.ok)return await r.json();last=new Error('HTTP '+r.status);}catch(e){last=e;}}throw last||new Error('LP_UNAVAILABLE');}
-async function gwBroadcast(rawtx){let last=null;for(const b of await bases()){
- try{const r=await fetch(b+'/broadcast',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({rawtx})});
-  const j=await r.json();if(j&&j.txid)return j.txid;last=new Error(JSON.stringify(j).slice(0,100));}catch(e){last=e;}}
+function _fetchTo(u,o,ms){return new Promise(function(res,rej){var c=new AbortController();var t=setTimeout(function(){c.abort();rej(new Error('timeout'));},ms||4000);var i=o||{};i.signal=c.signal;fetch(u,i).then(function(r){clearTimeout(t);res(r);}).catch(function(e){clearTimeout(t);rej(e);});});}
+function _lpOk(b){try{var s=JSON.parse(sessionStorage.getItem('gbx_lp_score')||'{}');s[b]=(s[b]||0)-1;sessionStorage.setItem('gbx_lp_score',JSON.stringify(s));}catch(e){}}
+function _lpFail(b){try{var s=JSON.parse(sessionStorage.getItem('gbx_lp_score')||'{}');s[b]=(s[b]||0)+1;sessionStorage.setItem('gbx_lp_score',JSON.stringify(s));}catch(e){}}
+function _lpOrder(a){var s={};try{s=JSON.parse(sessionStorage.getItem('gbx_lp_score')||'{}');}catch(e){}return a.slice().sort(function(x,y){return (s[x]||0)-(s[y]||0);});}
+async function gwGet(p){let last=null;for(const b of _lpOrder(await bases())){try{const r=await _fetchTo(b+p,null,4000);if(r.ok){_lpOk(b);return await r.json();}_lpFail(b);last=new Error('HTTP '+r.status);}catch(e){_lpFail(b);last=e;}}throw last||new Error('LP_UNAVAILABLE');}
+async function gwBroadcast(rawtx){let last=null;for(const b of _lpOrder(await bases())){
+ try{const r=await _fetchTo(b+'/broadcast',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({rawtx})},8000);
+  const j=await r.json();if(j&&j.txid){_lpOk(b);return j.txid;}last=new Error(JSON.stringify(j).slice(0,100));if(j&&j.error&&String(j.error).indexOf('-25')>=0)throw last;_lpFail(b);}catch(e){if(String(e).indexOf('-25')>=0)throw e;_lpFail(b);last=e;}}
  throw last||new Error('LP_UNAVAILABLE');}
 function loadWallet(){try{const raw=sessionStorage.getItem('gbx_unlocked_wallets');if(raw===null)return null;
  const s=JSON.parse(raw);if(s&&s.wallets&&s.wallets.length>0){const w=s.wallets.find(x=>x.id===s.activeWalletId)||s.wallets[0];
@@ -531,8 +535,8 @@ async function loadExtras(){
     const gj=async p=>{for(let i=0;i<20&&!window.GBXRead;i++)await new Promise(r=>setTimeout(r,100));
       return window.GBXRead?await window.GBXRead.json(p):await (await fetch(p)).json();};
     const [cd,td]=await Promise.all([gj('/api/candles/'+cid+'?interval=600'),gj('/api/trades/'+cid)]);
-    initProChart();
-    renderTrades((td&&td.trades)||[]);
+    try{renderTrades((td&&td.trades)||[]);}catch(e){console.error('[trades]',e);}
+    try{initProChart();}catch(e){console.error('[chart]',e);}
   }catch(e){}
   renderHolders();
 }
@@ -718,11 +722,11 @@ $('tabSell').onclick=()=>{side='sell';$('tabSell').classList.add('on');$('tabBuy
 
 /* ── keys + holdings ── */
 async function ensureKeys(){
-  if(keys)return;
-  const k=await window.GoldbrixCrypto.deriveKeypairFromMnemonic(wallet.mnemonic);
-  keys=k; secp=(await import('/vendor/secp256k1.mjs')).default;
+  if(keys&&spkU&&secp)return;
+  if(!keys){keys=await window.GoldbrixCrypto.deriveKeypairFromMnemonic(wallet.mnemonic);}
+  secp=(await import('/vendor/secp256k1.mjs')).default;
   const hm=await import('/vendor/gbx-h160.mjs');
-  const pk=new Uint8Array(k.publicKey);
+  const pk=new Uint8Array(keys.publicKey);
   const h=hm.ripemd160(hm.sha256(pk));
   spkU=new Uint8Array(22);spkU[1]=0x14;spkU.set(h,2);
 }
@@ -781,7 +785,7 @@ async function execute(){
     const txid=await gwBroadcast(C.hex(txBytes));
     $('stCast').className='step ok';
     toast(tt('sent'));
-    setTimeout(()=>location.reload(),4000);
+    setTimeout(refreshAll,4000);setTimeout(refreshAll,12000);
   }catch(e){
     toast(humanErr(e));cleanup();
   }
@@ -794,7 +798,8 @@ function humanErr(e){
   else if(m.indexOf('MAX_PER_TX')>=0)k='e.max';
   else if(m.indexOf('missingorspent')>=0||m.indexOf('-25')>=0||m.indexOf('txn-mempool-conflict')>=0)k='e.busy';
   else if(m.indexOf('LP_UNAVAILABLE')>=0||m.indexOf('Failed to fetch')>=0)k='e.net';
-  return (k?tt(k):tt('e.err'))+'\n('+m.slice(0,60)+')';
+  console.error('[trade]', m);
+  return k?tt(k):(tt('e.err')+'\n('+m.slice(0,60)+')');
 }
 function cleanup(){$('btnTrade').disabled=false;$('steps').style.display='none';
  $('stTx').className='step';$('stCast').className='step';}
@@ -827,7 +832,7 @@ $('btnRefund').onclick=async()=>{
     const ins=rf.inputs.map((u,i)=>i===0?{...u,kind:'curve',ws:C.unhex(rf.oldWsHex)}
       :(i===1?{...u,kind:'token',ws:C.unhex(rf.tokenWsHex)}:{...u,kind:'p2wpkh'}));
     const txid=await gwBroadcast(C.hex(F.buildCurveTx(ins,rf.outs,pkU,sign)));
-    toast(tt('sent'));setTimeout(()=>location.reload(),4000);
+    toast(tt('sent'));setTimeout(refreshAll,4000);setTimeout(refreshAll,12000);
   }catch(e){toast(humanErr(e));}
 };
 $('btnGrad').onclick=async()=>{
@@ -846,11 +851,20 @@ $('btnGrad').onclick=async()=>{
     const g=await F.buildGraduateTx({curve,utxos,pkU,p2wpkhSpkOf:()=>spkU});
     const ins=g.inputs.map((u,i)=>i===0?{...u,kind:'curve',ws:C.unhex(g.oldWsHex)}:{...u,kind:'p2wpkh'});
     const txid=await gwBroadcast(C.hex(F.buildCurveTx(ins,g.outs,pkU,sign)));
-    toast(tt('sent'));setTimeout(()=>location.reload(),4000);
+    toast(tt('sent'));setTimeout(refreshAll,4000);setTimeout(refreshAll,12000);
   }catch(e){toast(humanErr(e));}
 };
 
 /* ── init ── */
+async function refreshAll(){
+  try{
+    cleanup();_exT=0;
+    D=await loadCurve();
+    render();
+    await loadExtras();
+    await maybeCards();refreshQuote();updBal(true);
+  }catch(e){console.error('[refresh]',e);}
+}
 (async function init(){
   try{
     D=await loadCurve();
@@ -918,7 +932,7 @@ window.addEventListener('pageshow',function(e){if(e.persisted)location.reload();
 document.addEventListener('visibilitychange',function(){if(!document.hidden)draw();});
 })();
 </script>
-<script src="/v3/gbx-read.js?v=121" defer></script>
+<script src="/v3/gbx-read.js?v=122" defer></script>
 <script src="/v3/gbx-lp.js?v=119" defer></script>
   <script src="/promo-banner.js?v=115" defer></script>
 </body>

@@ -731,14 +731,14 @@ const server = http.createServer(async (req, res) => {
           return sendJson(res, 200, cached.data);
         }
         try {
-          const ixU = gbxIndex.scanLikeIndex(address);
+          const ixU = (limitParam > 0 && gbxIndex.scanTopN) ? gbxIndex.scanTopN(address, limitParam) : gbxIndex.scanLikeIndex(address);
           if (!ixU) {
             console.error('[RA-1] index miss /api/utxos ' + String(address).slice(0,24));
             return sendJson(res, 503, { error: 'indexing', tip: gbxIndex.tipHeight ? gbxIndex.tipHeight() : null, retry_after_s: 5 });
           }
           const scan = ixU;
           let rawUnspents = scan.unspents || [];
-          const totalCount = rawUnspents.length;
+          const totalCount = (scan.total_count !== undefined) ? scan.total_count : rawUnspents.length;
           // GBX — if a limit is requested: sort desc by amount + take the first N (fast BUY/SELL on addresses cu multe UTXO)
           if (limitParam > 0 && rawUnspents.length > limitParam) {
             rawUnspents = rawUnspents.slice().sort((a,b) => Number(b.amount||0) - Number(a.amount||0)).slice(0, limitParam);

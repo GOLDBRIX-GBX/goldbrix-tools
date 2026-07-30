@@ -57,6 +57,7 @@ CREATE INDEX IF NOT EXISTS idx_sh ON utxos(spent_height);
 CREATE INDEX IF NOT EXISTS idx_addr_all ON utxos(address, spent_height);
 CREATE INDEX IF NOT EXISTS idx_addr_h ON utxos(address, height DESC);
 CREATE INDEX IF NOT EXISTS idx_addr_shd ON utxos(address, spent_height DESC);
+CREATE INDEX IF NOT EXISTS idx_addr_sats ON utxos(address, sats DESC) WHERE spent_height IS NULL;
 CREATE TABLE IF NOT EXISTS blocks (height INTEGER PRIMARY KEY, hash TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT);
 `);
