@@ -321,7 +321,8 @@ function walletsUI(){
       try{if(window.GBXSession&&window.GBXSession.setActive)window.GBXSession.setActive(id);}catch(e){}
       try{localStorage.removeItem('gbx_my_pk');}catch(e){}
       window.__gbxMyPk=null;
-      location.href='/v3/profile-x.html';
+      /* wallet.html derives the new key and lands back here with ?pk= */
+      location.href='/v3/wallet.html';
     });
   });
 }
