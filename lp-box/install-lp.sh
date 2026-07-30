@@ -18,7 +18,7 @@ DISK_GB=$(df -BG --output=avail /opt | tail -1 | tr -dc '0-9')
 mkdir -p $D/keys $D/state $D/vendor $D/target/idl
 SRC="$(cd "$(dirname "$0")" && pwd)"  # sources = public repo lp-box/, no tarball, no founder server
 mkdir -p $D/vendor $D/target/idl $D/lp-box
-cp $SRC/lp_daemon_main.py $SRC/lp_gateway_main.py $SRC/lp_solana.py $SRC/lp_pricing.py $SRC/_sol_key.py $SRC/lp_env.py $SRC/evm-htlc-cli.mjs $D/
+cp $SRC/lp_daemon_main.py $SRC/lp_gateway_main.py $SRC/lp_solana.py $SRC/lp_pricing.py $SRC/_sol_key.py $SRC/_evm_key.py $SRC/lp_env.py $SRC/lp_reserves_updater.py $SRC/evm-htlc-cli.mjs $D/
 cp $SRC/vendor/*.mjs $D/vendor/
 cp $SRC/sol/sol-htlc-cli.mjs $D/
 cp $SRC/sol/htlc.idl.json $D/target/idl/htlc.json
@@ -78,6 +78,31 @@ UNIT
 write_unit daemon "lp_daemon_main.py 5 --loop"
 write_unit gateway "lp_gateway_main.py 18099"
 systemctl daemon-reload && systemctl enable --now gbx-lp-daemon gbx-lp-gateway
+
+# reserves updater - reads this LP's own balances from the chains and rewrites the reserve
+# file the pricing reads. Without it an LP quotes from a snapshot that never changes, so it
+# is part of a working install, not an extra.
+cat > /etc/systemd/system/gbx-lp-reserves.service <<UNIT
+[Unit]
+Description=GoldBrix LP reserves updater (keyless)
+[Service]
+Type=oneshot
+WorkingDirectory=$D
+EnvironmentFile=$D/gbx-lp.env
+ExecStart=/usr/bin/python3 $D/lp_reserves_updater.py
+StandardOutput=append:$D/state/lp_reserves.log
+StandardError=append:$D/state/lp_reserves.log
+UNIT
+cat > /etc/systemd/system/gbx-lp-reserves.timer <<UNIT
+[Unit]
+Description=Run the GBX LP reserves updater every 60s
+[Timer]
+OnBootSec=30
+OnUnitActiveSec=60
+[Install]
+WantedBy=timers.target
+UNIT
+systemctl daemon-reload && systemctl enable --now gbx-lp-reserves.timer
 
 # watchdog — application-level health (catches "alive but stuck"), local-only
 cp $D/lp-box/lp-watchdog.sh $D/lp-watchdog.sh && chmod +x $D/lp-watchdog.sh
