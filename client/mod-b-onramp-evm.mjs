@@ -1,9 +1,9 @@
 // GOLDBRIX · mod-b-onramp-evm.mjs · ON-RAMP NON-CUSTODIAL EVM: ETH<->USDC (Base + Arbitrum)
 // KEYLESS aggregators with fallback (no API keys to hold or expire). The user signs, the aggregator executes.
-// Lista extensibila: adauga un agregator = un obiect in AGG[]. Primar -> rezerva automat.
+// Extensible list: one aggregator = one entry in AGG[]. Primary falls back to the next automatically.
 // Configurable RPC (scalable: at volume you swap the endpoint, not the code).
 
-const NATIVE = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"; // ETH nativ (conventie agregatoare)
+const NATIVE = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"; // native ETH (aggregator convention)
 const CHAINS = {
   base:     { id: 8453,  usdc: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", weth: "0x4200000000000000000000000000000000000006", rpc: "https://mainnet.base.org",     kyber: "base" },
   arbitrum: { id: 42161, usdc: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", weth: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1", rpc: "https://arb1.arbitrum.io/rpc", kyber: "arbitrum" }
@@ -13,7 +13,7 @@ const CHAINS = {
 async function paraswapQuote(chain, srcTok, dstTok, amountWei, userAddr){
   const C = CHAINS[chain];
   const sdec = srcTok===NATIVE?18:6, ddec = dstTok===NATIVE?18:6;
-  const src = srcTok, dst = dstTok; // nativ 0xEeee.. acceptat de ParaSwap/Kyber; NU converti la WETH (altfel router cere WETH inexistent -> revert)
+  const src = srcTok, dst = dstTok; // the 0xEeee.. native sentinel is accepted by both; do NOT map it to WETH or the router reverts
   const u = "https://api.paraswap.io/prices?srcToken="+src+"&destToken="+dst+
             "&amount="+amountWei+"&srcDecimals="+sdec+"&destDecimals="+ddec+
             "&side=SELL&network="+C.id+"&userAddress="+userAddr;
@@ -68,9 +68,9 @@ export async function quoteEvm(chain, srcTok, dstTok, amountWei, userAddr){
       const q = (a.name==="ParaSwap") ? await a.quote(chain,srcTok,dstTok,amountWei,userAddr)
                                       : await a.quote(chain,srcTok,dstTok,amountWei);
       return { ...q, _agg:a, outAmount: Number(q.outWei)/Math.pow(10,q.outDec) };
-    }catch(e){ lastErr=e; continue; } // agregator mort -> incearca urmatorul
+    }catch(e){ lastErr=e; continue; } // dead aggregator -> try the next one
   }
-  throw new Error("toate agregatoarele EVM indisponibile: "+(lastErr&&lastErr.message||""));
+  throw new Error("all EVM aggregators unavailable: "+(lastErr&&lastErr.message||""));
 }
 
 // ---- ERC20 allowance: the USDC source requires approval to the router BEFORE the swap (otherwise revert 0x0) ----

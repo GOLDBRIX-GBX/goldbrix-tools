@@ -358,7 +358,7 @@ function ownerUI(){
   var cb=$('ownerActs').querySelector('.a-conv');
   if(cb)cb.addEventListener('click',function(e){e.preventDefault();
     if(window.openConvertModal){window.openConvertModal();return;}
-    var sc=document.createElement('script');sc.src='/v3/convert-ui.js?v=115';
+    var sc=document.createElement('script');sc.src='/v3/convert-ui.js?v=120';
     sc.onload=function(){if(window.openConvertModal)window.openConvertModal();};
     document.head.appendChild(sc);});
   var cw=$('chainWrap');

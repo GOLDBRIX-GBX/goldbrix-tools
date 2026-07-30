@@ -1,39 +1,39 @@
-/* GOLDBRIX · convert-ui.js · ON-RAMP Convert UI (SPA-safe, 5 limbi, fallback agregatoare keyless)
-   Leaga: mod-b-onramp-sol.mjs (Jupiter+Raydium) + mod-b-onramp-evm.mjs (ParaSwap+KyberSwap)
-   Non-custodial: user semneaza, agregator executa. Istoric tip CONVERT. */
+/* GOLDBRIX - convert-ui.js - on-ramp convert UI (SPA-safe, five languages, keyless aggregator fallback)
+   Binds: mod-b-onramp-sol.mjs (Jupiter+Raydium) + mod-b-onramp-evm.mjs (ParaSwap+KyberSwap)
+   Non-custodial: the user signs, the aggregator executes. History entries of type CONVERT. */
 (function(){
-  // ---- i18n 5 limbi (regula 8) ----
+  // ---- i18n, five languages ----
   var L = {
     en:{title:'Convert',pick:'Choose what to convert:',pay:'You pay',get:'You receive',min:'Min received',via:'Via',back:'Back',go:'Convert',
         working:'Converting…',quoting:'Getting best rate…',signing:'Sign in your wallet…',
         done:'Done! Funds are in your wallet.',
         unavail:'Conversion is temporarily unavailable on this network — try another network or come back in a few minutes.',
-        have:'You have:',noamt:'Enter an amount.',nobal:'Not enough balance for this conversion.',nofee:'Insufficient {sym} for network fees — keep at least ~{min} {sym} in your wallet on top of the converted amount.',soon:'Coming soon'},
+        have:'You have:',noamt:'Enter an amount.',nobal:'Not enough balance for this conversion.',nofee:'Insufficient {sym} for network fees — keep at least ~{min} {sym} in your wallet on top of the converted amount.',soon:'Coming soon',e_gas:'Not enough {sym} for network fees on this chain — add a little {sym} and try again.',e_appr:'The USDC approval did not go through — try again in a moment.',e_rev:'The network rejected the conversion — nothing left your wallet.',e_net:'No aggregator answered just now — try again in a moment.'},
     ro:{title:'Conversie',pick:'Alege ce convertești:',pay:'Plătești',get:'Primești',min:'Minim primit',via:'Prin',back:'Înapoi',go:'Convertește',
         working:'Se convertește…',quoting:'Se caută cel mai bun curs…',signing:'Semnează în portofel…',
         done:'Gata! Fondurile sunt în portofel.',
         unavail:'Conversia e temporar indisponibilă pe această rețea — încearcă altă rețea sau revino în câteva minute.',
-        have:'Ai:',noamt:'Introdu o sumă.',nobal:'Sold insuficient pentru această conversie.',nofee:'{sym} insuficient pentru taxele rețelei — păstrează minim ~{min} {sym} în portofel peste suma convertită.',soon:'În curând'},
+        have:'Ai:',noamt:'Introdu o sumă.',nobal:'Sold insuficient pentru această conversie.',nofee:'{sym} insuficient pentru taxele rețelei — păstrează minim ~{min} {sym} în portofel peste suma convertită.',soon:'În curând',e_gas:'{sym} insuficient pentru taxele rețelei pe acest lanț — adaugă puțin {sym} și încearcă din nou.',e_appr:'Aprobarea USDC nu a trecut — încearcă din nou în cateva momente.',e_rev:'Rețeaua a respins conversia — nu a ieșit nimic din portofel.',e_net:'Niciun agregator nu a răspuns acum — încearcă din nou în cateva momente.'},
     de:{title:'Umwandeln',pick:'Wähle, was umgewandelt wird:',pay:'Du zahlst',get:'Du erhältst',min:'Mindestens',via:'Über',back:'Zurück',go:'Umwandeln',
         working:'Wird umgewandelt…',quoting:'Bester Kurs wird gesucht…',signing:'In der Wallet signieren…',
         done:'Fertig! Guthaben ist in deiner Wallet.',
         unavail:'Umwandlung auf diesem Netzwerk vorübergehend nicht verfügbar — versuche ein anderes Netzwerk oder komme später wieder.',
-        have:'Du hast:',noamt:'Betrag eingeben.',nobal:'Unzureichendes Guthaben für diese Umwandlung.',nofee:'Nicht genug {sym} für Netzwerkgebühren — behalte mindestens ~{min} {sym} zusätzlich zum umgewandelten Betrag in der Wallet.',soon:'Demnächst'},
+        have:'Du hast:',noamt:'Betrag eingeben.',nobal:'Unzureichendes Guthaben für diese Umwandlung.',nofee:'Nicht genug {sym} für Netzwerkgebühren — behalte mindestens ~{min} {sym} zusätzlich zum umgewandelten Betrag in der Wallet.',soon:'Demnächst',e_gas:'Nicht genug {sym} für Netzwerkgebühren auf dieser Chain — füge etwas {sym} hinzu und versuche es erneut.',e_appr:'Die USDC-Freigabe ging nicht durch — versuche es gleich erneut.',e_rev:'Das Netzwerk hat die Umwandlung abgelehnt — nichts hat deine Wallet verlassen.',e_net:'Kein Aggregator hat gerade geantwortet — versuche es gleich erneut.'},
     zh:{title:'兑换',pick:'选择要兑换的：',pay:'支付',get:'收到',min:'最少收到',via:'通过',back:'返回',go:'兑换',
         working:'兑换中…',quoting:'正在获取最佳汇率…',signing:'在钱包中签名…',
         done:'完成！资金已到账。',
         unavail:'此网络暂时无法兑换 — 请尝试其他网络或稍后再来。',
-        have:'你有：',noamt:'请输入金额。',nobal:'余额不足，无法完成此兑换。',nofee:'{sym} 不足以支付网络费用 — 请在兑换金额之外，钱包中至少保留约 {min} {sym}。',soon:'即将推出'},
+        have:'你有：',noamt:'请输入金额。',nobal:'余额不足，无法完成此兑换。',nofee:'{sym} 不足以支付网络费用 — 请在兑换金额之外，钱包中至少保留约 {min} {sym}。',soon:'即将推出',e_gas:'该链上的 {sym} 不足以支付网络费用 — 请添加少量 {sym} 后重试。',e_appr:'USDC 授权未完成 — 请稍后重试。',e_rev:'网络拒绝了本次兑换 — 资金未离开钱包。',e_net:'当前没有聚合器响应 — 请稍后重试。'},
     ar:{title:'تحويل',pick:'اختر ما تريد تحويله:',pay:'تدفع',get:'تستلم',min:'الحد الأدنى',via:'عبر',back:'رجوع',go:'تحويل',
         working:'جارٍ التحويل…',quoting:'جارٍ الحصول على أفضل سعر…',signing:'وقّع في محفظتك…',
         done:'تم! الأموال في محفظتك.',
         unavail:'التحويل غير متاح مؤقتًا على هذه الشبكة — جرّب شبكة أخرى أو عد بعد دقائق.',
-        have:'لديك:',noamt:'أدخل مبلغًا.',nobal:'الرصيد غير كافٍ لهذا التحويل.',nofee:'رصيد {sym} لا يكفي لرسوم الشبكة — احتفظ بما لا يقل عن ~{min} {sym} في محفظتك فوق المبلغ المحوَّل.',soon:'قريبًا'}
+        have:'لديك:',noamt:'أدخل مبلغًا.',nobal:'الرصيد غير كافٍ لهذا التحويل.',nofee:'رصيد {sym} لا يكفي لرسوم الشبكة — احتفظ بما لا يقل عن ~{min} {sym} في محفظتك فوق المبلغ المحوَّل.',soon:'قريبًا',e_gas:'رصيد {sym} لا يكفي لرسوم الشبكة على هذه السلسلة — أضف قليلا من {sym} ثم أعد المحاولة.',e_appr:'لم تكتمل موافقة USDC — أعد المحاولة بعد قليل.',e_rev:'رفضت الشبكة التحويل — لم يغادر شيء محفظتك.',e_net:'لم يستجب أي مجمّع الآن — أعد المحاولة بعد قليل.'}
   };
   function lang(){ try{ return localStorage.getItem('gbx_lang')||'en'; }catch(e){ return 'en'; } }
   function t(k){ var l=L[lang()]||L.en; return l[k]||L.en[k]||k; }
 
-  // ---- Cele 6 rute (ambele sensuri). Solana live (Jupiter+Raydium). EVM live (ParaSwap+KyberSwap). ----
+  // ---- The six routes (both directions). Solana via Jupiter+Raydium, EVM via ParaSwap+KyberSwap. ----
   var ROUTES = [
     {id:'sol_usdc', chain:'solana',   from:'SOL',  to:'USDC', dir:'native2usdc', icon:'◎', col:'#9945FF'},
     {id:'usdc_sol', chain:'solana',   from:'USDC', to:'SOL',  dir:'usdc2native', icon:'◎', col:'#9945FF'},
@@ -48,7 +48,7 @@
   // ---- Deschide/inchide modal (SPA-safe: display flex/none, ca addWalletModal) ----
   /* The markup used to live only in the wallet screen. It is carried here so
      that any screen loading this file can offer the same conversion. */
-  var MODAL_HTML = "<div id=\"convertModal\" style=\"position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9998;display:none;align-items:flex-end;justify-content:center;\" onclick=\"if(event.target===this)closeConvertModal()\">\n  <div style=\"background:#1a140d;border:1px solid #F0C060;border-radius:18px 18px 0 0;width:100%;max-width:460px;padding:22px 18px 28px;font-family:system-ui,sans-serif;max-height:88vh;overflow-y:auto;\">\n    <div style=\"display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;\">\n      <div style=\"font-size:16px;font-weight:800;color:#F0C060;\" id=\"cvTitle\">Convert</div>\n      <div onclick=\"closeConvertModal()\" style=\"font-size:22px;color:#888;cursor:pointer;line-height:1;\">&times;</div>\n    </div>\n    <!-- SELECTOR RUTE -->\n    <div id=\"cvRoutes\">\n      <div style=\"font-size:12px;color:#9a8c6f;margin-bottom:10px;font-family:JetBrains Mono,monospace;\" id=\"cvPick\">Choose what to convert:</div>\n      <div id=\"cvRouteList\"></div>\n    </div>\n    <!-- ECRAN CONVERSIE (ascuns initial) -->\n    <div id=\"cvSwap\" style=\"display:none;\">\n      <div onclick=\"cvBackToRoutes()\" style=\"font-size:13px;color:#F0C060;cursor:pointer;margin-bottom:12px;\">&larr; <span id=\"cvBack\">Back</span></div>\n      <div style=\"font-size:14px;color:#fff;font-weight:700;margin-bottom:10px;\" id=\"cvRouteLabel\"></div>\n      <label style=\"display:block;font-size:12px;color:#d4c590;margin-bottom:4px;\" id=\"cvYouPay\">You pay</label>\n      <div id=\"cvBalRow\" style=\"font-size:12px;margin-bottom:6px;font-family:JetBrains Mono,monospace;min-height:18px;\"></div>\n      <input id=\"cvAmount\" inputmode=\"decimal\" placeholder=\"0.00\" autocomplete=\"off\" style=\"width:100%;padding:13px;background:#241d14;border:1px solid #3a3025;border-radius:10px;color:#fff;font-size:16px;font-family:JetBrains Mono,monospace;margin-bottom:12px;\">\n      <div style=\"background:#241d14;border-radius:10px;padding:12px;margin-bottom:14px;font-size:13px;font-family:JetBrains Mono,monospace;\">\n        <div style=\"display:flex;justify-content:space-between;color:#e8dcb0;\"><span id=\"cvYouGet\">You receive</span><span style=\"color:#F0C060;font-weight:700;\" id=\"cvOut\">\u2014</span></div>\n        <div style=\"display:flex;justify-content:space-between;color:#c9bd95;margin-top:6px;\"><span id=\"cvMinLbl\">Min received</span><span id=\"cvMin\" style=\"color:#e8dcb0;\">\u2014</span></div>\n        <div style=\"display:flex;justify-content:space-between;color:#c9bd95;margin-top:6px;\"><span id=\"cvViaLbl\">Via</span><span id=\"cvVia\" style=\"color:#e8dcb0;\">\u2014</span></div>\n      </div>\n      <div id=\"cvMsg\" style=\"display:none;font-size:13px;padding:10px;border-radius:8px;margin-bottom:12px;\"></div>\n      <button onclick=\"cvExecute()\" style=\"width:100%;padding:15px;background:linear-gradient(135deg,#F0C060,#c79a1e);border:none;border-radius:12px;color:#0a0a0a;font-size:15px;font-weight:800;cursor:pointer;font-family:system-ui,sans-serif;\" id=\"cvGoBtn\">Convert</button>\n    </div>\n  </div>\n</div>";
+  var MODAL_HTML = "<div id=\"convertModal\" style=\"position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9998;display:none;align-items:flex-end;justify-content:center;\" onclick=\"if(event.target===this)closeConvertModal()\">\n  <div style=\"background:#1a140d;border:1px solid #F0C060;border-radius:18px 18px 0 0;width:100%;max-width:460px;padding:22px 18px calc(96px + env(safe-area-inset-bottom,0px));font-family:system-ui,sans-serif;max-height:88vh;overflow-y:auto;\">\n    <div style=\"display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;\">\n      <div style=\"font-size:16px;font-weight:800;color:#F0C060;\" id=\"cvTitle\">Convert</div>\n      <div onclick=\"closeConvertModal()\" style=\"font-size:22px;color:#888;cursor:pointer;line-height:1;\">&times;</div>\n    </div>\n    <!-- SELECTOR RUTE -->\n    <div id=\"cvRoutes\">\n      <div style=\"font-size:12px;color:#9a8c6f;margin-bottom:10px;font-family:JetBrains Mono,monospace;\" id=\"cvPick\">Choose what to convert:</div>\n      <div id=\"cvRouteList\"></div>\n    </div>\n    <!-- ECRAN CONVERSIE (ascuns initial) -->\n    <div id=\"cvSwap\" style=\"display:none;\">\n      <div onclick=\"cvBackToRoutes()\" style=\"font-size:13px;color:#F0C060;cursor:pointer;margin-bottom:12px;\">&larr; <span id=\"cvBack\">Back</span></div>\n      <div style=\"font-size:14px;color:#fff;font-weight:700;margin-bottom:10px;\" id=\"cvRouteLabel\"></div>\n      <label style=\"display:block;font-size:12px;color:#d4c590;margin-bottom:4px;\" id=\"cvYouPay\">You pay</label>\n      <div id=\"cvBalRow\" style=\"font-size:12px;margin-bottom:6px;font-family:JetBrains Mono,monospace;min-height:18px;\"></div>\n      <input id=\"cvAmount\" inputmode=\"decimal\" placeholder=\"0.00\" autocomplete=\"off\" style=\"width:100%;padding:13px;background:#241d14;border:1px solid #3a3025;border-radius:10px;color:#fff;font-size:16px;font-family:JetBrains Mono,monospace;margin-bottom:12px;\">\n      <div style=\"background:#241d14;border-radius:10px;padding:12px;margin-bottom:14px;font-size:13px;font-family:JetBrains Mono,monospace;\">\n        <div style=\"display:flex;justify-content:space-between;color:#e8dcb0;\"><span id=\"cvYouGet\">You receive</span><span style=\"color:#F0C060;font-weight:700;\" id=\"cvOut\">\u2014</span></div>\n        <div style=\"display:flex;justify-content:space-between;color:#c9bd95;margin-top:6px;\"><span id=\"cvMinLbl\">Min received</span><span id=\"cvMin\" style=\"color:#e8dcb0;\">\u2014</span></div>\n        <div style=\"display:flex;justify-content:space-between;color:#c9bd95;margin-top:6px;\"><span id=\"cvViaLbl\">Via</span><span id=\"cvVia\" style=\"color:#e8dcb0;\">\u2014</span></div>\n      </div>\n      <div id=\"cvMsg\" style=\"display:none;font-size:13px;padding:10px;border-radius:8px;margin-bottom:12px;\"></div>\n      <button onclick=\"cvExecute()\" style=\"width:100%;padding:15px;background:linear-gradient(135deg,#F0C060,#c79a1e);border:none;border-radius:12px;color:#0a0a0a;font-size:15px;font-weight:800;cursor:pointer;font-family:system-ui,sans-serif;\" id=\"cvGoBtn\">Convert</button>\n    </div>\n  </div>\n</div>";
   function ensureConvertModal(){
     if(document.getElementById("convertModal")) return;
     var d=document.createElement("div"); d.innerHTML=MODAL_HTML;
@@ -162,7 +162,7 @@
     if(!balRow){ var inpEl=document.getElementById('cvAmount'); if(inpEl){ balRow=document.createElement('div'); balRow.id='cvBalRow'; balRow.style.cssText='font-size:13px;margin-bottom:8px;font-family:JetBrains Mono,monospace;'; inpEl.parentNode.insertBefore(balRow,inpEl); } }
     if(!balRow){ return; }
     balRow.innerHTML='<span style="color:#d4c590;">'+t('have')+' …</span>';
-    // SELECTOR AGREGATOR (doar solana): Jupiter / Raydium
+    // Aggregator picker (Solana only): Jupiter / Raydium
     _cvAgg='jupiter';
     var oldSel=document.getElementById('cvAggRow'); if(oldSel) oldSel.remove();
     if(_cur.chain==='solana'){
@@ -202,6 +202,7 @@
     scheduleQuote();
   };
 
+  var _qGen=0;
   function scheduleQuote(){
     clearTimeout(_quoteTimer);
     _quoteTimer=setTimeout(doQuote,350);
@@ -216,10 +217,12 @@
 
   async function doQuote(){
     var v=parseFloat(document.getElementById('cvAmount').value); if(!(v>0)){ document.getElementById('cvOut').textContent='—'; document.getElementById('cvMin').textContent='—'; return; }
+    var _g=++_qGen;
     hideMsg();
     document.getElementById('cvOut').textContent='…';
     try{
       var q=await getQuote(_cur,v);
+      if(_g!==_qGen) return;
       _lastQuote=q;
       hideMsg();
       document.getElementById('cvOut').textContent=fmt(q.out)+' '+_cur.to;
@@ -227,18 +230,47 @@
       document.getElementById('cvVia').textContent=q.via;
       hideMsg(); // rata valida -> ascunde orice mesaj de eroare rezidual
     }catch(e){
-      // eroare tranzitorie: pastreaza rata veche daca exista, arata unavail DOAR daca chiar n-avem nimic
+      // Transient failure: keep the previous rate if there is one; only report unavailable when there is nothing at all
+      if(_g!==_qGen) return;
       if(!_lastQuote){
         document.getElementById('cvOut').textContent='—';
         showMsg(t('unavail'),'err');
       }
-      // daca _lastQuote exista (rata anterioara valida), nu speria userul pt un hopa tranzitoriu
+      // A valid earlier rate is still on screen, so a transient hiccup must not alarm the user
     }
   }
   function fmt(n){ return (Number(n)||0).toLocaleString(undefined,{maximumFractionDigits:6}); }
 
-  // ---- QUOTE prin module (Solana: Jupiter+Raydium · EVM: ParaSwap+KyberSwap) ----
+  /* The aggregator modules are ES modules; this file is a classic script, so it
+     loads them itself instead of relying on the page that hosts it. The wallet
+     page used to do it and the link broke when that page was replaced. */
+  var _modP=null;
+  function _loadMods(){
+    if(_modP) return _modP;
+    _modP=(async function(){
+      if(!window.GoldbrixOnrampSol){
+        try{ window.GoldbrixOnrampSol=await import('/mod-b-onramp-sol.mjs'); }catch(e){ console.error('[convert] sol module', e); }
+      }
+      if(!window.GoldbrixOnrampEvm){
+        try{ window.GoldbrixOnrampEvm=await import('/mod-b-onramp-evm.mjs'); }catch(e){ console.error('[convert] evm module', e); }
+      }
+      /* Signing and RPC live in their own modules and register themselves on
+         load. They were pulled in by the wallet page that no longer exists, so
+         the conversion loads them itself and never assumes a host page. */
+      try{ if(!window.GoldbrixEVM) await import('/evm-tx.mjs'); }catch(e){ console.error('[convert] evm-tx', e); }
+      try{ if(!window.GoldbrixEVMSend) await import('/evm-send.mjs'); }catch(e){ console.error('[convert] evm-send', e); }
+      try{ if(!window.GoldbrixMultichain) await import('/multichain-utils.js'); }catch(e){ console.error('[convert] multichain', e); }
+      for(var i=0;i<40 && !(window.GoldbrixEVMSend && window.GoldbrixEVM && window.GoldbrixMultichain);i++){
+        await new Promise(function(r){ setTimeout(r,100); });
+      }
+      return true;
+    })();
+    return _modP;
+  }
+
+  // ---- Quotes through the modules (Solana: Jupiter+Raydium, EVM: ParaSwap+KyberSwap) ----
   async function getQuote(route, amount){
+    await _loadMods();
     var w=null; try{ if(window.GBXSession){ w=GBXSession.activeWallet(); } if(!w){ var _u=JSON.parse(sessionStorage.getItem('gbx_unlocked_wallets')||'null'); if(_u && _u.wallets){ w=_u.wallets[_u.activeWalletId] || _u.wallets[Object.keys(_u.wallets)[0]]; } } }catch(_e){}
     if(route.chain==='solana'){
       var mod=window.GoldbrixOnrampSol; if(!mod) throw new Error('sol-mod');
@@ -272,7 +304,18 @@
     }
   }
 
-  // ---- verificare on-chain: succes DOAR daca tx e minata cu status 0x1 (regula 7+9) ----
+  /* An honest message for each real cause; the technical detail stays in the console. */
+  function cvErr(e){
+    var m=String((e&&e.message)||e||'').toLowerCase();
+    var sym=(_cur&&_cur.chain==='solana')?'SOL':'ETH';
+    var k='e_net';
+    if(m.indexOf('insufficient funds')>=0||m.indexOf('gas required')>=0||m.indexOf('exceeds balance')>=0) k='e_gas';
+    else if(m.indexOf('approve')>=0||m.indexOf('allowance')>=0) k='e_appr';
+    else if(m.indexOf('revert')>=0||m.indexOf('onchain')>=0||m.indexOf('0x0')>=0) k='e_rev';
+    return t(k).replace(/\{sym\}/g,sym);
+  }
+
+  // ---- On-chain check: success only when the transaction is mined with status 0x1 ----
   async function _evmReceipt(chain, hash){
     if(!hash || String(hash).slice(0,2)!=='0x' || String(hash).length<10) return {ok:false,reason:'no-hash'};
     for(var i=0;i<40;i++){
@@ -283,11 +326,12 @@
     return {ok:false,reason:'timeout'};
   }
 
-  // ---- EXECUTA conversia (user semneaza, agregator executa, istoric CONVERT) ----
+  // ---- Execute the conversion (the user signs, the aggregator executes, CONVERT history entry) ----
   window.cvExecute=async function(){
+    await _loadMods();
     var v=parseFloat(document.getElementById('cvAmount').value);
     if(!(v>0)){ showMsg(t('noamt'),'err'); return; }
-    // garda onesta: sursa nativa trebuie sa acopere suma + taxele retelei (mesaj real, nu "revino mai tarziu")
+    // Honest guard: the native balance must cover the amount plus network fees, with a real message
     try{
       var _rsv=0, _sym='';
       if(_cur && _cur.chain==='solana' && _cur.from==='SOL'){ _rsv=0.004; _sym='SOL'; }
@@ -326,10 +370,10 @@
         var C2=modE.EVM_ONRAMP_CHAINS[_cur.chain];
         var rpc=window.GoldbrixEVMSend.makeRPC(C2.rpc);
         var evmSend=window.GoldbrixEVMSend.makeEVMSend({rpc:rpc,evm:window.GoldbrixEVM,chainId:C2.id});
-        var pk=ev.privateKey||ev.priv||ev.secretKey; // cheia derivata a userului
+        var pk=ev.privateKey||ev.priv||ev.secretKey; // the user's own derived key
         try{ window._cvOwner=ev.address; }catch(_o){}
         var signer={ address:ev.address, signAndSend:async function(tx){
-          // _sendRaw DOVEDIT (acelasi ca send.html): semneaza cu cheia userului, broadcast la RPC
+          // Same proven path as the send page: signed with the user's key, broadcast to the RPC
           var rc=await evmSend._sendRaw(pk, tx.to, tx.data, BigInt(tx.value||'0'));
           return (rc&&(rc.transactionHash||rc.hash))||'';
         }};
@@ -343,7 +387,7 @@
           var _rcp=await _evmReceipt(_cur.chain, sig);
           if(!_rcp.ok){ throw new Error('evm-onchain-'+_rcp.reason); }
       }
-      // ISTORIC tip CONVERT (acelasi format ca GBX_BUY/SELL)
+      // CONVERT history entry, same shape as the buy and sell entries
       try{
         var h=JSON.parse(localStorage.getItem('gbx_swaps_history')||'[]');
         var _own=''; try{ _own=(window._cvOwner||'').toLowerCase(); }catch(_o){}
@@ -354,7 +398,8 @@
       showMsg(t('done'),'ok');
       setTimeout(function(){ closeConvertModal(); try{ if(window.gbxRefresh_wallet_silent){ window.gbxRefresh_wallet_silent(); } else if(window.gbxRefresh_wallet){ window.gbxRefresh_wallet(); } }catch(e){} },1400);
     }catch(e){
-      showMsg(t('unavail'),'err');
+      var _tech=String((e&&e.message)||e||'').slice(0,70);
+      showMsg(cvErr(e)+(_tech?' ('+_tech+')':''),'err');
       try{console.error('CV_EXEC_ERR',e);}catch(_x){}
     }
     btn.disabled=false; btn.textContent=orig;

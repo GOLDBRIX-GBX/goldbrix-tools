@@ -3,7 +3,7 @@
 // The user signs with the BIP39-derived key. Zero GoldBrix spread. Legacy tx (the vendor lacks VersionedTransaction).
 import { Connection, Keypair, Transaction, PublicKey, getAssociatedTokenAddress } from "/vendor/solana.mjs";
 
-const SOL_MINT  = "So11111111111111111111111111111111111111112";   // wrapped SOL (nativ)
+const SOL_MINT  = "So11111111111111111111111111111111111111112";   // wrapped SOL (native)
 const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";   // USDC Solana (Circle native)
 const JUP_BASE  = "https://lite-api.jup.ag/swap/v1";                 // free endpoint, no API key
 const RPCS = [
@@ -27,7 +27,7 @@ async function _sendRawWithFallback(rawTx){
   throw new Error("toate RPC-urile Solana au picat: " + errs.join(" | "));
 }
 
-// Keypair Solana din cheia derivata (acelasi ca mod-b-solana.mjs)
+// Solana keypair from the derived key (same as mod-b-solana.mjs)
 export function solKeypairFromDerive(d){
   const seed = Uint8Array.from(Buffer.from(d.secretKey, "hex"));
   return Keypair.fromSeed(seed);
@@ -122,7 +122,7 @@ export async function swapUsdcToSol(ctx){
   return { sig, outSol:q.outSol, minOutSol:q.minOutSol };
 }
 
-// ==== AGREGATOR RAYDIUM (keyless) — alternativa la Jupiter, selectabil de user in UI ====
+// ==== Raydium aggregator (keyless) - alternative to Jupiter, selectable in the UI ====
 const RAY_BASE = "https://transaction-v1.raydium.io";
 
 // Raydium QUOTE (SOL->USDC or USDC->SOL, by mints)
@@ -147,13 +147,13 @@ export async function swapRaydium(ctx){
   onStatus && onStatus("quoting");
   const q = await quoteRaydium(inMint, outMint, amount, bps);
   onStatus && onStatus("building");
-  const wrapSol   = (inMint===SOL_MINT);   // intra SOL nativ -> wrap
-  const unwrapSol = (outMint===SOL_MINT);  // iese SOL nativ -> unwrap
+  const wrapSol   = (inMint===SOL_MINT);   // native SOL in -> wrap
+  const unwrapSol = (outMint===SOL_MINT);  // native SOL out -> unwrap
   // Raydium requires the ATAs explicitly (REQ_INPUT_ACCOUT_ERROR without them)
   const owner = solKeypair.publicKey;
   let inputAccount, outputAccount;
   try{
-    // pt SOL nativ (wrap/unwrap) Raydium gestioneaza singur; pt USDC trimitem ATA userului
+    // Raydium handles native SOL wrap/unwrap itself; for USDC we pass the user's token account
     if(inMint!==SOL_MINT){ inputAccount = (await getAssociatedTokenAddress(new PublicKey(inMint), owner)).toBase58(); }
     if(outMint!==SOL_MINT){ outputAccount = (await getAssociatedTokenAddress(new PublicKey(outMint), owner)).toBase58(); }
   }catch(_a){}
