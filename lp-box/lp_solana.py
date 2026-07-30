@@ -119,6 +119,9 @@ def sol_scan_and_lock_usdc_for_sell(st, fund, cfg, deps):
         if _decl and gbx_val > int(_decl*1.01):
             st["swaps"][sid]={"direction":"sell","chain":"solana","hashlock":hl,"status":"rejected_val_underdeclared"}; print(f"  [GUARD SELL SOL] REJECT {hl[:14]} onchain={gbx_val} > declared={_decl}"); continue
         max_usd = deps["quote_sell"](gbx_val / 1e8)["usd_out"]; req_usdc = int(intent["usdc_amount"])
+        # Same commitment rule as the EVM branch: the LP honours its own live quote.
+        _qu = float(intent.get("quote_usd") or 0); _qe = int(intent.get("quote_exp") or 0)
+        if _qu > 0 and int(__import__("time").time()) < _qe and _qu > max_usd: max_usd = _qu
         if req_usdc > int(max_usd * 1e6 * 1.01):
             st["swaps"][sid] = {"direction":"sell","chain":"solana","hashlock":hl,"status":"rejected_price"}
             deps["save_state"](st); print(f"  [SOL GUARD SELL] REJECT {hl[:14]} req={req_usdc} > max={int(max_usd*1e6)}"); continue

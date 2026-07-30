@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 # GoldBrix LP gateway — intent + swap status + broadcast GBX + quote (chokepoint pret). NU atinge daemon-ul.
-import json, subprocess, sys, time
+import os, json, subprocess, sys, time
 from urllib.parse import urlparse, parse_qs
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from lp_env import E
+import hashlib as _hashlib
+from _evm_key import load_evm_key
 INTENTS_F=E["INTENTS_F"]; STATE_F=E["STATE_F"]; CONFIG_F=E["CONFIG_F"]
 def _lp_evm_addr():
     """Citeste lp_evm din chains.json (sursa unica de adevar = treasury unificat). Fallback 0x3b5Bdd."""
@@ -105,9 +107,46 @@ def _rate_check(ip):
 # Anti-dump: per-address cooldown + GBX/24h volume cap per refund_pubkey. Dynamic thresholds on the LP reserve (code-is-law).
 SELL_COOLDOWN=600
 SG_F=E["SELL_GUARD_F"]
+SELL_DAILY_FRAC=float(os.environ.get("GBX_SELL_DAILY_FRAC","0.25"))
 def _sg_cap_sats():
-    try: r=json.load(open(E["RESERVES_F"])); return min(max(int(50e8),int(0.05*float(r.get('gbx_lp_reserve',0))*1e8)),int(0.10*float(r.get('gbx_lp_reserve',0))*1e8))
+    """Daily sell cap per key = a share of this LP's own GBX reserve, so it scales with
+    liquidity instead of being a fixed number. Each operator sets the share for their
+    own box; the same share then applies to every user of that box, at every size."""
+    try:
+        r=json.load(open(E["RESERVES_F"])); res=float(r.get('gbx_lp_reserve',0) or 0)
+        return int(SELL_DAILY_FRAC*res*1e8) if res>0 else int(50e8)
     except Exception: return int(50e8)
+QUOTES_F=INTENTS_F.rsplit('/',1)[0]+'/lp_quotes.json'
+QUOTE_TTL=120      # a quote stays valid this long
+QUOTE_GRACE=240    # plus settlement time, during which the LP still honours it
+def _quotes_load():
+    try: return json.load(open(QUOTES_F))
+    except Exception: return []
+def _quote_commit(gbx,usd):
+    """The LP records what it just quoted, so it can honour its own word even if the
+    pool price moves before the swap settles. No client input is trusted: the honoured
+    figure is the one this LP itself produced."""
+    now=int(_t.time()); exp=now+QUOTE_TTL
+    q=[e for e in _quotes_load() if int(e.get('exp',0))>now][-200:]
+    if usd>0: q.append({'gbx':float(gbx),'usd':float(usd),'exp':exp,'used':0})
+    try: json.dump(q,open(QUOTES_F,'w'))
+    except Exception: pass
+    return exp
+def _quote_honour(gbx_base):
+    """Find this LP's own most recent unused quote for the same size and consume it."""
+    now=int(_t.time()); g=float(gbx_base or 0)/1e8
+    q=_quotes_load(); best=None; bi=-1
+    for i,e in enumerate(q):
+        if e.get('used'): continue
+        if int(e.get('exp',0))<=now: continue
+        eg=float(e.get('gbx') or 0)
+        if eg<=0 or abs(eg-g)>max(eg,g)*0.01: continue
+        if best is None or float(e.get('usd') or 0)>float(best.get('usd') or 0): best=e; bi=i
+    if best is None: return None,None
+    q[bi]['used']=1
+    try: json.dump(q,open(QUOTES_F,'w'))
+    except Exception: pass
+    return float(best['usd']), int(best['exp'])+QUOTE_GRACE
 def _sell_guard(pk,val_sats,commit=True):
     if not pk: return False,{'error':'missing_refund_pubkey'}
     now=int(_t.time()); day=now//86400
@@ -115,13 +154,18 @@ def _sell_guard(pk,val_sats,commit=True):
     except Exception: sg={}
     e=sg.get(pk) or {'last':0,'day':day,'vol':0}
     if e['day']!=day: e['day']=day; e['vol']=0
-    if e['last'] and now-e['last']<SELL_COOLDOWN:
-        return False,{'error':'sell_cooldown','retry_after_s':SELL_COOLDOWN-(now-e['last'])}
     cap=_sg_cap_sats(); v=int(val_sats or 0)
+    # Endogenous cooldown: the wait scales with the share of the daily cap the previous
+    # sale consumed. Same rule at every size - a sale that takes the whole cap waits the
+    # full window, a small sale waits proportionally little. Nobody gets a discount.
+    _pv=int(e.get('last_val') or 0)
+    _need=SELL_COOLDOWN if cap<=0 else int(SELL_COOLDOWN*min(1.0,_pv/float(cap)))
+    if e['last'] and _need>0 and now-e['last']<_need:
+        return False,{'error':'sell_cooldown','retry_after_s':_need-(now-e['last'])}
     if e['vol']+v>cap:
         return False,{'error':'sell_daily_cap','daily_gbx_left':max(0,cap-e['vol'])/1e8,'cap_gbx':cap/1e8}
     if commit:
-        e['last']=now; e['vol']+=v; sg[pk]=e
+        e['last']=now; e['vol']+=v; e['last_val']=v; sg[pk]=e
         json.dump(sg,open(SG_F,'w'))
     return True,None
 
@@ -156,6 +200,8 @@ class H(BaseHTTPRequestHandler):
                 if not _ok: return self._s(429,{'error':_why})
                 _gok,_gerr=_sell_guard(body.get('refund_pubkey') or body.get('sol_user_pubkey'),body.get('gbx_val'))
                 if not _gok: return self._s(429,_gerr)
+                _qu,_qe=_quote_honour(body.get('gbx_val'))
+                if _qu: body['quote_usd']=_qu; body['quote_exp']=_qe
                 it[hl]=body
             else:
                 pkU=body.get('pkU'); amt=body.get('gbx_amount')
@@ -187,6 +233,40 @@ class H(BaseHTTPRequestHandler):
             except: return self._s(502,{'error':'cli_fail','raw':(r.stdout or r.stderr)[:200]})
             if o.get('error'): return self._s(502,o)
             return self._s(200,o)
+        if self.path=='/evm-relay-claim':
+            """Relay a USDC claim on an EVM chain for a user who holds no gas token there.
+
+            The user reveals the preimage, which only ever releases the locked USDC to the
+            receiver fixed inside the lock (the user). The LP can do nothing else with it and
+            pays only the gas - the same courtesy already granted on Solana, so holding ETH on
+            each chain is never a precondition for getting paid."""
+            if _breaker_active(): return self._s(503,{'error':'breaker_active'})
+            body=self._body()
+            hl=str(body.get('hashlock') or '').lower(); pre=str(body.get('preimage') or '')
+            if not (hl and pre): return self._s(400,{'error':'missing','need':['hashlock','preimage']})
+            if not pre.startswith('0x'): pre='0x'+pre
+            try:
+                if _hashlib.sha256(bytes.fromhex(pre[2:])).hexdigest()!=hl.replace('0x',''):
+                    return self._s(400,{'error':'preimage_mismatch'})
+            except Exception: return self._s(400,{'error':'preimage_invalid'})
+            st=load(STATE_F,{'swaps':{}})
+            sw=next((v for v in st.get('swaps',{}).values() if str(v.get('hashlock','')).lower()==hl), None)
+            if not sw: return self._s(404,{'error':'unknown_swap'})
+            if sw.get('status')!='usdc_locked': return self._s(409,{'error':'not_claimable','status':sw.get('status')})
+            lid=sw.get('usdc_lock_id')
+            if not lid: return self._s(409,{'error':'no_lock_id'})
+            ch=load(CHAINS_F,{}).get('chains',{}).get(sw.get('chain') or '',{})
+            if not ch or ch.get('kind','evm')!='evm': return self._s(400,{'error':'not_an_evm_chain'})
+            try: pk,_addr=load_evm_key()
+            except Exception as e: return self._s(503,{'error':'lp_key_unavailable','msg':str(e)[:120]})
+            arg=json.dumps({'cmd':'claim','pk':pk,'htlc':ch.get('HTLC'),'id':lid,'preimage':pre,
+                'rpc':(ch.get('rpcs') or [None])[0],'rpcs':ch.get('rpcs'),'chainId':ch.get('chainId'),
+                'fromBlock':hex(int(ch.get('from_block',0) or 0))})
+            r=subprocess.run(['node',E["EVM_CLI"],arg],capture_output=True,text=True,timeout=120)
+            try: o=json.loads(r.stdout.strip())
+            except Exception: return self._s(502,{'error':'cli_fail','raw':(r.stdout or r.stderr)[:200]})
+            if o.get('error'): return self._s(502,o)
+            return self._s(200,{'hash':o.get('hash'),'status':o.get('status'),'relayed':True})
         if self.path=='/sol-prepare-claim':
             if _breaker_active(): return self._s(503,{'error':'breaker_active'})
             body=self._body()
@@ -338,6 +418,7 @@ class H(BaseHTTPRequestHandler):
             _g=qs.get('gbx')
             if _g:
                 _q=quote_sell(float(_g[0])); _q['breaker']=_breaker_active()
+                _q['valid_until']=_quote_commit(float(_g[0]),float(_q.get('usd_out') or 0))
                 return self._s(200,_q)
             usd=float((qs.get('usd') or ['0'])[0])
             _q=quote(usd); _q['breaker']=_breaker_active()
@@ -366,6 +447,10 @@ class H(BaseHTTPRequestHandler):
             sw=next((v for v in st.get('swaps',{}).values() if v.get('hashlock','').lower()==hl), None)
             if not sw: return self._s(200,{'status':'pending'})
             out={'status':sw['status'],'script':sw.get('script'),'gbx_txid':sw.get('gbx_txid'),'gbx_vout':sw.get('gbx_vout'),'gbx_val':sw.get('gbx_val'),'T2':sw.get('T2')}
+            # The counterparty lock id, so a client can claim directly instead of scanning
+            # a public RPC for 200k blocks. Already public on the counterparty chain.
+            for _k in ('usdc_lock_id','sol_swap_id','user_ata','usdc_amount','chain'):
+                if sw.get(_k) is not None: out[_k]=sw.get(_k)
             if sw['status']=='gbx_locked':
                 txo=gtxout(sw['gbx_txid'],sw['gbx_vout']); out['spk']=txo['scriptPubKey']['hex'] if txo else None
             return self._s(200,out)

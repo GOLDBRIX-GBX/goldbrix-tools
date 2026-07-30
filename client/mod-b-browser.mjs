@@ -7,10 +7,23 @@ import { makeEVMHTLC } from './evm-htlc.mjs';
 import { buildHtlcScript, p2wshSpk, p2wpkhAddress, p2wpkhSpkFromPub, buildFundTx, hex, buildClaimTx, buildRefundTx, unhex } from './gbx-htlc.mjs';
 function p2wpkhSpk2(pub){ const h=ripemd160(sha256(pub)); const o=new Uint8Array(22); o[0]=0; o[1]=0x14; o.set(h,2); return o; }
 const LOCKED_SIG='Locked(bytes32,address,address,address,uint256,bytes32,uint256)';
-export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, evmRpc, chainId, chainName, htlcAddr, usdcAddr, lpEvmAddr, fetchUtxos, t1Blocks }){
-  // AUTONOMOUS FALLBACK: try several RPCs; each is good at something different
-  // (publicnode: eth_call OK, getLogs archive NU | mainnet.base.org: getLogs OK, eth_call intermitent)
-  const RPC_LIST=[evmRpc,'https://mainnet.base.org','https://base-rpc.publicnode.com','https://base-mainnet.public.blastapi.io','https://1rpc.io/base'].filter((v,i,a)=>v&&a.indexOf(v)===i);
+async function crypto_subtle_sha256(preHex){
+  const h=String(preHex||'').replace(/^0x/,'');
+  const b=new Uint8Array(h.length/2); for(let i=0;i<b.length;i++) b[i]=parseInt(h.substr(i*2,2),16);
+  return await globalThis.crypto.subtle.digest('SHA-256', b);
+}
+export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, evmRpc, rpcList, chainId, chainName, htlcAddr, usdcAddr, lpEvmAddr, fetchUtxos, t1Blocks }){
+  /* AUTONOMOUS FALLBACK, PER CHAIN: several endpoints, because each is good at
+     something different (one serves eth_call reliably, another archive getLogs).
+     The fallbacks must belong to the SAME chain: a signed transaction sent to a
+     different network is rejected ("tx for different chain"), which silently broke
+     every chain except the one whose endpoints were listed here. Callers may pass
+     rpcList to add their own; nothing is chain-crossed. */
+  const _CHAIN_RPCS={
+    8453:['https://mainnet.base.org','https://base-rpc.publicnode.com','https://base-mainnet.public.blastapi.io','https://base.drpc.org'],
+    42161:['https://arb1.arbitrum.io/rpc','https://arbitrum-one-rpc.publicnode.com','https://arbitrum.drpc.org']
+  };
+  const RPC_LIST=[evmRpc].concat(rpcList||[]).concat(_CHAIN_RPCS[Number(chainId)]||[]).filter((v,i,a)=>v&&a.indexOf(v)===i);
   const rpc=async(method,params)=>{
     let lastErr=null;
     for(const url of RPC_LIST){
@@ -21,7 +34,7 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
         return j.result;
       }catch(e){ lastErr=e; continue; }
     }
-    throw lastErr||new Error('all RPC failed for '+method);
+    throw new Error('all '+RPC_LIST.length+' RPC endpoints failed for '+method+' on chain '+chainId+((lastErr&&lastErr.message)?(': '+lastErr.message):''));
   };
   const htlc=makeEVMHTLC({ rpc, evm:GoldbrixEVM, chainId });
   const post=async(p,b)=>{ const r=await fetch(gatewayBase+p,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b)}); return r.json(); };
@@ -109,7 +122,17 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
       } };
     const evm={
       findLock:async({hashlock,receiver})=>{ const rcv='0x'+receiver.replace(/^0x/,'').toLowerCase().padStart(64,'0'); const latestHex=await rpc('eth_blockNumber',[]); const latest=parseInt(latestHex,16); const WIN=9000; const SCAN_BACK=200000; for(let hi=latest; hi>Math.max(0,latest-SCAN_BACK); hi-=WIN){ const lo=Math.max(0,hi-WIN+1); let logs; try{ logs=await rpc('eth_getLogs',[{address:htlcAddr,fromBlock:'0x'+lo.toString(16),toBlock:'0x'+hi.toString(16),topics:[t0,null,null,rcv]}]); }catch(_e){ continue; } for(const l of logs){ const d=l.data.replace(/^0x/,''); const sl=i=>'0x'+d.slice(i*64,(i+1)*64); if(sl(2).toLowerCase()===hashlock.toLowerCase()) return {id:l.topics[1],receiver,token:'0x'+sl(0).slice(-40),amount:BigInt(sl(1)).toString(),hashlock:sl(2)}; } } return null; },
-      claim:async({id,preimage})=>{ const r=await htlc.claim(ek.privateKey,htlcAddr,id,preimage); return r.hash; } };
+      /* Settling a sale must not require holding the chain's gas token: ask the LP to
+         relay the claim (it only ever releases the locked USDC to the receiver named in
+         the lock, which is us). Signing it ourselves stays the fallback. */
+      claim:async({id,preimage,hashlock})=>{
+        try{
+          const _hl=hashlock||('0x'+Array.from(new Uint8Array(await crypto_subtle_sha256(preimage))).map(b=>b.toString(16).padStart(2,'0')).join(''));
+          const _rr=await (await fetch(gatewayBase+'/evm-relay-claim',{method:'POST',headers:{'content-type':'application/json'},
+            body:JSON.stringify({hashlock:String(_hl).toLowerCase(),preimage:preimage})})).json();
+          if(_rr&&_rr.hash) return _rr.hash;
+        }catch(_e){}
+        const r=await htlc.claim(ek.privateKey,htlcAddr,id,preimage); return r.hash; } };
     let _h=0; try{ _h=(await (await fetch(gatewayBase+'/height')).json()).height||0; }catch(_e){}
     const _T1 = _h>0 ? _h+100000 : 9999999;
     return await sellGbx({ gbxAmount, usdcAmount:String(usdcAmount), lpGbxPub, userEvmAddr:ek.address, usdcAddr, timelockT1Gbx:_T1, t2EvmSeconds:3600, gbx, evm, submitIntent, onStatus, pollMs:1000, maxPolls:60, chain:_chain });
@@ -121,6 +144,23 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
   }
   async function claimUsdcForSell({ mnemonic, hashlock, secret, userEvmAddr }){
     const ek=await multichain.deriveEVM(mnemonic);
+    /* Getting paid must not depend on holding the chain's gas token. Ask the LP to relay
+       the claim first (it already does this on Solana): revealing the preimage can only
+       release the locked USDC to the receiver written into the lock, which is us.
+       If no LP relays, fall back to signing and paying for it ourselves. */
+    try{
+      const _rr=await (await fetch(gatewayBase+'/evm-relay-claim',{method:'POST',headers:{'content-type':'application/json'},
+        body:JSON.stringify({hashlock:String(hashlock).toLowerCase(),preimage:'0x'+secret})})).json();
+      if(_rr&&_rr.hash) return { hash:_rr.hash, relayed:true };
+    }catch(_e){}
+    /* The LP that locked the USDC knows the lock id: one request instead of scanning
+       200k blocks on a public RPC, which fails on busy chains. The scan stays as fallback. */
+    try{
+      const _sw=await (await fetch(gatewayBase+'/swap/'+String(hashlock).toLowerCase(),{cache:'no-store'})).json();
+      const _id=_sw&&_sw.usdc_lock_id;
+      if(_id){ const _r=await htlc.claim(ek.privateKey, htlcAddr, (String(_id).startsWith('0x')?_id:'0x'+_id), '0x'+secret);
+               return { hash:(_r&&_r.hash)||_r, lockId:_id }; }
+    }catch(_e){}
     const t0='0x'+hex(keccak_256(new TextEncoder().encode(LOCKED_SIG)));
     const rcv='0x'+userEvmAddr.replace(/^0x/,'').toLowerCase().padStart(64,'0');
     const latest=parseInt(await rpc('eth_blockNumber',[]),16);

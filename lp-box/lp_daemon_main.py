@@ -8,29 +8,8 @@ A=json.load(open(E["ADDRS_F"])); USDC=A["USDC"]; HTLC=A["HTLC"]
 FROM_BLOCK=hex(A.get("from_block",0))
 RPC="https://mainnet.base.org"; CHAIN=8453
 RPCS=A.get("rpcs",[RPC])  # B.2 multi-RPC fallback
-def _load_treasury_key():
-    """Decripteaza cheia treasury 0x3b5B din keystore criptat (PBKDF2 200k + AES-256-CBC).
-    The key stays encrypted on disk, decrypted ONLY in memory. Same model as lib/evm.js.
-    LP and treasury unified (single warm identity)."""
-    import re as _re, hashlib as _hl
-    from cryptography.hazmat.primitives.ciphers import Cipher as _C, algorithms as _alg, modes as _md
-    _env=open(E["ENV_F"]).read()
-    def _g(k):
-        m=_re.search(rf'^{k}=(.*)$', _env, _re.M)
-        return m.group(1).strip().strip('"').strip("'") if m else None
-    _pw=_g("EVM_KEY_PASSPHRASE"); _kp=_g("EVM_KEYSTORE_PATH")
-    if not _pw or not _kp: raise RuntimeError("EVM_KEY_PASSPHRASE/EVM_KEYSTORE_PATH lipsa in .env")
-    _buf=open(_kp,"rb").read()
-    if _buf[:8]!=b"Salted__": raise RuntimeError("keystore: format openssl invalid")
-    _salt=_buf[8:16]; _ct=_buf[16:]
-    _ki=_hl.pbkdf2_hmac("sha256", _pw.encode(), _salt, 200000, dklen=48)
-    _d=_C(_alg.AES(_ki[:32]), _md.CBC(_ki[32:48])).decryptor()
-    _pt=_d.update(_ct)+_d.finalize(); _pt=_pt[:-_pt[-1]]
-    _ks=json.loads(_pt.decode())
-    _pk=_ks["privateKey"]
-    return (_pk if _pk.startswith("0x") else "0x"+_pk), _ks["address"]
-
-LP_PK_EVM, LP_EVM = _load_treasury_key()
+from _evm_key import load_evm_key
+LP_PK_EVM, LP_EVM = load_evm_key()
 STATE_F=E["STATE_F"]; INTENTS_F=E["INTENTS_F"]
 import os as _os,sys as _sys; _sys.path.insert(0,_os.path.dirname(_os.path.abspath(__file__)))
 from lp_pricing import quote, quote_sell
@@ -352,7 +331,10 @@ def run_once():
             'quote_sell': quote_sell, 'bip143': bip143, 'ser_tx': ser_tx, 'sgn': sgn,
         })
     except Exception as _e:
-        print(f"  [SOL RESILIENT] ramura Solana esuata: {str(_e)[:120]} -> EVM neatins, continui")
+        import traceback as _tb
+        print("  [SOL] branch failed (EVM untouched, continuing):")
+        print("  "+str(_e)[:2000])
+        print(_tb.format_exc()[-2000:])
     save_state(st); return st
 def run_loop(interval=5, iters=None):
     i=0
@@ -414,6 +396,10 @@ def scan_and_lock_usdc(st,fund,ctx):
         if _decl and gbx_val > int(_decl*1.01):
             st["swaps"][sid]={"direction":"sell","hashlock":hl,"status":"rejected_val_underdeclared"}; print(f"  [GUARD SELL] REJECT {hl[:14]} onchain={gbx_val} > declared={_decl}"); continue
         max_usd=quote_sell(gbx_val/1e8)["usd_out"]; req_usdc=int(intent["usdc_amount"])
+        # The LP keeps its word: a quote it issued itself is honoured until it expires,
+        # even if the pool has moved since. Same rule on every chain.
+        _qu=float(intent.get("quote_usd") or 0); _qe=int(intent.get("quote_exp") or 0)
+        if _qu>0 and int(time.time())<_qe and _qu>max_usd: max_usd=_qu
         if req_usdc > int(max_usd*1e6*1.01):
             st["swaps"][sid]={"direction":"sell","hashlock":hl,"status":"rejected_price"}
             refund_sell_guard(intent_refund_key(intent),intent.get("gbx_val"))

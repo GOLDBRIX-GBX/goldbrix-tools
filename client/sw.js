@@ -1,6 +1,6 @@
 /* GoldBrix SW v6 — HTML network-first (always fresh code), assets SWR, API network-only.
  * Fix: stale-while-revalidate on HTML was serving old code. */
-const CACHE = 'gbx-shell-v202-20260730-contacts';
+const CACHE = 'gbx-shell-v213-20260730-s73-swap-hardening';
 
 function isNetworkOnly(url) {
   // /lp/ + lps.json + ANY cross-origin = network-only. Stale quotes/prices from cache are forbidden (no-loss rule).

@@ -17,7 +17,7 @@ export async function lockUsdcSolana(ctx){
   tx.partialSign(solKeypair);
   const signedB64=btoa(String.fromCharCode(...tx.serialize({requireAllSignatures:false})));
   onStatus&&onStatus("user_signed",{swap_id:prep.swap_id});
-  try{ if(typeof localStorage!=="undefined") localStorage.setItem("gbx_pending_"+hashlock,JSON.stringify({dir:"buy_solana",hashlock,secret:_hex(secret),swap_id:prep.swap_id,vault:prep.vault,usdcAmount:String(usdcAmount),ts:Date.now()})); }catch(_e){}
+  try{ if(typeof localStorage!=="undefined") localStorage.setItem("gbx_pending_"+hashlock,JSON.stringify({dir:"buy_solana",owner_pk:(pkUHex||""),hashlock,secret:_hex(secret),swap_id:prep.swap_id,vault:prep.vault,usdcAmount:String(usdcAmount),ts:Date.now()})); }catch(_e){}
   const sub=await post("/sol-submit",{tx_signed_b64:signedB64,swap_id:prep.swap_id,hashlock,pkU:pkUHex,gbx_amount:gbxAmount,t2_blocks:t2Blocks});
   if(sub.error||!sub.ok) throw new Error("sol-submit: "+JSON.stringify(sub));
   onStatus&&onStatus("usdc_locked",{sig:sub.sig,vault:sub.vault});
@@ -53,18 +53,32 @@ export async function sellGbxSolana(ctx){
   onStatus&&onStatus("prepared",{hashlock:Hhex});
   const lock=await gbxLock({H,Hhex});                       // lock GBX L1 (injectat, cod dovedit sell EVM)
   onStatus&&onStatus("gbx_locked",{gbx_txid:lock.gbx_txid});
-  try{ localStorage.setItem("gbx_pending_"+Hhex,JSON.stringify({dir:"sell",chain:"solana",hashlock:Hhex,secret:_hex(secret),usdcAmount:String(usdcAmount),gbx_txid:lock.gbx_txid,gbx_vout:lock.gbx_vout,ts:Date.now()})); }catch(_e){}
+  try{ localStorage.setItem("gbx_pending_"+Hhex,JSON.stringify({dir:"sell",chain:"solana",owner_pk:(lock.refund_pubkey||""),hashlock:Hhex,secret:_hex(secret),usdcAmount:String(usdcAmount),gbx_txid:lock.gbx_txid,gbx_vout:lock.gbx_vout,ts:Date.now()})); }catch(_e){}
   await post("/intent",{hashlock:Hhex,direction:"sell",chain:"solana",sol_user_pubkey:solKeypair.publicKey.toBase58(),
     usdc_amount:String(usdcAmount),gbx_txid:lock.gbx_txid,gbx_vout:lock.gbx_vout,gbx_script:lock.script,gbx_val:lock.gbx_val,t2_evm:3600,refund_pubkey:lock.refund_pubkey||""});
   // asteapta lock-ul USDC al LP-ului si VERIFICA on-chain INAINTE de a dezvalui preimage-ul (funds-safe)
+  const _cl=await claimUsdcSolana({gatewayBase,program,mint,solKeypair,secretHex:_hex(secret),usdcAmount,onStatus,pollMs,maxPolls});
+  return { hashlock:Hhex, sig:_cl.sig, secret:_hex(secret) };
+}
+
+
+/* Claim the USDC side of a Solana sell. Used by sellGbxSolana at settle time and by the
+   pending-recovery card (the claim survives a closed tab: secret+hashlock live in the pending). */
+export async function claimUsdcSolana(ctx){
+  const { gatewayBase, program, mint, solKeypair, secretHex, usdcAmount=0, onStatus, pollMs=1500, maxPolls=20 }=ctx;
+  const { PublicKey, Transaction }=await import("/vendor/solana.mjs");
+  const post=async(p,b)=>{ const r=await fetch(gatewayBase+p,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(b)}); return r.json(); };
+  const _h=String(secretHex||"").replace(/^0x/,"");
+  const secret=new Uint8Array(_h.length/2); for(let i=0;i<secret.length;i++) secret[i]=parseInt(_h.substr(i*2,2),16);
+  const H=await _sha256(secret); const Hhex="0x"+_hex(H);
   let sw=null;
   for(let i=0;i<maxPolls;i++){ sw=await fetchSolSwap(program,H).catch(()=>null); if(sw) break; await new Promise(r=>setTimeout(r,pollMs)); }
-  if(!sw) throw new Error("timeout: LP nu a blocat USDC pe Solana -> refund GBX dupa T1");
+  if(!sw) throw new Error("USDC lock not found on Solana yet - try again shortly");
   const userPk=solKeypair.publicKey;
   if(_hex(sw.receiver)!==_hex(userPk.toBytes())) throw new Error("USDC lock invalid (receiver) -> NU revendic");
-  const { PublicKey:PK }=await import("/vendor/solana.mjs");
+  const PK=PublicKey;
   if(_hex(sw.mint)!==_hex(new PK(mint).toBytes())) throw new Error("USDC lock invalid (mint) -> NU revendic");
-  if(sw.amount < BigInt(usdcAmount)) throw new Error("USDC lock invalid (amount) -> NU revendic");
+  if(usdcAmount && sw.amount < BigInt(usdcAmount)) throw new Error("USDC lock invalid (amount) -> NU revendic");
   if(sw.hashlock.toLowerCase()!==_hex(H)) throw new Error("USDC lock invalid (hashlock) -> NU revendic");
   if(sw.claimed||sw.refunded) throw new Error("USDC lock deja consumat");
   if(sw.timelock < Math.floor(Date.now()/1000)+300) throw new Error("timelock too short -> not claiming");

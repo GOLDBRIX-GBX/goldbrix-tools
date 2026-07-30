@@ -730,9 +730,13 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
         const usd = +probe.usd_out;
         if(!(usd>0)){ setMsg('quote sell indisponibil'); _reset(); return; }
         if(!_slipCheck(usd)){ _reset(); return; }
-        const _sr=await client.sellGbxInApp({ mnemonic:w.mnemonic, gbxAmount:v, usdcAmount:Math.round(usd*1e6), onStatus });
+        // AMM drift guard: the pool price can move between this quote and the LP's own
+        // re-quote (reserves refresh on a timer). Ask 1% under the quote so ordinary drift
+        // cannot void the swap; the LP still refuses anything above its live price.
+        const _ask6=Math.floor(usd*1e6*0.99);
+        const _sr=await client.sellGbxInApp({ mnemonic:w.mnemonic, gbxAmount:v, usdcAmount:_ask6, onStatus });
         try{ if(_sr&&_sr.hashlock) localStorage.removeItem('gbx_pending_'+_sr.hashlock); }catch(_e){}
-        try{ const _h=JSON.parse(localStorage.getItem('gbx_swaps_history')||'[]'); _h.unshift({type:'GBX_SELL',chain:chain,gbx_amount:v,usdc:usd,tx_hash:(_sr&&(_sr.hash||_sr.gbx_txid))||'',timestamp:Date.now(),status:'completed'}); localStorage.setItem('gbx_swaps_history',JSON.stringify(_h.slice(0,100))); }catch(_e){}
+        try{ const _h=JSON.parse(localStorage.getItem('gbx_swaps_history')||'[]'); _h.unshift({type:'GBX_SELL',chain:chain,gbx_amount:v,usdc:(_ask6/1e6),tx_hash:(_sr&&(_sr.hash||_sr.gbx_txid))||'',timestamp:Date.now(),status:'completed'}); localStorage.setItem('gbx_swaps_history',JSON.stringify(_h.slice(0,100))); }catch(_e){}
         renderFlow('completed',false); setMsg(t('done_sell'), true); try{checkPendingSwaps();}catch(_e){};
       }
     }catch(e){
@@ -745,11 +749,11 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
   });
   // ===== FUNDS-SAFE: recuperare swap in asteptare (USDC blocat) =====
   const RECT={
-    en:{ready:'Pending swap — your USDC is locked. You can recover it now:',wait:'Swap in progress — your USDC is protected. If it doesn\'t complete, it auto-refunds in ~{min} min.',gauto:'Pending swap — {usd} USDC locked safely. If LP doesn\'t deliver GBX, it auto-refunds in ~{min} min (no action needed).',gdone:'Swap complete — GBX is in your wallet. Nothing to recover.',btn:'Recover USDC',doing:'Recovering…',done:'USDC recovered ✓',err:'Recovery failed: ',psell:'Pending SELL — claim your USDC',cbtn:'Claim USDC',cdoing:'Claiming…',cdone:'USDC claimed ✓',cerr:'Claim failed: ',rgbx:'This sale didn\'t complete — your {g} GBX is safe and ready to return to your wallet.',rgbtn:'Recover GBX',rgdoing:'Recovering…',rgdone:'{g} GBX back in your wallet ✓',rgwait:'Your GBX is safe. It can be recovered in about {h} h — come back then.'},
-    ro:{ready:'Swap în așteptare — USDC-ul tău e blocat. Îl poți recupera acum:',wait:'Swap în curs — USDC-ul tău e protejat. Dacă nu se finalizează, se returnează automat în ~{min} min.',gauto:'Swap în așteptare — {usd} USDC blocat în siguranță. Dacă LP nu livrează GBX, se returnează automat în ~{min} min (fără acțiune din partea ta).',gdone:'Swap finalizat — GBX e în portofel. Nimic de recuperat.',btn:'Recuperează USDC',doing:'Se recuperează…',done:'USDC recuperat ✓',err:'Recuperare eșuată: ',psell:'SELL în așteptare — revendică USDC',cbtn:'Revendică USDC',cdoing:'Se revendică…',cdone:'USDC revendicat ✓',cerr:'Revendicare eșuată: ',rgbx:'Vânzarea nu s-a finalizat — cei {g} GBX sunt în siguranță și pot reveni în portofel.',rgbtn:'Recuperează GBX',rgdoing:'Se recuperează…',rgdone:'{g} GBX înapoi în portofel ✓',rgwait:'GBX-ul tău e în siguranță. Poate fi recuperat în ~{h} h — revino atunci.'},
-    de:{ready:'Ausstehender Swap — dein USDC ist gesperrt. Jetzt zurückholbar:',wait:'Swap läuft — dein USDC ist geschützt. Falls er nicht abschließt, wird er in ~{min} Min automatisch zurückerstattet.',btn:'USDC zurückholen',doing:'Wird zurückgeholt…',done:'USDC zurückgeholt ✓',err:'Rückholung fehlgeschlagen: ',psell:'Ausstehender VERKAUF — USDC beanspruchen',cbtn:'USDC beanspruchen',cdoing:'Wird beansprucht…',cdone:'USDC beansprucht ✓',cerr:'Anspruch fehlgeschlagen: ',rgbx:'Der Verkauf wurde nicht abgeschlossen — deine {g} GBX sind sicher und können in deine Wallet zurückkehren.',rgbtn:'GBX zurückholen',rgdoing:'Wird zurückgeholt…',rgdone:'{g} GBX zurück in deiner Wallet ✓',rgwait:'Deine GBX sind sicher. Rückholung in ca. {h} Std. möglich — schau dann wieder vorbei.'},
-    zh:{ready:'待处理交换 — 您的 USDC 已锁定。现在可取回：',wait:'交换进行中 — 您的 USDC 受保护。若未完成，约 {min} 分钟后自动退回。',btn:'取回 USDC',doing:'取回中…',done:'USDC 已取回 ✓',err:'取回失败: ',psell:'待处理卖单 — 领取您的 USDC',cbtn:'领取 USDC',cdoing:'领取中…',cdone:'USDC 已领取 ✓',cerr:'领取失败: ',rgbx:'本次出售未完成 — 你的 {g} GBX 安全无虞，可返回你的钱包。',rgbtn:'取回 GBX',rgdoing:'正在取回…',rgdone:'{g} GBX 已回到你的钱包 ✓',rgwait:'你的 GBX 是安全的，约 {h} 小时后可取回 — 届时再来。'},
-    ar:{ready:'مبادلة معلّقة — USDC مقفل. يمكنك استرداده الآن:',wait:'المبادلة جارية — USDC محمي. إذا لم تكتمل، تتم إعادته تلقائيًا خلال ~{min} دقيقة.',btn:'استرداد USDC',doing:'جارٍ الاسترداد…',done:'تم استرداد USDC ✓',err:'فشل الاسترداد: ',psell:'بيع معلّق — طالب بـ USDC',cbtn:'المطالبة بـ USDC',cdoing:'جارٍ المطالبة…',cdone:'تمت المطالبة بـ USDC ✓',cerr:'فشلت المطالبة: ',rgbx:'لم تكتمل عملية البيع — {g} GBX الخاصة بك آمنة وجاهزة للعودة إلى محفظتك.',rgbtn:'استرداد GBX',rgdoing:'جارٍ الاسترداد…',rgdone:'عادت {g} GBX إلى محفظتك ✓',rgwait:'عملتك آمنة. يمكن استردادها خلال ~{h} ساعة — عُد حينها.'}
+    en:{nolock:'This purchase did not complete - the counterparty never locked. Your USDC returns to your wallet by itself; nothing to do.',ready:'Pending swap — your USDC is locked. You can recover it now:',wait:'Swap in progress — your USDC is protected. If it doesn\'t complete, it auto-refunds in ~{min} min.',gauto:'Pending swap — {usd} USDC locked safely. If LP doesn\'t deliver GBX, it auto-refunds in ~{min} min (no action needed).',gdone:'Swap complete — GBX is in your wallet. Nothing to recover.',btn:'Recover USDC',doing:'Recovering…',done:'USDC recovered ✓',err:'Recovery failed: ',psell:'Pending SELL — claim your USDC',cbtn:'Claim USDC',cdoing:'Claiming…',cdone:'USDC claimed ✓',cerr:'Claim failed: ',rgbx:'This sale didn\'t complete — your {g} GBX is safe and ready to return to your wallet.',rgbtn:'Recover GBX',rgdoing:'Recovering…',rgdone:'{g} GBX back in your wallet ✓',rgwait:'Your GBX is safe. It can be recovered in about {h} h — come back then.'},
+    ro:{nolock:'Cumpărarea nu s-a finalizat — contrapartea nu a blocat niciodată. USDC-ul tău revine singur în portofel; nu ai nimic de făcut.',ready:'Swap în așteptare — USDC-ul tău e blocat. Îl poți recupera acum:',wait:'Swap în curs — USDC-ul tău e protejat. Dacă nu se finalizează, se returnează automat în ~{min} min.',gauto:'Swap în așteptare — {usd} USDC blocat în siguranță. Dacă LP nu livrează GBX, se returnează automat în ~{min} min (fără acțiune din partea ta).',gdone:'Swap finalizat — GBX e în portofel. Nimic de recuperat.',btn:'Recuperează USDC',doing:'Se recuperează…',done:'USDC recuperat ✓',err:'Recuperare eșuată: ',psell:'SELL în așteptare — revendică USDC',cbtn:'Revendică USDC',cdoing:'Se revendică…',cdone:'USDC revendicat ✓',cerr:'Revendicare eșuată: ',rgbx:'Vânzarea nu s-a finalizat — cei {g} GBX sunt în siguranță și pot reveni în portofel.',rgbtn:'Recuperează GBX',rgdoing:'Se recuperează…',rgdone:'{g} GBX înapoi în portofel ✓',rgwait:'GBX-ul tău e în siguranță. Poate fi recuperat în ~{h} h — revino atunci.'},
+    de:{nolock:'Dieser Kauf kam nicht zustande — die Gegenseite hat nie gesperrt. Dein USDC kehrt von selbst in deine Wallet zurück; nichts zu tun.',ready:'Ausstehender Swap — dein USDC ist gesperrt. Jetzt zurückholbar:',wait:'Swap läuft — dein USDC ist geschützt. Falls er nicht abschließt, wird er in ~{min} Min automatisch zurückerstattet.',btn:'USDC zurückholen',doing:'Wird zurückgeholt…',done:'USDC zurückgeholt ✓',err:'Rückholung fehlgeschlagen: ',psell:'Ausstehender VERKAUF — USDC beanspruchen',cbtn:'USDC beanspruchen',cdoing:'Wird beansprucht…',cdone:'USDC beansprucht ✓',cerr:'Anspruch fehlgeschlagen: ',rgbx:'Der Verkauf wurde nicht abgeschlossen — deine {g} GBX sind sicher und können in deine Wallet zurückkehren.',rgbtn:'GBX zurückholen',rgdoing:'Wird zurückgeholt…',rgdone:'{g} GBX zurück in deiner Wallet ✓',rgwait:'Deine GBX sind sicher. Rückholung in ca. {h} Std. möglich — schau dann wieder vorbei.'},
+    zh:{nolock:'本次购买未完成 — 对手方未锁定。你的 USDC 会自行退回钱包，无需操作。',ready:'待处理交换 — 您的 USDC 已锁定。现在可取回：',wait:'交换进行中 — 您的 USDC 受保护。若未完成，约 {min} 分钟后自动退回。',btn:'取回 USDC',doing:'取回中…',done:'USDC 已取回 ✓',err:'取回失败: ',psell:'待处理卖单 — 领取您的 USDC',cbtn:'领取 USDC',cdoing:'领取中…',cdone:'USDC 已领取 ✓',cerr:'领取失败: ',rgbx:'本次出售未完成 — 你的 {g} GBX 安全无虞，可返回你的钱包。',rgbtn:'取回 GBX',rgdoing:'正在取回…',rgdone:'{g} GBX 已回到你的钱包 ✓',rgwait:'你的 GBX 是安全的，约 {h} 小时后可取回 — 届时再来。'},
+    ar:{nolock:'لم تكتمل هذه العملية — الطرف المقابل لم يقفل المبلغ. سيعود USDC إلى محفظتك تلقائياً؛ لا شيء عليك فعله.',ready:'مبادلة معلّقة — USDC مقفل. يمكنك استرداده الآن:',wait:'المبادلة جارية — USDC محمي. إذا لم تكتمل، تتم إعادته تلقائيًا خلال ~{min} دقيقة.',btn:'استرداد USDC',doing:'جارٍ الاسترداد…',done:'تم استرداد USDC ✓',err:'فشل الاسترداد: ',psell:'بيع معلّق — طالب بـ USDC',cbtn:'المطالبة بـ USDC',cdoing:'جارٍ المطالبة…',cdone:'تمت المطالبة بـ USDC ✓',cerr:'فشلت المطالبة: ',rgbx:'لم تكتمل عملية البيع — {g} GBX الخاصة بك آمنة وجاهزة للعودة إلى محفظتك.',rgbtn:'استرداد GBX',rgdoing:'جارٍ الاسترداد…',rgdone:'عادت {g} GBX إلى محفظتك ✓',rgwait:'عملتك آمنة. يمكن استردادها خلال ~{h} ساعة — عُد حينها.'}
   };
   const RT=(k)=>((RECT[lang]||RECT.en)[k]||RECT.en[k]);
   function gbxPendingKeys(){ let ks=[]; try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.indexOf('gbx_pending_')===0) ks.push(k);} }catch(_e){} return ks; }
@@ -777,6 +781,8 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
     rec.hidden=false; rec.innerHTML='';
     for(const k of ks){
       let p; try{ p=JSON.parse(localStorage.getItem(k)); }catch(_e){ continue; }
+      // PER-WALLET ISOLATION (universal): entries stamped with owner_pk belong to one key only.
+      try{ if(p.owner_pk){ const _aw=activeWallet(); if(_aw){ const _kp=await window.GoldbrixCrypto.deriveKeypairFromMnemonic(_aw.mnemonic); const _mp=Array.from(new Uint8Array(_kp.publicKey),x=>x.toString(16).padStart(2,'0')).join(''); if(_mp.toLowerCase()!==String(p.owner_pk).toLowerCase()){ continue; } } } }catch(_e){}
       if(p.dir==='sell'){
         // IZOLARE PER-WALLET: cardul apare doar pe wallet-ul care a initiat sell-ul
         try{ const _aw=activeWallet(); if(p.owner && _aw){ const _ev=await window.GoldbrixMultichain.deriveEVM(_aw.mnemonic); if(_ev && _ev.address && _ev.address.toLowerCase()!==p.owner){ continue; } } }catch(_e){}
@@ -847,10 +853,19 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
           btn.disabled=true; btn.textContent=RT('cdoing');
           try{
             const w=activeWallet(); if(!w){ location.href='/v3/unlock.html'; return; }
+            if(p.chain==='solana'){
+              const PCs=GBX_CHAINS.solana; await GBX_LP_ENSURE(PCs);
+              const _dv=await window.GoldbrixMultichain.deriveSOL(w.mnemonic);
+              const _kp=window.GoldbrixModSol.solKeypairFromDerive(_dv);
+              const r=await window.GoldbrixModSol.claimUsdcSolana({ gatewayBase:PCs.gateway, program:PCs.program, mint:PCs.usdc, solKeypair:_kp, secretHex:p.secret, usdcAmount:0 });
+              try{ const _h=JSON.parse(localStorage.getItem('gbx_swaps_history')||'[]'); _h.unshift({type:'GBX_SELL',chain:'solana',gbx_amount:0,usdc:(Number(p.usdcAmount||0)/1e6),tx_hash:(r&&r.sig)||'',timestamp:Date.now(),status:'completed'}); localStorage.setItem('gbx_swaps_history',JSON.stringify(_h.slice(0,100))); }catch(_e){}
+              localStorage.removeItem(k); box.innerHTML='<div style="color:#2e7d32">'+RT('cdone')+' '+(r&&r.sig?('('+String(r.sig).slice(0,12)+'…)'):'')+'</div>'; return;
+            }
             // FIX: claim pe lantul PENDINGULUI (nu pe cel selectat in UI) — altfel lock not found
             const PC=(p.chain && GBX_CHAINS[p.chain]) ? GBX_CHAINS[p.chain] : C;
             await GBX_LP_ENSURE(PC); const client=window.GoldbrixModB.makeInAppClient({ crypto:window.GoldbrixCrypto, multichain:window.GoldbrixMultichain, GoldbrixEVM:window.GoldbrixEVM, gatewayBase:PC.gateway, evmRpc:PC.evmRpc, chainId:PC.chainId, htlcAddr:PC.htlc, usdcAddr:PC.usdc, lpEvmAddr:PC.lpEvm, fetchUtxos:window.GoldbrixCrypto.fetchUtxos });
             const r=await client.claimUsdcForSell({ mnemonic:w.mnemonic, hashlock:p.hashlock, secret:p.secret, userEvmAddr:p.userEvmAddr });
+
             try{ const _h=JSON.parse(localStorage.getItem('gbx_swaps_history')||'[]'); _h.unshift({type:'GBX_SELL',gbx_amount:0,usdc:(Number(p.usdcAmount||0)/1e6),tx_hash:(r&&r.hash)||'',timestamp:Date.now(),status:'completed'}); localStorage.setItem('gbx_swaps_history',JSON.stringify(_h.slice(0,100))); }catch(_e){}
             localStorage.removeItem(k); box.innerHTML='<div style="color:#2e7d32">'+RT('cdone')+' '+(r&&r.hash?('('+r.hash.slice(0,12)+'…)'):'')+'</div>';
           }catch(e){ btn.disabled=false; btn.textContent=RT('cbtn'); let er=box.querySelector('.recerr'); if(!er){ er=document.createElement('div'); er.className='recerr'; er.style.cssText='color:#b03a2e;margin-top:6px;font-size:14px'; box.appendChild(er);} er.textContent=RT('cerr')+humanError(e); }
@@ -862,6 +877,25 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
         let _bs=false;
         try{ const sw=await (await GBX_LP_FETCH(C,'/swap/'+(p.hashlock||'').toLowerCase())).json(); if(sw && (sw.status==='completed'||sw.status==='claimed')) _bs=true; }catch(_e){}
         if(_bs){ try{ localStorage.removeItem(k); }catch(_e){} continue; }
+        /* Read the actual state of the USDC lock on Solana before offering anything.
+           A pending entry whose counterparty never locked has nothing to claim: saying so
+           plainly, with the time the money returns by itself, beats a button that cannot work. */
+        let _solSt=null;
+        try{
+          const _idb=(function(h){h=String(h||'').replace(/^0x/,'');const b=new Uint8Array(h.length/2);for(let i=0;i<b.length;i++)b[i]=parseInt(h.substr(i*2,2),16);return b;})(p.swap_id||p.hashlock);
+          _solSt=await window.GoldbrixModSol.fetchSolSwap(GBX_CHAINS.solana.program,_idb);
+        }catch(_e){}
+        if(_solSt && (_solSt.claimed||_solSt.refunded)){ try{ localStorage.removeItem(k); }catch(_e){} continue; }
+        if(!_solSt){
+          /* No lock on chain means no money was ever taken from this wallet: the entry is
+             written before the lock is submitted, so a missing lock is a purchase that never
+             started. Nothing is held, so nothing is announced - the entry just clears. The
+             short window only covers confirmation latency right after submitting. */
+          if(Date.now()-Number(p.ts||0) > 120*1000){ try{ localStorage.removeItem(k); }catch(_e){} continue; }
+          const _box0=document.createElement('div'); _box0.style.cssText='border:1px solid var(--gold-deep,#b8860b);border-radius:12px;padding:12px;margin-top:12px;background:rgba(184,134,11,.06)';
+          _box0.textContent=RT('nolock');
+          rec.appendChild(_box0); continue;
+        }
         const usdBS=(Number(p.usdcAmount||0)/1e6).toLocaleString();
         const box=document.createElement('div'); box.style.cssText='border:1px solid var(--gold-deep,#b8860b);border-radius:12px;padding:12px;margin-top:12px;background:rgba(184,134,11,.06)';
         const m=document.createElement('div'); m.style.marginBottom='8px'; m.textContent='BUY Solana în așteptare — revendică GBX ('+usdBS+' USDC)'; box.appendChild(m);
