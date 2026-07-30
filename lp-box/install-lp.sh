@@ -10,8 +10,8 @@ python3 -c "import cryptography, ecdsa" 2>/dev/null || { echo "FAIL: pip3 instal
 # pre-flight gates — honest refusal beats a broken install
 NV=$(node -v | sed 's/^v//;s/\..*//'); [ "$NV" -ge 18 ] || { echo "FAIL: node >=18 required (found $(node -v))"; exit 1; }
 RAM_MB=$(awk '/MemTotal/{print int($2/1024)}' /proc/meminfo)
-[ "$RAM_MB" -ge 6000 ] || { echo "FAIL: ${RAM_MB}MB RAM < 6GB — node + LP will OOM. Upgrade RAM first."; exit 1; }
-[ "$RAM_MB" -ge 8000 ] || echo "WARN: ${RAM_MB}MB RAM < 8GB — will run, but tight; watchdog is mandatory (installed below)"
+[ "$RAM_MB" -ge 4000 ] || { echo "FAIL: ${RAM_MB}MB RAM < 4GB — node + LP will OOM (measured: node ~3.2GB, LP ~0.1GB). Upgrade RAM first."; exit 1; }
+[ "$RAM_MB" -ge 6000 ] || echo "WARN: ${RAM_MB}MB RAM < 6GB — will run, but tight; watchdog is mandatory (installed below)"
 DISK_GB=$(df -BG --output=avail /opt | tail -1 | tr -dc '0-9')
 [ "$DISK_GB" -ge 30 ] || { echo "FAIL: ${DISK_GB}GB free on /opt < 30GB"; exit 1; }
 

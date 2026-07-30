@@ -21,7 +21,7 @@ td,th{border:1px solid #30363d;padding:6px 10px;text-align:left}
 <p>Anyone can run a full GoldBrix node. No permission, no registration, no keys required. Your node independently verifies every block and strengthens the network.</p>
 
 <h2>0. One command (recommended)</h2>
-<p>Full non-pruned node + public read endpoint (<code>/api/status</code>, <code>/api/utxos</code>) in one step. Keyless — the machine never holds funds. Needs x86_64 Linux, root, &ge;900GB free disk.</p>
+<p>Full non-pruned node + public read endpoint (<code>/api/status</code>, <code>/api/utxos</code>) in one step. Keyless — the machine never holds funds. Needs x86_64 Linux, root, &ge;40GB free disk (chain is ~4GB today and grows).</p>
 <pre><code>curl -fsSL https://raw.githubusercontent.com/GOLDBRIX-GBX/goldbrix-tools/main/run-node/install-node.sh -o install-node.sh
 less install-node.sh   # read before running — verify, don't trust
 sudo bash install-node.sh</code></pre>

@@ -19,7 +19,7 @@ FREE_GB=$(df --output=avail -BG "$(dirname "$DATADIR")" | tail -1 | tr -dc '0-9'
 [ "$FREE_GB" -ge 40 ] || { echo "need >=40GB free (chain ~6GB now, grows over time), have ${FREE_GB}GB"; exit 1; }
 RAM_MB=$(awk '/MemTotal/{print int($2/1024)}' /proc/meminfo)
 [ "$RAM_MB" -ge 1800 ] || { echo "FAIL: ${RAM_MB}MB RAM < 2GB — a plain node needs ~2GB (measured: idle node ~1.1GB). Upgrade RAM first."; exit 1; }
-[ "$RAM_MB" -ge 2500 ] || echo "WARN: ${RAM_MB}MB RAM — enough for a plain node (~2GB), NOT for an LP box (needs 8GB, use install-lp.sh on a bigger machine)"
+[ "$RAM_MB" -ge 2500 ] || echo "WARN: ${RAM_MB}MB RAM — enough for a plain node (~2GB), NOT for an LP box (needs 4GB+, use install-lp.sh on a bigger machine)"
 
 echo "[1/6] dependencies"
 apt-get update -qq
@@ -58,10 +58,15 @@ mkdir -p "$DATADIR/index"
 # Silent by design: if nothing answers, the baked-in seeds still apply.
 if ! grep -q '^addnode=' "$DATADIR/goldbrix.conf" 2>/dev/null; then
   echo "[3b/6] peer bootstrap via on-chain node registry"
+  # Bootstrap entries ship with this script: on a clean machine the tools repo is
+  # only cloned in step 4, so a file-based list is empty exactly when it is needed.
+  # These are entry points for the FIRST question only - the answer comes from the
+  # on-chain registry below, and any live node can replace them.
+  ENTRY="https://155-117-232-248.sslip.io/api https://goldbrix.app/api"
   BOOT_SRC="$TOOLSDIR/nodes.json"
-  ENTRY=""
   if [ -f "$BOOT_SRC" ]; then
-    ENTRY=$(python3 -c "import json,sys;print(' '.join(json.load(open('$BOOT_SRC')).get('nodes',[])))" 2>/dev/null || true)
+    EXTRA=$(python3 -c "import json,sys;print(' '.join(json.load(open('$BOOT_SRC')).get('nodes',[])))" 2>/dev/null || true)
+    [ -n "$EXTRA" ] && ENTRY="$EXTRA $ENTRY"
   fi
   REG=""
   for u in $ENTRY; do
