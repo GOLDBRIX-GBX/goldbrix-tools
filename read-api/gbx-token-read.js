@@ -315,8 +315,17 @@ function openTokenIndex(dbPath){
            tot={n:x.n, s:String(x.s||0)}; }catch(_e){}
       const chainTot = q.meta.get('burn_total_sat')?.v ?? null;
       const chainUtxos = q.meta.get('burn_utxos')?.v ?? null;
+      // Direct chain burns: coins sent straight to the canonical burn address,
+      // read from the UTXO index (newest first). Launchpad fees live in curve_ops;
+      // everything else that reaches the burn address shows up here.
+      let direct=[];
+      try{
+        const BURN_ADDR='bn1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3kc3g2';
+        const gi=require('./gbx-index-read.js');
+        if (gi.directBurns) direct = gi.directBurns(BURN_ADDR, 100);
+      }catch(_e){}
       return { scanned:tip, chain_total_sat:chainTot, chain_burn_utxos:chainUtxos?parseInt(chainUtxos,10):null,
-               launchpad_burn_sat:tot.s, launchpad_ops:tot.n, burns:rows };
+               launchpad_burn_sat:tot.s, launchpad_ops:tot.n, burns:rows, direct_burns:direct };
     },
     coinStats(coinId){
       // market stats band: price, window % change, liquidity, 24h volume/txns/traders — all on-chain.

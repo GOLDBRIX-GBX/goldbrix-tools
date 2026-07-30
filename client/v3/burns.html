@@ -55,6 +55,8 @@ body{color:var(--text-primary);font-family:'JetBrains Mono',ui-monospace,monospa
   <div class="hk" id="fTit">Includes the custodial era and every launchpad burn</div>
 </div>
 
+<div class="sect" id="directTitle"></div>
+<div id="directList"></div>
 <div class="sect" id="listTitle">Every burn · first to last</div>
 <div id="list"><div class="empty" id="loadMsg">Loading…</div></div>
 <div class="scan" id="scanNote"></div>
@@ -74,11 +76,11 @@ body{color:var(--text-primary);font-family:'JetBrains Mono',ui-monospace,monospa
 var L='en';try{L=(localStorage.getItem('gbx_lang')||localStorage.getItem('goldbrix_lang')||'en').slice(0,2);}catch(e){}
 if(L==='ar'){try{document.documentElement.dir='rtl';}catch(e){}}
 var T={
-en:{title:'Burns',tot:'Total burned on-chain · forever',meas:'measured by this node from the chain',froz:'Includes the custodial era (34,694.09 GBX · 207 tx · closed) and every launchpad burn',fsub:'',list:'Launchpad burns · first to last',loading:'Loading…',nodata:'No burns yet',blk:'block',fees:{C:'CREATE fee',B:'curve fee 0.5%',S:'curve fee 0.5%',P:'pool fee 0.3%',Q:'pool fee 0.3%',G:'graduation',R:'refund'},scanned:'chain scanned to block'},
-ro:{title:'Arderi',tot:'Total ars on-chain · pentru totdeauna',meas:'măsurat de acest nod din lanț',froz:'Include era custodială (34.694,09 GBX · 207 tx · închisă) și fiecare ardere din launchpad',fsub:'',list:'Arderi launchpad · de la prima la ultima',loading:'Se încarcă…',nodata:'Nicio ardere încă',blk:'bloc',fees:{C:'fee CREARE',B:'fee curbă 0,5%',S:'fee curbă 0,5%',P:'fee pool 0,3%',Q:'fee pool 0,3%',G:'graduare',R:'refund'},scanned:'lanț scanat până la blocul'},
-de:{title:'Verbrennungen',tot:'Insgesamt on-chain verbrannt · für immer',meas:'von diesem Node aus der Chain gemessen',froz:'Enthält die Custodial-Ära (34.694,09 GBX · 207 Tx · geschlossen) und jeden Launchpad-Burn',fsub:'',list:'Launchpad-Burns · von zuerst bis zuletzt',loading:'Lädt…',nodata:'Noch keine Burns',blk:'Block',fees:{C:'CREATE-Gebühr',B:'Kurven-Gebühr 0,5%',S:'Kurven-Gebühr 0,5%',P:'Pool-Gebühr 0,3%',Q:'Pool-Gebühr 0,3%',G:'Graduierung',R:'Erstattung'},scanned:'Chain gelesen bis Block'},
-zh:{title:'销毁',tot:'链上总销毁 · 永久',meas:'由本节点从链上测量',froz:'包含托管时代（34,694.09 GBX · 207 笔 · 已关闭）及所有 launchpad 销毁',fsub:'',list:'Launchpad 销毁 · 从第一笔到最后一笔',loading:'加载中…',nodata:'暂无销毁',blk:'区块',fees:{C:'创建费',B:'曲线费 0.5%',S:'曲线费 0.5%',P:'池费 0.3%',Q:'池费 0.3%',G:'毕业',R:'退款'},scanned:'链已扫描至区块'},
-ar:{title:'الحرق',tot:'إجمالي المحروق على السلسلة · للأبد',meas:'مقاس بواسطة هذه العقدة من السلسلة',froz:'يشمل الحقبة الوصائية (34,694.09 GBX · 207 معاملة · مغلقة) وكل حرق launchpad',fsub:'',list:'حرق launchpad · من الأول إلى الأخير',loading:'جارٍ التحميل…',nodata:'لا حرق بعد',blk:'كتلة',fees:{C:'رسوم الإنشاء',B:'رسوم المنحنى 0.5%',S:'رسوم المنحنى 0.5%',P:'رسوم المجمع 0.3%',Q:'رسوم المجمع 0.3%',G:'التخرج',R:'استرداد'},scanned:'تم مسح السلسلة حتى الكتلة'}};
+en:{title:'Burns',tot:'Total burned on-chain · forever',meas:'measured by this node from the chain',froz:'Includes the custodial era (34,694.09 GBX · 207 tx · closed) and every launchpad burn',fsub:'',direct:'Direct chain burns · newest first',list:'Launchpad burns · first to last',loading:'Loading…',nodata:'No burns yet',blk:'block',fees:{C:'CREATE fee',B:'curve fee 0.5%',S:'curve fee 0.5%',P:'pool fee 0.3%',Q:'pool fee 0.3%',G:'graduation',R:'refund'},scanned:'chain scanned to block'},
+ro:{title:'Arderi',tot:'Total ars on-chain · pentru totdeauna',meas:'măsurat de acest nod din lanț',froz:'Include era custodială (34.694,09 GBX · 207 tx · închisă) și fiecare ardere din launchpad',fsub:'',direct:'Arderi directe pe lanț · cele mai noi întâi',list:'Arderi launchpad · de la prima la ultima',loading:'Se încarcă…',nodata:'Nicio ardere încă',blk:'bloc',fees:{C:'fee CREARE',B:'fee curbă 0,5%',S:'fee curbă 0,5%',P:'fee pool 0,3%',Q:'fee pool 0,3%',G:'graduare',R:'refund'},scanned:'lanț scanat până la blocul'},
+de:{title:'Verbrennungen',tot:'Insgesamt on-chain verbrannt · für immer',meas:'von diesem Node aus der Chain gemessen',froz:'Enthält die Custodial-Ära (34.694,09 GBX · 207 Tx · geschlossen) und jeden Launchpad-Burn',fsub:'',direct:'Direkte Chain-Verbrennungen · neueste zuerst',list:'Launchpad-Burns · von zuerst bis zuletzt',loading:'Lädt…',nodata:'Noch keine Burns',blk:'Block',fees:{C:'CREATE-Gebühr',B:'Kurven-Gebühr 0,5%',S:'Kurven-Gebühr 0,5%',P:'Pool-Gebühr 0,3%',Q:'Pool-Gebühr 0,3%',G:'Graduierung',R:'Erstattung'},scanned:'Chain gelesen bis Block'},
+zh:{title:'销毁',tot:'链上总销毁 · 永久',meas:'由本节点从链上测量',froz:'包含托管时代（34,694.09 GBX · 207 笔 · 已关闭）及所有 launchpad 销毁',fsub:'',direct:'链上直接销毁 · 最新在前',list:'Launchpad 销毁 · 从第一笔到最后一笔',loading:'加载中…',nodata:'暂无销毁',blk:'区块',fees:{C:'创建费',B:'曲线费 0.5%',S:'曲线费 0.5%',P:'池费 0.3%',Q:'池费 0.3%',G:'毕业',R:'退款'},scanned:'链已扫描至区块'},
+ar:{title:'الحرق',tot:'إجمالي المحروق على السلسلة · للأبد',meas:'مقاس بواسطة هذه العقدة من السلسلة',froz:'يشمل الحقبة الوصائية (34,694.09 GBX · 207 معاملة · مغلقة) وكل حرق launchpad',fsub:'',direct:'حرق مباشر على السلسلة · الأحدث أولاً',list:'حرق launchpad · من الأول إلى الأخير',loading:'جارٍ التحميل…',nodata:'لا حرق بعد',blk:'كتلة',fees:{C:'رسوم الإنشاء',B:'رسوم المنحنى 0.5%',S:'رسوم المنحنى 0.5%',P:'رسوم المجمع 0.3%',Q:'رسوم المجمع 0.3%',G:'التخرج',R:'استرداد'},scanned:'تم مسح السلسلة حتى الكتلة'}};
 var t=T[L]||T.en;
 function $(i){return document.getElementById(i);}
 [['pgTitle',t.title],['hTot',t.tot],['fTit',t.froz],['listTitle',t.list],['loadMsg',t.loading]].forEach(function(x){var e=$(x[0]);if(e)e.textContent=x[1];});
@@ -107,6 +109,20 @@ async function load(){
       '</div>';
     }).join('');
     if(el.innerHTML!==html)el.innerHTML=html; /* silent update */
+    var dl=$('directList');
+    if(dl){
+      var ds=(j.direct_burns||[]);
+      var dh=ds.length?ds.map(function(b){
+        return '<div class="row">'+
+          '<div class="op">🔥</div>'+
+          '<div class="main"><div class="m1">'+t.direct.split(' · ')[0]+'</div>'+
+          '<div class="m2">'+t.blk+' '+b.height.toLocaleString('en-US')+' · <a href="/v3/explorer.html?q='+b.txid+'">'+b.txid.slice(0,10)+'…</a></div></div>'+
+          '<div class="val"><div class="v1">-'+gbxFull(b.sats)+'</div><div class="v2">GBX 🔥</div></div>'+
+        '</div>';
+      }).join(''):'<div class="empty">'+t.nodata+'</div>';
+      if(dl.innerHTML!==dh)dl.innerHTML=dh;
+      var dt=$('directTitle'); if(dt)dt.textContent=t.direct;
+    }
     if(j.scanned)$('scanNote').textContent=t.scanned+' '+Number(j.scanned).toLocaleString('en-US');
   }catch(e){}
 }

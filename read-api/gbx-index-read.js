@@ -38,6 +38,15 @@ function scanTopN(address, limit){
 }
 module.exports.scanTopN = scanTopN;
 
+// Burns sent straight to the canonical burn address, newest first.
+function directBurns(address, limit){
+  try{
+    const rows = db().prepare('SELECT txid,vout,sats,height FROM utxos WHERE address=? ORDER BY height DESC LIMIT ?').all(address, limit||100);
+    return rows.map(r=>({height:r.height, txid:r.txid, vout:r.vout, sats:String(r.sats)}));
+  }catch(_e){ return []; }
+}
+module.exports.directBurns = directBurns;
+
 // Sumar rapid: total/spendable/utxo direct in SQL, fara materializare.
 // spendable = exclude coinbase imatur (<100 conf). NU stie de mempool (ajustat in caller).
 function summaryFast(address){
