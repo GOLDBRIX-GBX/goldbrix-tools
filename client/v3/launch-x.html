@@ -8,7 +8,7 @@
 <link rel="icon" href="/assets/coin/gbx-coin-32.png">
 <link rel="stylesheet" href="/v3/style.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-<script type="module" src="/crypto-utils-v2.js?v=122"></script>
+<script type="module" src="/crypto-utils-v2.js?v=123"></script>
 <script src="/gbx-update-check.js" defer></script>
 <script src="/gbx-native-bridge.js" defer></script>
 <script src="/i18n.js?v=114" defer></script>
@@ -340,7 +340,7 @@ async function gwBroadcast(rawtx){
   for (const b of await bases()){
     try{ const r=await fetch(b+'/broadcast',{method:'POST',
       headers:{'content-type':'application/json'},body:JSON.stringify({rawtx})});
-      const j=await r.json(); if(j && j.txid) return j.txid;
+      const j=await r.json(); if(j && j.txid){ try{if(window.GoldbrixCrypto&&window.GoldbrixCrypto.spent)window.GoldbrixCrypto.spent.mark(rawtx);}catch(_e){} return j.txid; }
       last=new Error(JSON.stringify(j).slice(0,120)); }
     catch(e){ last=e; }
   }

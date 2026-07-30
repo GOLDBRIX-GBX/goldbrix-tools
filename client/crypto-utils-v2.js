@@ -162,21 +162,90 @@ async function _fedBroadcast(rawtx){
       body = await r.json().catch(function(){return null;});
     } catch(_e){ continue; }
     const id = body && (body.txid || body.tx_hash);
-    if (id) return id;
+    if (id) { _spent.mark(rawtx); return id; }
   }
   return null;
 }
 
+/* Self-spent outpoint memory.
+   The index only reports CONFIRMED spends, so an outpoint this device has
+   just spent still looks free for a few seconds. Reusing it builds a
+   transaction the chain must reject. The client therefore remembers what it
+   spent: an entry is dropped as soon as the index proves the spend landed,
+   and in any case after the ceiling below. Works on every node, needs no
+   server support. */
+const _SPENT_KEY = 'gbx_spent_outpoints';
+const _SPENT_TTL = 10 * 60 * 1000;
+
+function _spentLoad(){
+  try { const o = JSON.parse(sessionStorage.getItem(_SPENT_KEY) || '{}'); return (o && typeof o === 'object') ? o : {}; }
+  catch(_e){ return {}; }
+}
+function _spentSave(o){ try { sessionStorage.setItem(_SPENT_KEY, JSON.stringify(o)); } catch(_e){} }
+
+/* Structural parse of the inputs of a signed transaction (segwit aware). */
+function _inputsOf(rawtxHex){
+  const h = String(rawtxHex || ''); const b = [];
+  for (let i = 0; i + 1 < h.length; i += 2) b.push(parseInt(h.substr(i, 2), 16));
+  if (b.length < 10) return [];
+  let o = 4;
+  if (b[4] === 0x00 && b[5] === 0x01) o = 6;
+  const vi = () => { const f = b[o];
+    if (f < 0xfd){ o += 1; return f; }
+    if (f === 0xfd){ const v = b[o+1] | (b[o+2] << 8); o += 3; return v; }
+    if (f === 0xfe){ const v = b[o+1] | (b[o+2] << 8) | (b[o+3] << 16) | (b[o+4] * 16777216); o += 5; return v; }
+    let v = 0; for (let i = 7; i >= 0; i--) v = v * 256 + b[o+1+i]; o += 9; return v; };
+  const n = vi(); const out = [];
+  for (let i = 0; i < n; i++){
+    if (o + 40 > b.length) break;
+    let t = ''; for (let k = 31; k >= 0; k--) t += ('0' + b[o+k].toString(16)).slice(-2);
+    const vout = b[o+32] | (b[o+33] << 8) | (b[o+34] << 16) | (b[o+35] * 16777216);
+    o += 36; const sl = vi(); o += sl; o += 4;
+    out.push(t + ':' + vout);
+  }
+  return out;
+}
+
+const _spent = {
+  /* Called only after a broadcast the network accepted. */
+  mark(rawtxHex){
+    try {
+      const now = Date.now(); const m = _spentLoad();
+      _inputsOf(rawtxHex).forEach(k => { m[k] = { ts: now, seen: false }; });
+      _spentSave(m);
+    } catch(_e){}
+  },
+  /* Removes from a fresh index listing everything this device already spent.
+     An entry seen alive before and now gone = the spend is confirmed: forget
+     it. An entry never seen in this listing may belong to another address
+     (a coin holding, a curve output) and is kept until the ceiling. */
+  filter(unspents){
+    const list = unspents || [];
+    let m = _spentLoad(); const now = Date.now(); let dirty = false;
+    const live = {}; list.forEach(u => { live[u.txid + ':' + u.vout] = 1; });
+    Object.keys(m).forEach(k => {
+      const e = m[k] && typeof m[k] === 'object' ? m[k] : { ts: m[k] || 0, seen: false };
+      if (now - e.ts > _SPENT_TTL){ delete m[k]; dirty = true; return; }
+      if (live[k]){ if (!e.seen){ e.seen = true; m[k] = e; dirty = true; } return; }
+      if (e.seen){ delete m[k]; dirty = true; }
+    });
+    if (dirty) _spentSave(m);
+    return list.filter(u => !m[u.txid + ':' + u.vout]);
+  },
+  has(txid, vout){ const m = _spentLoad(); return !!m[txid + ':' + vout]; },
+  clear(){ try { sessionStorage.removeItem(_SPENT_KEY); } catch(_e){} }
+};
+
 async function fetchUtxos(address, target) {
   const fed = await _fedReadUtxos(address, target);
-  if (fed) return fed;
+  if (fed) return _spent.filter(fed);
   const res = (target && target>0)
     ? await _lpFetchFailover('/utxos/'+address+'?target='+target)
     : await fetch(API_BASE+'/utxos/'+address+'?limit=1000');
   if (!res.ok) throw new Error('UTXO fetch failed: '+res.status);
   const data = await res.json();
   if (data.target_unmet) { const e = new Error('MAX_PER_TX'); e.maxPerTx = data.max_per_tx; throw e; }
-  return data.unspents || [];
+  return _spent.filter(data.unspents || []);
 }
 
 async function sendGBX(mnemonic, fromAddress, toAddress, amountGbx, feeRateSatsPerByte = 30, onProgress = null) {
@@ -265,6 +334,7 @@ async function sendGBX(mnemonic, fromAddress, toAddress, amountGbx, feeRateSatsP
         txid = (j && j.txid) || localTxid;
       }
     }
+    _spent.mark(rawTxHex);
     txids.push(txid);
     remainingSats -= sendSats;
     totalFeeSats += fee;
@@ -381,6 +451,7 @@ window.GoldbrixCrypto = {
   deriveKeypairFromMnemonic,
   addressFromPublicKey,
   fetchUtxos,
+  spent: _spent,
   sendGBX,
   network: GOLDBRIX_NETWORK,
   // Encryption (AES-GCM + PBKDF2)

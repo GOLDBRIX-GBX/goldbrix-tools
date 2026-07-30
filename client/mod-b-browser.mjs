@@ -39,7 +39,7 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
   const htlc=makeEVMHTLC({ rpc, evm:GoldbrixEVM, chainId });
   const post=async(p,b)=>{ const r=await fetch(gatewayBase+p,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b)}); return r.json(); };
   // Broadcast fallback: the LP is only the first attempt; on failure the tx goes out
-  // spre TOATE nodurile publice din discovery (/api/broadcast = keyless sendrawtransaction).
+  // to EVERY public node from discovery (/api/broadcast = keyless sendrawtransaction).
   // The write survives even if the LP (or any single operator's servers) is dead.
   // txid = dsha256 pe serializarea FARA witness (BIP144). Segwit: marker 0x00 flag 0x01
   // after the version; the witness is skipped after the outputs. Structural parsing, zero guessing.
@@ -64,9 +64,10 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
     const flat=new Uint8Array(tot); let q=0; parts.forEach(x=>{flat.set(x,q); q+=x.length;});
     const h=sha256(sha256(flat)); return hex(h.slice().reverse());
   };
+  const _mk=(tx)=>{try{if(typeof window!=='undefined'&&window.GoldbrixCrypto&&window.GoldbrixCrypto.spent)window.GoldbrixCrypto.spent.mark(tx);}catch(_e){}};
   const gbxBroadcast=async(tx)=>{
     let firstErr=null;
-    try{ const j=await post('/broadcast',{rawtx:tx}); if(j&&j.txid) return j.txid; firstErr=new Error('lp: '+JSON.stringify(j)); }
+    try{ const j=await post('/broadcast',{rawtx:tx}); if(j&&j.txid){ _mk(tx); return j.txid; } firstErr=new Error('lp: '+JSON.stringify(j)); }
     catch(e){ firstErr=e; }
     const nodes=(typeof window!=='undefined' && window.GBX_NODES) ? window.GBX_NODES.slice() : ['https://goldbrix.app/api'];
     for(const base of nodes){
@@ -75,10 +76,10 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
         const r=await fetch(base.replace(/\/+$/,'')+'/broadcast',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({rawtx:tx}),signal:c.signal});
         clearTimeout(t);
         const j=await r.json();
-        if(j&&j.txid) return j.txid;
+        if(j&&j.txid){ _mk(tx); return j.txid; }
         // already in the mempool/chain (response lost on a previous attempt) = SUCCESS:
-        // txid-ul se calculeaza local din rawtx (dsha256, little-endian), nu se ghiceste.
-        if(j&&j.error&&/already in block chain|txn-already|already known|already-in-mempool/i.test(JSON.stringify(j.error))) return _txidOf(tx);
+        // the txid is computed locally from the rawtx (dsha256, little-endian), never guessed.
+        if(j&&j.error&&/already in block chain|txn-already|already known|already-in-mempool/i.test(JSON.stringify(j.error))) { _mk(tx); return _txidOf(tx); }
       }catch(_e){}
     }
     throw firstErr||new Error('broadcast: all endpoints failed');
