@@ -19,7 +19,19 @@ export async function lockUsdcSolana(ctx){
   onStatus&&onStatus("user_signed",{swap_id:prep.swap_id});
   try{ if(typeof localStorage!=="undefined") localStorage.setItem("gbx_pending_"+hashlock,JSON.stringify({dir:"buy_solana",owner_pk:(pkUHex||""),hashlock,secret:_hex(secret),swap_id:prep.swap_id,vault:prep.vault,usdcAmount:String(usdcAmount),ts:Date.now()})); }catch(_e){}
   const sub=await post("/sol-submit",{tx_signed_b64:signedB64,swap_id:prep.swap_id,hashlock,pkU:pkUHex,gbx_amount:gbxAmount,t2_blocks:t2Blocks});
-  if(sub.error||!sub.ok) throw new Error("sol-submit: "+JSON.stringify(sub));
+  if(sub.error||!sub.ok){
+    /* The lock may already be on chain: the LP broadcasts first and only then
+       confirms, so a slow confirmation must not be reported as a failure. A user
+       told "it failed" locks a second time and pays twice. The chain decides. */
+    let _live=null;
+    for(let i=0;i<6 && !_live;i++){
+      _live=await fetchSolSwap(ctx.program||"", H).catch(()=>null);
+      if(!_live) await new Promise(r=>setTimeout(r,2000));
+    }
+    if(!_live) throw new Error("sol-submit: "+JSON.stringify(sub));
+    onStatus&&onStatus("usdc_locked",{sig:null,recovered:true});
+    return { hashlock, secret:_hex(secret), swap_id:prep.swap_id, sig:null };
+  }
   onStatus&&onStatus("usdc_locked",{sig:sub.sig,vault:sub.vault});
   return { hashlock, secret:_hex(secret), swap_id:prep.swap_id, sig:sub.sig };
 }
@@ -64,6 +76,53 @@ export async function sellGbxSolana(ctx){
 
 /* Claim the USDC side of a Solana sell. Used by sellGbxSolana at settle time and by the
    pending-recovery card (the claim survives a closed tab: secret+hashlock live in the pending). */
+/* Getting a stuck buy back must not depend on holding SOL. The program pays a
+   refund only to the account that funded the lock (sender_ata is checked against
+   swap.sender on chain), so the LP can relay it and pay the gas without being able
+   to divert anything. Signing it ourselves stays the fallback. */
+export async function refundUsdcSolana(ctx){
+  const { gatewayBase, program, mint, solKeypair, swapId }=ctx;
+  const { PublicKey, Transaction, TransactionInstruction, getAssociatedTokenAddress }=await import("/vendor/solana.mjs");
+  const _s=String(swapId||"").replace(/^0x/,"");
+  if(_s.length!==64) throw new Error("refund: bad swap id");
+  const idB=new Uint8Array(32); for(let i=0;i<32;i++) idB[i]=parseInt(_s.substr(i*2,2),16);
+  const sw=await fetchSolSwap(program,idB).catch(()=>null);
+  if(!sw) throw new Error("lock not found on Solana");
+  if(sw.claimed||sw.refunded) throw new Error("lock already settled");
+  const now=Math.floor(Date.now()/1000);
+  if(sw.timelock>now) throw new Error("too early: "+(sw.timelock-now)+"s left");
+  const userPk=solKeypair.publicKey;
+  const sAta=await getAssociatedTokenAddress(new PublicKey(mint),userPk);
+  /* PATH 1: the LP relays and pays the gas. */
+  try{
+    const r=await fetch(gatewayBase+"/sol-relay-refund",{method:"POST",headers:{"content-type":"application/json"},
+      body:JSON.stringify({swap_id:"0x"+_s,sender_ata:sAta.toBase58()})});
+    const j=await r.json();
+    if(j&&j.sig) return { sig:j.sig, relayed:true };
+  }catch(_e){}
+  /* PATH 2: sign it ourselves, which needs SOL for the fee. */
+  const bal=await _solRpc("getBalance",[userPk.toBase58(),{commitment:"confirmed"}]).then(r=>r.value||r).catch(()=>0);
+  if(!(bal>=1000000)) throw new Error("no relay available and no SOL for the fee");
+  const disc=(await _sha256(new TextEncoder().encode("global:refund"))).slice(0,8);
+  const data=new Uint8Array(8+32); data.set(disc,0); data.set(idB,8);
+  const enc=new TextEncoder();
+  const pda=sw.pda;
+  const vault=(PublicKey.findProgramAddressSync?PublicKey.findProgramAddressSync([enc.encode("vault"),idB],new PublicKey(program))[0]
+    :(await PublicKey.findProgramAddress([enc.encode("vault"),idB],new PublicKey(program)))[0]);
+  const ix=new TransactionInstruction({programId:new PublicKey(program),keys:[
+    {pubkey:userPk,isSigner:true,isWritable:true},
+    {pubkey:pda,isSigner:false,isWritable:true},
+    {pubkey:vault,isSigner:false,isWritable:true},
+    {pubkey:sAta,isSigner:false,isWritable:true},
+    {pubkey:new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"),isSigner:false,isWritable:false}],data});
+  const bh=await _solRpc("getLatestBlockhash",[{commitment:"confirmed"}]);
+  const tx=new Transaction({recentBlockhash:(bh.value||bh).blockhash,feePayer:userPk}).add(ix);
+  tx.sign(solKeypair);
+  const raw=btoa(String.fromCharCode(...tx.serialize()));
+  const sig=await _solRpc("sendTransaction",[raw,{encoding:"base64",skipPreflight:false,preflightCommitment:"confirmed"}]);
+  return { sig:(sig&&sig.value)||sig, relayed:false };
+}
+
 export async function claimUsdcSolana(ctx){
   const { gatewayBase, program, mint, solKeypair, secretHex, usdcAmount=0, onStatus, pollMs=1500, maxPolls=20 }=ctx;
   const { PublicKey, Transaction }=await import("/vendor/solana.mjs");
@@ -75,12 +134,12 @@ export async function claimUsdcSolana(ctx){
   for(let i=0;i<maxPolls;i++){ sw=await fetchSolSwap(program,H).catch(()=>null); if(sw) break; await new Promise(r=>setTimeout(r,pollMs)); }
   if(!sw) throw new Error("USDC lock not found on Solana yet - try again shortly");
   const userPk=solKeypair.publicKey;
-  if(_hex(sw.receiver)!==_hex(userPk.toBytes())) throw new Error("USDC lock invalid (receiver) -> NU revendic");
+  if(_hex(sw.receiver)!==_hex(userPk.toBytes())) throw new Error("USDC lock invalid (receiver) -> not claiming");
   const PK=PublicKey;
-  if(_hex(sw.mint)!==_hex(new PK(mint).toBytes())) throw new Error("USDC lock invalid (mint) -> NU revendic");
-  if(usdcAmount && sw.amount < BigInt(usdcAmount)) throw new Error("USDC lock invalid (amount) -> NU revendic");
-  if(sw.hashlock.toLowerCase()!==_hex(H)) throw new Error("USDC lock invalid (hashlock) -> NU revendic");
-  if(sw.claimed||sw.refunded) throw new Error("USDC lock deja consumat");
+  if(_hex(sw.mint)!==_hex(new PK(mint).toBytes())) throw new Error("USDC lock invalid (mint) -> not claiming");
+  if(usdcAmount && sw.amount < BigInt(usdcAmount)) throw new Error("USDC lock invalid (amount) -> not claiming");
+  if(sw.hashlock.toLowerCase()!==_hex(H)) throw new Error("USDC lock invalid (hashlock) -> not claiming");
+  if(sw.claimed||sw.refunded) throw new Error("USDC lock already settled");
   if(sw.timelock < Math.floor(Date.now()/1000)+300) throw new Error("timelock too short -> not claiming");
   onStatus&&onStatus("usdc_verified",{amount:sw.amount.toString()});
   const preHex="0x"+_hex(secret); let sig=null;
