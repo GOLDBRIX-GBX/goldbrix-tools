@@ -1,46 +1,107 @@
-# L2 Token Indexing & State Replay (GBX:OP:*)
+# On-Chain Token Indexing (GBX:* OP_RETURN)
 
-All launchpad token operations are published on-chain as OP_RETURN outputs.
-This document specifies how a third party can rebuild L2 state from the
-chain alone, and what the known limits are.
+Every launchpad operation is published on-chain as an OP_RETURN output.
+This document specifies the exact byte layout of each declaration, so a
+third party can rebuild the full L2 state from the chain alone, with no
+API and no permission from anyone.
 
-## Operation formats
+Reference implementation: `token-index/scanner.js` (keyless, read-only).
+
+## Declaration formats
+
+### Curve and pool operations - `GBX:C:`
 
 ```
-GBX:OP:CREATE:<ticker>:<supply>:<decimals>:<metadata-hash>
-GBX:OP:MINT:<ticker>:<amount>:<recipient-suffix>
-GBX:OP:XFER:<ticker>:<amount>:<recipient-suffix>
-GBX:OP:BURN:<ticker>:<amount>
-GBX:OP:GRADUATE:<ticker>:<gbx-reserve>:<token-reserve>
-GBX:OP:STATE:<ticker>:<reserve-gbx>:<holders>:<merkle16>
+'GBX:C:'(6) + op(1) + cid(32) + amount(8 BE) + tokens_out(8 BE) + pk(33)
+= 88 bytes
 ```
 
-- `recipient-suffix` — last 20 chars of the bn1 address (privacy-preserving)
-- `merkle16` — first 16 hex chars of SHA-256 over the sorted balance list
-  (`address:balance`, 8 decimals, one per line, sorted by address)
-- `STATE` checkpoints are published by a daemon whenever a token's state
-  changes (curve reserve, holder count, balance set).
+| `op` | Meaning |
+|---|---|
+| `C` | create a coin (bonding curve opens) |
+| `B` | buy on the curve |
+| `S` | sell on the curve |
+| `G` | graduate (curve closes, AMM pool opens) |
+| `P` | pool buy (post-graduation AMM) |
+| `Q` | pool sell (post-graduation AMM) |
+| `R` | reserved marker, excluded from traded volume |
 
-## What a third party can rebuild from chain alone
+- `cid` - coin id, 32 bytes
+- `amount`, `tokens_out` - big-endian unsigned, base units
+- `pk` - 33-byte compressed public key of the actor
 
-- Full operation history per token (create/mint/burn/xfer/graduate)
-- Circulating supply per token = sum(MINT) - sum(BURN)
-- Total burned GBX (all fees go to the unspendable burn address)
-- Curve reserve and holder count at every STATE checkpoint
-- Integrity of any claimed balance set: recompute merkle16 and compare
-  against the latest on-chain STATE checkpoint
+### Token transfer - `GBX:T:`
+
+```
+'GBX:T:'(6) + ver(1) + cid(32) + amount(8 BE) + pk_recipient(33)
+```
+
+Indexed as `T` on the sender side and `U` on the recipient side.
+
+### Coin metadata - `GBX:M:`
+
+```
+v1: 'GBX:M:'(6) + ver=1(1) + cid(32) + tickerLen(1) + ticker + nameLen(1) + name
+v2: 'GBX:M:'(6) + ver=2(1) + cid(32) + dLen(1) + desc + lLen(1) + links
+```
+
+Max 255 bytes (PUSHDATA1 limit). `desc` up to 150 UTF-8 bytes, `links` up
+to 64. A declaration is not trusted on sight: only the coin creator's key
+may set metadata for that `cid`.
+
+### Coin logo - `GBX:L:`
+
+```
+'GBX:L:'(6) + ver=1(1) + cid(32) + idx(1) + total(1) + hash16(16) + dLen(1) + data(<=197)
+= max 255 bytes per chunk
+```
+
+Up to 21 chunks (~4 KB WebP). `hash16` is the first 16 bytes of the
+SHA-256 of the complete logo; a logo is accepted only once every chunk is
+present and the reassembled bytes hash to `hash16`.
+
+### Discovery registries
+
+```
+GBX:NODE:<https-url>    read endpoint of a node
+GBX:LP:<https-url>      liquidity provider gateway
+GBX:HTLC:<https-url>    HTLC contract endpoint
+```
+
+Anti-spam is economic: the operator pays the L1 fee to announce their own
+entry. Entries expire after a liveness window of 200,000 blocks (~7 days)
+unless re-announced. See `node-registry/`.
+
+## What a third party can rebuild from the chain alone
+
+- Every curve and pool operation per coin, in block order
+- Curve reserve, virtual supply and price at any height
+- AMM pool reserves after graduation
+- Coin name, ticker, description, links and logo
+- Total burned GBX (fees go to an unspendable address)
+- The full node, LP and HTLC registries
+
+None of the above requires an API. An index built this way is identical on
+every machine that replays the same chain.
 
 ## Known limits (honest)
 
-- Recipients are truncated (20-char suffix): full addresses are not
-  recoverable from chain alone. A full balance snapshot must be obtained
-  from any API (or peer) and verified against merkle16.
-- BURN has no source address on-chain.
-- The STATE checkpoint cadence is best-effort (daemon, max 10 tx/run).
+- `GBX:T:` carries the recipient public key, not a full address; deriving
+  the address requires the same derivation the wallet uses.
+- Burn outputs carry no source address on-chain.
+- Metadata and logo declarations are ignored by consensus. They are client
+  and index level only: an invalid declaration costs its author a fee and
+  is discarded by every honest indexer.
 
-## Verify a STATE checkpoint
+## Rebuild the index yourself
 
 ```bash
-# fetch balances from any source, format address:balance (8 decimals), sort,
-sha256sum <<(sorted list) # first 16 hex must equal merkle16 from chain
+GBX_BIN=/usr/local/bin/goldbrix-cli \
+GBX_DATADIR=/var/lib/goldbrix \
+GBX_TOKENIDX_DB=/var/lib/goldbrix/index/curve-mainnet.db \
+GBX_SQLITE_MOD=/path/to/read-api/node_modules/better-sqlite3 \
+node token-index/scanner.js --oneshot
 ```
+
+Compare your result with any public endpoint. If they disagree, your own
+chain is the authority.
