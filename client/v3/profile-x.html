@@ -506,7 +506,9 @@ async function go(){
       gj('/api/candles/'+h.coin_id+'?interval=1h').then(function(d){
         var a=(d&&(d.candles||d.rows))||d||[];
         var st=stats[h.coin_id],ph=(st&&st.phase==='pool')?'p':'c';
-        var v=a.filter(function(x){return x.ph===ph;}).map(function(x){return Number(x.close);});
+        /* The endpoint answers with long field names when an interval is asked for
+           and short ones otherwise; read both so a sparkline never goes blank. */
+        var v=a.filter(function(x){return x.ph===ph;}).map(function(x){return Number(x.close!=null?x.close:x.c);}).filter(function(n){return n>0;});
         var e=$('sp_'+h.coin_id);if(e)e.innerHTML=spark(v);
       }).catch(function(){});
     });

@@ -86,7 +86,10 @@ function txHistory(address, limit){
   const rows=[...m.values()].map(e=>{
     const net=e.credit-e.debit;
     return { height:e.height, confirmations:tip-e.height+1,
-      kind: e.coinbase?'mined':(net>=0?'in':'out'),
+      /* A block can hold both a reward and a spend of ours. Calling that block
+         'mined' hides the spend and shows only the net, so the label follows the
+         reward only when nothing was spent at that height. */
+      kind: (e.coinbase && !e.debit)?'mined':(net>=0?'in':'out'),
       amount_sat: Math.abs(net), txid: net>=0?e.txid:null };
   }).filter(e=>e.amount_sat>0).sort((a,b)=>b.height-a.height).slice(0,lim);
   return { success:true, height:tip, txs:rows };
