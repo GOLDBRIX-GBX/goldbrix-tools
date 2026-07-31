@@ -4,7 +4,14 @@ set -e
 D=/opt/gbx-lp
 command -v node >/dev/null || { echo "FAIL: node >=18 required"; exit 1; }
 command -v python3 >/dev/null || { echo "FAIL: python3 required"; exit 1; }
-python3 -c "import cryptography, ecdsa" 2>/dev/null || { echo "FAIL: pip3 install cryptography ecdsa"; exit 1; }
+# Python dependencies come from the distribution, not from pip: on current
+# Ubuntu the environment is externally managed and "pip3 install" is refused,
+# so telling the operator to run it would send them into a wall.
+if ! python3 -c "import cryptography, ecdsa" 2>/dev/null; then
+  echo "installing python dependencies (cryptography, ecdsa)"
+  apt-get update -qq && apt-get install -y -qq python3-cryptography python3-ecdsa >/dev/null 2>&1 || true
+fi
+python3 -c "import cryptography, ecdsa" 2>/dev/null || { echo "FAIL: python3 cryptography and ecdsa are required; install them with your package manager (Debian/Ubuntu: apt-get install python3-cryptography python3-ecdsa)"; exit 1; }
 [ -x /usr/local/bin/goldbrix-cli ] || { echo "FAIL: GBX node required first (run install-node.sh)"; exit 1; }
 
 # pre-flight gates — honest refusal beats a broken install
