@@ -233,6 +233,41 @@ class H(BaseHTTPRequestHandler):
             except: return self._s(502,{'error':'cli_fail','raw':(r.stdout or r.stderr)[:200]})
             if o.get('error'): return self._s(502,o)
             return self._s(200,o)
+        if self.path=='/sol-relay-refund':
+            """Relay a USDC refund on Solana for a user who holds no SOL.
+
+            The program pays the refund to the account that funded the lock and to
+            nobody else (sender_ata is checked against swap.sender on chain), so the
+            LP can only pay the gas here. The state is read from the chain, not
+            taken from the caller: an unexpired or already settled lock is refused."""
+            if _breaker_active(): return self._s(503,{'error':'breaker_active'})
+            body=self._body()
+            sid=str(body.get('swap_id') or '').lower()
+            ata=str(body.get('sender_ata') or '')
+            if not (sid and ata): return self._s(400,{'error':'missing','need':['swap_id','sender_ata']})
+            if not sid.startswith('0x'): sid='0x'+sid
+            try:
+                if len(bytes.fromhex(sid[2:]))!=32: raise ValueError()
+            except Exception: return self._s(400,{'error':'bad_swap_id'})
+            sol=load(CHAINS_F,{}).get('chains',{}).get('solana',{})
+            base={'idl':sol.get('idl'),'program':sol.get('program'),'rpc':sol.get('rpc'),'commitment':'confirmed'}
+            arg=json.dumps(dict(base,cmd='swap',swap_id=sid))
+            r=subprocess.run(['node',SOL_CLI,arg],capture_output=True,text=True,timeout=40)
+            try: o=json.loads(r.stdout.strip())
+            except Exception: return self._s(502,{'error':'cli_fail','raw':(r.stdout or r.stderr)[:200]})
+            sw=o.get('swap')
+            if not sw: return self._s(404,{'error':'unknown_swap'})
+            if sw.get('claimed') or sw.get('refunded'): return self._s(409,{'error':'already_settled'})
+            try: tl=int(sw.get('timelock') or 0)
+            except Exception: tl=0
+            now=int(_t.time())
+            if now<tl: return self._s(409,{'error':'too_early','retry_after_s':tl-now})
+            arg2=json.dumps(dict(base,cmd='refund',lp_secret=_sol_secret(),swap_id=sid,sender_ata=ata))
+            r2=subprocess.run(['node',SOL_CLI,arg2],capture_output=True,text=True,timeout=60)
+            try: o2=json.loads(r2.stdout.strip())
+            except Exception: return self._s(502,{'error':'cli_fail','raw':(r2.stdout or r2.stderr)[:200]})
+            if o2.get('error'): return self._s(502,o2)
+            return self._s(200,o2)
         if self.path=='/evm-relay-claim':
             """Relay a USDC claim on an EVM chain for a user who holds no gas token there.
 
