@@ -1,17 +1,18 @@
 #!/usr/bin/env node
 /* GoldBrix Address Indexer (gbx-indexer)
-   address -> UTXO, reorg-safe (spent_height), polling feed. Production, build-once.
-   Citeste GoldBrix RPC via cookie. Proces SEPARAT de nod. */
+   address -> UTXO, reorg-safe (spent_height), polling feed.
+   Reads the node over RPC with its cookie. Runs as its own process, so a
+   restart here never disturbs the chain. */
 'use strict';
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const Database = require('better-sqlite3');
 
-const GBX_DATADIR = process.env.GBX_DATADIR || '/root/.bitcoin';          // datadir nod GoldBrix (reziduu pre-existent; OPSEC rename = FAZA 7)
+const GBX_DATADIR = process.env.GBX_DATADIR || '/var/lib/goldbrix';
 const RPC_HOST = '127.0.0.1';
-const RPC_PORT = parseInt(process.env.GBX_RPC_PORT||'8342',10);                          // GoldBrix RPC [VERIFICAT]
-const DB_PATH  = process.env.GBX_INDEX_DB || '/root/goldbrix-one/server/gbx-index.db';
+const RPC_PORT = parseInt(process.env.GBX_RPC_PORT||'8332',10);
+const DB_PATH  = process.env.GBX_INDEX_DB || path.join(GBX_DATADIR, 'index', 'gbx-index.db');
 const POLL_MS  = 1000;
 const COOKIE   = path.join(GBX_DATADIR, '.cookie');
 
@@ -50,6 +51,7 @@ CREATE TABLE IF NOT EXISTS utxos (
   txid TEXT NOT NULL, vout INTEGER NOT NULL,
   address TEXT NOT NULL, sats INTEGER NOT NULL,
   height INTEGER NOT NULL, spent_height INTEGER,
+  spk TEXT, coinbase INTEGER DEFAULT 0,
   PRIMARY KEY (txid, vout));
 CREATE INDEX IF NOT EXISTS idx_addr_uns ON utxos(address) WHERE spent_height IS NULL;
 CREATE INDEX IF NOT EXISTS idx_h ON utxos(height);
@@ -61,6 +63,15 @@ CREATE INDEX IF NOT EXISTS idx_addr_sats ON utxos(address, sats DESC) WHERE spen
 CREATE TABLE IF NOT EXISTS blocks (height INTEGER PRIMARY KEY, hash TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT);
 `);
+// A database written by an older build is missing these two columns, and
+// CREATE TABLE IF NOT EXISTS never touches a table that already exists, so it
+// would keep failing on every insert. Add them once, only when absent.
+{
+  const have = new Set(db.prepare("PRAGMA table_info(utxos)").all().map(c => c.name));
+  if (!have.has('spk')) db.exec("ALTER TABLE utxos ADD COLUMN spk TEXT");
+  if (!have.has('coinbase')) db.exec("ALTER TABLE utxos ADD COLUMN coinbase INTEGER DEFAULT 0");
+}
+
 const Q = {
   add: db.prepare(`INSERT OR REPLACE INTO utxos (txid,vout,address,sats,height,spent_height,spk,coinbase) VALUES (?,?,?,?,?,NULL,?,?)`),
   spend: db.prepare(`UPDATE utxos SET spent_height=? WHERE txid=? AND vout=?`),
