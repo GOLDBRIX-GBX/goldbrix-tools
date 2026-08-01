@@ -28,11 +28,27 @@ export function previewCreate(devBuySat){
   return { gross, burnFee: fee, liquidity: rc.newReserve, tokensOut: rc.tokensOut };
 }
 
+/* A create is a single transaction: the coin id derives from the first input,
+   so it cannot be split into a chain the way a plain send can. Take the largest
+   outputs first, so a wallet full of small change still fits in one standard
+   transaction, and stop at the same input ceiling the wallet uses. */
+const CREATE_MAX_INPUTS = 1200;
+
 function selectUtxos(utxos, needSat){
+  const pool = [...utxos].sort((a, b) => (BigInt(b.value8) > BigInt(a.value8) ? 1 : BigInt(b.value8) < BigInt(a.value8) ? -1 : 0));
   const ins = []; let sum = 0n;
-  for (const u of utxos){
+  for (const u of pool){
     ins.push(u); sum += BigInt(u.value8);
     if (sum >= needSat) return { ins, sum };
+    if (ins.length >= CREATE_MAX_INPUTS) break;
+  }
+  if (sum >= needSat) return { ins, sum };
+  if (ins.length >= CREATE_MAX_INPUTS){
+    /* The balance is there, but not in few enough pieces. Say so before the
+       user spends work on the proof, instead of letting the node reject it. */
+    const e = new Error('TX_TOO_BIG');
+    e.maxSat = sum;
+    throw e;
   }
   throw new Error('NO_UTXO');
 }

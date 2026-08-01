@@ -5,7 +5,13 @@
   function hasSession(){ try{ return !!sessionStorage.getItem(SESSION_KEY); }catch(e){ return false; } }
   function sessionAge(){ try{ var s=JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null'); return (s&&s.unlocked_at)?(Date.now()-s.unlocked_at):Infinity; }catch(e){ return Infinity; } }
   var locking=false;
+  /* A long operation the user already started (proof-of-work, signing, a swap leg)
+     must not be interrupted by the screen going off. The page raises window.__gbxBusy
+     while it runs and clears it when it ends, on success or on failure. The flag lives
+     on window only, so any reload drops it and the normal locking resumes. */
+  function busy(){ try{ return !!window.__gbxBusy; }catch(e){ return false; } }
   function lock(broadcast){
+    if(busy()) return;
     if(locking) return; locking=true;
     try{ sessionStorage.removeItem(SESSION_KEY); }catch(e){}
     if(broadcast!==false){ try{ localStorage.setItem(LOCK_SIGNAL,String(Date.now())); }catch(e){} }
