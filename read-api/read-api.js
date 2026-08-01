@@ -8,7 +8,11 @@ const gbxIndex = require('./gbx-index-read.js');
 let gbxTrades = null;
 try { gbxTrades = require('./gbx-trade-read.js'); } catch (e) { console.error('[TRADE-1] trade index unavailable:', e.message); }
 
-const HOST = '0.0.0.0';
+// Bound to loopback by default: the public entry point is the HTTPS proxy in
+// front of it. Binding every interface would answer in clear text on the side,
+// where a reader can be watched and an answer can be changed. Set GBX_BIND to
+// 0.0.0.0 only when nothing else terminates TLS for this node.
+const HOST = process.env.GBX_BIND || '127.0.0.1';
 const PORT = process.env.PORT || 8088;
 
 const CLI = process.env.GBX_CLI || '/usr/local/bin/goldbrix-cli';

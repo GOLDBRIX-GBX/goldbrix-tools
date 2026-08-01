@@ -163,7 +163,8 @@ After=goldbrixd.service
 Requires=goldbrixd.service
 [Service]
 User=gbx
-Environment=GBX_CLI=/usr/local/bin/goldbrix-cli GBX_RPC_PORT=8332 GBX_DATADIR=${DATADIR} PORT=8088
+# Answers only to the proxy on this machine. The public door is HTTPS.
+Environment=GBX_CLI=/usr/local/bin/goldbrix-cli GBX_RPC_PORT=8332 GBX_DATADIR=${DATADIR} PORT=8088 GBX_BIND=127.0.0.1
 Environment=GBX_NODEREG_STATE=${TOOLSDIR}/node-registry/node-registry.json
 # read-api MUST read the local index; without it, address/utxo routes fall back to a full UTXO scan (2.5G RSS -> OOM).
 Environment=GBX_INDEX_DB=${DATADIR}/index/gbx-index.db
