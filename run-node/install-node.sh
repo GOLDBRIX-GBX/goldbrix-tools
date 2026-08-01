@@ -213,6 +213,8 @@ echo "[6/7] web server (Caddy) — this node also serves the wallet"
 # Serving client/ here is what makes a third-party node self-sufficient.
 NODE_ENV_EARLY="${TOOLSDIR}/run-node/node.env"
 PUB=$(grep -E '^NODE_PUBLIC_URL=' "$NODE_ENV_EARLY" 2>/dev/null | cut -d= -f2- || true)
+# First run has no node.env yet, so the address given on the command line counts.
+[ -n "${PUB:-}" ] || PUB="${NODE_PUBLIC_URL:-}"
 HOSTN=$(printf '%s' "${PUB:-}" | sed -e 's#^https\?://##' -e 's#/.*$##')
 if ! command -v caddy >/dev/null 2>&1; then
   apt-get install -y -qq caddy >/dev/null 2>&1 || true
@@ -265,24 +267,46 @@ ${SITE} {
   fi
 fi
 
-# federation announce — OPT-IN, keyless by default.
-# A plain node holds NO funds. To be discoverable on-chain it must pay a dust fee,
-# which needs a local wallet. Config-driven (no prompt): fill node.env to opt in.
+# federation announce — ON by default, like a node that listens for peers.
+# A node that answers wallet reads is only useful if wallets can find it. The
+# entry lives on-chain and costs a dust fee, so it needs a wallet on THIS machine,
+# whose key never leaves it. A fresh machine has no coins yet: the timer keeps
+# trying and the node lists itself the moment the wallet is funded. Nobody has to
+# come back and finish the job. Set ANNOUNCE=no to stay unlisted.
 NODE_ENV="${TOOLSDIR}/run-node/node.env"
-[ -f "$NODE_ENV" ] || cat > "$NODE_ENV" <<'NENV'
-# Federation announce (optional). Leave blank to stay unlisted (default, keyless).
-# To be discoverable: set your public HTTPS endpoint AND a wallet that holds a few brix.
-NODE_PUBLIC_URL=
-ANNOUNCE_WALLET=
+[ -f "$NODE_ENV" ] || cat > "$NODE_ENV" <<NENV
+# Public HTTPS endpoint of this node. Wallets reach it here.
+NODE_PUBLIC_URL=${NODE_PUBLIC_URL:-}
+# Announce this node on-chain so wallets can find it. Set to no to stay unlisted.
+ANNOUNCE=yes
+# Wallet on this machine that pays the dust fee. Its key never leaves this machine.
+ANNOUNCE_WALLET=gbx_node
 NENV
 NODE_URL=$(grep -E '^NODE_PUBLIC_URL=' "$NODE_ENV" | cut -d= -f2-)
+[ -n "$NODE_URL" ] || NODE_URL="${NODE_PUBLIC_URL:-}"
+ANN=$(grep -E '^ANNOUNCE=' "$NODE_ENV" | cut -d= -f2-)
 AWALLET=$(grep -E '^ANNOUNCE_WALLET=' "$NODE_ENV" | cut -d= -f2-)
-if [ -n "$NODE_URL" ] && [ -n "$AWALLET" ]; then
+[ -n "$AWALLET" ] || AWALLET=gbx_node
+
+if [ "${ANN:-yes}" = "no" ]; then
+  echo "ANNOUNCE: disabled in node.env — this node stays unlisted."
+elif [ -z "$NODE_URL" ]; then
+  echo "ANNOUNCE: no public address for this node, so wallets cannot be sent here."
+  echo "          Set NODE_PUBLIC_URL in ${NODE_ENV} and re-run to join the federation."
+else
   NREG=${TOOLSDIR}/node-registry
+  CLI_A="goldbrix-cli -datadir=${DATADIR} -conf=goldbrix.conf"
+  $CLI_A loadwallet "$AWALLET" >/dev/null 2>&1 \
+    || $CLI_A createwallet "$AWALLET" >/dev/null 2>&1 || true
+  AADDR=$($CLI_A -rpcwallet="$AWALLET" getnewaddress "node-announce" 2>/dev/null || echo "")
+  ABAL=$($CLI_A -rpcwallet="$AWALLET" getbalance 2>/dev/null || echo 0)
+
   python3 - "$NREG/announce.json" "$NODE_URL" "$AWALLET" <<'PYJSON'
-import json,sys
+import json,os,sys
 f,node,w=sys.argv[1],sys.argv[2],sys.argv[3]
-json.dump({"node":node,"wallet":w},open(f,"w"),indent=2)
+cfg=json.load(open(f)) if os.path.exists(f) else {}
+cfg["node"]=node; cfg["wallet"]=w
+json.dump(cfg,open(f,"w"),indent=2)
 PYJSON
   cp $NREG/gbx-announce.service /etc/systemd/system/
   cp $NREG/gbx-announce.timer   /etc/systemd/system/
@@ -290,7 +314,16 @@ PYJSON
   printf '[Service]\nEnvironment=GBX_DATADIR=%s\n' "$DATADIR" > /etc/systemd/system/gbx-announce.service.d/datadir.conf
   systemctl daemon-reload && systemctl enable --now gbx-announce.timer
   GBX_DATADIR=$DATADIR bash $NREG/gbx-announce.sh || true
-  echo "ANNOUNCE: node listed on-chain (re-announces autonomously)"
+  echo "ANNOUNCE: enabled. This node lists itself at ${NODE_URL} and keeps the entry"
+  echo "          alive on its own, for as long as it runs."
+  if python3 -c "import sys;sys.exit(0 if float('${ABAL:-0}')>0 else 1)" 2>/dev/null; then
+    echo "          Fee wallet is funded — the entry goes on-chain now."
+  else
+    echo "          The fee wallet is empty, so the entry is not on-chain yet."
+    echo "          Send a few brix to:  ${AADDR}"
+    echo "          The node publishes itself on its own once the coins arrive;"
+    echo "          nothing else has to be done here."
+  fi
 fi
 
 echo "[7/7] done"
@@ -298,5 +331,4 @@ echo "Sync from genesis starts now (peers learned from the on-chain federation, 
 echo "Check:   goldbrix-cli -datadir=${DATADIR} getblockchaininfo | grep -e blocks -e verificationprogress"
 echo "Status:  curl -s http://127.0.0.1:8088/api/status"
 echo "When fully synced: expose :8088 behind HTTPS (Caddy/nginx)."
-echo "To be discovered by wallets: set NODE_PUBLIC_URL + ANNOUNCE_WALLET in ${TOOLSDIR}/run-node/node.env"
-echo "and re-run this script. Discovery is 100% on-chain (GBX:NODE) — no central list, no app rebuild."
+echo "Discovery is 100% on-chain (GBX:NODE) — no central list, no app rebuild, nothing to register with anyone."
