@@ -168,6 +168,8 @@ Environment=GBX_CLI=/usr/local/bin/goldbrix-cli GBX_RPC_PORT=8332 GBX_DATADIR=${
 Environment=GBX_NODEREG_STATE=${TOOLSDIR}/node-registry/node-registry.json
 # read-api MUST read the local index; without it, address/utxo routes fall back to a full UTXO scan (2.5G RSS -> OOM).
 Environment=GBX_INDEX_DB=${DATADIR}/index/gbx-index.db
+# Without this the coin endpoints answer "not enabled", even while the index runs.
+Environment=GBX_TOKENIDX_DB=${DATADIR}/index/curve-mainnet.db
 WorkingDirectory=${TOOLSDIR}/read-api
 ExecStart=/usr/bin/node read-api.js
 Restart=always
@@ -207,7 +209,36 @@ RestartSec=5
 WantedBy=multi-user.target
 UNIT
 
-systemctl enable --now goldbrixd gbx-read-api gbx-indexer gbx-node-registry
+# Coins and their bonding curves are read from this index. Without it a node
+# answers "not enabled" on /api/curves, cannot pass its own health check, and so
+# never publishes itself: a node that ships the wallet must also serve the coins.
+cat > /etc/systemd/system/gbx-curve-index.service << UNIT
+[Unit]
+Description=GBX curve index scanner (consensus mirror)
+After=goldbrixd.service
+PartOf=goldbrixd.service
+[Service]
+User=gbx
+Group=gbx
+WorkingDirectory=${TOOLSDIR}/token-index
+Environment=GBX_BIN=/usr/local/bin/goldbrix-cli
+Environment=GBX_DATADIR=${DATADIR}
+Environment=GBX_CHAIN=main
+Environment=GBX_RPC_PORT=8332
+Environment=GBX_TOKENIDX_DB=${DATADIR}/index/curve-mainnet.db
+Environment=GBX_SQLITE_MOD=${TOOLSDIR}/read-api/node_modules/better-sqlite3
+Environment=GBX_LAUNCHPAD_HEIGHT=2720000
+Environment=MALLOC_ARENA_MAX=2
+ExecStart=/usr/bin/node ${TOOLSDIR}/token-index/scanner.js --loop
+Restart=on-failure
+RestartSec=10
+MemoryMax=1024M
+[Install]
+WantedBy=multi-user.target
+UNIT
+
+install -d -o gbx -g gbx ${DATADIR}/index
+systemctl enable --now goldbrixd gbx-read-api gbx-indexer gbx-node-registry gbx-curve-index
 
 echo "[6/7] web server (Caddy) — this node also serves the wallet"
 # A node that only serves data still leaves the wallet itself hosted somewhere else.
