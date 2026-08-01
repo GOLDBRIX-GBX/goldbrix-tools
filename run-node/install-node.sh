@@ -161,6 +161,9 @@ cat > /etc/systemd/system/gbx-read-api.service << UNIT
 Description=GBX public read API (:8088, keyless)
 After=goldbrixd.service
 Requires=goldbrixd.service
+# Stops with the node. A reader that outlives its chain serves stale answers
+# with a straight face, which is worse than answering nothing.
+PartOf=goldbrixd.service
 [Service]
 User=gbx
 # Answers only to the proxy on this machine. The public door is HTTPS.
@@ -170,6 +173,8 @@ Environment=GBX_NODEREG_STATE=${TOOLSDIR}/node-registry/node-registry.json
 Environment=GBX_INDEX_DB=${DATADIR}/index/gbx-index.db
 # Without this the coin endpoints answer "not enabled", even while the index runs.
 Environment=GBX_TOKENIDX_DB=${DATADIR}/index/curve-mainnet.db
+Environment=GBX_TRADE_DB=${DATADIR}/index/gbx-trades.db
+Environment=GBX_SQLITE_MOD=${TOOLSDIR}/read-api/node_modules/better-sqlite3
 WorkingDirectory=${TOOLSDIR}/read-api
 ExecStart=/usr/bin/node read-api.js
 Restart=always
@@ -237,8 +242,31 @@ MemoryMax=1024M
 WantedBy=multi-user.target
 UNIT
 
+# Executed price and volume, derived from settled swaps on both sides. The
+# contracts are read from the on-chain announcements, so this needs no config.
+cat > /etc/systemd/system/gbx-trade-index.service << UNIT
+[Unit]
+Description=GBX trade index (executed price and volume, derived from chain)
+After=goldbrixd.service gbx-indexer.service
+Requires=goldbrixd.service
+[Service]
+User=gbx
+Environment=GBX_RPC_PORT=8332 GBX_DATADIR=${DATADIR}
+Environment=GBX_INDEX_DB=${DATADIR}/index/gbx-index.db
+Environment=GBX_TRADE_DB=${DATADIR}/index/gbx-trades.db
+Environment=GBX_NODEREG_STATE=${TOOLSDIR}/node-registry/node-registry.json
+Environment=GBX_TRADE_FROM=1173294
+WorkingDirectory=${TOOLSDIR}/read-api
+ExecStart=/usr/bin/node gbx-trade-index.js
+Restart=always
+RestartSec=15
+MemoryMax=512M
+[Install]
+WantedBy=multi-user.target
+UNIT
+
 install -d -o gbx -g gbx ${DATADIR}/index
-systemctl enable --now goldbrixd gbx-read-api gbx-indexer gbx-node-registry gbx-curve-index
+systemctl enable --now goldbrixd gbx-read-api gbx-indexer gbx-node-registry gbx-curve-index gbx-trade-index
 
 echo "[6/7] web server (Caddy) — this node also serves the wallet"
 # A node that only serves data still leaves the wallet itself hosted somewhere else.

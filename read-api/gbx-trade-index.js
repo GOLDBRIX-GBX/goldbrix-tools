@@ -172,10 +172,19 @@ async function syncSOL(c) {
   log(`[TRADE] solana: ${rows.length} settled locks (of ${swaps.length} swaps)`);
 }
 
+// Public RPC endpoints per chain. They are not configuration a node operator
+// should have to find: the contracts themselves are announced on-chain, and
+// these are the same public endpoints anyone uses to read a public ledger.
+// A local chains.json still wins when present, for an operator with own RPCs.
+const DEFAULT_RPCS = {
+  base: ['https://mainnet.base.org','https://base-rpc.publicnode.com','https://base-mainnet.public.blastapi.io','https://base.drpc.org'],
+  arbitrum: ['https://arb1.arbitrum.io/rpc','https://arbitrum-one-rpc.publicnode.com','https://arbitrum.public-rpc.com','https://arbitrum.drpc.org']
+};
+
 async function syncEVM() {
-  let chains;
+  let chains = {};
   try { chains = (JSON.parse(fs.readFileSync(CHAINS_F,'utf8')).chains) || {}; }
-  catch(e) { log('[TRADE] chains.json unreadable:', e.message); return; }
+  catch(e) { log('[TRADE] no local chains file, reading contracts from the chain instead'); }
   // ETAPA 4.9: merge HTLC contracts announced on-chain (GBX:HTLC) — autonomous discovery.
   let annHtlcs = {};
   try {
@@ -188,7 +197,15 @@ async function syncEVM() {
     }
     for (const ch of Object.keys(annHtlcs)) annHtlcs[ch] = annHtlcs[ch].sort((a,b)=>b.h-a.h).slice(0,20); // cap 20, newest first
   } catch(e) { /* registry unreadable -> hardcoded fallback only */ }
+  // A chain announced on-chain but absent from the local file is still indexed:
+  // the announcement is the record, the file is only an override.
+  for (const ch of Object.keys(annHtlcs)) {
+    if (chains[ch] || !DEFAULT_RPCS[ch]) continue;
+    const newest = annHtlcs[ch][0];
+    chains[ch] = { enabled: true, HTLC: newest.addr, from_block: newest.from, rpcs: DEFAULT_RPCS[ch] };
+  }
   for (const [name,c] of Object.entries(chains)) {
+    if (c && c.enabled && !Array.isArray(c.rpcs) && DEFAULT_RPCS[name]) c.rpcs = DEFAULT_RPCS[name];
     if (!c.enabled || c.kind === 'solana' || !c.HTLC || !Array.isArray(c.rpcs)) continue;
     const key = 'evm_block_' + name;
     const from = parseInt(metaGet(key) || String(c.from_block || 0), 10);
