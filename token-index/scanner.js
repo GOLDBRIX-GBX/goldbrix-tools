@@ -9,11 +9,15 @@ const path = require('path');
 const Database = require(process.env.GBX_SQLITE_MOD || path.join(__dirname,'..','read-api','node_modules','better-sqlite3'));
 
 const BIN     = process.env.GBX_BIN     || '/usr/local/bin/goldbrix-cli';
-const DATADIR = process.env.GBX_DATADIR || '/root/.bitcoin';
+const DATADIR = process.env.GBX_DATADIR || '/var/lib/goldbrix';
 const CHAIN   = process.env.GBX_CHAIN   || 'main';      // 'regtest' | 'main'
 const RPCPORT = process.env.GBX_RPC_PORT|| '8332';
 const DB_PATH = process.env.GBX_TOKENIDX_DB || path.join(__dirname,'token-index.db');
-const START   = parseInt(process.env.GBX_TOKENIDX_START || '0', 10);
+// Coins cannot exist before the launchpad activates, so the blocks before it
+// hold nothing this index can store. Starting there costs a new node hours of
+// reading blocks it will discard, and that cost grows with the chain. The
+// launchpad height is the natural floor; an explicit start still wins.
+const START   = parseInt(process.env.GBX_TOKENIDX_START || process.env.GBX_LAUNCHPAD_HEIGHT || '0', 10);
 const POLL_MS = parseInt(process.env.GBX_POLL_MS || '3000', 10);
 const LAUNCH_H= parseInt(process.env.GBX_LAUNCHPAD_HEIGHT || '0', 10); // consensus nLaunchpadHeight mirror; 0 = index everything (pre-activation / regtest)
 const KEEP    = 220;                                        // > reorg finality (100)
