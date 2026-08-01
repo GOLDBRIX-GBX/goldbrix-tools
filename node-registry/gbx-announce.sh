@@ -26,6 +26,32 @@ have_balance(){
   bal=$(cli -rpcwallet="$WALLET" getbalance 2>/dev/null || echo 0)
   python3 -c "import sys;sys.exit(0 if float('$bal')>0 else 1)" 2>/dev/null
 }
+node_healthy(){
+  local info bad
+  info=$(cli getblockchaininfo 2>/dev/null) || { echo "node RPC unreachable"; return 1; }
+  bad=$(python3 - "$info" <<'PY'
+import json,sys
+try: d=json.loads(sys.argv[1])
+except Exception: print("bad getblockchaininfo"); raise SystemExit
+if d.get("pruned"): print("pruned node cannot serve history")
+elif d.get("initialblockdownload"): print("still syncing (initial block download)")
+elif d.get("blocks") != d.get("headers"): print("behind tip: blocks %s of %s"%(d.get("blocks"),d.get("headers")))
+PY
+)
+  [ -n "$bad" ] && { echo "$bad"; return 1; }
+  local api code body r
+  api="${GBX_READAPI:-http://127.0.0.1:8088}"
+  for r in /api/curves /api/gbx/stats; do
+    code=$(curl -s -m 8 -o /tmp/gbx-heal.$$ -w '%{http_code}' "$api$r" 2>/dev/null || echo 000)
+    code="${code: -3}"
+    body=$(wc -c < /tmp/gbx-heal.$$ 2>/dev/null || echo 0)
+    rm -f /tmp/gbx-heal.$$
+    [ "$code" = "200" ] || { echo "read-api $r returned $code"; return 1; }
+    [ "$body" -gt 2 ] || { echo "read-api $r returned empty body"; return 1; }
+  done
+  return 0
+}
+
 emit(){
   local key="$1" script="$2" arg="$3" label="$4"
   local last
@@ -52,7 +78,10 @@ PY
 
 NODE_URL=$(python3 -c "import json;print(json.load(open('$CFG')).get('node',''))" 2>/dev/null)
 LP_URL=$(python3 -c "import json;print(json.load(open('$CFG')).get('lp',''))" 2>/dev/null)
-[ -n "$NODE_URL" ] && emit node announce-node.js "$NODE_URL" node
+if [ -n "$NODE_URL" ]; then
+  HEAL=$(node_healthy) && emit node announce-node.js "$NODE_URL" node \
+    || log "node NOT announced — $HEAL (will announce itself once healthy)"
+fi
 [ -n "$LP_URL" ]   && emit lp   announce-lp.js   "$LP_URL"   lp
 python3 -c "import json;print('\n'.join(json.load(open('$CFG')).get('htlcs',[])))" 2>/dev/null | while IFS= read -r H; do
   [ -n "$H" ] || continue

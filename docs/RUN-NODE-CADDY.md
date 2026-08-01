@@ -1,8 +1,17 @@
 # Serving a GoldBrix node behind Caddy
 
+`install-node.sh` installs Caddy and writes this configuration for you: set
+`NODE_PUBLIC_URL` in `run-node/node.env` and the hostname is taken from there.
+An existing `/etc/caddy/Caddyfile` is never overwritten — the model is written
+to `run-node/Caddyfile.example` instead, and you merge what you need.
+
 This is the configuration a live public node runs: TLS, the web client, the
 read API, and optionally an LP box. Replace `your.node.example` with your own
 hostname.
+
+A node serves the wallet itself, not only the data. Anyone who runs a node
+hosts the full application: there is no separate place the client has to come
+from.
 
 ```caddyfile
 your.node.example {
@@ -15,6 +24,11 @@ your.node.example {
 	# to read the chain from any node. CORS is emitted here, once, and stripped
 	# from the backend response so it can never be sent twice.
 	header /api/* Access-Control-Allow-Origin "*"
+
+	# Chain answers must never be reused from a browser cache: a stale
+	# balance or a stale UTXO set makes a wallet build a transaction the
+	# chain will reject.
+	header /api/* Cache-Control "no-store"
 
 	# Only if this machine also runs an LP box (install-lp.sh).
 	# Remove this block on a plain node.

@@ -175,6 +175,63 @@ UNIT
 
 systemctl enable --now goldbrixd gbx-read-api gbx-indexer gbx-node-registry
 
+echo "[6/7] web server (Caddy) — this node also serves the wallet"
+# A node that only serves data still leaves the wallet itself hosted somewhere else.
+# Serving client/ here is what makes a third-party node self-sufficient.
+NODE_ENV_EARLY="${TOOLSDIR}/run-node/node.env"
+PUB=$(grep -E '^NODE_PUBLIC_URL=' "$NODE_ENV_EARLY" 2>/dev/null | cut -d= -f2- || true)
+HOSTN=$(printf '%s' "${PUB:-}" | sed -e 's#^https\?://##' -e 's#/.*$##')
+if ! command -v caddy >/dev/null 2>&1; then
+  apt-get install -y -qq caddy >/dev/null 2>&1 || true
+fi
+if ! command -v caddy >/dev/null 2>&1; then
+  echo "WARN: caddy not available from this distribution. Node works locally on :8088;"
+  echo "      serve ${TOOLSDIR}/client and proxy /api yourself (see docs/RUN-NODE-CADDY.md)."
+else
+  LPBLOCK=""
+  if ss -ltn 2>/dev/null | grep -q ':18099'; then
+    LPBLOCK=$'\n\thandle_path /lp/* {\n\t\treverse_proxy 127.0.0.1:18099\n\t}'
+  fi
+  SITE="${HOSTN:-:80}"
+  CADDYCONF=$(printf '%s' "# managed by install-node.sh — remove this line to keep your own config
+${SITE} {
+\theader {
+\t\tX-Content-Type-Options \"nosniff\"
+\t\t-Server
+\t}
+\theader /api/* Access-Control-Allow-Origin \"*\"
+\theader /api/* Cache-Control \"no-store\"${LPBLOCK}
+\thandle /api/* {
+\t\treverse_proxy 127.0.0.1:8088 {
+\t\t\theader_down -Access-Control-Allow-Origin
+\t\t}
+\t}
+\t@code path *.js *.mjs *.css *.html
+\theader @code Cache-Control \"no-cache\"
+\thandle {
+\t\troot * ${TOOLSDIR}/client
+\t\ttry_files {path} {path}.html /index.html
+\t\tfile_server
+\t}
+}")
+  printf '%b\n' "$CADDYCONF" > "${TOOLSDIR}/run-node/Caddyfile.example"
+  if [ ! -f /etc/caddy/Caddyfile ] || grep -q 'managed by install-node.sh' /etc/caddy/Caddyfile; then
+    install -d /etc/caddy
+    printf '%b\n' "$CADDYCONF" > /etc/caddy/Caddyfile
+    caddy validate --config /etc/caddy/Caddyfile >/dev/null 2>&1 \
+      && { systemctl enable --now caddy >/dev/null 2>&1; systemctl reload caddy >/dev/null 2>&1 || systemctl restart caddy >/dev/null 2>&1; \
+           echo "WEB: serving ${TOOLSDIR}/client on ${SITE}"; } \
+      || echo "WARN: generated Caddyfile did not validate — left in place, check: caddy validate --config /etc/caddy/Caddyfile"
+  else
+    echo "WEB: /etc/caddy/Caddyfile is yours — not touched."
+    echo "     Model written to ${TOOLSDIR}/run-node/Caddyfile.example (serves client/ and proxies /api)."
+  fi
+  if [ -z "$HOSTN" ]; then
+    echo "WEB: no NODE_PUBLIC_URL set — serving over plain HTTP on :80 only."
+    echo "     Wallets are loaded over HTTPS; set NODE_PUBLIC_URL in run-node/node.env and re-run for automatic TLS."
+  fi
+fi
+
 # federation announce — OPT-IN, keyless by default.
 # A plain node holds NO funds. To be discoverable on-chain it must pay a dust fee,
 # which needs a local wallet. Config-driven (no prompt): fill node.env to opt in.
@@ -203,7 +260,7 @@ PYJSON
   echo "ANNOUNCE: node listed on-chain (re-announces autonomously)"
 fi
 
-echo "[6/6] done"
+echo "[7/7] done"
 echo "Sync from genesis starts now (peers learned from the on-chain federation, plus the seeds baked in the binary — no central server, no DNS seed required)."
 echo "Check:   goldbrix-cli -datadir=${DATADIR} getblockchaininfo | grep -e blocks -e verificationprogress"
 echo "Status:  curl -s http://127.0.0.1:8088/api/status"

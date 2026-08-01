@@ -1,0 +1,24 @@
+# managed by install-node.sh — remove this line to keep your own config
+:80 {
+	header {
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+	header /api/* Access-Control-Allow-Origin "*"
+	header /api/* Cache-Control "no-store"
+	handle_path /lp/* {
+		reverse_proxy 127.0.0.1:18099
+	}
+	handle /api/* {
+		reverse_proxy 127.0.0.1:8088 {
+			header_down -Access-Control-Allow-Origin
+		}
+	}
+	@code path *.js *.mjs *.css *.html
+	header @code Cache-Control "no-cache"
+	handle {
+		root * /opt/goldbrix-tools/client
+		try_files {path} {path}.html /index.html
+		file_server
+	}
+}
