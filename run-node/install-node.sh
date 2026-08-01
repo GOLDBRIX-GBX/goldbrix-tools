@@ -21,7 +21,7 @@ RAM_MB=$(awk '/MemTotal/{print int($2/1024)}' /proc/meminfo)
 [ "$RAM_MB" -ge 1800 ] || { echo "FAIL: ${RAM_MB}MB RAM < 2GB — a plain node needs ~2GB (measured: idle node ~1.1GB). Upgrade RAM first."; exit 1; }
 [ "$RAM_MB" -ge 2500 ] || echo "WARN: ${RAM_MB}MB RAM — enough for a plain node (~2GB), NOT for an LP box (needs 4GB+, use install-lp.sh on a bigger machine)"
 
-echo "[1/6] dependencies"
+echo "[1/7] dependencies"
 apt-get update -qq
 apt-get install -y -qq curl git python3 build-essential >/dev/null
 if ! command -v node >/dev/null || [ "$(node -e 'console.log(parseInt(process.versions.node))')" -lt 18 ]; then
@@ -29,7 +29,7 @@ if ! command -v node >/dev/null || [ "$(node -e 'console.log(parseInt(process.ve
   apt-get install -y -qq nodejs >/dev/null
 fi
 
-echo "[2/6] download + verify binary (SHA256 pinned in this script and published in the release checksums)"
+echo "[2/7] download + verify binary (SHA256 pinned in this script and published in the release checksums)"
 cd /tmp
 curl -fsSL -o "$TAR" "${BASE}/${TAR}"
 echo "${TAR_SHA}  ${TAR}" | sha256sum -c -
@@ -38,10 +38,35 @@ install -m 0755 goldbrix-*/bin/goldbrixd goldbrix-*/bin/goldbrix-cli /usr/local/
 ln -sf /usr/local/bin/goldbrixd /usr/local/bin/goldbrix-node
 [ -e /usr/local/bin/goldbrix-cli ] || true
 
-echo "[3/6] node config (full, txindex — required to serve wallet reads)"
+echo "[3/7] node config (full, txindex — required to serve wallet reads)"
 id -u gbx &>/dev/null || useradd -r -m -d "$DATADIR" -s /usr/sbin/nologin gbx
 mkdir -p "$DATADIR"
-[ -f "$DATADIR/goldbrix.conf" ] || cat > "$DATADIR/goldbrix.conf" << 'CONF'
+NEED_REINDEX=0
+if [ -f "$DATADIR/goldbrix.conf" ]; then
+  # A node that was already running here may be configured in a way that cannot
+  # serve wallet reads. Those settings are corrected in place; everything else
+  # the operator wrote is kept.
+  cp "$DATADIR/goldbrix.conf" "$DATADIR/goldbrix.conf.bak.$(date -u +%Y%m%d%H%M%S)"
+  grep -qE '^prune=0$' "$DATADIR/goldbrix.conf" || NEED_REINDEX=1
+  grep -qE '^txindex=1$' "$DATADIR/goldbrix.conf" || NEED_REINDEX=1
+  for kv in server=1 txindex=1 prune=0 listen=1; do
+    k="${kv%%=*}"
+    if grep -qE "^${k}=" "$DATADIR/goldbrix.conf"; then
+      sed -i "s#^${k}=.*#${kv}#" "$DATADIR/goldbrix.conf"
+    else
+      echo "$kv" >> "$DATADIR/goldbrix.conf"
+    fi
+  done
+  if [ "$NEED_REINDEX" = "1" ]; then
+    echo "NOTE: this machine was running a node that cannot serve wallet reads"
+    echo "      (pruned, or without a transaction index). The settings are now"
+    echo "      corrected and the chain will be rebuilt once, from the start."
+    echo "      This takes hours and needs no supervision; the node stays offline"
+    echo "      to wallets until it finishes, and publishes itself only when ready."
+    touch "$DATADIR/.needs-reindex"
+  fi
+else
+  cat > "$DATADIR/goldbrix.conf" << 'CONF'
 server=1
 txindex=1
 prune=0
@@ -49,6 +74,7 @@ listen=1
 dbcache=1024
 fallbackfee=0.0001
 CONF
+fi
 mkdir -p "$DATADIR/index"
 
 # Peer bootstrap from the federation, not from a fixed host.
@@ -57,7 +83,7 @@ mkdir -p "$DATADIR/index"
 # a DNS seed, on the seeds baked into the binary, or on any single operator.
 # Silent by design: if nothing answers, the baked-in seeds still apply.
 if ! grep -q '^addnode=' "$DATADIR/goldbrix.conf" 2>/dev/null; then
-  echo "[3b/6] peer bootstrap via on-chain node registry"
+  echo "[3b/7] peer bootstrap via on-chain node registry"
   # Bootstrap entries ship with this script: on a clean machine the tools repo is
   # only cloned in step 4, so a file-based list is empty exactly when it is needed.
   # These are entry points for the FIRST question only - the answer comes from the
@@ -100,12 +126,12 @@ fi
 
 chown -R gbx:gbx "$DATADIR"
 
-echo "[4/6] read-api + indexer from goldbrix-tools"
+echo "[4/7] read-api + indexer from goldbrix-tools"
 [ -d "$TOOLSDIR/.git" ] && git -C "$TOOLSDIR" pull -q || git clone -q "$TOOLS_REPO" "$TOOLSDIR"
 cd "$TOOLSDIR/read-api"
 npm install --omit=dev --silent better-sqlite3
 
-echo "[5/6] systemd units"
+echo "[5/7] systemd units"
 cat > /etc/systemd/system/goldbrixd.service << UNIT
 [Unit]
 Description=GoldBrix Core full node
@@ -116,9 +142,16 @@ User=gbx
 # glibc arena fragmentation: 16 arenas balloon a long-running node's heap.
 # Proven on a live node: 3.85 GB RSS -> 1.07 GB with 2 arenas, no perf loss.
 Environment=MALLOC_ARENA_MAX=2
+# A chain that was pruned, or indexed without txindex, cannot answer wallet
+# reads. It is rebuilt once: the marker below is written by the installer and
+# removed by the first rebuild, so a restart never triggers it again.
+ExecStartPre=/bin/sh -c 'if [ -f ${DATADIR}/.needs-reindex ]; then /usr/local/bin/goldbrixd -datadir=${DATADIR} -conf=goldbrix.conf -reindex -daemon=0 && rm -f ${DATADIR}/.needs-reindex; fi; exit 0'
 ExecStart=/usr/local/bin/goldbrixd -datadir=${DATADIR} -conf=goldbrix.conf
 Restart=always
 RestartSec=10
+# Rebuilding the chain runs inside ExecStartPre and takes hours on a slow disk.
+# The default start timeout would kill it and restart it forever.
+TimeoutStartSec=infinity
 TimeoutStopSec=600
 [Install]
 WantedBy=multi-user.target
