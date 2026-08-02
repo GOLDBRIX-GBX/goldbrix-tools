@@ -63,6 +63,15 @@ const metaSet = (k,v) => Q.setMeta.run(k, String(v));
 
 const idx   = fs.existsSync(IDX_DB) ? new Database(IDX_DB,{readonly:true,fileMustExist:true}) : null;
 const qPrev = idx ? idx.prepare('SELECT sats FROM utxos WHERE txid=? AND vout=?') : null;
+// How far the address index has actually been written. The trade cursor must never move
+// past it: on a fresh machine both indexes start together, and a cursor that jumps to the
+// chain tip while the address index is still filling would skip the whole history and
+// never look back. Returns null when unknown, in which case nothing changes.
+const qIdxTip = idx ? idx.prepare('SELECT MAX(height) h FROM blocks') : null;
+function idxTip() {
+  if (!qIdxTip) return null;
+  try { const r = qIdxTip.get(); return (r && r.h != null) ? r.h : null; } catch(e) { return null; }
+}
 async function prevValueSats(txid, vout) {
   if (qPrev) { const r = qPrev.get(txid, vout); if (r) return r.sats; }
   const t = await rpcR('getrawtransaction', [txid, true]);
@@ -102,7 +111,11 @@ async function syncL1() {
   const from = last > 0 ? last : (FROM_H - 1);
   const heights = htlcSpendHeights(from, tip);
   if (heights === null) { log('[TRADE] no index — cannot scan efficiently; install gbx-indexer'); return false; }
-  if (!heights.length) { metaSet('l1_height', tip); return false; }
+  if (!heights.length) {
+    const it = idxTip();
+    metaSet('l1_height', (it === null) ? tip : Math.min(tip, it));
+    return false;
+  }
   let found = 0;
   for (const h of heights) {
     const bh  = await rpcR('getblockhash', [h]);
