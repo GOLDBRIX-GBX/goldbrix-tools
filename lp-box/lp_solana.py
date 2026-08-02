@@ -45,7 +45,14 @@ def sol_scan_and_lock_gbx(st, fund, cfg, deps):
             deps["save_state"](st); print(f"  [SOL GUARD] REJECT {hl[:14]} req={req_gbx} > max={max_gbx}"); continue
         pkU = bytes.fromhex(intent["pkU"])
         skLP = deps["sk_from_hex"](st["lp_gbx_sk"]); pkLP = deps["pk_of"](skLP)
-        T2 = deps["gheight"]() + int(intent.get("t2_blocks", cfg["t2_blocks"]))
+        # Same rule as the EVM branch: T2 comes from the USDC lock timelock read on
+        # chain, never from the request. No room left means nothing is locked and the
+        # user refunds their own USDC - a refused swap, never a lost one.
+        _t2 = deps["_t2_from_t1"](ev.get("timelock"), intent.get("t2_blocks", cfg["t2_blocks"]))
+        if _t2 is None:
+            st["swaps"][sid] = {"chain": "solana", "hashlock": hl, "sol_swap_id": sswid, "status": "rejected_t1_too_close"}
+            deps["save_state"](st); print(f"  [SOL GUARD T2] REJECT {hl[:14]} USDC timelock too close -> GBX not locked"); continue
+        T2 = deps["gheight"]() + _t2
         H = bytes.fromhex(hl[2:] if hl.startswith("0x") else hl)
         SCRIPT = deps["build_htlc"](H, pkU, pkLP, T2)
         addr = deps["gclij"]("decodescript", SCRIPT.hex())["segwit"]["address"]; lockh = deps["gheight"]()
@@ -125,7 +132,14 @@ def sol_scan_and_lock_usdc_for_sell(st, fund, cfg, deps):
         if req_usdc > int(max_usd * 1e6 * 1.01):
             st["swaps"][sid] = {"direction":"sell","chain":"solana","hashlock":hl,"status":"rejected_price"}
             deps["save_state"](st); print(f"  [SOL GUARD SELL] REJECT {hl[:14]} req={req_usdc} > max={int(max_usd*1e6)}"); continue
-        T2 = int(_t.time()) + int(intent.get("t2_evm", 3600))
+        # Second line of defence: the gateway already clamps t2_evm, but an intent
+        # reaching this daemon from anywhere else must not set this LP own lock window.
+        _te = intent.get("t2_evm")
+        try: _te = int(_te)
+        except Exception: _te = 3600
+        if _te < 1800: _te = 1800
+        if _te > 14400: _te = 14400
+        T2 = int(_t.time()) + _te
         o = _solcli(cfg, cmd="lock-sell", lp_secret=deps["SOL_SECRET"],
                     user_pubkey=intent["sol_user_pubkey"], mint=cfg["usdc"],
                     swap_id=hl, hashlock=hl, amount=str(req_usdc), timelock=str(T2))

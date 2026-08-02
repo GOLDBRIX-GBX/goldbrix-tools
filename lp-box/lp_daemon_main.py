@@ -109,6 +109,26 @@ def load_state():
 def save_state(st): json.dump(st,open(STATE_F,"w"),indent=1)
 def load_intents():
     return json.load(open(INTENTS_F)) if os.path.exists(INTENTS_F) else {}
+# T2 (this LP GBX lock) must expire well before T1 (the USDC lock it will claim against).
+# T1 is read from the chain event, never from the request. Block spacing is deliberately
+# assumed slower than real, so a slow stretch cannot push T2 past T1. No room left means
+# the LP locks nothing and the user refunds at T1 - a refused swap, never a lost one.
+T2_MIN_BLOCKS=int(os.environ.get("GBX_T2_MIN_BLOCKS","60"))
+T2_MAX_BLOCKS=int(os.environ.get("GBX_T2_MAX_BLOCKS","1008"))
+T2_SPACING_S=float(os.environ.get("GBX_T2_SPACING_S","6.0"))
+T2_SAFETY_FRAC=float(os.environ.get("GBX_T2_SAFETY_FRAC","0.5"))
+def _t2_from_t1(t1_unix,requested):
+    try: t1=int(t1_unix)
+    except Exception: return None
+    left=t1-int(time.time())
+    if left<=0: return None
+    cap=int((left/T2_SPACING_S)*T2_SAFETY_FRAC)
+    allowed=T2_MAX_BLOCKS if cap>T2_MAX_BLOCKS else cap
+    if allowed<T2_MIN_BLOCKS: return None
+    try: n=int(requested)
+    except Exception: n=600
+    return T2_MIN_BLOCKS if n<T2_MIN_BLOCKS else (allowed if n>allowed else n)
+
 def refund_sell_guard(pk,val_sats):
     # give back the volume consumed by _sell_guard at /intent when the daemon rejects (a reject is not a sale)
     try:
@@ -214,7 +234,14 @@ def scan_and_lock_gbx(st,fund,ctx):
         if req_gbx > max_gbx*(1+0.01):
             print(f"  [GUARD] REJECT {ev['id'][:14]} req={req_gbx} > max={max_gbx} usd={usd_locked} -> NU blochez GBX"); continue
         pkU=bytes.fromhex(intent["pkU"]); skLP=sk_from_hex(st["lp_gbx_sk"]); pkLP=pk_of(skLP)
-        T2=gheight()+int(intent.get("t2_blocks",600)); H=bytes.fromhex(ev["hashlock"][2:]); SCRIPT=build_htlc(H,pkU,pkLP,T2)
+        _t2=_t2_from_t1(ev.get("timelock"),intent.get("t2_blocks"))
+        if _t2 is None:
+            # Recorded, not retried: with no room left before T1 this swap can never be
+            # served safely. The user refunds their own USDC at T1 and loses nothing.
+            st["swaps"][ctx["name"]+":"+ev["id"]]={"chain":ctx["name"],"evm_id":ev["id"],"hashlock":ev["hashlock"],"status":"rejected_t1_too_close"}
+            save_state(st)
+            print(f"  [GUARD T2] REJECT {ev['id'][:14]} USDC timelock too close -> GBX not locked, user refunds USDC at T1"); continue
+        T2=gheight()+_t2; H=bytes.fromhex(ev["hashlock"][2:]); SCRIPT=build_htlc(H,pkU,pkLP,T2)
         addr=gclij("decodescript",SCRIPT.hex())["segwit"]["address"]; lockh=gheight()
         txid=gcli("sendtoaddress",addr,float(intent.get("gbx_amount",1.0)),wallet=WALLET); gmine(1,fund)
         v=[x for x in gclij("getrawtransaction",txid,True)["vout"] if x["scriptPubKey"]["hex"]==p2wsh_spk(SCRIPT).hex()][0]
@@ -321,7 +348,7 @@ def run_once():
     # === RAMURA SOLANA (izolata, gated pe chains.json solana.enabled) ===
     try:
         lp_solana.sol_run(st, fund, {
-            'load_intents': load_intents, 'load_chains': load_chains,
+            'load_intents': load_intents, 'load_chains': load_chains, '_t2_from_t1': _t2_from_t1,
             'save_state': save_state, 'quote': quote,
             'sk_from_hex': sk_from_hex, 'pk_of': pk_of, 'gheight': gheight,
             'build_htlc': build_htlc, 'gcli': gcli, 'gclij': gclij, 'gmine': gmine,

@@ -108,6 +108,19 @@ def _rate_check(ip):
 SELL_COOLDOWN=600
 SG_F=E["SELL_GUARD_F"]
 SELL_DAILY_FRAC=float(os.environ.get("GBX_SELL_DAILY_FRAC","0.25"))
+# Safety parameters are set by this LP, never taken from the request they protect
+# against. t2_blocks / timelock_secs / t2_evm decide when THIS LP own lock expires: a
+# caller free to pick them can strip the LP of its claim window or freeze its capital.
+T2_MIN_BLOCKS=int(os.environ.get("GBX_T2_MIN_BLOCKS","60"))
+T2_MAX_BLOCKS=int(os.environ.get("GBX_T2_MAX_BLOCKS","1008"))
+T1_MIN_SECS=int(os.environ.get("GBX_T1_MIN_SECS","1800"))
+T1_MAX_SECS=int(os.environ.get("GBX_T1_MAX_SECS","14400"))
+def _clamp_int(v,lo,hi,dflt):
+    """Missing or malformed falls back to the default, valid gets clamped. Never raises:
+    a bad field must not be able to stop the LP."""
+    try: n=int(v)
+    except Exception: return dflt
+    return lo if n<lo else (hi if n>hi else n)
 def _sg_cap_sats():
     """Daily sell cap per key = a share of this LP's own GBX reserve, so it scales with
     liquidity instead of being a fixed number. Each operator sets the share for their
@@ -203,11 +216,12 @@ class H(BaseHTTPRequestHandler):
                 _qu,_qe=_quote_honour(body.get('gbx_val'))
                 if _qu: body['quote_usd']=_qu; body['quote_exp']=_qe
                 it[hl]=body
+                it[hl]['t2_evm']=_clamp_int(body.get('t2_evm'),T1_MIN_SECS,T1_MAX_SECS,3600)
             else:
                 pkU=body.get('pkU'); amt=body.get('gbx_amount')
                 if not (pkU and amt): return self._s(400,{'error':'missing'})
                 it[hl]={'pkU':pkU,'gbx_amount':amt}
-                if body.get('t2_blocks'): it[hl]['t2_blocks']=body['t2_blocks']
+                it[hl]['t2_blocks']=_clamp_int(body.get('t2_blocks'),T2_MIN_BLOCKS,T2_MAX_BLOCKS,600)
                 # GASLESS (EIP-3009): pastreaza autorizarea ca daemonul sa poata face lockAuth (relayer=LP)
                 if body.get('gasless'):
                     it[hl]['gasless']=True
@@ -227,7 +241,7 @@ class H(BaseHTTPRequestHandler):
             arg=json.dumps({'cmd':'prepare-lock','idl':sol.get('idl'),'program':sol.get('program'),'rpc':sol.get('rpc'),
                 'commitment':'confirmed','lp_secret':_sol_secret(),'user_pubkey':body['user_pubkey'],
                 'mint':sol.get('USDC'),'swap_id':body['swap_id'],'hashlock':body['hashlock'],
-                'amount':str(amt),'timelock':str(int(_t.time())+int(body.get('timelock_secs',3600)))})
+                'amount':str(amt),'timelock':str(int(_t.time())+_clamp_int(body.get('timelock_secs'),T1_MIN_SECS,T1_MAX_SECS,3600))})
             r=subprocess.run(['node',SOL_CLI,arg],capture_output=True,text=True,timeout=40)
             try: o=json.loads(r.stdout.strip())
             except: return self._s(502,{'error':'cli_fail','raw':(r.stdout or r.stderr)[:200]})
@@ -342,7 +356,7 @@ class H(BaseHTTPRequestHandler):
             hl=body['hashlock'].lower()
             it=load(INTENTS_F,{})
             it[hl]={'chain':'solana','sol_swap_id':body['swap_id'],'pkU':body['pkU'],'gbx_amount':body['gbx_amount']}
-            if body.get('t2_blocks'): it[hl]['t2_blocks']=body['t2_blocks']
+            it[hl]['t2_blocks']=_clamp_int(body.get('t2_blocks'),T2_MIN_BLOCKS,T2_MAX_BLOCKS,600)
             json.dump(it,open(INTENTS_F,'w'))
             return self._s(200,{'ok':True,'sig':o.get('sig'),'vault':o.get('vault'),'hashlock':hl})
         if self.path=='/broadcast':
