@@ -160,6 +160,20 @@ def _quote_honour(gbx_base):
     try: json.dump(q,open(QUOTES_F,'w'))
     except Exception: pass
     return float(best['usd']), int(best['exp'])+QUOTE_GRACE
+def _refund_pk_from_script(script_hex):
+    """The daily cap must be anchored to something that costs money to obtain. This
+    reads the refund key out of the HTLC script of the swap; the script hash is checked
+    against the on-chain output before any USDC leaves this LP, so the key is one that
+    actually holds GBX. A key taken from the request would be free to generate, turning
+    the cap into a per-request limit instead of a per-actor one.
+    Layout verified against live swaps: the script ends with 21 <33-byte key> ac 68."""
+    try: b=bytes.fromhex(script_hex or '')
+    except Exception: return None
+    if len(b)<36: return None
+    t=b[-36:]
+    if t[0]!=0x21 or t[34]!=0xac or t[35]!=0x68: return None
+    return t[1:34].hex()
+
 def _sell_guard(pk,val_sats,commit=True):
     if not pk: return False,{'error':'missing_refund_pubkey'}
     now=int(_t.time()); day=now//86400
@@ -211,7 +225,9 @@ class H(BaseHTTPRequestHandler):
                 # ANTI-DUMP: rate-limit ONLY on sells (outgoing money)
                 _ok,_why=_rate_check(_ip)
                 if not _ok: return self._s(429,{'error':_why})
-                _gok,_gerr=_sell_guard(body.get('refund_pubkey') or body.get('sol_user_pubkey'),body.get('gbx_val'))
+                _cap_pk=_refund_pk_from_script(body.get('gbx_script'))
+                if not _cap_pk: return self._s(400,{'error':'missing_refund_pubkey'})
+                _gok,_gerr=_sell_guard(_cap_pk,body.get('gbx_val'))
                 if not _gok: return self._s(429,_gerr)
                 _qu,_qe=_quote_honour(body.get('gbx_val'))
                 if _qu: body['quote_usd']=_qu; body['quote_exp']=_qe
