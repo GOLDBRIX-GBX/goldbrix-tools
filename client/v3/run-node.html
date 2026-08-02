@@ -25,7 +25,7 @@ td,th{border:1px solid #30363d;padding:6px 10px;text-align:left}
 <pre><code>curl -fsSL https://raw.githubusercontent.com/GOLDBRIX-GBX/goldbrix-tools/main/run-node/install-node.sh -o install-node.sh
 less install-node.sh   # read before running — verify, don't trust
 sudo bash install-node.sh</code></pre>
-<p>The script pins the binary SHA-256 (also anchored on-chain) and installs systemd services <code>goldbrixd</code>, <code>gbx-read-api</code>, <code>gbx-indexer</code>. When synced, expose port 8088 behind HTTPS and submit your endpoint for <code>nodes.json</code> — wallets pick you up via quorum, no app rebuild.</p>
+<p>The script pins the binary SHA-256 (also anchored on-chain) and installs systemd services <code>goldbrixd</code>, <code>gbx-read-api</code>, <code>gbx-indexer</code>. When synced, expose port 8088 behind HTTPS and the node publishes itself to the on-chain registry — nobody has to accept you, and wallets pick you up from the chain, no app rebuild.</p>
 <h2>1. Requirements</h2>
 <table>
 <tr><th>OS</th><td>Linux x86_64 (Ubuntu 22.04+ / Debian 12+)</td></tr>

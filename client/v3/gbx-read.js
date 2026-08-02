@@ -1,6 +1,6 @@
 /* GBX READ-ROUTER v2 — federated multi-node read with persistent failover.
    Keyless by construction. Works with OR without any specific server.
-   Discovery: locally shipped nodes.json + peer nodes.json + on-chain node registry.
+   Discovery: the nodes.json shipped with this client + the on-chain node registry.
    Nodes that answered are remembered on the device; dead nodes are demoted.
    API unchanged: window.gbxRead(path,{quorum,field}) · window.GBXRead.json(path)
    Added: window.GBXReady (promise) · window.GBX_LAST_NODE */
@@ -14,9 +14,16 @@
   var READY_CAP_MS = 2500;
   var REFRESH_MS   = 300000;
 
-  // Last-resort bootstrap only. One reachable entry is enough: the list then
-  // grows from the chain itself and is remembered on this device.
-  var SEED = ['https://goldbrix.app/api'];
+  // Last-resort bootstrap only, and no entry here is privileged: one reachable
+  // node is enough, the list then grows from the chain itself and is remembered
+  // on this device. Independent operators first, so that losing any single host
+  // - including the one the project started on - changes nothing.
+  var SEED = [
+    'https://155-117-232-248.sslip.io/api',
+    'https://node1.noderuner.com/api',
+    'https://169-58-61-71.sslip.io/api',
+    'https://goldbrix.app/api'
+  ];
 
   var SCORE = {};
 
@@ -91,9 +98,7 @@
   // '/nodes.json' is the copy shipped with the client (installed app or any
   // mirror): resolvable without depending on a remote host. Failure = silent.
   window.GBX_NODES_URLS = window.GBX_NODES_URLS || [
-    '/nodes.json',
-    'https://goldbrix.app/nodes.json',
-    'https://raw.githubusercontent.com/GOLDBRIX-GBX/goldbrix-tools/main/nodes.json'
+    '/nodes.json'
   ];
 
   function discoverFiles(){
