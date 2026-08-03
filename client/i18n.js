@@ -5,6 +5,10 @@
 // Add data-t="key" on element textContent or data-tp="key" on placeholder
 
 // ═══ I18N — FULL TRANSLATIONS ═══
+/* Wrapped in an IIFE: pages declare their own top-level currentLang and
+   applyLang, and two top-level let declarations kill the later script.
+   Everything stays private; window gets only what nobody else defined. */
+(function(){
 const I18N = {
   en: {
     h_tvl:'TVL', h_vol24h:'24H VOL', h_burned:'BURNED',
@@ -577,3 +581,11 @@ if (typeof document !== 'undefined') {
     applyLang(currentLang);
   }
 }
+
+/* Guarded exports: a page's own definitions always win. */
+if (typeof window!=='undefined'){
+  if (window.t === undefined) window.t = t;
+  if (window.applyLang === undefined) window.applyLang = applyLang;
+  window.gbxI18nApply = applyLang;
+}
+})();
