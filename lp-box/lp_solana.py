@@ -97,13 +97,23 @@ def sol_scan_and_refund(st, cfg, deps):
     pass
 
 def sol_run(st, fund, deps):
+    # One failing step must never stop the others. Opening a new lock needs
+    # rent-exempt deposits; settling a swap that is already running does not.
+    # A provider out of lamports still has to honour what it started.
     cfg = sol_cfg(deps["load_chains"])
     if cfg is None: return
-    sol_scan_and_lock_gbx(st, fund, cfg, deps)
-    sol_scan_and_claim_usdc(st, cfg, deps)
-    sol_scan_and_refund(st, cfg, deps)
-    sol_scan_and_lock_usdc_for_sell(st, fund, cfg, deps)
-    sol_scan_and_claim_gbx_for_sell(st, fund, cfg, deps)
+    for _name, _fn, _needs_fund in (
+        ("lock_gbx",        sol_scan_and_lock_gbx,          True),
+        ("claim_usdc",      sol_scan_and_claim_usdc,        False),
+        ("refund",          sol_scan_and_refund,            False),
+        ("lock_usdc_sell",  sol_scan_and_lock_usdc_for_sell, True),
+        ("claim_gbx_sell",  sol_scan_and_claim_gbx_for_sell, True),
+    ):
+        try:
+            if _needs_fund: _fn(st, fund, cfg, deps)
+            else: _fn(st, cfg, deps)
+        except Exception as _e:
+            print(f"  [SOL {_name} RESILIENT] {str(_e)[:160]} -> skip this step, continue")
 
 
 # ================= SELL:SOLANA (user lock GBX L1 -> LP lock USDC Solana -> user claim USDC -> LP claim GBX) =================

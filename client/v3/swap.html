@@ -842,7 +842,15 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
           if(_rej){
             // TRIERE ON-CHAIN: UTXO cheltuit deja (refundat/claimed) -> cardul dispare
             let _spent=false;
-            try{ const u=await (await GBX_LP_FETCH(C,'/utxo-status?txid='+p.gbx_txid+'&vout='+(p.gbx_vout||0))).json(); if(u && u.spent===true) _spent=true; }catch(_e){}
+            try{ const u=await (await GBX_LP_FETCH(C,'/utxo-status?txid='+p.gbx_txid+'&vout='+(p.gbx_vout||0))).json();
+                 if(u && u.spent===true) _spent=true;
+                 // A rejected sell leaves the provider with nothing to report, so the
+                 // amount is read from the output itself - the chain always knows it.
+                 if(u && !_spent && !(Number(p.gbx_val)>0) && Number(u.value_sat)>0){
+                   p.gbx_val=Number(u.value_sat);
+                   if(!p.script && u.spk) p.spk=u.spk;
+                   try{ localStorage.setItem(k, JSON.stringify(p)); }catch(_e){}
+                 } }catch(_e){}
             if(_spent){ try{ localStorage.removeItem(k); }catch(_e){} continue; }
             const gS=(Number(p.gbx_val||0)/1e8).toLocaleString();
             const box=document.createElement('div'); box.style.cssText='border:1px solid var(--gold-deep,#b8860b);border-radius:12px;padding:12px;margin-top:12px;background:rgba(184,134,11,.06)';
@@ -1021,7 +1029,7 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
       var x=(p.x_usdc!=null)?(+p.x_usdc).toFixed(2):'0.00';
       // numbers speak (live price above, chart, explorer links below). One honest line.
       // The floor is derived from the price the chain has executed; never a written-in number.
-      var _f=(p.floor_usd!=null)?('$'+(+p.floor_usd).toFixed(4).replace(/0+$/,'').replace(/\.$/,'')):null;
+      var _f=(p.floor_usd!=null)?((+p.floor_usd).toFixed(4).replace(/0+$/,'').replace(/\.$/,'')):null;
       var head = _f ? ('• '+String(t.piSimple||'').replace('{f}',_f)) : '';
       var EXP={base:{u:'https://basescan.org/token/0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913?a=',n:'Base'},
                arbitrum:{u:'https://arbiscan.io/token/0xaf88d065e77c8cC2239327C5EDb3A432268e5831?a=',n:'Arbitrum'},
