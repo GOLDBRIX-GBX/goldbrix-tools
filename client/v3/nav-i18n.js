@@ -14,11 +14,11 @@
     ['/v3/wallet.html',      '👤','navWallet'],
     ['/v3/trade.html',       '📊','navTrade'],
     ['/v3/launch.html',      '🚀','navLaunch'],
-    ['/v3/leaderboard.html', '🔥','navBurns'],
+    ['/v3/burns.html', '🔥','navBurns'],
     ['/v3/explorer.html',    '🔍','navExplorer'],
     ['/v3/settings.html',    '⚙️','navSettings']
   ];
-  const ALIAS = { '/v3/launch-x.html':'/v3/launch.html', '/v3/coins-x.html':'/v3/trade.html', '/v3/coin-x.html':'/v3/trade.html', '/v3/burns.html':'/v3/leaderboard.html', '/index.html':'/' };
+  const ALIAS = { '/v3/launch-x.html':'/v3/launch.html', '/v3/coins-x.html':'/v3/trade.html', '/v3/coin-x.html':'/v3/trade.html', '/v3/leaderboard.html':'/v3/burns.html', '/index.html':'/' };
   function getLang(){ return localStorage.getItem('gbx_lang') || localStorage.getItem('goldbrix_lang') || 'en'; }
   function applyNavI18n(){
     try {
