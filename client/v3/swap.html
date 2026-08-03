@@ -325,7 +325,7 @@ input, textarea, .copyable, [data-copyable], .addr, .hash, .txid, code, .gbx-amo
 <script type="module" src="/multichain-utils.js?v=114"></script>
 <script type="module" src="/evm-tx.mjs"></script>
 <script type="module">
-import("/mod-b-browser.mjs").then(function(){ if(!window.GoldbrixModB) window.__gbxErr.push("ModB importat dar window.GoldbrixModB NESETAT"); }).catch(function(e){ window.__gbxErr.push("ModB: "+((e&&e.message)||String(e))); });
+import("/mod-b-browser.mjs").then(function(){ if(!window.GoldbrixModB) window.__gbxErr.push("ModB imported but window.GoldbrixModB is UNSET"); }).catch(function(e){ window.__gbxErr.push("ModB: "+((e&&e.message)||String(e))); });
 import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(function(e){ window.__gbxErr.push("ModSol: "+((e&&e.message)||String(e))); });
 </script>
 <script>
