@@ -215,6 +215,39 @@
   function norm(p){ return (p.indexOf('/api/')===0) ? p.slice(4) : p; }
   window.GBXRead = {
     fetch: function(p,o){ return window.gbxRead(norm(p), o); },
-    json:  function(p,o){ return window.gbxRead(norm(p), o).then(function(r){ return r.json(); }); }
+    json:  function(p,o){ return window.gbxRead(norm(p), o).then(function(r){ return r.json(); }); },
+    /* Ask every live node in parallel and keep the answer scoreFn ranks
+       highest. For market data the node with the deepest trade history wins:
+       an endogenous criterion, no privileged host. Nodes that fail or score
+       null are ignored; no node answering resolves to null. */
+    best: function(p, scoreFn, ms){
+      var path = norm(p);
+      var nodes = (window.GBX_NODES||[]).slice();
+      if (!nodes.length) return window.GBXRead.json(p);
+      var t = ms || 6000;
+      return Promise.all(nodes.map(function(n){
+        var c = (typeof AbortController!=='undefined') ? new AbortController() : null;
+        var to = c ? setTimeout(function(){ c.abort(); }, t) : null;
+        return fetch(String(n).replace(/\/+$/,'')+path, {cache:'no-store', signal:(c&&c.signal)||undefined})
+          .then(function(r){ return r.json(); })
+          .then(function(j){ var sc = scoreFn(j); return (sc==null||isNaN(sc)) ? null : {j:j, sc:sc, n:n}; })
+          .catch(function(){ return null; })
+          .finally(function(){ if(to) clearTimeout(to); });
+      })).then(function(rs){
+        var b = null;
+        for (var i=0;i<rs.length;i++) if (rs[i] && (!b || rs[i].sc > b.sc)) b = rs[i];
+        return b;
+      });
+    },
+    /* Same race, but the caller wants the winning node base (for widgets
+       that build their own URLs, like the chart), not the payload. */
+    bestNode: function(p, scoreFn, ms){
+      return this._bestRaw(p, scoreFn, ms).then(function(b){ return b ? b.n : null; });
+    }
+  };
+  /* best() keeps returning the payload; both share one implementation. */
+  window.GBXRead._bestRaw = window.GBXRead.best;
+  window.GBXRead.best = function(p, scoreFn, ms){
+    return this._bestRaw(p, scoreFn, ms).then(function(b){ return b ? b.j : null; });
   };
 })();
