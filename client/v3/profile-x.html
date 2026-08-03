@@ -430,7 +430,7 @@ async function go(){
       var k=id+':'+iv; if(CAND[k]) return CAND[k];
       var raw=[]; try{ var d=await gj('/api/candles/'+id+'?interval='+iv+'&limit=500'); raw=(d&&d.candles)||[]; }catch(e){}
       CAND[k]=raw.map(function(x){
-        var cl=Number(x.close!=null?x.close:x.c); var tm=Number(x.time!=null?x.time:x.t);
+        var cl=Number(x.close); var tm=Number(x.time);
         if(!(cl>0)||!(tm>0)) return null;
         if(tm<1e12){ tm=(window.__phTipH&&window.__phTipH>0)? Date.now()-(window.__phTipH-tm)*3000 : null; }
         return tm?{time:tm, close:cl}:null;
@@ -508,7 +508,7 @@ async function go(){
         var st=stats[h.coin_id],ph=(st&&st.phase==='pool')?'p':'c';
         /* The endpoint answers with long field names when an interval is asked for
            and short ones otherwise; read both so a sparkline never goes blank. */
-        var v=a.filter(function(x){return x.ph===ph;}).map(function(x){return Number(x.close!=null?x.close:x.c);}).filter(function(n){return n>0;});
+        var v=a.filter(function(x){return x.ph===ph;}).map(function(x){return Number(x.close);}).filter(function(n){return n>0;});
         var e=$('sp_'+h.coin_id);if(e)e.innerHTML=spark(v);
       }).catch(function(){});
     });
