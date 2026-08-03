@@ -564,16 +564,16 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
   // Source = the same keyless trade index the chart uses; federated, no single server.
   async function gbxShowMarketPrice(){
     try{
-      var bases=(window.GBX_NODES&&window.GBX_NODES.length)?window.GBX_NODES:[];
+      /* The market figure must come from the node with the deepest trade
+         history, not from whichever answered first (one node has none). */
       var m=null;
-      for(var i=0;i<bases.length && i<4 && !m;i++){
-        try{
-          var c=new AbortController(); var to=setTimeout(function(){c.abort();},6000);
-          var r=await fetch(bases[i].replace(/\/+$/,'')+'/gbx/stats',{cache:'no-store',signal:c.signal});
-          clearTimeout(to);
-          if(r.ok) m=await r.json();
-        }catch(_e){}
-      }
+      try{
+        if(window.GBXRead && window.GBXRead.best){
+          m=await window.GBXRead.best('/api/gbx/stats', function(j){ return (j && j.trades>0 && j.last_price_usd>0) ? j.trades : null; });
+        } else if(window.GBXRead){
+          m=await window.GBXRead.json('/api/gbx/stats');
+        }
+      }catch(_e){}
       var row=document.getElementById('mktRow'), px=document.getElementById('mktPrice');
       if(!row||!px) return;
       if(m && m.trades>0 && m.last_price_usd>0){
