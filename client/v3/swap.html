@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script>window.__gbxErr=[];addEventListener("error",function(e){window.__gbxErr.push((e.message||e.type)+" @ "+((e.filename||"").split("/").pop())+":"+(e.lineno||""));},true);</script>
 <script>
-window.GBX_API_BASE='https://goldbrix.app/api'; window.GBX_LP_BASE='https://goldbrix.app/lp';
+window.GBX_API_BASE=''; window.GBX_LP_BASE='';  // no fixed host: nodes come from GBXRead, gateways from GBXLp (on-chain registry)
 // LP discovery — lps.json + registrul ON-CHAIN (GBX:LP via /lp-registry).
 // Merge dedup pe base_url; intrarile on-chain = minime (health-check /lp-info decide). Failure = silent.
 window.GBX_LPS = async function(){ try{ return await window.GBXLp.list(); }catch(_e){ return []; } };
@@ -22,7 +22,7 @@ window.GBX_LP_FETCH = async function(C, pathq){
          if(!r.ok) throw new Error('http '+r.status); return r; }
     catch(e){ clearTimeout(t); throw e; }
   }
-  try{ return await tryOne(C.gateway); }catch(e0){}
+  if(C.gateway){ try{ return await tryOne(C.gateway); }catch(e0){} }
   try{
     var d={lps: await window.GBX_LPS()};
     var ch=Object.keys(window.GBX_CHAINS).find(function(k){return window.GBX_CHAINS[k]===C;});
@@ -43,6 +43,26 @@ window.GBX_LP_FETCH = async function(C, pathq){
   return fetch(C.gateway+pathq); // ultimul: lasa eroarea originala sa iasa onest
 };
 window.GBX_LP_ENSURE = async function(C){
+  // Single gate in front of every flow that moves money: wait for the router to
+  // pick a gateway from the on-chain registry before anything is signed or sent.
+  try{ await window.GBX_LP_ROUTE; }catch(_e){}
+  if(C && !C.gateway){
+    try{
+      var _l=await window.GBX_LPS();
+      var _ch=Object.keys(window.GBX_CHAINS||{}).find(function(k){return window.GBX_CHAINS[k]===C;});
+      for(var _i=0;_i<_l.length;_i++){
+        var _lp=_l[_i];
+        if(_ch && _lp.chains && _lp.chains.indexOf(_ch)<0) continue;
+        try{
+          var _in=await (await fetch(_lp.base_url+'/lp-info',{cache:'no-store'})).json();
+          if(!_in || !_in.lp_evm_addr) continue;
+          C.gateway=_lp.base_url; C.lpName=_lp.name;
+          if(C.kind==='evm' && _in.lp_evm_addr) C.lpEvm=_in.lp_evm_addr;
+          break;
+        }catch(_e1){ continue; }
+      }
+    }catch(_e2){}
+  }
   try{ await (await window.GBX_LP_FETCH(C,'/quote?usd=1')).json(); }catch(e){}
 };
 // LP-SWAP-STATUS: statusul unui swap vechi traieste DOAR pe LP-ul care l-a procesat.
@@ -105,7 +125,7 @@ window.GBX_LP_ROUTE = (async function(){
     window.GBX_CHAINS = {
   base: {
     kind:'evm', label:'Base', chainId: 8453,
-    gateway: 'https://goldbrix.app/lp',
+    gateway: '',   // resolved by GBX_LP_ROUTE from the on-chain LP registry
     evmRpc:  'https://mainnet.base.org',
     htlc:    '0x8e351c32dfb27aa22334a20dcf7262f54f78e0c0',
     usdc:    '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
@@ -113,7 +133,7 @@ window.GBX_LP_ROUTE = (async function(){
   },
   arbitrum: {
     kind:'evm', label:'Arbitrum', chainId: 42161,
-    gateway: 'https://goldbrix.app/lp',
+    gateway: '',   // resolved by GBX_LP_ROUTE from the on-chain LP registry
     evmRpc:  'https://arb1.arbitrum.io/rpc',
     htlc:    '0xa43813d90adb98a5c400113ce2cc29d43d4ab867',
     usdc:    '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
@@ -121,7 +141,7 @@ window.GBX_LP_ROUTE = (async function(){
   },
   solana: {
     kind:'solana', label:'Solana',
-    gateway: 'https://goldbrix.app/lp',
+    gateway: '',   // resolved by GBX_LP_ROUTE from the on-chain LP registry
     program: 'AAbKiRpmY5jYfC37DuQ9aTsWnNqxZXLe4fvyGSb3YS1F',
     usdc:    'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
     lpSol:   '67giiRaNb6qUjX6DnSrEZc7fbgSu5zxCDXNrUAELaDWh',
@@ -541,7 +561,7 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
   // Source = the same keyless trade index the chart uses; federated, no single server.
   async function gbxShowMarketPrice(){
     try{
-      var bases=(window.GBX_NODES&&window.GBX_NODES.length)?window.GBX_NODES:['https://goldbrix.app/api'];
+      var bases=(window.GBX_NODES&&window.GBX_NODES.length)?window.GBX_NODES:[];
       var m=null;
       for(var i=0;i<bases.length && i<4 && !m;i++){
         try{
@@ -674,7 +694,7 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
         if(dir!=='buy'){
           // quote de SELL real de la LP (AMM cu price impact) — NU derivare liniara din quote-ul de buy
           const probe=await (await GBX_LP_FETCH(C,'/quote?gbx='+v)).json();
-          if(probe.below_floor){ setMsg((t('below_floor')||'').replace('{f}', String(probe.floor_usd||0.10))); _reset(); return; }
+          if(probe.below_floor){ setMsg((t('below_floor')||'').replace('{f}', String(probe.floor_usd||''))); _reset(); return; }
           if(probe.capped){ setMsg(t('cap_msg_sell').replace('{m}', String(probe.cap_gbx||probe.max_gbx_in||''))); _reset(); return; }
           const usd=+probe.usd_out;
           if(!(usd>0)){ setMsg('quote sell indisponibil'); _reset(); return; }
@@ -727,7 +747,7 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
       }else{
         // quote de SELL real de la LP (AMM cu price impact) — NU derivare liniara din quote-ul de buy
         const probe = await (await GBX_LP_FETCH(C,'/quote?gbx='+v)).json();
-        if(probe.below_floor){ setMsg((t('below_floor')||'').replace('{f}', String(probe.floor_usd||0.10))); _reset(); return; }
+        if(probe.below_floor){ setMsg((t('below_floor')||'').replace('{f}', String(probe.floor_usd||''))); _reset(); return; }
         if(probe.capped){ setMsg(t('cap_msg_sell').replace('{m}', String(probe.cap_gbx||probe.max_gbx_in||''))); _reset(); return; }
         const usd = +probe.usd_out;
         if(!(usd>0)){ setMsg('quote sell indisponibil'); _reset(); return; }
@@ -984,11 +1004,11 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
 })();
 
   var PI_T={
-    en:{piSimple:"The price never falls below $0.10.",how:"How is the price set?",floor:"Now: floor price $",boot:" (bootstrap phase).",onchain:" Fully backed by real on-chain reserves — anyone can verify. Treasury excluded (to be burned).",curve:"Live: automatic curve x·y=k — nobody sets the price. Fully backed by on-chain reserves; large trades move the price progressively — automatic fairness for everyone.",verif:"Verifiable on-chain · treasury excluded → burn",verify:"Verify on explorer"},
-    ro:{piSimple:"Prețul nu scade niciodată sub $0,10.",how:"Cum se stabilește prețul?",floor:"Acum: preț plasă $",boot:" (fază bootstrap).",onchain:" Acoperit integral de rezerve reale on-chain — oricine poate verifica. Trezoreria e exclusă (se va arde).",curve:"Activ: curbă automată x·y=k — nimeni nu setează prețul. Acoperit integral de rezerve on-chain; tranzacțiile mari mișcă prețul progresiv — corectitudine automată pentru toți.",verif:"Verificabil on-chain · trezorerie exclusă → burn",verify:"Verifică pe explorer"},
-    de:{piSimple:"Der Preis fällt nie unter $0,10.",how:"Wie wird der Preis festgelegt?",floor:"Jetzt: Mindestpreis $",boot:" (Bootstrap-Phase).",onchain:" Vollständig durch echte On-Chain-Reserven gedeckt — jeder kann es prüfen. Treasury ausgeschlossen (wird verbrannt).",curve:"Live: automatische Kurve x·y=k — niemand setzt den Preis. Vollständig durch On-Chain-Reserven gedeckt; große Trades bewegen den Preis progressiv — automatische Fairness für alle.",verif:"On-chain überprüfbar · Treasury ausgeschlossen → Burn",verify:"Im Explorer prüfen"},
-    zh:{piSimple:"价格永不低于 $0.10。",how:"价格如何确定？",floor:"当前：保底价 $",boot:"（启动阶段）。",onchain:"由真实链上储备全额支持 — 任何人都可验证。国库已排除（将被销毁）。",curve:"实时：自动曲线 x·y=k — 无人设定价格。由链上储备全额支持；大额交易会逐步推动价格 — 对所有人自动公平。",verif:"链上可验证 · 国库排除 → 销毁",verify:"在浏览器验证"},
-    ar:{piSimple:"لا يقل السعر أبدًا عن 0.10 دولار.",how:"كيف يُحدَّد السعر؟",floor:"الآن: السعر الأدنى $",boot:" (مرحلة التمهيد).",onchain:" مدعوم بالكامل باحتياطيات حقيقية على السلسلة — يمكن لأي شخص التحقق. الخزينة مستبعدة (سيتم حرقها).",curve:"مباشر: منحنى تلقائي x·y=k — لا أحد يحدد السعر. مدعوم بالكامل باحتياطيات على السلسلة؛ الصفقات الكبيرة تحرّك السعر تدريجياً — عدالة تلقائية للجميع.",verif:"قابل للتحقق على السلسلة · الخزينة مستثناة → حرق",verify:"تحقق على المستكشف"}
+    en:{piSimple:"The price never falls below ${f}.",how:"How is the price set?",floor:"Now: floor price $",boot:" (bootstrap phase).",onchain:" Fully backed by real on-chain reserves — anyone can verify. Treasury excluded (to be burned).",curve:"Live: automatic curve x·y=k — nobody sets the price. Fully backed by on-chain reserves; large trades move the price progressively — automatic fairness for everyone.",verif:"Verifiable on-chain · treasury excluded → burn",verify:"Verify on explorer"},
+    ro:{piSimple:"Prețul nu scade niciodată sub ${f}.",how:"Cum se stabilește prețul?",floor:"Acum: preț plasă $",boot:" (fază bootstrap).",onchain:" Acoperit integral de rezerve reale on-chain — oricine poate verifica. Trezoreria e exclusă (se va arde).",curve:"Activ: curbă automată x·y=k — nimeni nu setează prețul. Acoperit integral de rezerve on-chain; tranzacțiile mari mișcă prețul progresiv — corectitudine automată pentru toți.",verif:"Verificabil on-chain · trezorerie exclusă → burn",verify:"Verifică pe explorer"},
+    de:{piSimple:"Der Preis fällt nie unter ${f}.",how:"Wie wird der Preis festgelegt?",floor:"Jetzt: Mindestpreis $",boot:" (Bootstrap-Phase).",onchain:" Vollständig durch echte On-Chain-Reserven gedeckt — jeder kann es prüfen. Treasury ausgeschlossen (wird verbrannt).",curve:"Live: automatische Kurve x·y=k — niemand setzt den Preis. Vollständig durch On-Chain-Reserven gedeckt; große Trades bewegen den Preis progressiv — automatische Fairness für alle.",verif:"On-chain überprüfbar · Treasury ausgeschlossen → Burn",verify:"Im Explorer prüfen"},
+    zh:{piSimple:"价格永不低于 ${f}。",how:"价格如何确定？",floor:"当前：保底价 $",boot:"（启动阶段）。",onchain:"由真实链上储备全额支持 — 任何人都可验证。国库已排除（将被销毁）。",curve:"实时：自动曲线 x·y=k — 无人设定价格。由链上储备全额支持；大额交易会逐步推动价格 — 对所有人自动公平。",verif:"链上可验证 · 国库排除 → 销毁",verify:"在浏览器验证"},
+    ar:{piSimple:"لا يقل السعر أبدًا عن {f} دولار.",how:"كيف يُحدَّد السعر؟",floor:"الآن: السعر الأدنى $",boot:" (مرحلة التمهيد).",onchain:" مدعوم بالكامل باحتياطيات حقيقية على السلسلة — يمكن لأي شخص التحقق. الخزينة مستبعدة (سيتم حرقها).",curve:"مباشر: منحنى تلقائي x·y=k — لا أحد يحدد السعر. مدعوم بالكامل باحتياطيات على السلسلة؛ الصفقات الكبيرة تحرّك السعر تدريجياً — عدالة تلقائية للجميع.",verif:"قابل للتحقق على السلسلة · الخزينة مستثناة → حرق",verify:"تحقق على المستكشف"}
   };
   async function loadPriceInfo(){
     var box=document.getElementById('piBody'); var tg=document.getElementById('piToggle');
@@ -1000,7 +1020,9 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
       var r=await window.GBX_LP_FETCH((typeof C!=='undefined'&&C&&C.gateway)?C:{gateway:(window.GBX_LP_BASE||'/lp')},'/lp-info'); var d=await r.json(); var p=d.price||{};
       var x=(p.x_usdc!=null)?(+p.x_usdc).toFixed(2):'0.00';
       // numbers speak (live price above, chart, explorer links below). One honest line.
-      var head = '• '+(t.piSimple||'');
+      // The floor is derived from the price the chain has executed; never a written-in number.
+      var _f=(p.floor_usd!=null)?('$'+(+p.floor_usd).toFixed(4).replace(/0+$/,'').replace(/\.$/,'')):null;
+      var head = _f ? ('• '+String(t.piSimple||'').replace('{f}',_f)) : '';
       var EXP={base:{u:'https://basescan.org/token/0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913?a=',n:'Base'},
                arbitrum:{u:'https://arbiscan.io/token/0xaf88d065e77c8cC2239327C5EDb3A432268e5831?a=',n:'Arbitrum'},
                solana:{u:'https://solscan.io/account/',n:'Solana'}};

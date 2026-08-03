@@ -60,7 +60,7 @@ const GOLDBRIX_NETWORK = {
 };
 
 const DERIVATION_PATH = "m/84'/0'/0'/0/0";
-const API_BASE = (typeof window!=='undefined' && window.GBX_API_BASE) || 'https://goldbrix.app/api';
+const API_BASE = (typeof window!=='undefined' && window.GBX_API_BASE) || '/api';
 
 // Client-side per-request failover across the LP federation for utxos + broadcast.
 // Order: GBX_LP_BASE (if the swap router already chose) -> all gateways from lps.json -> static fallback.
@@ -78,7 +78,6 @@ async function _lpBases(){
     }catch(_e){ _gbxLpList=_gbxLpList||[]; }
   }
   for(const b of _gbxLpList){ if(bases.indexOf(b)===-1) bases.push(b); }
-  if(bases.indexOf('https://goldbrix.app/lp')===-1) bases.push('https://goldbrix.app/lp');
   return bases;
 }
 async function _lpFetchFailover(path, opts){
