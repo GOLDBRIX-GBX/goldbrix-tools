@@ -5,7 +5,19 @@ window.__GBX_VERSION_LOCAL__ = "1.0.114";
 window.__GBX_DEBUG__ = false;
 
 (function() {
-  var VERSION_URL = 'https://goldbrix.app/version.json';
+  /* Federated: ask the nodes the client already knows, never one fixed
+     host. Each node serves the app, so each serves /version.json. */
+  function versionUrls(){
+    var out=[];
+    try{
+      (window.GBX_NODES||[]).forEach(function(n){
+        out.push(String(n).replace(/\/api\/?$/,'').replace(/\/+$/,'')+'/version.json');
+      });
+    }catch(_e){}
+    if(!out.length && typeof location!=='undefined' && location.protocol==='https:')
+      out.push(location.origin+'/version.json');
+    return out;
+  }
   var CHECK_DELAY_MS = 2000;
   var debugLog = [];
 
@@ -43,23 +55,31 @@ window.__GBX_DEBUG__ = false;
   }
 
   async function fetchVersion() {
+    /* Try every known federation node in order; the first good answer wins.
+       A dead node is skipped, not fatal - there is no privileged host. */
+    var urls = versionUrls();
     var P = window.Capacitor && window.Capacitor.Plugins;
-    if (P && P.CapacitorHttp) {
+    for (var i = 0; i < urls.length; i++) {
+      var u = urls[i];
+      if (P && P.CapacitorHttp) {
+        try {
+          var resp = await P.CapacitorHttp.get({
+            url: u,
+            headers: { 'Cache-Control': 'no-cache' },
+            params: { t: String(Date.now()) }
+          });
+          log('← HTTP ' + resp.status + ' ' + u);
+          if (resp.status === 200 && resp.data) return resp.data;
+          continue;
+        } catch (e) { log('✗ ' + (e.message||e).substr(0,40)); continue; }
+      }
       try {
-        var resp = await P.CapacitorHttp.get({
-          url: VERSION_URL,
-          headers: { 'Cache-Control': 'no-cache' },
-          params: { t: String(Date.now()) }
-        });
-        log('← HTTP ' + resp.status);
-        return resp.data;
-      } catch (e) { log('✗ ' + (e.message||e).substr(0,40)); return null; }
+        var r = await fetch(u + '?t=' + Date.now(), { cache: 'no-store' });
+        log('← Fetch ' + r.status + ' ' + u);
+        if (r.ok) return await r.json();
+      } catch (e) { log('✗ ' + (e.message||e).substr(0,40)); }
     }
-    try {
-      var r = await fetch(VERSION_URL + '?t=' + Date.now(), { cache: 'no-store' });
-      log('← Fetch ' + r.status);
-      return r.ok ? await r.json() : null;
-    } catch (e) { log('✗ ' + (e.message||e).substr(0,40)); return null; }
+    return null;
   }
 
   async function runCheck() {
@@ -70,13 +90,9 @@ window.__GBX_DEBUG__ = false;
     window.__GBX_UPDATE_STATE__.error = null;
     window.dispatchEvent(new CustomEvent('gbx:update-check-start'));
 
-    if (!isNative()) {
-      log('Skip (web)');
-      window.__GBX_UPDATE_STATE__.checking = false;
-      window.dispatchEvent(new CustomEvent('gbx:update-check-end'));
-      return;
-    }
-    log('Native ✓');
+    /* The check runs on web too (decision: one code path everywhere);
+       only the install action differs per platform. */
+    log(isNative() ? 'Native ✓' : 'Web ✓');
 
     var remote = await fetchVersion();
     window.__GBX_UPDATE_STATE__.checking = false;

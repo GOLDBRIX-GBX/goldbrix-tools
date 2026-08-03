@@ -1,6 +1,5 @@
 /* GoldBrix V4.9 — Universal Live Ticker: Promoted + Top 24h + Newest — 5 langs */
 (function(){
-  const API = 'https://goldbrix.app';
   let bannerEl = null;
   let items = [];
   let lastFingerprint = '';

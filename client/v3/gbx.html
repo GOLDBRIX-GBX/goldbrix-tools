@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <link rel="prefetch" href="/v3/wallet.html"><link rel="prefetch" href="/v3/trade.html"><link rel="prefetch" href="/v3/launch.html"><link rel="prefetch" href="/v3/burns.html"><link rel="prefetch" href="/v3/settings.html"><link rel="prefetch" href="/v3/favorites.html"><link rel="prefetch" href="/v3/leaderboard.html"><link rel="prefetch" href="/v3/style.css"><link rel="dns-prefetch" href="https://goldbrix.app">
-<link rel="preconnect" href="https://goldbrix.app" crossorigin>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>GBX · Native Token — GoldBrix</title>
@@ -712,7 +711,6 @@ function applyI18n_gbx() {
 // ═══════════════════════════════════════════
 // CONFIG
 // ═══════════════════════════════════════════
-const API_BRIDGE = 'https://goldbrix.app'; // legacy anchor (kept for SPA loader; data reads go through GBXRead)
 async function gj(p){
   for(var i=0;i<20&&!window.GBXRead;i++)await new Promise(function(r){setTimeout(r,100);});
   if(window.GBXRead) return await window.GBXRead.json(p);

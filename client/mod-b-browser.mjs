@@ -69,7 +69,9 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
     let firstErr=null;
     try{ const j=await post('/broadcast',{rawtx:tx}); if(j&&j.txid){ _mk(tx); return j.txid; } firstErr=new Error('lp: '+JSON.stringify(j)); }
     catch(e){ firstErr=e; }
-    const nodes=(typeof window!=='undefined' && window.GBX_NODES) ? window.GBX_NODES.slice() : ['https://goldbrix.app/api'];
+    /* No fixed fallback host: without a federated node list the honest
+       answer is the first error, not a guess at a hostname. */
+    const nodes=(typeof window!=='undefined' && window.GBX_NODES) ? window.GBX_NODES.slice() : [];
     for(const base of nodes){
       try{
         const c=new AbortController(); const t=setTimeout(()=>c.abort(),8000);
