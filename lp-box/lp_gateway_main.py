@@ -390,7 +390,7 @@ class H(BaseHTTPRequestHandler):
         if self.path=='/onramp/gbx-price' or self.path=='/gbx-price':
             import lp_pricing as _lp
             _c=_lp._cfg(); _pr=_lp._price(_c)
-            return self._s(200,{'ok':True,'gbx_price_usd':_pr,'price_source':_c.get('price_source'),'floor_usd':float(_c.get('price_usd',0.10))})
+            return self._s(200,{'ok':True,'gbx_price_usd':_pr,'price_source':_c.get('price_source'),'floor_usd':_lp._floor(_c)})
         if self.path.startswith('/utxos/'):
             pu=urlparse(self.path); addr=pu.path.split('/utxos/',1)[1]
             qs=parse_qs(pu.query)

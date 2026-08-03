@@ -16,6 +16,7 @@ _D = {
  "SELL_GUARD_F":"/root/goldbrix-onramp/sell_guard.json",
  "RESERVES_F":"/root/lp_reserves.json",
  "INDEX_DB":  "",
+ "NODEREG_F": "",
 }
 # LP-19: index DB auto-detect if not provided via GBX_INDEX_DB
 def _autodb():
@@ -26,4 +27,11 @@ def _autodb():
         if _o.path.exists(c): return c
     return ""
 E = {k: os.environ.get("GBX_"+k, v) for k, v in _D.items()}
+def _autonodereg():
+    import os as _o
+    for c in ("/opt/goldbrix-tools/node-registry/node-registry.json",
+              "/root/goldbrix-tools/node-registry/node-registry.json"):
+        if _o.path.exists(c): return c
+    return ""
 if not E.get("INDEX_DB"): E["INDEX_DB"] = _autodb()
+if not E.get("NODEREG_F"): E["NODEREG_F"] = _autonodereg()

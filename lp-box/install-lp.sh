@@ -60,7 +60,12 @@ GBX_GBX_WALLET=lp_hot
 GBX_INDEX_DB=${GBX_NODE_DATADIR}/index/gbx-index.db
 ENV
 
-[ -f $D/lp_config.json ] || echo '{"price_usd": 0.1, "spread_bps": 50, "burn_bps": 0, "price_source": "reserve"}' > $D/lp_config.json
+# price_source=amm -> constant-product curve x*y=k: a whale pays progressively
+# more, and a large sell is punished by the curve itself. "reserve" is the older
+# linear model and has no such protection. price_usd is the operator's own floor;
+# the effective floor is raised to a fraction of the federated on-chain price by
+# lp_pricing, so a fresh LP cannot be drained below the market it just joined.
+[ -f $D/lp_config.json ] || echo '{"price_usd": 0.1, "spread_bps": 50, "burn_bps": 0, "price_source": "amm"}' > $D/lp_config.json
 
 write_unit() {
 cat > /etc/systemd/system/gbx-lp-$1.service <<UNIT
@@ -165,3 +170,25 @@ B=$(J "/quote?side=buy&gbx=10" price_usd);  [ -n "$B" ] || { echo "SELF-TEST RED
 S=$(J "/quote?side=sell&gbx=10" price_usd); [ -n "$S" ] || { echo "SELF-TEST RED: quote SELL"; OK=0; }
 if [ "$OK" = 1 ]; then echo "SELF-TEST GREEN: LP live on :18099 (height=$H, price=$B)"
 else echo "SELF-TEST RED — check $D/state/lp_daemon.log and $D/state/lp_gateway.log"; exit 3; fi
+
+# Reserve guidance. The LP quotes off its own reserves (x_USDC / y_GBX). If those
+# reserves imply a price far below what the federation has actually executed on
+# chain, arbitrage drains the new LP. This only tells the operator the number;
+# the funds and the decision stay entirely his.
+FED=$(python3 - "$D" <<'PYFED'
+import sys, json, urllib.request
+sys.path.insert(0, sys.argv[1])
+try:
+    import lp_pricing as P
+    print(P._live_price() or "")
+except Exception:
+    print("")
+PYFED
+)
+if [ -n "$FED" ]; then
+  echo ""
+  echo "Federation price (median of executed on-chain trades): $FED USD/GBX"
+  echo "Size your reserves so that USDC_total / GBX_in_lp_hot is close to it."
+  echo "Example: with 40 USDC, fund the LP with about $(python3 -c "print(round(40/float('$FED'),2))") GBX."
+  echo "Quoting far below this price is how a new LP gets emptied by arbitrage."
+fi

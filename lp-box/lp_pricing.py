@@ -4,20 +4,50 @@ import os
 import json, urllib.request
 from lp_env import E
 CONFIG_F=E["CONFIG_F"]
-# local price service first; the seed node is only a fallback — any federation node works
-PRICE_URLS=[u for u in [os.environ.get("GBX_PRICE_URL"),"http://127.0.0.1:8096/onramp/gbx-price","https://goldbrix.app/onramp/gbx-price"] if u]
+# Federated price: read from the nodes the chain itself lists, never from a fixed host.
+NODEREG_F=E.get("NODEREG_F","")
+FLOOR_FRAC=float(os.environ.get("GBX_FLOOR_FRAC","0.90"))
+_FED_CACHE={"ts":0.0,"p":None}
 def _cfg():
     try: return json.load(open(CONFIG_F))
     except: return {"price_usd":0.10,"spread_bps":50,"burn_bps":0,"price_source":"static"}
+def _fed_nodes():
+    # Node list comes from the on-chain registry scanner running on this machine.
+    try:
+        d=json.load(open(NODEREG_F))
+        return [u for u in d.get("nodes",{}).keys() if u.startswith("http")]
+    except Exception:
+        return []
+
 def _live_price():
-    for u in PRICE_URLS:
+    # Median of the last executed on-chain price across federation nodes.
+    # Nodes that have not indexed any trade yet are ignored - an empty index
+    # must never drag the floor down. No quorum -> None -> behaviour unchanged.
+    import time as _t
+    now=_t.time()
+    if _FED_CACHE["p"] is not None and (now-_FED_CACHE["ts"])<60: return _FED_CACHE["p"]
+    vals=[]
+    for u in _fed_nodes()[:5]:
         try:
-            with urllib.request.urlopen(u, timeout=2) as r:
+            with urllib.request.urlopen(u.rstrip("/")+"/gbx/stats", timeout=3) as r:
                 d=json.load(r)
-            p=float(d.get("gbx_price_usd",0) or 0)
-            if p>0: return p
+            if int(d.get("trades",0) or 0)<=0: continue
+            p=float(d.get("last_price_usd",0) or 0)
+            if p>0: vals.append(p)
         except Exception: continue
-    return None
+    if len(vals)<2:
+        _FED_CACHE["ts"]=now; _FED_CACHE["p"]=None; return None
+    vals.sort(); n=len(vals)
+    med=vals[n//2] if n%2 else (vals[n//2-1]+vals[n//2])/2.0
+    _FED_CACHE["ts"]=now; _FED_CACHE["p"]=med
+    return med
+
+def _floor(c):
+    # Config floor is the operator's own minimum; the federated floor is the net
+    # that stops a fresh LP from selling far below the market it just joined.
+    base=float(c.get("price_usd",0.10))
+    fed=_live_price()
+    return max(base, FLOOR_FRAC*fed) if fed else base
 RESERVES_F=E["RESERVES_F"]
 def _reserve_price():
     # PRET AUTONOM GLOBAL: Sigma(USDC tranzactionare pe toate lanturile active) / GBX LP tranzactionare.
@@ -65,7 +95,7 @@ def _amm_sell_out(gbx_in):
     return dx if dx>0 else None
 
 def _price(c):
-    floor=float(c.get("price_usd",0.10))
+    floor=_floor(c)
     src=c.get("price_source")
     if src in ("reserve","amm"):
         # PRICE-1: "amm" was unknown here -> it fell back to the floor => the UI/chart showed the FLOOR, not the market.
@@ -95,7 +125,7 @@ def quote(usd):
     if c.get("price_source")=="amm":
         _dy=_amm_buy_out(usd)
         if _dy is not None:
-            floor=float(c.get("price_usd",0.10))
+            floor=_floor(c)
             eff_price=(usd/_dy) if _dy>0 else floor
             # LP-14: FLOOR pe buy — LP nu vinde GBX sub pretul-podea; la floor, gbx_out se limiteaza corespunzator
             if eff_price<floor:
@@ -118,7 +148,7 @@ def quote_sell(gbx):
     if c.get("price_source")=="amm":
         _dx=_amm_sell_out(gbx)
         if _dx is not None:
-            floor=float(c.get("price_usd",0.10))
+            floor=_floor(c)
             eff_price=(_dx/gbx) if gbx>0 else floor
             # LP-14: sub floor LP-ul NU coteaza sell (plata la floor dintr-o rezerva sub-floor ar goli LP-ul; refuz onest)
             if eff_price<floor:
@@ -140,7 +170,7 @@ def price_info():
     # Sursa unica de adevar pt preturi: acelasi lp_pricing importat de gateway SI daemon.
     c=_cfg()
     src=c.get("price_source","static")
-    floor=float(c.get("price_usd",0.10))
+    floor=_floor(c)
     sp=int(c.get("spread_bps",50)); bn=int(c.get("burn_bps",0))
     price=_price(c)
     rv=_amm_reserves(); x=y=k=None
