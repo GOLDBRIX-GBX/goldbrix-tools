@@ -43,11 +43,20 @@ def check(nodes):
     for n in nodes:
         st = get(n.rstrip("/") + "/status")
         ok = isinstance(st, dict) and "best_block_height" in st
+        # The binary hash lives on the node's health endpoint, one level above
+        # the API base; a node that does not expose it stays "unknown".
+        sha = "unknown"
+        if ok:
+            base = n.rstrip("/")
+            base = base[:-4] if base.endswith("/api") else base
+            ni = get(base + "/gbx-node-info")
+            if isinstance(ni, dict) and ni.get("binary_sha256"):
+                sha = ni["binary_sha256"]
         rec["nodes"][n] = {
             "alive": ok,
             "height": st.get("best_block_height") if ok else None,
             "network": st.get("network") if ok else None,
-            "binary_sha256": st.get("binary_sha256", "unknown") if ok else None,
+            "binary_sha256": sha if ok else None,
             "error": None if ok else st.get("_error", "no status"),
         }
         if ok: rec["alive"] += 1

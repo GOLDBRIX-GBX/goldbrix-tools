@@ -266,7 +266,23 @@ WantedBy=multi-user.target
 UNIT
 
 install -d -o gbx -g gbx ${DATADIR}/index
-systemctl enable --now goldbrixd gbx-read-api gbx-indexer gbx-node-registry gbx-curve-index gbx-trade-index
+cat > /etc/systemd/system/gbx-node-info.service << UNIT
+[Unit]
+Description=GBX node health endpoint (:8390, keyless, read-only)
+After=goldbrixd.service
+Requires=goldbrixd.service
+PartOf=goldbrixd.service
+[Service]
+User=gbx
+Environment=GBX_RPC_PORT=8332
+Environment=GBX_COOKIE=${DATADIR}/.cookie
+ExecStart=/usr/bin/python3 ${TOOLSDIR}/node-info/gbx-node-info.py
+Restart=on-failure
+RestartSec=5
+[Install]
+WantedBy=multi-user.target
+UNIT
+systemctl enable --now goldbrixd gbx-read-api gbx-indexer gbx-node-registry gbx-curve-index gbx-trade-index gbx-node-info
 
 echo "[6/7] web server (Caddy) — this node also serves the wallet"
 # A node that only serves data still leaves the wallet itself hosted somewhere else.
@@ -296,7 +312,7 @@ ${SITE} {
 \t}
 \theader /api/* Access-Control-Allow-Origin \"*\"
 \theader /api/* Cache-Control \"no-store\"${LPBLOCK}
-\thandle /api/* {
+\thandle /gbx-node-info {\n\t\treverse_proxy 127.0.0.1:8390\n\t}\n\thandle /api/* {
 \t\treverse_proxy 127.0.0.1:8088 {
 \t\t\theader_down -Access-Control-Allow-Origin
 \t\t}

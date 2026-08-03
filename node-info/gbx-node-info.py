@@ -4,9 +4,12 @@ import json, hashlib, time, os, sys
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.request import Request, urlopen
 
-RPC_PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8342
-COOKIE_FILE = "/root/.bitcoin/.cookie"
-BINARY = "/usr/local/bin/goldbrixd"
+# Configurable per node via env; the defaults match the original layout,
+# so an existing installation keeps working untouched.
+RPC_PORT = int(sys.argv[1]) if len(sys.argv) > 1 else int(os.environ.get("GBX_RPC_PORT", "8342"))
+COOKIE_FILE = os.environ.get("GBX_COOKIE", "/root/.bitcoin/.cookie")
+BINARY = os.environ.get("GBX_BINARY", "/usr/local/bin/goldbrixd")
+LISTEN_PORT = int(os.environ.get("GBX_NODEINFO_PORT", "8390"))
 START = time.time()
 
 def binary_sha():
@@ -54,4 +57,4 @@ class H(BaseHTTPRequestHandler):
             self.send_response(503); self.end_headers()
             self.wfile.write(json.dumps({"err":"node_unavailable"}).encode())
 
-HTTPServer(("0.0.0.0", 8390), H).serve_forever()
+HTTPServer(("127.0.0.1", LISTEN_PORT), H).serve_forever()
