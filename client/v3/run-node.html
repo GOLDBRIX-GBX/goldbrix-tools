@@ -78,8 +78,8 @@ sudo systemctl enable --now goldbrixd</pre>
 <h2>7. Verify your node's integrity (optional)</h2>
 <p>Compare your binary hash with the network's canonical release:</p>
 <pre>sha256sum /usr/local/bin/goldbrixd
-curl -s https://ANY-NODE/api/status</pre>
-<p>Node URLs come from the on-chain registry (<code>/api/node-registry</code>) — no central list.</p>
+curl -s https://ANY-NODE/gbx-node-info</pre>
+<p>Node URLs come from the on-chain registry (<code>/api/node-registry</code>) — no central list. Every node installed with <code>install-node.sh</code> exposes <code>/gbx-node-info</code>: the SHA-256 of the binary it is actually running, keyless and read-only.</p>
 <p>The <code>binary_sha256</code> field shows the hash of the reproducible Guix build currently running on public seed nodes.</p>
 
 <h2>8. Rebuild from source (verify, don't trust)</h2>
@@ -87,10 +87,11 @@ curl -s https://ANY-NODE/api/status</pre>
 <h2>9. Run the public watchtower (optional)</h2>
 <p>Independent, keyless liveness monitor. Records the network's uptime history on YOUR machine — proof the system runs without its founder.</p>
 <pre>wget https://raw.githubusercontent.com/GOLDBRIX-GBX/goldbrix-tools/main/watchtower/watchtower.py
-python3 watchtower.py</pre>
+python3 watchtower.py --seed https://ANY-NODE/api</pre>
+<p>Any registered node works as the seed; the full list is then read from the chain. It alarms on silence, compares block hashes at the same height (a real fork test), and records each node's binary hash.</p>
 
 <h2>10. Mine to your own address (solo, non-custodial)</h2>
-<p>Any federation node can expose a <strong>solo non-custodial</strong> stratum pool: the coinbase of every block pays <strong>your address directly</strong>; the pool never holds funds, fee <strong>0</strong> (code-is-law). One such seed pool: <code>stratum+tcp://goldbrix.app:3333</code> — verify any pool live at its <code>/pool-info</code>.</p>
+<p>Any federation node can expose a <strong>solo non-custodial</strong> stratum pool: the coinbase of every block pays <strong>your address directly</strong>; the pool never holds funds, fee <strong>0</strong> (code-is-law). Any federation node may run one — verify any pool live at its <code>/pool-info</code>.</p>
 <pre>./cpuminer -a sha256d -o stratum+tcp://ANY-POOL:3333 -u bn1youraddress.worker1 -p x</pre>
 <p>Login format: <code>bn1address.workername</code>. Any SHA-256d stratum miner works. Rewards mature after 100 blocks. You can also run this pool software against your own node — source: <a href="https://github.com/GOLDBRIX-GBX/goldbrix-tools">goldbrix-tools</a>. Node source: <a href="https://github.com/GOLDBRIX-GBX/goldbrix-core">goldbrix-core</a>.</p>
 </body>
