@@ -41,3 +41,30 @@ sha256sum -c SHA256SUMS-v30-gbx-7.txt
 
 If step 3 matches, your binary/APK is exactly what was anchored on-chain,
 regardless of where you downloaded it from.
+
+## What an anchor proves — and what it does not
+
+An anchor proves **integrity**: the bytes you hold are the bytes that were
+anchored. It does not and cannot prove **authority**: an OP_RETURN can be
+written by anyone with a few base units, so after the founder's departure
+there may one day be several anchors carrying the same tag and different
+hashes. No user should have to guess which one is "official" — and by
+design, none is.
+
+There is no release authority in GoldBrix, and none will ever be created.
+No key, no account and no person — including the founder — can designate
+a build as the true one. What replaces authority:
+
+- **Reproducible builds.** The source is public; anyone can build it and
+  compare their own hash against an anchor. Trust the math, not the
+  publisher.
+- **Your node, your rules.** A patch that changes consensus is not an
+  update — it is a different chain. Every operator decides for themselves
+  what code they run, exactly as in Bitcoin.
+- **Adoption is the only signal.** A release "wins" only by independent
+  operators choosing to run it. Nothing else confers legitimacy.
+
+If you ever face two conflicting anchors: build from source, verify, and
+decide like an operator. That is not a weakness of the system — it is the
+system.
+
