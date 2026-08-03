@@ -299,6 +299,9 @@ input, textarea, .copyable, [data-copyable], .addr, .hash, .txid, code, .gbx-amo
       <span data-i="rate">Rate</span>
       <span><b id="rate" class="num">—</b> · <span data-i="fee">spread</span> <b id="spread" class="num">—</b></span>
     </div>
+    <div id="impactRow" hidden style="margin:4px 0 2px;font-size:12px;color:#F0C060;font-family:monospace;">
+      <span id="impactMsg"></span>
+    </div>
     <div id="mktRow" class="rate" style="font-size:13px;color:var(--text-muted)" hidden>
       <span data-i="piMkt">Market</span>
       <span><b id="mktPrice" class="num">—</b></span>
@@ -338,7 +341,7 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
     balInfo:$('#balInfo'), btnMax:$('#btnMax'),
     lblPay:$('#lblPay'), lblGet:$('#lblGet'), lang:$('#langBtn') };
   const T = {
-    en:{piMkt:"Last on-chain trade",piMktNone:"—",piVerify:"Verify on explorer",piHow:"How is the price set?",piFloor:"Now: floor price $",piBoot:" (bootstrap phase).",piOnchain:" Fully backed by real on-chain reserves — anyone can verify. Treasury excluded (to be burned).",piCurve:"Live: automatic curve x·y=k — nobody sets the price. Fully backed by on-chain reserves; large trades move the price progressively — automatic fairness for everyone.",piSpread:"Spread",piVerif:"Verifiable on-chain · treasury excluded → burn",buy:"Buy GBX",sell:"Sell GBX",youPay:"You pay",youGet:"You receive",rate:"Rate",fee:"spread",
+    en:{piMkt:"Last on-chain trade",piMktNone:"—",piVerify:"Verify on explorer",piHow:"How is the price set?",piFloor:"Now: floor price $",piBoot:" (bootstrap phase).",piOnchain:" Fully backed by real on-chain reserves — anyone can verify. Treasury excluded (to be burned).",piCurve:"Live: automatic curve x·y=k — nobody sets the price. Fully backed by on-chain reserves; large trades move the price progressively — automatic fairness for everyone.",piSpread:"Spread",piVerif:"Verifiable on-chain · treasury excluded → burn",buy:"Buy GBX",sell:"Sell GBX",youPay:"You pay",youGet:"You receive",rate:"Rate",fee:"spread",impact_msg:"Effective price ${p}/GBX (+{i}% impact - this order moves the market)",
       cta_buy:"Buy GBX",cta_sell:"Sell GBX",cta_wait:"Processing…",foot:"Non-custodial · atomic · no one holds your keys",
       note_buy:"Atomic swap: your USDC and GBX settle together through one secret. No custodian, no middleman. Settlement takes a short moment — that's the price of trustlessness.",
       note_sell:"Atomic swap: your GBX and USDC settle together through one secret. No custodian, no middleman. Settlement takes a short moment — that's the price of trustlessness.",
@@ -347,7 +350,7 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
       locked:"locked",verified:"verified",settled:"settled",
       need_unlock:"Unlock your wallet to swap.",enter_amt:"Enter an amount.",cap_msg:"Max {m} USDC per swap right now (automatic limit, scales with liquidity).",cap_msg_sell:"Max {m} GBX per swap right now (automatic limit, scales with liquidity).",below_floor:"Selling is paused: the market price is below the minimum price of {f} USD. Buys at the minimum price rebuild liquidity — check back later.",
       loading:"Loading swap engine…",done_buy:"Done. GBX is in your wallet.",done_sell:"Done. USDC is in your wallet."},
-    ro:{piMkt:"Ultima tranzacție on-chain",piMktNone:"—",piVerify:"Verifică pe explorer",piHow:"Cum se stabilește prețul?",piFloor:"Acum: preț plasă $",piBoot:" (fază bootstrap).",piOnchain:" Acoperit integral de rezerve reale on-chain — oricine poate verifica. Trezoreria e exclusă (se va arde).",piCurve:"Activ: curbă automată x·y=k — nimeni nu setează prețul. Acoperit integral de rezerve on-chain; tranzacțiile mari mișcă prețul progresiv — corectitudine automată pentru toți.",piSpread:"Spread",piVerif:"Verificabil on-chain · trezorerie exclusă → burn",buy:"Cumpără GBX",sell:"Vinde GBX",youPay:"Plătești",youGet:"Primești",rate:"Curs",fee:"spread",
+    ro:{piMkt:"Ultima tranzacție on-chain",piMktNone:"—",piVerify:"Verifică pe explorer",piHow:"Cum se stabilește prețul?",piFloor:"Acum: preț plasă $",piBoot:" (fază bootstrap).",piOnchain:" Acoperit integral de rezerve reale on-chain — oricine poate verifica. Trezoreria e exclusă (se va arde).",piCurve:"Activ: curbă automată x·y=k — nimeni nu setează prețul. Acoperit integral de rezerve on-chain; tranzacțiile mari mișcă prețul progresiv — corectitudine automată pentru toți.",piSpread:"Spread",piVerif:"Verificabil on-chain · trezorerie exclusă → burn",buy:"Cumpără GBX",sell:"Vinde GBX",youPay:"Plătești",youGet:"Primești",rate:"Curs",fee:"spread",impact_msg:"Preț efectiv ${p}/GBX (+{i}% impact — această sumă mișcă piața)",
       cta_buy:"Cumpără GBX",cta_sell:"Vinde GBX",cta_wait:"Se procesează…",foot:"Non-custodial · atomic · nimeni nu-ți deține cheile",
       note_buy:"Swap atomic: USDC și GBX se decontează împreună printr-un singur secret. Fără custode, fără intermediar. Decontarea durează un moment — ăsta e prețul lipsei de încredere necesară.",
       note_sell:"Swap atomic: GBX și USDC se decontează împreună printr-un singur secret. Fără custode, fără intermediar. Decontarea durează un moment — ăsta e prețul lipsei de încredere necesară.",
@@ -356,7 +359,7 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
       locked:"blocat",verified:"verificat",settled:"decontat",
       need_unlock:"Deblochează portofelul pentru swap.",enter_amt:"Introdu o sumă.",cap_msg:"Maxim {m} USDC per swap acum (limită automată, scalată cu lichiditatea).",cap_msg_sell:"Maxim {m} GBX per swap acum (limită automată, scalată cu lichiditatea).",below_floor:"Vânzarea e în pauză: prețul pieței e sub prețul minim de {f} USD. Cumpărările la preț minim refac lichiditatea — revino mai târziu.",
       loading:"Se încarcă motorul de swap…",done_buy:"Gata. GBX e în portofel.",done_sell:"Gata. USDC e în portofel."},
-    de:{piMkt:"Letzter On-Chain-Trade",piMktNone:"—",piVerify:"Im Explorer prüfen",piHow:"Wie wird der Preis festgelegt?",piFloor:"Jetzt: Mindestpreis $",piBoot:" (Bootstrap-Phase).",piOnchain:" Vollständig durch echte On-Chain-Reserven gedeckt — jeder kann es prüfen. Treasury ausgeschlossen (wird verbrannt).",piCurve:"Live: automatische Kurve x·y=k — niemand setzt den Preis. Vollständig durch On-Chain-Reserven gedeckt; große Trades bewegen den Preis progressiv — automatische Fairness für alle.",piSpread:"Spread",piVerif:"On-chain überprüfbar · Treasury ausgeschlossen → Burn",buy:"GBX kaufen",sell:"GBX verkaufen",youPay:"Du zahlst",youGet:"Du erhältst",rate:"Kurs",fee:"Spread",
+    de:{piMkt:"Letzter On-Chain-Trade",piMktNone:"—",piVerify:"Im Explorer prüfen",piHow:"Wie wird der Preis festgelegt?",piFloor:"Jetzt: Mindestpreis $",piBoot:" (Bootstrap-Phase).",piOnchain:" Vollständig durch echte On-Chain-Reserven gedeckt — jeder kann es prüfen. Treasury ausgeschlossen (wird verbrannt).",piCurve:"Live: automatische Kurve x·y=k — niemand setzt den Preis. Vollständig durch On-Chain-Reserven gedeckt; große Trades bewegen den Preis progressiv — automatische Fairness für alle.",piSpread:"Spread",piVerif:"On-chain überprüfbar · Treasury ausgeschlossen → Burn",buy:"GBX kaufen",sell:"GBX verkaufen",youPay:"Du zahlst",youGet:"Du erhältst",rate:"Kurs",fee:"Spread",impact_msg:"Effektiver Preis ${p}/GBX (+{i}% Impact — diese Order bewegt den Markt)",
       cta_buy:"GBX kaufen",cta_sell:"GBX verkaufen",cta_wait:"Wird verarbeitet…",foot:"Non-custodial · atomar · niemand hält deine Schlüssel",
       note_buy:"Atomarer Swap: USDC und GBX werden über ein Geheimnis gemeinsam abgewickelt. Keine Verwahrstelle, kein Mittelsmann. Die Abwicklung dauert einen Moment — das ist der Preis der Vertrauensfreiheit.",
       note_sell:"Atomarer Swap: GBX und USDC werden über ein Geheimnis gemeinsam abgewickelt. Keine Verwahrstelle, kein Mittelsmann. Die Abwicklung dauert einen Moment — das ist der Preis der Vertrauensfreiheit.",
@@ -365,7 +368,7 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
       locked:"gesperrt",verified:"geprüft",settled:"abgewickelt",
       need_unlock:"Wallet entsperren, um zu tauschen.",enter_amt:"Betrag eingeben.",cap_msg:"Max. {m} USDC pro Swap derzeit (automatisches Limit, skaliert mit der Liquidität).",cap_msg_sell:"Max. {m} GBX pro Swap derzeit (automatisches Limit, skaliert mit der Liquidität).",below_floor:"Der Verkauf pausiert: Der Marktpreis liegt unter dem Mindestpreis von {f} USD. Käufe zum Mindestpreis bauen die Liquidität wieder auf — schau später wieder vorbei.",
       loading:"Swap-Engine wird geladen…",done_buy:"Fertig. GBX ist in deiner Wallet.",done_sell:"Fertig. USDC ist in deiner Wallet."},
-    zh:{piMkt:"最近一笔链上成交",piMktNone:"—",piVerify:"在浏览器验证",piHow:"价格如何确定？",piFloor:"当前：保底价 $",piBoot:"（启动阶段）。",piOnchain:"由真实链上储备全额支持 — 任何人都可验证。国库已排除（将被销毁）。",piCurve:"实时：自动曲线 x·y=k — 无人设定价格。由链上储备全额支持；大额交易会逐步推动价格 — 对所有人自动公平。",piSpread:"价差",piVerif:"链上可验证 · 国库排除 → 销毁",buy:"购买 GBX",sell:"出售 GBX",youPay:"你支付",youGet:"你获得",rate:"汇率",fee:"价差",
+    zh:{piMkt:"最近一笔链上成交",piMktNone:"—",piVerify:"在浏览器验证",piHow:"价格如何确定？",piFloor:"当前：保底价 $",piBoot:"（启动阶段）。",piOnchain:"由真实链上储备全额支持 — 任何人都可验证。国库已排除（将被销毁）。",piCurve:"实时：自动曲线 x·y=k — 无人设定价格。由链上储备全额支持；大额交易会逐步推动价格 — 对所有人自动公平。",piSpread:"价差",piVerif:"链上可验证 · 国库排除 → 销毁",buy:"购买 GBX",sell:"出售 GBX",youPay:"你支付",youGet:"你获得",rate:"汇率",fee:"价差",impact_msg:"实际价格 ${p}/GBX（+{i}% 冲击 — 此订单会推动市场）",
       cta_buy:"购买 GBX",cta_sell:"出售 GBX",cta_wait:"处理中…",foot:"非托管 · 原子交换 · 无人持有你的密钥",
       note_buy:"原子交换：你的 USDC 与 GBX 通过同一个密钥一起结算。无托管方，无中间人。结算需要片刻——这是无需信任的代价。",
       note_sell:"原子交换：你的 GBX 与 USDC 通过同一个密钥一起结算。无托管方，无中间人。结算需要片刻——这是无需信任的代价。",
@@ -374,7 +377,7 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
       locked:"已锁定",verified:"已验证",settled:"已结算",
       need_unlock:"请先解锁钱包。",enter_amt:"请输入金额。",cap_msg:"当前每次兑换上限 {m} USDC（自动上限，随流动性调整）。",cap_msg_sell:"当前每次兑换上限 {m} GBX（自动上限，随流动性调整）。",below_floor:"卖出已暂停：市场价格低于 {f} USD 的最低价。按最低价买入会补充流动性 — 请稍后再来。",
       loading:"正在加载交换引擎…",done_buy:"完成。GBX 已到账。",done_sell:"完成。USDC 已到账。"},
-    ar:{piMkt:"آخر صفقة على السلسلة",piMktNone:"—",piVerify:"تحقق على المستكشف",piHow:"كيف يُحدَّد السعر؟",piFloor:"الآن: السعر الأدنى $",piBoot:" (مرحلة التمهيد).",piOnchain:" مدعوم بالكامل باحتياطيات حقيقية على السلسلة — يمكن لأي شخص التحقق. الخزينة مستبعدة (سيتم حرقها).",piCurve:"مباشر: منحنى تلقائي x·y=k — لا أحد يحدد السعر. مدعوم بالكامل باحتياطيات على السلسلة؛ الصفقات الكبيرة تحرّك السعر تدريجياً — عدالة تلقائية للجميع.",piSpread:"الفارق",piVerif:"قابل للتحقق على السلسلة · الخزينة مستثناة → حرق",buy:"شراء GBX",sell:"بيع GBX",youPay:"تدفع",youGet:"تستلم",rate:"السعر",fee:"الفارق",
+    ar:{piMkt:"آخر صفقة على السلسلة",piMktNone:"—",piVerify:"تحقق على المستكشف",piHow:"كيف يُحدَّد السعر؟",piFloor:"الآن: السعر الأدنى $",piBoot:" (مرحلة التمهيد).",piOnchain:" مدعوم بالكامل باحتياطيات حقيقية على السلسلة — يمكن لأي شخص التحقق. الخزينة مستبعدة (سيتم حرقها).",piCurve:"مباشر: منحنى تلقائي x·y=k — لا أحد يحدد السعر. مدعوم بالكامل باحتياطيات على السلسلة؛ الصفقات الكبيرة تحرّك السعر تدريجياً — عدالة تلقائية للجميع.",piSpread:"الفارق",piVerif:"قابل للتحقق على السلسلة · الخزينة مستثناة → حرق",buy:"شراء GBX",sell:"بيع GBX",youPay:"تدفع",youGet:"تستلم",rate:"السعر",fee:"الفارق",impact_msg:"السعر الفعلي ${p}/GBX (+{i}٪ تأثير — هذا الطلب يحرّك السوق)",
       cta_buy:"شراء GBX",cta_sell:"بيع GBX",cta_wait:"جارٍ المعالجة…",foot:"غير وصائي · ذرّي · لا أحد يملك مفاتيحك",
       note_buy:"مبادلة ذرّية: يُسوّى USDC وGBX معًا عبر سرّ واحد. بلا وصيّ، بلا وسيط. تستغرق التسوية لحظة — هذا ثمن انعدام الحاجة للثقة.",
       note_sell:"مبادلة ذرّية: يُسوّى GBX وUSDC معًا عبر سرّ واحد. بلا وصيّ، بلا وسيط. تستغرق التسوية لحظة — هذا ثمن انعدام الحاجة للثقة.",
@@ -498,7 +501,7 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
   let quoteTimer=null;
   function refreshQuote(){
     const v = parseFloat(el.amt.value);
-    if(!(v>0)){ el.recv.textContent='0.00'; el.recv.classList.add('muted'); el.rate.textContent='—'; el.spread.textContent='—'; return; }
+    if(!(v>0)){ el.recv.textContent='0.00'; el.recv.classList.add('muted'); el.rate.textContent='—'; el.spread.textContent='—'; var _ir0=document.getElementById('impactRow'); if(_ir0) _ir0.hidden=true; return; }
     clearTimeout(quoteTimer);
     quoteTimer = setTimeout(async ()=>{
       try{
@@ -509,10 +512,26 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
           window._gbxShownOut = +q.gbx_out;
           el.rate.textContent = '1 GBX = $'+(+q.price_usd).toFixed(4);
           if(q.capped && q.max_usd_in!=null){ el.msg.textContent = t('cap_msg').replace('{m}', (+q.max_usd_in).toLocaleString(undefined,{maximumFractionDigits:2})); el.msg.classList.add('cap-warn'); }
-          else if(el.msg.classList.contains('cap-warn')){ el.msg.textContent=''; el.msg.classList.remove('cap-warn'); }
+          else {
+            /* Honest impact figure, derived from the quote itself: what this
+               order actually pays per GBX versus the spot the curve shows.
+               Nothing blocks - the user just sees the price they move. */
+            var _eff = (+q.gbx_out > 0) ? (v / +q.gbx_out) : 0;
+            /* Baseline = the market's last executed price (federated),
+               because the quoted price_usd already carries the impact. */
+            var _base = (+window._gbxMktUsd > 0) ? +window._gbxMktUsd : +q.price_usd;
+            var _imp = (_base > 0 && _eff > 0) ? ((_eff - _base) / _base) * 100 : 0;
+            var _ir=document.getElementById('impactRow'), _im=document.getElementById('impactMsg');
+            /* 10%: normal spread plus spot-vs-last-trade drift stays silent;
+               only an order that genuinely moves the curve speaks up. */
+            if (_imp > 10 && _ir && _im){
+              _im.textContent = t('impact_msg').replace('{p}', _eff.toFixed(4)).replace('{i}', _imp.toFixed(1));
+              _ir.hidden = false;
+            } else if(_ir){ _ir.hidden = true; }
+          }
           el.spread.textContent = (q.spread_bps/100).toFixed(2)+'%';
         }else{
-          // quote de SELL real (AMM cu price impact) — afisajul = executia, zero divergenta
+          // real SELL quote (AMM with price impact) - what is shown is what executes; never derived linearly from the buy quote
           const probe = await (await GBX_LP_FETCH(C,'/quote?gbx='+v)).json();
           if(probe.breaker){ el.msg.textContent = humanError('breaker'); el.msg.classList.add('cap-warn'); }
           const usd = +probe.usd_out;
@@ -577,6 +596,7 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
       var row=document.getElementById('mktRow'), px=document.getElementById('mktPrice');
       if(!row||!px) return;
       if(m && m.trades>0 && m.last_price_usd>0){
+        window._gbxMktUsd = +m.last_price_usd;
         px.textContent='$'+(+m.last_price_usd).toFixed(4);
         row.hidden=false;
       } else {
@@ -717,7 +737,7 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
       // ===== RAMURA SOLANA (gasless co-semnare) — buy USDC->GBX =====
       if(C.kind==='solana'){
         if(dir!=='buy'){
-          // quote de SELL real de la LP (AMM cu price impact) — NU derivare liniara din quote-ul de buy
+          // real SELL quote (AMM with price impact) - what is shown is what executes; never derived linearly from the buy quote
           const probe=await (await GBX_LP_FETCH(C,'/quote?gbx='+v)).json();
           if(probe.below_floor){ setMsg((t('below_floor')||'').replace('{f}', String(probe.floor_usd||''))); _reset(); return; }
           if(probe.capped){ setMsg(t('cap_msg_sell').replace('{m}', String(probe.cap_gbx||probe.max_gbx_in||''))); _reset(); return; }
@@ -770,7 +790,7 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
         try{ const _h=JSON.parse(localStorage.getItem('gbx_swaps_history')||'[]'); _h.unshift({type:'GBX_BUY',chain:chain,gbx_amount:(v/(+(C._lastPrice||0.1024))||0),usdc:v,tx_hash:(_br&&(_br.gbxClaimTx||_br.hash))||'',timestamp:Date.now(),status:'completed'}); localStorage.setItem('gbx_swaps_history',JSON.stringify(_h.slice(0,100))); }catch(_e){}
         renderFlow('completed',false); setMsg(t('done_buy'), true); _clearAck();
       }else{
-        // quote de SELL real de la LP (AMM cu price impact) — NU derivare liniara din quote-ul de buy
+        // real SELL quote (AMM with price impact) - what is shown is what executes; never derived linearly from the buy quote
         const probe = await (await GBX_LP_FETCH(C,'/quote?gbx='+v)).json();
         if(probe.below_floor){ setMsg((t('below_floor')||'').replace('{f}', String(probe.floor_usd||''))); _reset(); return; }
         if(probe.capped){ setMsg(t('cap_msg_sell').replace('{m}', String(probe.cap_gbx||probe.max_gbx_in||''))); _reset(); return; }
