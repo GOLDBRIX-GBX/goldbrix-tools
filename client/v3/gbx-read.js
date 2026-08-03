@@ -146,12 +146,21 @@
     return await _rotateRaw(path, opts, ms);
   }
 
-  async function _quorum(path, field){
+  async function _quorum(path, field, strict){
     await ensure();
+    function _refuse(reason){
+      window.GBX_QUORUM_DEGRADED = true;
+      if (strict){ var e=new Error('QUORUM_UNAVAILABLE'); e.code='QUORUM_UNAVAILABLE'; e.reason=reason; throw e; }
+      console.warn('[gbxRead] quorum degraded ('+reason+') on', field);
+    }
     var nodes = _ordered();
-    if (nodes.length < 2) return await _rotateRaw(path);
+    if (nodes.length < 2){
+      _refuse('single node');
+      return await _rotateRaw(path);
+    }
     var results = [];
-    for (var i=0; i<nodes.length && results.length<2; i++){
+    var want = Math.min(3, nodes.length);
+    for (var i=0; i<nodes.length && results.length<want; i++){
       try {
         var r = await _fetchNode(nodes[i], path);
         var j = await r.clone().json();
@@ -159,30 +168,36 @@
       } catch(e){ _fail(nodes[i]); }
     }
     if (results.length === 0) throw new Error('all nodes down');
-    if (results.length === 1) return results[0].r;
-    var a = String(results[0].j[field]), b = String(results[1].j[field]);
-    if (a !== b) {
-      // Transient divergence at 3s blocks: retry once, then degrade to the
-      // first answer (same behaviour as a single-node client).
-      await new Promise(function(r){ setTimeout(r, 1200); });
-      try {
-        var r2 = await _fetchNode(nodes[0], path); var j2 = await r2.clone().json();
-        var r3 = await _fetchNode(nodes[1], path); var j3 = await r3.clone().json();
-        if (String(j2[field]) === String(j3[field])) return r2;
-      } catch(e){}
-      console.warn('[gbxRead] persistent quorum mismatch on', field, '- using first node');
+    if (results.length === 1){
+      _refuse('one answer');
       return results[0].r;
     }
+    /* Majority among the answers we have: 2-of-2 or 2-of-3. */
+    var tally = {};
+    for (var t=0; t<results.length; t++){
+      var v = String(results[t].j[field]);
+      tally[v] = (tally[v]||0) + 1;
+      if (tally[v] >= 2){ window.GBX_QUORUM_DEGRADED = false; return results[t].r; }
+    }
+    /* No two answers agree at 3s blocks: retry once, then either refuse
+       (strict) or degrade to the first answer like a single-node client. */
+    await new Promise(function(r){ setTimeout(r, 1200); });
+    try {
+      var r2 = await _fetchNode(nodes[0], path); var j2 = await r2.clone().json();
+      var r3 = await _fetchNode(nodes[1], path); var j3 = await r3.clone().json();
+      if (String(j2[field]) === String(j3[field])) { window.GBX_QUORUM_DEGRADED = false; return r2; }
+    } catch(e){}
+    _refuse('persistent mismatch');
     return results[0].r;
   }
 
   window.gbxRead = function(path, opts){
     opts = opts || {};
-    if (opts.quorum && opts.field) return _quorum(path, opts.field);
+    if (opts.quorum && opts.field) return _quorum(path, opts.field, opts.strict === true);
     /* routing options stay here; everything else belongs to the request itself */
     var req = null, ms = null;
     for (var k in opts) if (Object.prototype.hasOwnProperty.call(opts,k)){
-      if (k === 'quorum' || k === 'field') continue;
+      if (k === 'quorum' || k === 'field' || k === 'strict') continue;
       /* a few reads are genuinely slow on a busy address and deserve their
          own patience rather than the default one */
       if (k === 'timeout'){ ms = opts[k]; continue; }

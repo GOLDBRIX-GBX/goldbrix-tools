@@ -146,7 +146,7 @@ async function _fedReadUtxos(address, target){
     const uns = (d && d.unspents) || [];
     if (!uns.length) return null;
     return uns;
-  } catch(_e){ return null; }
+  } catch(_e){ _fedReadUtxos.lastError = _e; return null; }
 }
 
 async function _fedBroadcast(rawtx){
@@ -236,6 +236,7 @@ const _spent = {
 };
 
 async function fetchUtxos(address, target) {
+  _fedReadUtxos.lastError = null;
   const fed = await _fedReadUtxos(address, target);
   if (fed) return _spent.filter(fed);
   const res = (target && target>0)
@@ -244,7 +245,13 @@ async function fetchUtxos(address, target) {
   if (!res.ok) throw new Error('UTXO fetch failed: '+res.status);
   const data = await res.json();
   if (data.target_unmet) { const e = new Error('MAX_PER_TX'); e.maxPerTx = data.max_per_tx; throw e; }
-  return _spent.filter(data.unspents || []);
+  const out = _spent.filter(data.unspents || []);
+  /* Empty here with a failed federated read is a read problem, not an empty
+     wallet: say so, instead of letting the UI claim there are no coins. */
+  if (out.length === 0 && _fedReadUtxos.lastError){
+    const e = new Error('UTXO_READ_FAILED'); e.code = 'UTXO_READ_FAILED'; e.cause = _fedReadUtxos.lastError; throw e;
+  }
+  return out;
 }
 
 async function sendGBX(mnemonic, fromAddress, toAddress, amountGbx, feeRateSatsPerByte = 30, onProgress = null) {
