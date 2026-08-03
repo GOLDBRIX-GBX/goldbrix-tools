@@ -198,6 +198,12 @@ def scan_and_lock_gbx(st,fund,ctx):
     for hl,intent in intents.items():
         if not intent.get("gasless"): continue
         if intent.get("direction")=="sell": continue
+        # The 3009 authorisation is bound to one token on one chain. Submitting it
+        # anywhere else burns gas on a transaction that cannot succeed, and would
+        # lock the user twice if it ever did.
+        # No chain named means no chain to guess: the sell branch already refuses
+        # such an intent rather than picking one, and this branch does the same.
+        if intent.get("chain")!=ctx["name"]: continue
         gkey=ctx["name"]+":"+hl
         if gkey in st["gasless_locked"]: continue          # idempotenta: deja submis
         a=intent.get("auth3009") or {}
@@ -220,6 +226,10 @@ def scan_and_lock_gbx(st,fund,ctx):
                      token=ctx["usdc"],amount=int(intent["usdc_amount"]),
                      validAfter=int(a["validAfter"]),validBefore=int(a["validBefore"]),
                      authNonce=a["nonce"],v=a["v"],r=a["r"],s=a["s"])
+            if not o.get("id"):
+                # No lock id means the chain did not record a lock; recording it as
+                # locked would hide a failure and block the retry.
+                print(f"  [GASLESS NO-ID] {hl[:14]} lockAuth returned no lock id -> not marked, will retry"); continue
             st["gasless_locked"][gkey]={"status":"locked","id":o.get("id"),"hash":o.get("hash")}; save_state(st)
             print(f"  [GASLESS LOCK] {hl[:14]} user={intent['evm_user'][:10]} amount={intent['usdc_amount']} -> lockAuth ok id={str(o.get('id'))[:12]}")
         except Exception as e:
