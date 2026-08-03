@@ -166,12 +166,12 @@ body[dir="rtl"]{direction:rtl;}
   <div class="card">
     <div class="sect" data-x="s.price">Price · candles</div>
     <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
-      <button class="t-tf-btn pctb" data-tf="1m" onclick="window.setInterval2&&window.setInterval2('1m')">1m</button>
-      <button class="t-tf-btn pctb" data-tf="5m" onclick="setInterval2('5m')">5m</button>
-      <button class="t-tf-btn pctb" data-tf="15m" onclick="setInterval2('15m')">15m</button>
-      <button class="t-tf-btn pctb active" data-tf="1h" onclick="setInterval2('1h')">1h</button>
-      <button class="t-tf-btn pctb" data-tf="4h" onclick="setInterval2('4h')">4h</button>
-      <button class="t-tf-btn pctb" data-tf="1d" onclick="setInterval2('1d')">1d</button>
+      <button class="t-tf-btn pctb" data-tf="1m">1m</button>
+      <button class="t-tf-btn pctb" data-tf="5m">5m</button>
+      <button class="t-tf-btn pctb" data-tf="15m">15m</button>
+      <button class="t-tf-btn pctb active" data-tf="1h">1h</button>
+      <button class="t-tf-btn pctb" data-tf="4h">4h</button>
+      <button class="t-tf-btn pctb" data-tf="1d">1d</button>
     </div>
     <div id="proChart" style="width:100%;height:340px"></div>
     <div style="display:flex;gap:14px;margin-top:8px;font-size:11px;color:#FFFDF7">
@@ -533,10 +533,10 @@ function initProChart(){
     container:'proChart', height:340, defaultTf:'1h', pollMs:10000,
     usdMultiplier:function(){return 0.01;}, displayDecimals:2, precision:2, minMove:0.01, unitLabel:'\u00b5GBX',
     fitContent:true, showVolume:true, storageKey:'gbx_coinx_chartType',
-    candlesUrl:function(){ return '/api/candles/'+cid+(ph?('?x=1'+ph):''); },
+    candlesUrl:function(){ var b=window.GBX_CANDLES_BASE||window.GBX_LAST_NODE||(window.GBX_NODES&&window.GBX_NODES[0])||''; return b+'/candles/'+cid+(ph?('?x=1'+ph):''); },
     els:{ma7:'ma7v',ma14:'ma14v',ma28:'ma28v',change:'chg24'}
   });
-  document.querySelectorAll('.t-tf-btn').forEach(function(b){b.addEventListener('click',function(){if(window.PriceChart)window.PriceChart.setTimeframe(this.dataset.tf);});});
+  document.querySelectorAll('.t-tf-btn').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.t-tf-btn').forEach(function(x){x.classList.remove('active');});this.classList.add('active');if(window.PriceChart)window.PriceChart.setTimeframe(this.dataset.tf);});});
 }
 async function loadExtras(){
   if(Date.now()-_exT<10000)return; _exT=Date.now();
