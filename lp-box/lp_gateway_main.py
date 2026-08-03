@@ -133,8 +133,8 @@ def _sg_cap_sats():
         return int(SELL_DAILY_FRAC*res*1e8) if res>0 else int(50e8)
     except Exception: return int(50e8)
 QUOTES_F=INTENTS_F.rsplit('/',1)[0]+'/lp_quotes.json'
-QUOTE_TTL=120      # a quote stays valid this long
-QUOTE_GRACE=240    # plus settlement time, during which the LP still honours it
+QUOTE_TTL=int(os.environ.get("GBX_QUOTE_TTL","60"))     # long enough to read and sign, no longer
+QUOTE_GRACE=int(os.environ.get("GBX_QUOTE_GRACE","240"))  # plus settlement, during which the LP still honours it
 def _quotes_load():
     try: return json.load(open(QUOTES_F))
     except Exception: return []
@@ -157,7 +157,10 @@ def _quote_honour(gbx_base):
         if int(e.get('exp',0))<=now: continue
         eg=float(e.get('gbx') or 0)
         if eg<=0 or abs(eg-g)>max(eg,g)*0.01: continue
-        if best is None or float(e.get('usd') or 0)>float(best.get('usd') or 0): best=e; bi=i
+        # The most recent one, not the most favourable. A quote is a moment this LP
+        # stood behind, and the caller saw exactly one of them; picking the best of
+        # a pile would turn a commitment into a menu of stale prices.
+        if best is None or int(e.get('exp',0))>int(best.get('exp',0)): best=e; bi=i
     if best is None: return None,None
     q[bi]['used']=1
     try: json.dump(q,open(QUOTES_F,'w'))

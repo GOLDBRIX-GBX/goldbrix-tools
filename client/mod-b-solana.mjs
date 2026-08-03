@@ -19,6 +19,12 @@ export async function lockUsdcSolana(ctx){
   onStatus&&onStatus("user_signed",{swap_id:prep.swap_id});
   try{ if(typeof localStorage!=="undefined") localStorage.setItem("gbx_pending_"+hashlock,JSON.stringify({dir:"buy_solana",owner_pk:(pkUHex||""),hashlock,secret:_hex(secret),swap_id:prep.swap_id,vault:prep.vault,usdcAmount:String(usdcAmount),ts:Date.now()})); }catch(_e){}
   const sub=await post("/sol-submit",{tx_signed_b64:signedB64,swap_id:prep.swap_id,hashlock,pkU:pkUHex,gbx_amount:gbxAmount,t2_blocks:t2Blocks});
+  if(sub.error==='price_moved'){
+    // A refusal on price is final and nothing was broadcast: no point asking the
+    // chain about a lock that was never sent, and no reason to make the user wait.
+    try{ if(typeof localStorage!=="undefined") localStorage.removeItem("gbx_pending_"+hashlock); }catch(_e){}
+    throw new Error('price_moved: '+(sub.msg||''));
+  }
   if(sub.error||!sub.ok){
     /* The lock may already be on chain: the LP broadcasts first and only then
        confirms, so a slow confirmation must not be reported as a failure. A user

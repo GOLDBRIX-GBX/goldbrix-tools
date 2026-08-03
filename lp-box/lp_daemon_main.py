@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # GoldBrix LP daemon (MAINNET) — reactiv, non-custodial, cu refund-pe-abandon + auto-halt + bucla.
-import subprocess, json, hashlib, os, time, ecdsa
+import subprocess, json, hashlib, os, sys, time, ecdsa
 from ecdsa.util import sigencode_der_canonize
 from ecdsa import SECP256k1
 from lp_env import E
@@ -392,6 +392,22 @@ def check_economic_breaker(st):
         st["breaker"]={"active":False,"checked":now}
     return st
 
+def _reserves_refresh():
+    # Quotes are priced off the reserve snapshot. A settled swap changes the pool
+    # at once, so the snapshot is refreshed as soon as that happens rather than
+    # waiting for the next timer tick and quoting a curve that no longer exists.
+    try:
+        _u=os.path.join(os.path.dirname(os.path.abspath(__file__)),"lp_reserves_updater.py")
+        if not os.path.exists(_u): return
+        _r=subprocess.run([sys.executable,_u],capture_output=True,text=True,timeout=45)
+        print(f"  [RESERVES] refreshed after settlement: {(_r.stdout or '').strip()[:120]}")
+    except Exception as _e:
+        print(f"  [RESERVES] refresh failed: {str(_e)[:80]} -> the timer will catch up")
+
+def _settle_fingerprint(st):
+    sw=st.get("swaps",{})
+    return (len(sw), sum(1 for v in sw.values() if str(v.get("status","")).startswith(("completed","refunded"))))
+
 def run_once():
     st=load_state()
     if st.get("halt"): print("DAEMON HALTED (anomalie securitate)"); return st
@@ -399,6 +415,7 @@ def run_once():
     if st.get("breaker",{}).get("active"):
         save_state(st); print("ECONOMIC BREAKER active -> NOT processing new swaps (auto-resume when it clears)"); return st
     fund=ensure_setup(st)
+    _fp0=_settle_fingerprint(st)
     for _cn in (enabled_chains() or ["base"]):
         try:
             _c=chain_ctx(_cn)
@@ -430,6 +447,7 @@ def run_once():
         print("  [SOL] branch failed (EVM untouched, continuing):")
         print("  "+str(_e)[:2000])
         print(_tb.format_exc()[-2000:])
+    if _settle_fingerprint(st)!=_fp0: _reserves_refresh()
     save_state(st); return st
 def run_loop(interval=5, iters=None):
     i=0
