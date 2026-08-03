@@ -45,14 +45,20 @@ async function getLogsChunked(address,topics,fromHex){
   }
   return logs;
 }
+// What a transaction actually cost this provider, taken from the receipt itself.
+// On a rollup the L1 data fee is the larger part and is not in gasUsed*price.
+const txCost=r=>{ try{ const rc=r&&r.receipt; if(!rc) return null;
+  const l2=BigInt(rc.gasUsed||'0x0')*BigInt(rc.effectiveGasPrice||'0x0');
+  const l1=BigInt(rc.l1Fee||'0x0');
+  return (l2+l1).toString(); }catch(_e){ return null; } };
 let out={};
 try{
   if(a.cmd==='addr') out={address:evm.addressFromPriv(a.pk)};
-  else if(a.cmd==='approve'){const r=await htlc.approve(a.pk,a.token,a.spender,BigInt(a.amount)); out={status:r.receipt.status,hash:r.hash};}
-  else if(a.cmd==='lock'){const r=await htlc.lock(a.pk,a.htlc,a.receiver,a.token,BigInt(a.amount),a.hashlock,BigInt(a.timelock)); const lg=r.receipt.logs.find(l=>l.address.toLowerCase()===a.htlc.toLowerCase()); out={status:r.receipt.status,hash:r.hash,id:lg?lg.topics[1]:null};}
-  else if(a.cmd==='claim'){const r=await htlc.claim(a.pk,a.htlc,a.id,a.preimage); out={status:r.receipt.status,hash:r.hash};}
-  else if(a.cmd==='refund'){const r=await htlc.refund(a.pk,a.htlc,a.id); out={status:r.receipt.status,hash:r.hash};}
-  else if(a.cmd==='lockAuth'){const r=await htlc.lockAuth(a.pk,a.htlc,a.user,a.receiver,a.hashlock,BigInt(a.timelock),a.token,BigInt(a.amount),BigInt(a.validAfter),BigInt(a.validBefore),a.authNonce,a.v,a.r,a.s); const lg=(r.receipt.logs||[]).find(l=>l.address.toLowerCase()===a.htlc.toLowerCase()); out={status:r.receipt.status,hash:r.hash,id:lg?lg.topics[1]:null};}
+  else if(a.cmd==='approve'){const r=await htlc.approve(a.pk,a.token,a.spender,BigInt(a.amount)); out={status:r.receipt.status,hash:r.hash,gas_wei:txCost(r)};}
+  else if(a.cmd==='lock'){const r=await htlc.lock(a.pk,a.htlc,a.receiver,a.token,BigInt(a.amount),a.hashlock,BigInt(a.timelock)); const lg=r.receipt.logs.find(l=>l.address.toLowerCase()===a.htlc.toLowerCase()); out={status:r.receipt.status,hash:r.hash,id:lg?lg.topics[1]:null,gas_wei:txCost(r)};}
+  else if(a.cmd==='claim'){const r=await htlc.claim(a.pk,a.htlc,a.id,a.preimage); out={status:r.receipt.status,hash:r.hash,gas_wei:txCost(r)};}
+  else if(a.cmd==='refund'){const r=await htlc.refund(a.pk,a.htlc,a.id); out={status:r.receipt.status,hash:r.hash,gas_wei:txCost(r)};}
+  else if(a.cmd==='lockAuth'){const r=await htlc.lockAuth(a.pk,a.htlc,a.user,a.receiver,a.hashlock,BigInt(a.timelock),a.token,BigInt(a.amount),BigInt(a.validAfter),BigInt(a.validBefore),a.authNonce,a.v,a.r,a.s); const lg=(r.receipt.logs||[]).find(l=>l.address.toLowerCase()===a.htlc.toLowerCase()); out={status:r.receipt.status,hash:r.hash,id:lg?lg.topics[1]:null,gas_wei:txCost(r)};}
   else if(a.cmd==='balanceOf'){const b=await rpc('eth_call',[{to:a.token,data:'0x70a08231'+pad(a.who)},'latest']); out={balance:BigInt(b).toString()};}
   else if(a.cmd==='events'){
     const sig='Locked(bytes32,address,address,address,uint256,bytes32,uint256)';
@@ -68,6 +74,7 @@ try{
     const logs=await getLogsChunked(a.htlc,[t0],a.fromBlock);
     out={claimed: logs.map(l=>{const d=l.data.replace(/^0x/,''); const L=parseInt(d.slice(64,128),16); return {id:l.topics[1], preimage:'0x'+d.slice(128,128+2*L), block:parseInt(l.blockNumber,16)};})};
   }
+  else if(a.cmd==='nativeBalance'){const b=await rpc('eth_getBalance',[a.who,'latest']); out={wei:BigInt(b).toString()};}
   else out={error:'unknown cmd '+a.cmd};
 }catch(e){ out={error:String(e.message||e)}; }
 console.log(JSON.stringify(out));

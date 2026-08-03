@@ -3,7 +3,7 @@ from lp_env import E
 Schema cross-chain: hashlock PARTAJAT L1<->Solana, preimage revelat pe L1 (funds-safe, regula 10).
 Refoloseste din daemon: find_preimage, build_htlc, quote, gcli/gclij (L1) -> primite ca dependinte.
 Izolat: orice eroare aici e prinsa de run_once (try/except), EVM neatins."""
-import json, time, subprocess, hashlib
+import json, time, subprocess, hashlib, os
 
 SOL_CLI = E["SOL_CLI"]
 
@@ -40,6 +40,9 @@ def sol_scan_and_lock_gbx(st, fund, cfg, deps):
         if ev["hashlock"].lower() != hl.lower(): continue      # hashlock din swap == cheia intent
         usd_locked = int(ev["amount"]) / 1e6
         max_gbx = deps["quote"](usd_locked)["gbx_out"]; req_gbx = float(intent.get("gbx_amount", 1.0))
+        # Same commitment rule as the EVM branch: the LP honours its own live quote.
+        _qe = int(intent.get("quote_exp") or 0)
+        if _qe and int(time.time()) < _qe and req_gbx > max_gbx: max_gbx = req_gbx
         if req_gbx > max_gbx * (1 + 0.01):
             st["swaps"][sid] = {"chain": "solana", "hashlock": hl, "status": "rejected_price"}
             deps["save_state"](st); print(f"  [SOL GUARD] REJECT {hl[:14]} req={req_gbx} > max={max_gbx}"); continue
@@ -96,19 +99,42 @@ def sol_scan_and_refund(st, cfg, deps):
     # Refund USDC pe Solana = userul il cheama (USDC-ul lui). Refund GBX nativ L1 = scan_and_refund_gbx existent.
     pass
 
+# Opening a lock creates accounts that must be rent-exempt, and the deposit comes
+# from this provider. Settling an existing swap does not. So the balance is checked
+# only before the steps that open something, never before those that close it.
+SOL_LOCK_LAMPORTS=int(os.environ.get("GBX_SOL_LOCK_LAMPORTS","1976640"))
+SOL_MIN_LOCKS=int(os.environ.get("GBX_SOL_MIN_LOCKS","3"))
+
+def _sol_native_balance(cfg):
+    try:
+        o = _solcli(cfg, cmd="nativeBalance", account=cfg["lp_sol"])
+        return int(o.get("lamports","0"))
+    except Exception:
+        return None
+
 def sol_run(st, fund, deps):
     # One failing step must never stop the others. Opening a new lock needs
     # rent-exempt deposits; settling a swap that is already running does not.
     # A provider out of lamports still has to honour what it started.
     cfg = sol_cfg(deps["load_chains"])
     if cfg is None: return
-    for _name, _fn, _needs_fund in (
-        ("lock_gbx",        sol_scan_and_lock_gbx,          True),
-        ("claim_usdc",      sol_scan_and_claim_usdc,        False),
-        ("refund",          sol_scan_and_refund,            False),
-        ("lock_usdc_sell",  sol_scan_and_lock_usdc_for_sell, True),
-        ("claim_gbx_sell",  sol_scan_and_claim_gbx_for_sell, True),
+    _bal = _sol_native_balance(cfg)
+    _need = SOL_LOCK_LAMPORTS * SOL_MIN_LOCKS
+    _can_open = (_bal is None) or (_bal >= _need)
+    st.setdefault("chain_gas", {})
+    st["chain_gas"]["solana"] = {"balance": _bal, "lock_cost": SOL_LOCK_LAMPORTS,
+                                 "locks_left": (None if _bal is None else _bal // SOL_LOCK_LAMPORTS),
+                                 "min_locks": SOL_MIN_LOCKS, "ok": bool(_can_open)}
+    if not _can_open:
+        print(f"  [SOL GAS] {_bal} lamports covers fewer than {SOL_MIN_LOCKS} new locks -> opening none, settling the ones already running")
+    for _name, _fn, _needs_fund, _opens in (
+        ("lock_gbx",        sol_scan_and_lock_gbx,          True,  True),
+        ("claim_usdc",      sol_scan_and_claim_usdc,        False, False),
+        ("refund",          sol_scan_and_refund,            False, False),
+        ("lock_usdc_sell",  sol_scan_and_lock_usdc_for_sell, True, True),
+        ("claim_gbx_sell",  sol_scan_and_claim_gbx_for_sell, True, False),
     ):
+        if _opens and not _can_open: continue
         try:
             if _needs_fund: _fn(st, fund, cfg, deps)
             else: _fn(st, cfg, deps)

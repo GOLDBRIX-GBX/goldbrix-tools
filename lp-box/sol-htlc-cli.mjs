@@ -34,6 +34,15 @@ function makeProgram(kp) {
   return new Program(idl, provider);
 }
 
+// What a settled transaction actually cost this provider, read from the chain.
+// Rent deposits are returned when the accounts close; the fee is not.
+async function txFee(sig) {
+  try {
+    const t = await conn.getTransaction(sig, { commitment: COMMITMENT, maxSupportedTransactionVersion: 0 });
+    return (t && t.meta && t.meta.fee != null) ? String(t.meta.fee) : null;
+  } catch (_e) { return null; }
+}
+
 async function splBal(pubkeyStr) {
   try { return (await getAccount(conn, new PublicKey(pubkeyStr), COMMITMENT)).amount.toString(); }
   catch { return "0/none"; }
@@ -193,7 +202,7 @@ try {
     }
     const st = await conn.getSignatureStatuses([sig]).catch(() => null);
     const txErr = st && st.value && st.value[0] ? st.value[0].err : "unknown";
-    out = { status: (txErr === null) ? "0x1" : "0x0", sig, vault: vaultBal, txErr };
+    out = { status: (txErr === null) ? "0x1" : "0x0", sig, fee_lamports: await txFee(sig), vault: vaultBal, txErr };
   }
 
   else if (a.cmd === "lock-sell") {
@@ -232,6 +241,7 @@ try {
     await conn.confirmTransaction(sig, COMMITMENT);
     const vaultBal = await splBal(vaultPda.toBase58());
     out = { status: (vaultBal === amount.toString()) ? "0x1" : "0x0", sig,
+            fee_lamports: await txFee(sig),
             id: "0x" + swapId.toString("hex"), vault: vaultBal,
             user_ata: userAta.toBase58(), swap_account: swapPda.toBase58() };
   }
@@ -270,7 +280,7 @@ try {
     await conn.confirmTransaction(sig, COMMITMENT);
     const swapId = Buffer.from(a.swap_id.replace(/^0x/, ""), "hex");
     const { vaultPda } = pdas(swapId);
-    out = { status: "0x1", sig, vault_after: await splBal(vaultPda.toBase58()) };
+    out = { status: "0x1", sig, fee_lamports: await txFee(sig), vault_after: await splBal(vaultPda.toBase58()) };
   }
 
   else if (a.cmd === "preimage") {
@@ -305,6 +315,10 @@ try {
 
   else if (a.cmd === "balance") {
     out = { balance: await splBal(a.account) };
+  }
+
+  else if (a.cmd === "nativeBalance") {
+    out = { lamports: String(await conn.getBalance(new PublicKey(a.account), COMMITMENT)) };
   }
 
   else throw new Error("cmd necunoscut: " + a.cmd);

@@ -63,6 +63,9 @@ def evmcli(ctx=None,**d):
     if r.returncode!=0: raise RuntimeError("evmcli rc: "+r.stderr.strip())
     o=json.loads(r.stdout.strip())
     if o.get("error"): raise RuntimeError("evmcli: "+o["error"])
+    if o.get("gas_wei") and ctx is not None:
+        try: _gas_record(ctx["name"],o["gas_wei"])
+        except Exception: pass
     return o
 def sha256(b): return hashlib.sha256(b).digest()
 def dsha256(b): return sha256(sha256(b))
@@ -241,6 +244,10 @@ def scan_and_lock_gbx(st,fund,ctx):
         intent=intents.get(ev["hashlock"].lower())
         if not intent: continue
         usd_locked=int(ev.get("amount","0"))/1e6; max_gbx=quote(usd_locked)["gbx_out"]; req_gbx=float(intent.get("gbx_amount",1.0))
+        # The LP keeps its word: a quote it issued itself is honoured until it
+        # expires, even if the pool has moved since. Same rule as the sell branch.
+        _qe=int(intent.get("quote_exp") or 0)
+        if _qe and int(time.time())<_qe and req_gbx>max_gbx: max_gbx=req_gbx
         if req_gbx > max_gbx*(1+0.01):
             print(f"  [GUARD] REJECT {ev['id'][:14]} req={req_gbx} > max={max_gbx} usd={usd_locked} -> NU blochez GBX"); continue
         pkU=bytes.fromhex(intent["pkU"]); skLP=sk_from_hex(st["lp_gbx_sk"]); pkLP=pk_of(skLP)
@@ -298,6 +305,53 @@ def _gbx_lp_balance():
     try: return float(gcli("getbalance",wallet=WALLET))
     except Exception: return None
 
+# ---- What each chain costs this provider, measured from its own receipts ----
+# A provider that cannot pay a chain must say so and step aside on that chain
+# alone; the others keep settling. With no measurements yet, nothing is blocked.
+GAS_MIN_TXS=int(os.environ.get("GBX_GAS_MIN_TXS","50"))
+GAS_EMA_N=int(os.environ.get("GBX_GAS_EMA_N","20"))
+
+def _gas_load():
+    try: return json.load(open(E["GAS_F"]))
+    except Exception: return {}
+
+def _gas_record(chain,cost):
+    # Running mean over the last N settled transactions, in the chain's own unit.
+    try:
+        c=int(cost or 0)
+        if c<=0: return
+        g=_gas_load(); e=g.get(chain) or {}
+        n=min(int(e.get("n",0))+1,GAS_EMA_N)
+        avg=float(e.get("avg",0) or 0)
+        avg=c if avg<=0 else avg+(c-avg)/n
+        g[chain]={"avg":avg,"n":n,"last":c,"ts":int(_time_brk.time())}
+        json.dump(g,open(E["GAS_F"],"w"))
+    except Exception as _e:
+        print(f"  [GAS] could not record cost for {chain}: {str(_e)[:80]}")
+
+def _native_balance(ctx):
+    try:
+        o=evmcli(ctx=ctx,cmd="nativeBalance",who=ctx["lp_evm"])
+        return int(o.get("wei","0"))
+    except Exception: return None
+
+def _chain_solvent(ctx,st):
+    # True unless we have both a measured cost and a balance that cannot cover
+    # GAS_MIN_TXS more of them. Unknown -> unchanged behaviour, never a new refusal.
+    name=ctx["name"]
+    g=_gas_load().get(name) or {}
+    avg=float(g.get("avg",0) or 0)
+    bal=_native_balance(ctx)
+    st.setdefault("chain_gas",{})
+    if bal is None or avg<=0:
+        st["chain_gas"][name]={"balance":bal,"avg_cost":avg or None,"txs_left":None,"ok":True}
+        return True
+    left=int(bal/avg)
+    ok=left>=GAS_MIN_TXS
+    st["chain_gas"][name]={"balance":bal,"avg_cost":avg,"txs_left":left,"ok":ok,
+                           "min_txs":GAS_MIN_TXS,"checked":int(_time_brk.time())}
+    return ok
+
 def check_economic_breaker(st):
     # OWNERLESS ECONOMIC BREAKER: deterministic rules, no admin key, auto-resume.
     # Diferit de "halt" (securitate/preimage = permanent). Breaker = economic = se reia singur.
@@ -348,6 +402,10 @@ def run_once():
     for _cn in (enabled_chains() or ["base"]):
         try:
             _c=chain_ctx(_cn)
+            if not _chain_solvent(_c,st):
+                _cg=st.get("chain_gas",{}).get(_cn,{})
+                print(f"  [CHAIN {_cn} GAS] {_cg.get('txs_left')} transactions left, below {_cg.get('min_txs')} -> standing aside on this chain, the others continue")
+                save_state(st); continue
             scan_and_lock_gbx(st,fund,_c); scan_and_claim_usdc(st,_c); scan_and_lock_usdc(st,fund,_c); scan_and_claim_gbx(st,fund,_c)
         except Exception as _e:
             print(f"  [CHAIN {_cn} RESILIENT] {str(_e)[:100]} -> sar peste lant, continui")

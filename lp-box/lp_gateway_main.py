@@ -63,6 +63,9 @@ def lp_info():
         p=vk.pubkey.point; pub=("02" if p.y()%2==0 else "03")+format(p.x(),"064x")
     o={"lp_gbx_pubkey":pub,"lp_evm_addr":LP_EVM_ADDR,
        "fee_bps":0,"fee_policy":"none - founder takes no fee; full spread stays in LP reserve (code-is-law)"}
+    # Per-chain capacity, so a client can route around a chain this provider
+    # cannot pay for rather than discovering it when the swap is half done.
+    o["chains"]=st.get("chain_gas") or {}
     try:
         from lp_pricing import price_info as _pinfo
         o["price"]=_pinfo()
@@ -198,6 +201,16 @@ def _sell_guard(pk,val_sats,commit=True):
 
 def quote(usd):
     q=_quote(usd); q["valid_until"]=int(time.time())+60; q["ts"]=int(time.time()); return q
+def _chain_gas_ok(chain):
+    # A provider that cannot pay a chain says so before taking the order, instead
+    # of failing halfway through it. Unknown chain or no reading yet -> allowed.
+    try:
+        st=load(STATE_F,{}); cg=(st.get("chain_gas") or {}).get(chain)
+        if not cg: return True
+        return bool(cg.get("ok",True))
+    except Exception:
+        return True
+
 def _breaker_active():
     try:
         st=load(STATE_F,{}); b=st.get("breaker") or {}
@@ -220,6 +233,10 @@ class H(BaseHTTPRequestHandler):
             if _breaker_active(): return self._s(503,{'error':'breaker_active','msg':'swaps temporarily suspended (economic anomaly), auto-resumes'})
             body=self._body(); hl=(body.get('hashlock') or '').lower()
             if not hl: return self._s(400,{'error':'missing'})
+            _ch=body.get('chain')
+            if _ch and not _chain_gas_ok(_ch):
+                return self._s(503,{'error':'chain_unfunded','chain':_ch,
+                                    'msg':'this provider cannot currently pay for transactions on '+str(_ch)+'; other chains and other providers are unaffected'})
             it=load(INTENTS_F,{})
             if body.get('direction')=='sell':
                 # ANTI-DUMP: rate-limit ONLY on sells (outgoing money)
@@ -236,7 +253,16 @@ class H(BaseHTTPRequestHandler):
             else:
                 pkU=body.get('pkU'); amt=body.get('gbx_amount')
                 if not (pkU and amt): return self._s(400,{'error':'missing'})
-                it[hl]={'pkU':pkU,'gbx_amount':amt}
+                # Say no before the buyer locks anything, never after. If this LP
+                # cannot stand behind the figure it quoted, the answer comes now,
+                # with the current one, and no money has moved.
+                _qu,_qe=_quote_honour(int(round(float(amt)*1e8)))
+                if not _qu:
+                    _now=quote(float(body.get('usd_in') or 0)) if body.get('usd_in') else None
+                    return self._s(409,{'error':'price_moved',
+                        'msg':'the quote for this amount is no longer valid; nothing was locked',
+                        'gbx_now':(_now or {}).get('gbx_out')})
+                it[hl]={'pkU':pkU,'gbx_amount':amt,'quote_usd':_qu,'quote_exp':_qe}
                 it[hl]['t2_blocks']=_clamp_int(body.get('t2_blocks'),T2_MIN_BLOCKS,T2_MAX_BLOCKS,600)
                 # GASLESS (EIP-3009): pastreaza autorizarea ca daemonul sa poata face lockAuth (relayer=LP)
                 if body.get('gasless'):
@@ -363,6 +389,12 @@ class H(BaseHTTPRequestHandler):
             need=('tx_signed_b64','swap_id','hashlock','pkU','gbx_amount')
             if not all(body.get(k) for k in need): return self._s(400,{'error':'missing','need':list(need)})
             sol=load(CHAINS_F,{}).get('chains',{}).get('solana',{})
+            # Last point at which this LP can still decline without the buyer losing
+            # anything: the transaction is signed but not broadcast yet.
+            _qu,_qe=_quote_honour(int(round(float(body['gbx_amount'])*1e8)))
+            if not _qu:
+                return self._s(409,{'error':'price_moved',
+                    'msg':'the quote for this amount is no longer valid; nothing was broadcast and no funds are locked'})
             arg=json.dumps({'cmd':'submit-lock','idl':sol.get('idl'),'program':sol.get('program'),'rpc':sol.get('rpc'),
                 'commitment':'confirmed','tx_signed_b64':body['tx_signed_b64'],'swap_id':body['swap_id']})
             r=subprocess.run(['node',SOL_CLI,arg],capture_output=True,text=True,timeout=90)
@@ -371,7 +403,8 @@ class H(BaseHTTPRequestHandler):
             if o.get('error') or o.get('status')!='0x1': return self._s(502,o)
             hl=body['hashlock'].lower()
             it=load(INTENTS_F,{})
-            it[hl]={'chain':'solana','sol_swap_id':body['swap_id'],'pkU':body['pkU'],'gbx_amount':body['gbx_amount']}
+            it[hl]={'chain':'solana','sol_swap_id':body['swap_id'],'pkU':body['pkU'],'gbx_amount':body['gbx_amount'],
+                    'quote_usd':_qu,'quote_exp':_qe}
             it[hl]['t2_blocks']=_clamp_int(body.get('t2_blocks'),T2_MIN_BLOCKS,T2_MAX_BLOCKS,600)
             json.dump(it,open(INTENTS_F,'w'))
             return self._s(200,{'ok':True,'sig':o.get('sig'),'vault':o.get('vault'),'hashlock':hl})
@@ -487,6 +520,9 @@ class H(BaseHTTPRequestHandler):
                 return self._s(200,_q)
             usd=float((qs.get('usd') or ['0'])[0])
             _q=quote(usd); _q['breaker']=_breaker_active()
+            # A buyer is owed the same commitment a seller gets: the figure this LP
+            # just produced is honoured until it expires, whatever the pool does next.
+            _q['valid_until']=_quote_commit(float(_q.get('gbx_out') or 0),usd)
             return self._s(200,_q)
         if self.path.startswith('/utxo-status'):
             # read-only: e UTXO-ul cheltuit? (triere carduri recovery in client)

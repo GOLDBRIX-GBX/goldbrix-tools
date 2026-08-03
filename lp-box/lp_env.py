@@ -17,6 +17,7 @@ _D = {
  "RESERVES_F":"/root/lp_reserves.json",
  "INDEX_DB":  "",
  "NODEREG_F": "",
+ "GAS_F":     "",
 }
 # LP-19: index DB auto-detect if not provided via GBX_INDEX_DB
 def _autodb():
@@ -35,3 +36,6 @@ def _autonodereg():
     return ""
 if not E.get("INDEX_DB"): E["INDEX_DB"] = _autodb()
 if not E.get("NODEREG_F"): E["NODEREG_F"] = _autonodereg()
+if not E.get("GAS_F"):
+    import os as _o2
+    E["GAS_F"] = _o2.path.join(_o2.path.dirname(E["STATE_F"]) or ".", "lp_gas.json")
