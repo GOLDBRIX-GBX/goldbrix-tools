@@ -102,6 +102,26 @@ function parseTransfer(tx){
   return null;
 }
 
+// -- HTLC lock anchor: 'GBX:H:'+ver(1)+hashlock(32)+refund_pk(33) = 72 bytes.
+// The fund tx of a GBX-side HTLC lock may carry this second output so the lock
+// is findable from the chain alone, forever. It is NOT trusted: the client
+// rebuilds the script from (hashlock, its own key, the LP key from the
+// on-chain registry, T1) and accepts a row only when p2wsh(script) matches
+// the recorded spk. A false anchor therefore points at nothing spendable.
+function parseHtlcAnchor(tx){
+  for (const o of tx.vout){
+    const hex = (o.scriptPubKey && o.scriptPubKey.hex) || '';
+    if (!hex.startsWith('6a')) continue;
+    let data;
+    try { [data] = readPush(Buffer.from(hex,'hex'), 1); } catch { continue; }
+    if (data.length !== 72) continue;
+    if (!data.subarray(0,6).equals(Buffer.from('GBX:H:'))) continue;
+    if (data[6] !== 1) continue;
+    return { hashlock: data.subarray(7,39), pk: data.subarray(39,72) };
+  }
+  return null;
+}
+
 // ── coin metadata (name/ticker) from the chain alone: 'GBX:M:'+ver(1)+cid(32)+
 // tLen(1)+ticker+nLen(1)+name. Valid ONLY if the tx is signed by the creator pk
 // from the CREATE intent (P2WPKH witness reveals it). First on chain wins.
@@ -343,6 +363,13 @@ CREATE TABLE IF NOT EXISTS curve_ops(
   tokens_out TEXT NOT NULL, burn_sat TEXT NOT NULL);
 CREATE INDEX IF NOT EXISTS co_h ON curve_ops(height);
 CREATE INDEX IF NOT EXISTS co_pk ON curve_ops(pk);
+CREATE TABLE IF NOT EXISTS htlc_utxos(
+  txid TEXT NOT NULL, vout INTEGER NOT NULL,
+  spk TEXT NOT NULL, value_sat TEXT NOT NULL,
+  refund_pk TEXT NOT NULL, hashlock TEXT NOT NULL,
+  height INTEGER NOT NULL, spent_height INTEGER,
+  PRIMARY KEY(txid, vout));
+CREATE INDEX IF NOT EXISTS hu_pk ON htlc_utxos(refund_pk) WHERE spent_height IS NULL;
 `);
 try{ db.exec("ALTER TABLE curves ADD COLUMN creator_pk TEXT NOT NULL DEFAULT ''"); }catch(_e){}
 const q = {
@@ -358,6 +385,10 @@ const q = {
   tuGet:    db.prepare('SELECT coin_id, amount FROM token_utxos WHERE txid=? AND vout=?'),
   rbNew:    db.prepare('DELETE FROM token_utxos WHERE height > ?'),
   rbSpent:  db.prepare('UPDATE token_utxos SET spent_height=NULL WHERE spent_height > ?'),
+  hPut:     db.prepare('INSERT OR IGNORE INTO htlc_utxos(txid,vout,spk,value_sat,refund_pk,hashlock,height) VALUES(?,?,?,?,?,?,?)'),
+  hSpend:   db.prepare('UPDATE htlc_utxos SET spent_height=? WHERE txid=? AND vout=? AND spent_height IS NULL'),
+  hRbNew:   db.prepare('DELETE FROM htlc_utxos WHERE height > ?'),
+  hRbSpent: db.prepare('UPDATE htlc_utxos SET spent_height=NULL WHERE spent_height > ?'),
   rbBlk:    db.prepare('DELETE FROM blocks WHERE height > ?'),
   holdings: db.prepare(`SELECT coin_id, pk, SUM(CAST(amount AS INTEGER)) amt
                         FROM token_utxos WHERE spent_height IS NULL GROUP BY coin_id, pk`),
@@ -416,7 +447,7 @@ function curveApply(h, tx, cid, m, hM, status){
 const scanned = () => parseInt(q.getMeta.get('scanned')?.v ?? String(START - 1), 10);
 
 const rollbackTo = db.transaction(h => {
-  q.rbNew.run(h); q.rbSpent.run(h); q.rbBlk.run(h);
+  q.rbNew.run(h); q.rbSpent.run(h); q.hRbNew.run(h); q.hRbSpent.run(h); q.rbBlk.run(h);
   q.cRb.run(h);
   q.mRb.run(h);
   q.m2Rb.run(h);
@@ -439,7 +470,7 @@ const rollbackTo = db.transaction(h => {
 const applyBlock = db.transaction((h, blk) => {
   for (const tx of blk.tx){
     for (const vin of (tx.vin || []))
-      if (vin.txid !== undefined) q.spend.run(h, vin.txid, vin.vout);
+      if (vin.txid !== undefined) { q.spend.run(h, vin.txid, vin.vout); q.hSpend.run(h, vin.txid, vin.vout); }
     const it = parseIntent(tx);
     // ── curve tracking — runs for EVERY curve op, tokensOut or not ──
     if (it && 'CBSRG'.includes(it.op) && !(LAUNCH_H > 0 && h < LAUNCH_H)){ // pre-activation X ops are NOT consensus-guarded -> never indexed
@@ -537,6 +568,15 @@ const applyBlock = db.transaction((h, blk) => {
           const got = sha256(full).subarray(0,16).toString('hex');
           if (got === want) q.lgFullPut.run(lg.cid, full, tx.txid, h);
         }
+      }
+    }
+    // An HTLC anchor records the lock outpoint(s) of its own transaction.
+    const ha = parseHtlcAnchor(tx);
+    if (ha){
+      for (const o of tx.vout){
+        const hx = (o.scriptPubKey && o.scriptPubKey.hex) || '';
+        if (!hx.startsWith('0020')) continue;
+        q.hPut.run(tx.txid, o.n, hx, String(Math.round(o.value*1e8)), ha.pk.toString('hex'), ha.hashlock.toString('hex'), h);
       }
     }
     // A declared transfer credits the recipient only when the output proves it.

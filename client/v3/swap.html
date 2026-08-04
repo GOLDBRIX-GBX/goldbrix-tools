@@ -510,7 +510,11 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
           if(q.breaker){ el.msg.textContent = humanError('breaker'); el.msg.classList.add('cap-warn'); }
           el.recv.textContent = (+q.gbx_out).toLocaleString(undefined,{maximumFractionDigits:4});
           window._gbxShownOut = +q.gbx_out;
-          el.rate.textContent = '1 GBX = $'+(+q.price_usd).toFixed(4);
+          /* The public buys against the market: the rate shown is the last
+             executed on-chain price. What this order itself pays is said
+             separately, always, whenever it differs. */
+          var _rbase=(+window._gbxMktUsd>0)?+window._gbxMktUsd:+q.price_usd;
+          el.rate.textContent = '1 GBX = $'+_rbase.toFixed(4);
           if(q.capped && q.max_usd_in!=null){ el.msg.textContent = t('cap_msg').replace('{m}', (+q.max_usd_in).toLocaleString(undefined,{maximumFractionDigits:2})); el.msg.classList.add('cap-warn'); }
           else {
             /* Honest impact figure, derived from the quote itself: what this
@@ -524,7 +528,7 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
             var _ir=document.getElementById('impactRow'), _im=document.getElementById('impactMsg');
             /* 10%: normal spread plus spot-vs-last-trade drift stays silent;
                only an order that genuinely moves the curve speaks up. */
-            if (_imp > 10 && _ir && _im){
+            if (_imp > 0.05 && _ir && _im){
               _im.textContent = t('impact_msg').replace('{p}', _eff.toFixed(4)).replace('{i}', _imp.toFixed(1));
               _ir.hidden = false;
             } else if(_ir){ _ir.hidden = true; }
@@ -844,7 +848,42 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
   }
   async function checkPendingSwaps(){
     const rec=document.getElementById('recover'); if(!rec) return;
-    const ks=gbxPendingKeys(); if(!ks.length){ rec.hidden=true; rec.innerHTML=''; return; }
+    let ks=gbxPendingKeys();
+    // NO LOCAL MEMORY: the locks themselves live on chain and with the LPs.
+    // Once per page load, rebuild the local entries from the federation:
+    // the refund pubkey comes from the seed, the chain index (GBX:H anchors)
+    // and every registered LP are asked, and each still-unspent lock becomes
+    // a normal pending entry - the proven recovery flow does the rest.
+    if(!ks.length && !window.__gbxHtlcScanned){
+      window.__gbxHtlcScanned=true;
+      try{
+        const w=activeWallet();
+        if(w){
+          const kp=await window.GoldbrixCrypto.deriveKeypairFromMnemonic(w.mnemonic);
+          const pk=Array.from(new Uint8Array(kp.publicKey),x=>x.toString(16).padStart(2,'0')).join('').toLowerCase();
+          const found={};
+          try{ const j=await window.GBXRead.json('/api/htlc-by-refund-pubkey/'+pk);
+               for(const L of ((j&&j.locks)||[])) if(!L.spent) found[String(L.hashlock).toLowerCase()]={ gbx_txid:L.txid, gbx_vout:L.vout, gbx_val:Number(L.value_sat) }; }catch(_e){}
+          try{ const lps=await window.GBXLp.list();
+               for(const lp of (lps||[])){
+                 try{ const r=await (await fetch(lp.base_url.replace(/\/$/,'')+'/htlc-by-refund-pubkey/'+pk,{cache:'no-store'})).json();
+                      for(const L of ((r&&r.locks)||[])){
+                        const hl=String(L.hashlock||'').toLowerCase(); if(!hl||!L.gbx_txid) continue;
+                        found[hl]=Object.assign(found[hl]||{},{ gbx_txid:L.gbx_txid, gbx_vout:L.gbx_vout||0, gbx_val:Number(L.gbx_val)||((found[hl]||{}).gbx_val), script:L.gbx_script, chain:L.chain });
+                      } }catch(_e){}
+               } }catch(_e){}
+          for(const hl of Object.keys(found)){
+            const key='gbx_pending_'+hl.replace(/^0x/,'');
+            if(localStorage.getItem(key)) continue;
+            const f=found[hl];
+            const entry={ dir:'sell', hashlock:hl, gbx_txid:f.gbx_txid, gbx_vout:f.gbx_vout||0, gbx_val:f.gbx_val, script:f.script, chain:f.chain, owner_pk:pk };
+            try{ localStorage.setItem(key, JSON.stringify(entry)); }catch(_e){}
+          }
+          ks=gbxPendingKeys();
+        }
+      }catch(_e){}
+    }
+    if(!ks.length){ rec.hidden=true; rec.innerHTML=''; return; }
     rec.hidden=false; rec.innerHTML='';
     for(const k of ks){
       let p; try{ p=JSON.parse(localStorage.getItem(k)); }catch(_e){ continue; }

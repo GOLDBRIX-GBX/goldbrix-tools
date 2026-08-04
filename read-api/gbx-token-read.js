@@ -88,7 +88,18 @@ function openTokenIndex(dbPath){
              // spot price in base units per token (integer floor; quoting uses x*y=k)
              price_sat: BigInt(r.tokens) > 0n ? (BigInt(r.gbx_sat)/BigInt(r.tokens)).toString() : '0' };
   }
+  const hByPk = db.prepare('SELECT txid,vout,spk,value_sat,refund_pk,hashlock,height,spent_height FROM htlc_utxos WHERE refund_pk=? ORDER BY height DESC');
   return {
+    // Every HTLC lock anchored on chain for this refund key, spent or not.
+    // The caller rebuilds the script and proves the spk before trusting a row.
+    htlcByRefund(pkHex){
+      const tip = parseInt(q.meta.get('scanned')?.v ?? '0', 10);
+      let rows; try{ rows = hByPk.all(String(pkHex||'').toLowerCase()); }catch(_e){ return { ok:true, scanned:tip, locks:[] }; }
+      return { ok:true, scanned: tip, locks: rows.map(r=>({
+        txid:r.txid, vout:r.vout, spk:r.spk, value_sat:String(r.value_sat),
+        hashlock:r.hashlock, height:r.height,
+        spent: r.spent_height!=null, spent_height:r.spent_height })) };
+    },
     registry(){
       return { scanned: parseInt(q.meta.get('scanned')?.v ?? '-1', 10),
                coins: q.coins.all() };

@@ -546,6 +546,29 @@ class H(BaseHTTPRequestHandler):
                 return self._s(200,out)
             except Exception as e:
                 return self._s(200,{'txid':txid,'vout':int(vout),'spent':None,'error':str(e)})
+        # HTLC locks known to this LP for a refund key. Covers swaps made
+        # before the on-chain GBX:H anchor existed. The client verifies every
+        # row by rebuilding the script; nothing here is trusted blindly.
+        if self.path.startswith('/lp/htlc-by-refund-pubkey/') or self.path.startswith('/htlc-by-refund-pubkey/'):
+            pk=self.path.rsplit('/',1)[1].strip().lower()
+            if not pk or len(pk)!=66: return self._s(400,{'error':'bad_pubkey'})
+            try: it=json.load(open(INTENTS_F))
+            except Exception: it={}
+            locks=[]
+            for hl,v in (it.items() if isinstance(it,dict) else []):
+                if not isinstance(v,dict): continue
+                if (v.get('refund_pubkey') or '').lower()!=pk: continue
+                if not v.get('gbx_txid') or not v.get('gbx_script'): continue
+                # Only locks still unspent on chain: a settled or refunded swap
+                # must never come back as recoverable.
+                try:
+                    _o=subprocess.run(GCLI+['gettxout',v['gbx_txid'],str(v.get('gbx_vout',0))],capture_output=True,text=True,timeout=10)
+                    if not (_o.stdout or '').strip(): continue
+                except Exception: continue
+                locks.append({'hashlock':hl,'chain':v.get('chain'),
+                    'gbx_txid':v.get('gbx_txid'),'gbx_vout':v.get('gbx_vout'),
+                    'gbx_script':v.get('gbx_script'),'gbx_val':v.get('gbx_val')})
+            return self._s(200,{'ok':True,'locks':locks})
         if self.path.startswith('/swap/'):
             hl=self.path.split('/swap/',1)[1].lower(); st=load(STATE_F,{'swaps':{}})
             sw=next((v for v in st.get('swaps',{}).values() if v.get('hashlock','').lower()==hl), None)
