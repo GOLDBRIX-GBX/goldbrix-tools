@@ -5,6 +5,22 @@ import { secp256k1, keccak_256 } from '/vendor/evm-secp.mjs';
 import { sha256, ripemd160 } from '/vendor/gbx-h160.mjs';
 import { makeEVMHTLC } from './evm-htlc.mjs';
 import { buildHtlcScript, p2wshSpk, p2wpkhAddress, p2wpkhSpkFromPub, buildFundTx, hex, buildClaimTx, buildRefundTx, unhex } from './gbx-htlc.mjs';
+
+/* GBX:H lock anchor - a second, zero-value OP_RETURN output in every fund tx:
+   'GBX:H:' + ver(1) + hashlock(32) + refund_pk(33) = 72 bytes. With it, any
+   lock is findable from the chain alone, forever - no server, no local
+   memory. The index trusts nothing: it only records outpoints of the same
+   transaction, and the client proves the script before acting. */
+function gbxHAnchorSpk(Hhex, pkU){
+  /* H arrives as raw bytes on the sell path and as a hex string on the buy
+     path; both are welcome, neither is guessed. */
+  const hl=(Hhex instanceof Uint8Array)?Hhex:unhex(String(Hhex).replace(/^0x/,''));
+  if(hl.length!==32) throw new Error('ANCHOR_BAD_HASHLOCK');
+  const d=new Uint8Array(72);
+  d.set([0x47,0x42,0x58,0x3a,0x48,0x3a],0); d[6]=1; d.set(hl,7); d.set(pkU,39);
+  const spk=new Uint8Array(74); spk[0]=0x6a; spk[1]=72; spk.set(d,2);
+  return spk;
+}
 function p2wpkhSpk2(pub){ const h=ripemd160(sha256(pub)); const o=new Uint8Array(22); o[0]=0; o[1]=0x14; o.set(h,2); return o; }
 const LOCKED_SIG='Locked(bytes32,address,address,address,uint256,bytes32,uint256)';
 async function crypto_subtle_sha256(preHex){
@@ -119,6 +135,7 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
         const fundValue=Math.round(gbxAmount*1e8), fee=2000;
         let ins=[],sum=0; for(const u of utxos){ ins.push(u); sum+=u.value8; if(sum>=fundValue+fee) break; }
         const change=sum-fundValue-fee, outs=[{spk:htlcSpk,value8:fundValue}];
+        outs.push({spk:gbxHAnchorSpk(H,pkU),value8:0});
         if(change>546) outs.push({spk:p2wpkhSpkFromPub(pkU),value8:change});
         const tx=buildFundTx({utxos:ins,userPubkey:pkU,outputs:outs,nLockTime:0},(d)=>secp256k1.sign(d,skU).toDERRawBytes());
         return { gbx_txid:await gbxBroadcast(hex(tx)), gbx_vout:0, script:hex(script), gbx_val:fundValue };
@@ -192,6 +209,7 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
     const fundValue=Math.round(gbxAmount*1e8), fee=2000;
     let ins=[],sum=0; for(const u of utxos){ ins.push(u); sum+=u.value8; if(sum>=fundValue+fee) break; }
     const change=sum-fundValue-fee, outs=[{spk:htlcSpk,value8:fundValue}];
+    outs.push({spk:gbxHAnchorSpk(H,pkU),value8:0});
     if(change>546) outs.push({spk:p2wpkhSpkFromPub(pkU),value8:change});
     const tx=buildFundTx({utxos:ins,userPubkey:pkU,outputs:outs,nLockTime:0},(d)=>secp256k1.sign(d,skU).toDERRawBytes());
     return { gbx_txid:await gbxBroadcast(hex(tx)), gbx_vout:0, script:hex(script), gbx_val:fundValue, refund_pubkey:hex(pkU), t1:T1 };

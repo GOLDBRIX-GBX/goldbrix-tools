@@ -876,7 +876,16 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
             const key='gbx_pending_'+hl.replace(/^0x/,'');
             if(localStorage.getItem(key)) continue;
             const f=found[hl];
-            const entry={ dir:'sell', hashlock:hl, gbx_txid:f.gbx_txid, gbx_vout:f.gbx_vout||0, gbx_val:f.gbx_val, script:f.script, chain:f.chain, owner_pk:pk };
+            /* The index can lag the chain by a minute: confirm on the live
+               chain before resurrecting anything, and never resurrect a swap
+               the LP has already settled. */
+            try{ const sw2=await GBX_LP_SWAP_STATUS('0x'+hl.replace(/^0x/,''));
+                 if(sw2 && (sw2.status==='completed'||sw2.status==='claimed'||sw2.status==='settled')) continue; }catch(_e){}
+            try{ const u2=await (await GBX_LP_FETCH(C,'/utxo-status?txid='+f.gbx_txid+'&vout='+(f.gbx_vout||0))).json();
+                 if(u2 && u2.spent===true) continue; }catch(_e){}
+            /* recovered:true = refund-only; a claim needs the secret, and the
+               secret lives only on the original device. */
+            const entry={ dir:'sell', recovered:true, hashlock:hl, gbx_txid:f.gbx_txid, gbx_vout:f.gbx_vout||0, gbx_val:f.gbx_val, script:f.script, chain:f.chain, owner_pk:pk };
             try{ localStorage.setItem(key, JSON.stringify(entry)); }catch(_e){}
           }
           ks=gbxPendingKeys();
@@ -961,6 +970,9 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
             box.appendChild(btn); rec.appendChild(box); continue;
           }
         }
+        /* No secret, nothing to claim: a rebuilt entry waits for its refund
+           window instead of offering a button that cannot work. */
+        if(p.recovered || !p.secret){ continue; }
         const usdS=(Number(p.usdcAmount||0)/1e6).toLocaleString();
         const box=document.createElement('div'); box.style.cssText='border:1px solid var(--gold-deep,#b8860b);border-radius:12px;padding:12px;margin-top:12px;background:rgba(184,134,11,.06)';
         const m=document.createElement('div'); m.style.marginBottom='8px'; m.textContent=RT('psell')+' ('+usdS+' USDC)'; box.appendChild(m);
