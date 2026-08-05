@@ -35,13 +35,14 @@
   /* The node that served this very page is proven alive: it is always a
      candidate, and first in line (index 0). In the installed app the origin
      is not https:// and is skipped. */
-  try { if (location && location.protocol === 'https:') {
+  function _isLocal(n){ return /^https?:\/\/(localhost|127\.|10\.0\.2\.2)/.test(n); }
+  try { if (location && location.protocol === 'https:' && !_isLocal(location.origin)) {
     var _o = trim(location.origin) + '/api';
     if (window.GBX_NODES.indexOf(_o) === -1) window.GBX_NODES.unshift(_o);
   } } catch(e){}
 
   function add(n){
-    if (!isUrl(n)) return false;
+    if (!isUrl(n) || _isLocal(n)) return false;
     n = trim(n);
     if (window.GBX_NODES.indexOf(n) !== -1) return false;
     if (window.GBX_NODES.length >= MAX_NODES) return false;
@@ -135,7 +136,12 @@
   async function _rotateRaw(path, opts, ms){
     var nodes = _ordered(), errs = [];
     for (var i=0; i<nodes.length; i++){
-      try { var r = await _fetchNode(nodes[i], path, ms, opts); _ok(nodes[i]); return r; }
+      try {
+        var r = await _fetchNode(nodes[i], path, ms, opts);
+        var ct = (r.headers.get('content-type')||'');
+        if (ct.indexOf('text/html') !== -1) throw new Error('html response (not an API)');
+        _ok(nodes[i]); return r;
+      }
       catch(e){ _fail(nodes[i]); errs.push(nodes[i]+' -> '+(e && e.message ? e.message : e)); }
     }
     throw new Error('all nodes failed for '+path+': '+errs.join(' | '));

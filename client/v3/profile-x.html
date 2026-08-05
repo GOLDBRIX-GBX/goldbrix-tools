@@ -10,13 +10,13 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="/promo-banner.js?v=115" defer></script>
 <script src="/v3/nav-i18n.js?v=115" defer></script>
-<script src="/v3/gbx-session.js?v=119"></script>
-<script src="/v3/gbx-read.js?v=124"></script>
-<script src="/v3/gbx-lp.js?v=119"></script>
+<script src="/v3/gbx-session.js?v=115"></script>
+<script src="/v3/gbx-read.js?v=116"></script>
+<script src="/v3/gbx-lp.js?v=115"></script>
 <link rel="stylesheet" href="/lib/price-chart.css">
 <script src="/lib/lightweight-charts.standalone.production.js" defer></script>
-<script src="/lib/price-chart.js?v=123" defer></script>
-<script type="module" src="/crypto-utils-v2.js?v=124"></script>
+<script src="/lib/price-chart.js?v=115" defer></script>
+<script type="module" src="/crypto-utils-v2.js?v=115"></script>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg-primary)}
@@ -358,7 +358,7 @@ function ownerUI(){
   var cb=$('ownerActs').querySelector('.a-conv');
   if(cb)cb.addEventListener('click',function(e){e.preventDefault();
     if(window.openConvertModal){window.openConvertModal();return;}
-    var sc=document.createElement('script');sc.src='/v3/convert-ui.js?v=120';
+    var sc=document.createElement('script');sc.src='/v3/convert-ui.js?v=115';
     sc.onload=function(){if(window.openConvertModal)window.openConvertModal();};
     document.head.appendChild(sc);});
   var cw=$('chainWrap');
