@@ -144,8 +144,23 @@ async function _fedReadUtxos(address, target){
     const lim = Math.min(24000, Math.max(1000, est));
     const d = await window.GBXRead.json('/api/utxos/'+address+'?limit='+lim, {timeout:120000});
     const uns = (d && d.unspents) || [];
-    if (!uns.length) return null;
-    return uns;
+    if (uns.length) return uns;
+    /* Empty from one node is not proof of an empty wallet: an index can lag.
+       Cross-check the other federated nodes; only a confirmed empty is empty. */
+    var others=(window.GBX_NODES||[]).filter(function(n){return n!==window.GBX_LAST_NODE;});
+    var confirms=0;
+    for (var oi=0; oi<others.length && oi<3; oi++){
+      try {
+        var r2=await fetch(String(others[oi]).replace(/\/+$/,'')+'/utxos/'+address+'?limit='+lim,{cache:'no-store'});
+        if(!r2.ok) continue;
+        var d2=await r2.json();
+        var u2=(d2&&d2.unspents)||[];
+        if(u2.length) return u2;
+        confirms++;
+      } catch(_x){}
+    }
+    if (confirms>0) return [];  /* genuinely empty, cross-confirmed */
+    var ee=new Error('EMPTY_UNCONFIRMED'); _fedReadUtxos.lastError=ee; return null;
   } catch(_e){ _fedReadUtxos.lastError = _e; return null; }
 }
 
@@ -238,7 +253,7 @@ const _spent = {
 async function fetchUtxos(address, target) {
   _fedReadUtxos.lastError = null;
   const fed = await _fedReadUtxos(address, target);
-  if (fed) return _spent.filter(fed);
+  if (fed) return _spent.filter(fed);  /* [] = cross-confirmed empty, honest */
   const res = (target && target>0)
     ? await _lpFetchFailover('/utxos/'+address+'?target='+target)
     : await fetch(API_BASE+'/utxos/'+address+'?limit=1000');
