@@ -323,25 +323,12 @@ async function bases(){
   if (out.length===0) for (const o of origins) out.push(o+'/lp');
   _bases=out; return out;
 }
+/* Gateway: single source of truth in GBXLp (LP providers first, then federation nodes). */
 async function gwGet(path){
-  let last=null;
-  for (const b of await bases()){
-    try{ const r=await fetch(b+path); if(r.ok) return await r.json(); last=new Error('HTTP '+r.status); }
-    catch(e){ last=e; }
-  }
-  throw last || new Error('LP_UNAVAILABLE');
+  if (path==='/powtpl') return await window.GBXLp.powTemplate();
+  const r=await window.GBXLp.fetch(path); return await r.json();
 }
-async function gwBroadcast(rawtx){
-  let last=null;
-  for (const b of await bases()){
-    try{ const r=await fetch(b+'/broadcast',{method:'POST',
-      headers:{'content-type':'application/json'},body:JSON.stringify({rawtx})});
-      const j=await r.json(); if(j && j.txid){ try{if(window.GoldbrixCrypto&&window.GoldbrixCrypto.spent)window.GoldbrixCrypto.spent.mark(rawtx);}catch(_e){} return j.txid; }
-      last=new Error(JSON.stringify(j).slice(0,120)); }
-    catch(e){ last=e; }
-  }
-  throw last || new Error('LP_UNAVAILABLE');
-}
+async function gwBroadcast(rawtx){ return await window.GBXLp.broadcastTx(rawtx); }
 
 /* ── wallet session (same contract as the rest of the app) ── */
 function loadWallet(){
@@ -612,7 +599,7 @@ $('btnGo').onclick=forge;
 })();
 </script>
 <script src="/v3/gbx-read.js?v=116"></script>
-<script src="/v3/gbx-lp.js?v=118"></script>
+<script src="/v3/gbx-lp.js?v=119"></script>
 <script src="/v3/pwa.js?v=116" defer></script>
 <nav id="pgNav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:200;">
   <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>

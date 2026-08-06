@@ -384,11 +384,10 @@ function _fetchTo(u,o,ms){return new Promise(function(res,rej){var c=new AbortCo
 function _lpOk(b){try{var s=JSON.parse(sessionStorage.getItem('gbx_lp_score')||'{}');s[b]=(s[b]||0)-1;sessionStorage.setItem('gbx_lp_score',JSON.stringify(s));}catch(e){}}
 function _lpFail(b){try{var s=JSON.parse(sessionStorage.getItem('gbx_lp_score')||'{}');s[b]=(s[b]||0)+1;sessionStorage.setItem('gbx_lp_score',JSON.stringify(s));}catch(e){}}
 function _lpOrder(a){var s={};try{s=JSON.parse(sessionStorage.getItem('gbx_lp_score')||'{}');}catch(e){}return a.slice().sort(function(x,y){return (s[x]||0)-(s[y]||0);});}
-async function gwGet(p){let last=null;for(const b of _lpOrder(await bases())){try{const r=await _fetchTo(b+p,null,4000);if(r.ok){_lpOk(b);return await r.json();}_lpFail(b);last=new Error('HTTP '+r.status);}catch(e){_lpFail(b);last=e;}}throw last||new Error('LP_UNAVAILABLE');}
-async function gwBroadcast(rawtx){let last=null;for(const b of _lpOrder(await bases())){
- try{const r=await _fetchTo(b+'/broadcast',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({rawtx})},8000);
-  const j=await r.json();if(j&&j.txid){_lpOk(b);try{if(window.GoldbrixCrypto&&window.GoldbrixCrypto.spent)window.GoldbrixCrypto.spent.mark(rawtx);}catch(_e){}return j.txid;}last=new Error(JSON.stringify(j).slice(0,100));if(j&&j.error&&String(j.error).indexOf('-25')>=0)throw last;_lpFail(b);}catch(e){if(String(e).indexOf('-25')>=0)throw e;_lpFail(b);last=e;}}
- throw last||new Error('LP_UNAVAILABLE');}
+/* Gateway: single source of truth in GBXLp (LP providers first, then federation nodes). */
+async function gwGet(p){if(p==='/powtpl')return await window.GBXLp.powTemplate();
+ const r=await window.GBXLp.fetch(p);return await r.json();}
+async function gwBroadcast(rawtx){return await window.GBXLp.broadcastTx(rawtx);}
 function loadWallet(){try{const raw=sessionStorage.getItem('gbx_unlocked_wallets');if(raw===null)return null;
  const s=JSON.parse(raw);if(s&&s.wallets&&s.wallets.length>0){const w=s.wallets.find(x=>x.id===s.activeWalletId)||s.wallets[0];
  if(w&&w.mnemonic&&w.address&&String(w.mnemonic).trim().split(/\s+/).length===12)return w;}}catch(e){}return null;}
@@ -952,7 +951,7 @@ document.addEventListener('visibilitychange',function(){if(!document.hidden)draw
 })();
 </script>
 <script src="/v3/gbx-read.js?v=116" defer></script>
-<script src="/v3/gbx-lp.js?v=118" defer></script>
+<script src="/v3/gbx-lp.js?v=119" defer></script>
   <script src="/promo-banner.js?v=116" defer></script>
 </body>
 </html>

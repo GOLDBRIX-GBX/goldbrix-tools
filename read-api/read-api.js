@@ -371,6 +371,15 @@ async function _getAddressSummaryUncached(address) {
   };
 }
 
+let _ctipCache = { v: null, ts: 0 };
+async function getChainTipCached(){
+  const now = Date.now();
+  if (_ctipCache.v !== null && now - _ctipCache.ts < 10000) return _ctipCache.v;
+  try { _ctipCache = { v: Number(await runCli(['getblockcount'])), ts: now }; }
+  catch(_e){ /* keep last known */ }
+  return _ctipCache.v;
+}
+
 async function getTxVerboseAtHeight(txid, height) {
   const h = Number(height || 0);
   if (!(h > 0)) return null;
@@ -659,6 +668,19 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, await getStatus());
     }
 
+    if (req.method === 'GET' && url.pathname === '/api/powtpl') {
+      // CREATE-PoW template: height + best hash + bits. Keyless, read-only.
+      // Same semantics as the LP gateway /powtpl, served federated by any node.
+      try {
+        const tip = Number(await runCli(['getblockcount']));
+        const hash = (await runCli(['getblockhash', _assertInt(tip)])).trim();
+        const header = JSON.parse(await runCli(['getblockheader', _assertHex(hash, 'blockhash')]));
+        return sendJson(res, 200, { height: tip, hash: hash, bits: header.bits });
+      } catch (e) {
+        return sendJson(res, 200, { height: 0, error: String(e && e.message ? e.message : e) });
+      }
+    }
+
     const blockMatch = url.pathname.match(/^\/api\/block\/(\d+)$/);
     if (req.method === 'GET' && blockMatch) {
       const h = Number(blockMatch[1]);
@@ -747,10 +769,19 @@ const server = http.createServer(async (req, res) => {
           return sendJson(res, 200, cached.data);
         }
         try {
+          // An index behind the chain lies about spendability: a stale "unspent"
+          // builds a transaction the chain must reject (-25). Refusing honestly
+          // makes the federated client fail over to a healthy node instead.
+          const idxTip = gbxIndex.tipHeight ? gbxIndex.tipHeight() : null;
+          const chainTip = await getChainTipCached();
+          if (idxTip !== null && chainTip !== null && (chainTip - idxTip) > 30) {
+            console.error('[RA-1] index lag /api/utxos idx=' + idxTip + ' chain=' + chainTip);
+            return sendJson(res, 503, { error: 'indexing', tip: idxTip, chain_tip: chainTip, retry_after_s: 15 });
+          }
           const ixU = (limitParam > 0 && gbxIndex.scanTopN) ? gbxIndex.scanTopN(address, limitParam) : gbxIndex.scanLikeIndex(address);
           if (!ixU) {
             console.error('[RA-1] index miss /api/utxos ' + String(address).slice(0,24));
-            return sendJson(res, 503, { error: 'indexing', tip: gbxIndex.tipHeight ? gbxIndex.tipHeight() : null, retry_after_s: 5 });
+            return sendJson(res, 503, { error: 'indexing', tip: idxTip, retry_after_s: 5 });
           }
           const scan = ixU;
           let rawUnspents = scan.unspents || [];

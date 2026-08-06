@@ -180,7 +180,7 @@ ExecStart=/usr/bin/node read-api.js
 Restart=always
 RestartSec=5
 [Install]
-WantedBy=multi-user.target
+WantedBy=multi-user.target goldbrixd.service
 UNIT
 cat > /etc/systemd/system/gbx-indexer.service << UNIT
 [Unit]
@@ -195,7 +195,7 @@ ExecStart=/usr/bin/node gbx-indexer.js
 Restart=always
 RestartSec=10
 [Install]
-WantedBy=multi-user.target
+WantedBy=multi-user.target goldbrixd.service
 UNIT
 systemctl daemon-reload
 cat > /etc/systemd/system/gbx-node-registry.service << UNIT
@@ -211,7 +211,7 @@ ExecStart=/usr/bin/node scanner.js
 Restart=always
 RestartSec=5
 [Install]
-WantedBy=multi-user.target
+WantedBy=multi-user.target goldbrixd.service
 UNIT
 
 # Coins and their bonding curves are read from this index. Without it a node
@@ -235,11 +235,11 @@ Environment=GBX_SQLITE_MOD=${TOOLSDIR}/read-api/node_modules/better-sqlite3
 Environment=GBX_LAUNCHPAD_HEIGHT=2720000
 Environment=MALLOC_ARENA_MAX=2
 ExecStart=/usr/bin/node ${TOOLSDIR}/token-index/scanner.js --loop
-Restart=on-failure
+Restart=always
 RestartSec=10
 MemoryMax=1024M
 [Install]
-WantedBy=multi-user.target
+WantedBy=multi-user.target goldbrixd.service
 UNIT
 
 # Executed price and volume, derived from settled swaps on both sides. The
@@ -262,7 +262,7 @@ Restart=always
 RestartSec=15
 MemoryMax=512M
 [Install]
-WantedBy=multi-user.target
+WantedBy=multi-user.target goldbrixd.service
 UNIT
 
 install -d -o gbx -g gbx ${DATADIR}/index
@@ -277,10 +277,10 @@ User=gbx
 Environment=GBX_RPC_PORT=8332
 Environment=GBX_COOKIE=${DATADIR}/.cookie
 ExecStart=/usr/bin/python3 ${TOOLSDIR}/node-info/gbx-node-info.py
-Restart=on-failure
+Restart=always
 RestartSec=5
 [Install]
-WantedBy=multi-user.target
+WantedBy=multi-user.target goldbrixd.service
 UNIT
 systemctl enable --now goldbrixd gbx-read-api gbx-indexer gbx-node-registry gbx-curve-index gbx-trade-index gbx-node-info
 

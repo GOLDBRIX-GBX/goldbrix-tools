@@ -146,6 +146,66 @@
     } catch(e){ return 0; }
   }
 
+  // ── Transaction gateway: LP providers first, then federation nodes. ──
+  // One implementation for every page; per-attempt timeout on each try.
+  function _nodeOrigins(){
+    return (window.GBX_NODES || []).map(function(n){ return trim(String(n).replace(/\/api\/?$/,'')); })
+      .filter(function(o){ return isUrl(o); });
+  }
+  function reqPost(url, body, ms){
+    return new Promise(function(resolve, reject){
+      var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+      var to = setTimeout(function(){ if(ctl) ctl.abort(); reject(new Error('timeout')); }, ms||TIMEOUT_MS);
+      fetch(url, { method:'POST', headers:{'content-type':'application/json'},
+                   body: JSON.stringify(body), cache:'no-store',
+                   signal: ctl ? ctl.signal : undefined })
+        .then(function(r){ clearTimeout(to); resolve(r); })
+        .catch(function(e){ clearTimeout(to); reject(e); });
+    });
+  }
+  async function powTemplate(){
+    var lastErr = null;
+    var lps = await list();
+    for (var i=0;i<lps.length;i++){
+      var b = lps[i].base_url;
+      try { var r = await req(b + '/powtpl', 5000); var j = await r.json();
+            if (j && j.height > 0){ _ok(b); return j; } _fail(b); lastErr = new Error('bad tpl'); }
+      catch(e){ _fail(b); lastErr = e; }
+    }
+    var nodes = _nodeOrigins();
+    for (var k=0;k<nodes.length;k++){
+      try { var r2 = await req(nodes[k] + '/api/powtpl', 5000); var j2 = await r2.json();
+            if (j2 && j2.height > 0) return j2; lastErr = new Error('bad tpl'); }
+      catch(e2){ lastErr = e2; }
+    }
+    throw (lastErr || new Error('LP_UNAVAILABLE'));
+  }
+  async function broadcastTx(rawtx){
+    var lastErr = null;
+    function markSpent(){ try{ if(window.GoldbrixCrypto && window.GoldbrixCrypto.spent) window.GoldbrixCrypto.spent.mark(rawtx); }catch(_e){} }
+    var targets = [];
+    var lps = await list();
+    for (var i=0;i<lps.length;i++) targets.push({ url: lps[i].base_url + '/broadcast', base: lps[i].base_url });
+    var nodes = _nodeOrigins();
+    for (var k=0;k<nodes.length;k++) targets.push({ url: nodes[k] + '/api/broadcast', base: null });
+    for (var t=0;t<targets.length;t++){
+      try {
+        var r = await reqPost(targets[t].url, { rawtx: rawtx }, 8000);
+        var j = null; try { j = await r.json(); } catch(_e){}
+        if (j && j.txid){ if (targets[t].base) _ok(targets[t].base); markSpent(); return j.txid; }
+        lastErr = new Error(JSON.stringify(j||{}).slice(0,120));
+        if (j && j.error && String(j.error).indexOf('-25') >= 0) throw lastErr;
+        if (targets[t].base) _fail(targets[t].base);
+      } catch(e){
+        if (String(e).indexOf('-25') >= 0) throw e;
+        if (targets[t].base) _fail(targets[t].base);
+        lastErr = e;
+      }
+    }
+    throw (lastErr || new Error('LP_UNAVAILABLE'));
+  }
+
   window.GBXLp = { list:list, fetch:lpFetch, quoteAll:quoteAll, priceUsd:priceUsd,
-                   median:median, score:function(){ return SCORE; } };
+                   median:median, score:function(){ return SCORE; },
+                   powTemplate:powTemplate, broadcastTx:broadcastTx };
 })();
