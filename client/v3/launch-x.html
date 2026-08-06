@@ -8,7 +8,7 @@
 <link rel="icon" href="/assets/coin/gbx-coin-32.png">
 <link rel="stylesheet" href="/v3/style.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-<script type="module" src="/crypto-utils-v2.js?v=117"></script>
+<script type="module" src="/crypto-utils-v2.js?v=118"></script>
 <script src="/gbx-update-check.js" defer></script>
 <script src="/gbx-native-bridge.js" defer></script>
 <script src="/i18n.js?v=116" defer></script>
@@ -314,16 +314,12 @@ let _bases=null;
 async function bases(){
   if (_bases) return _bases;
   const out=[];
-  const origins=(window.GBX_NODES||[]).map(n=>n.replace(/\/api\/?$/,''));
-  for (const o of origins){
-    try{ const j=await (await fetch(o+'/lps.json',{cache:'no-store'})).json();
-      for (const x of (j.lps||j||[])){ const b=x.base_url||x.base||x.gateway||x.url; if(b&&out.indexOf(b)<0) out.push(b); }
-      if (out.length) break;
-    }catch(e){}
-  }
-  try{ const j=await window.GBXRead.json('/api/lp-registry');
-    for (const b of Object.keys((j&&j.lps)||{})) if(out.indexOf(b)<0) out.push(b);
+  /* Single source of truth: GBXLp (on-chain registry, cross-checked, plus
+     health-gated bootstrap). No page-local discovery. */
+  try{ const l=await window.GBXLp.list();
+    for (const x of l){ if(x&&x.base_url&&out.indexOf(x.base_url)<0) out.push(x.base_url); }
   }catch(e){}
+  const origins=(window.GBX_NODES||[]).map(n=>n.replace(/\/api\/?$/,''));
   if (out.length===0) for (const o of origins) out.push(o+'/lp');
   _bases=out; return out;
 }
@@ -616,6 +612,7 @@ $('btnGo').onclick=forge;
 })();
 </script>
 <script src="/v3/gbx-read.js?v=116"></script>
+<script src="/v3/gbx-lp.js?v=118"></script>
 <script src="/v3/pwa.js?v=116" defer></script>
 <nav id="pgNav" style="position:fixed;bottom:0;left:0;right:0;background:#2a2218;border-top:1px solid #3a3025;padding:6px 0 calc(6px + env(safe-area-inset-bottom));display:flex;z-index:200;">
   <a href="/" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#FFFDF7;font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;"><span style="font-size:18px;">🏠</span><span data-t="navHome">HOME</span></a>

@@ -70,12 +70,26 @@ async function _lpBases(){
   try{ if(typeof window!=='undefined' && window.GBX_LP_BASE) bases.push(window.GBX_LP_BASE); }catch(_e){}
   const now=Date.now();
   if(!_gbxLpList || now-_gbxLpListTs>60000){
+    /* Single source of truth: GBXLp (on-chain registry, cross-checked).
+       The relative /lps.json is only a bootstrap fallback and is skipped on
+       a local origin (Capacitor serves HTML for any path). */
     try{
-      const r=await fetch('/lps.json',{cache:'no-store'});
-      const j=await r.json();
-      _gbxLpList=(j.lps||j||[]).map(x=>x.base_url||x.base||x.gateway||x.url).filter(Boolean);
-      _gbxLpListTs=now;
-    }catch(_e){ _gbxLpList=_gbxLpList||[]; }
+      if (typeof window!=='undefined' && window.GBXLp){
+        const l=await window.GBXLp.list();
+        const v=(l||[]).map(x=>x&&x.base_url).filter(Boolean);
+        if (v.length){ _gbxLpList=v; _gbxLpListTs=now; }
+      }
+    }catch(_e){}
+    if(!_gbxLpList || now-_gbxLpListTs>60000){
+      try{
+        const loc=(typeof location!=='undefined')?location.hostname:'';
+        if (loc==='localhost' || loc==='127.0.0.1' || loc==='10.0.2.2') throw 0;
+        const r=await fetch('/lps.json',{cache:'no-store'});
+        const j=await r.json();
+        _gbxLpList=(j.lps||j||[]).map(x=>x.base_url||x.base||x.gateway||x.url).filter(Boolean);
+        _gbxLpListTs=now;
+      }catch(_e){ _gbxLpList=_gbxLpList||[]; }
+    }
   }
   for(const b of _gbxLpList){ if(bases.indexOf(b)===-1) bases.push(b); }
   return bases;

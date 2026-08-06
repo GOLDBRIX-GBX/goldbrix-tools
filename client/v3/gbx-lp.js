@@ -69,10 +69,29 @@
   // Authoritative source: announced on chain, reached through the node router.
   function fromChain(){
     if (!window.GBXRead) return Promise.resolve();
-    return window.GBXRead.json('/api/lp-registry').then(function(j){
-      Object.keys((j && j.lps) || {}).forEach(function(u){
+    function absorb(j){
+      var ks = Object.keys((j && j.lps) || {});
+      ks.forEach(function(u){
         add({ name:'onchain-lp', base_url:u, chains:null, fee_bps:null, onchain:true });
       });
+      return ks.length;
+    }
+    return window.GBXRead.json('/api/lp-registry').then(function(j){
+      if (absorb(j) > 0) return;
+      /* Empty from one node is not proof of an empty registry: an index can
+         lag or skip. Cross-check the other federated nodes directly; the
+         first non-empty answer wins (same pattern as the UTXO empty guard). */
+      var others = (window.GBX_NODES || []).filter(function(n){ return n !== window.GBX_LAST_NODE; });
+      var i = 0;
+      function next(){
+        if (i >= others.length || i >= 3) return;
+        var n = String(others[i++]).replace(/\/+$/,'');
+        return fetch(n + '/lp-registry', {cache:'no-store'})
+          .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+          .then(function(j2){ if (absorb(j2) === 0) return next(); })
+          .catch(function(){ return next(); });
+      }
+      return next();
     }).catch(function(){});
   }
 
