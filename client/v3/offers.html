@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1c1610">
+<title>GoldBrix · Direct Market</title>
+<script src="/v3/gbx-session.js?v=120"></script>
+<script src="/v3/gbx-read.js?v=120"></script>
+<script src="/vendor/buffer.bundle.mjs?v=120" type="module"></script>
+<script type="module">import * as B from "/vendor/buffer.bundle.mjs";window.Buffer=window.Buffer||B.Buffer||(B.default&&B.default.Buffer);</script>
+<script src="/multichain-utils.js?v=120" type="module"></script>
+<script type="module" src="/crypto-utils-v2.js?v=120"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/v3/style.css?v=120">
+<style>
+.wrap{max-width:640px;margin:0 auto;padding:14px 14px 90px}
+.hero{display:flex;align-items:center;gap:10px;margin:6px 0 14px}
+.hero h1{font-size:1.15rem;color:var(--gold);margin:0}
+.tabs{display:flex;gap:8px;margin-bottom:12px}
+.tab{flex:1;text-align:center;padding:10px;border:1px solid var(--border);border-radius:12px;color:var(--text-primary);cursor:pointer;font-weight:600}
+.tab.on{border-color:var(--gold);color:var(--gold)}
+.card{background:var(--panel,rgba(255,255,255,.03));border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px}
+.row{display:flex;justify-content:space-between;gap:8px;margin:6px 0;font-size:.85rem}
+.lab{color:#FFFDF7;opacity:1;font-size:.8rem}
+.val{font-family:'JetBrains Mono',monospace;color:var(--text-primary)}
+.price{color:var(--gold);font-weight:700}
+.amt{color:var(--green)}
+input,select{width:100%;background:#141414;border:1px solid var(--border);border-radius:10px;color:var(--text-primary);padding:12px;font-size:.95rem;font-family:'JetBrains Mono',monospace;margin:4px 0 10px}
+.btn{width:100%;padding:14px;border-radius:12px;border:0;background:var(--gold);color:#221a08;font-weight:700;font-size:1rem;cursor:pointer}
+.btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text-primary)}
+.btn.red{background:var(--red);color:#2a0d08}
+.btn:disabled{opacity:.55}
+.msg{display:none;border-radius:10px;padding:10px;margin:8px 0;font-size:.85rem}
+.msg.ok{display:block;background:rgba(87,255,158,.12);color:var(--green)}
+.msg.err{display:block;background:rgba(255,107,92,.12);color:var(--red)}
+.msg.info{display:block;background:rgba(255,217,138,.10);color:var(--gold)}
+.empty{color:#FFFDF7;opacity:1;text-align:center;padding:18px;font-size:.85rem}
+.mine{border-color:rgba(255,217,138,.45)}
+.chainB{color:#7fb3ff}.chainA{color:#8fd4ff}.chainS{color:#c8f7c5}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero"><a href="/v3/profile-x.html" id="backL" style="color:var(--gold);text-decoration:none">←</a><h1 id="tTitle">Direct Market</h1></div>
+  <div class="tabs"><div class="tab on" id="tabBook">BOOK</div><div class="tab" id="tabSell">SELL</div><div class="tab" id="tabMine">MINE</div></div>
+  <div id="vBook"><div id="floorCard" class="card" style="display:none"><div class="row"><span class="lab" id="lFloor">Floor</span><span class="val price" id="vFloor">—</span></div></div><div id="bookList"></div></div>
+  <div id="vSell" style="display:none">
+    <div class="card">
+      <div class="row"><span class="lab" id="lMkt">Market</span><span class="val price" id="vMkt">—</span></div>
+      <div class="row"><span class="lab" id="lMin">Minimum</span><span class="val" id="vMin">—</span></div>
+      <hr style="border:0;border-top:1px solid var(--border);margin:8px 0">
+      <div class="lab" id="lAmt">GBX amount</div><input id="inAmt" inputmode="decimal" placeholder="0.00">
+      <div class="lab" id="lPrice">Price (USDC per GBX)</div><input id="inPrice" inputmode="decimal" placeholder="0.0000">
+      <div class="lab" id="lChain">USDC chain</div>
+      <select id="inChain"><option value="B">Base</option><option value="A">Arbitrum</option><option value="S">Solana</option></select>
+      <div class="lab" id="lAddr">Your USDC address</div><input id="inAddr" placeholder="0x… / Solana address">
+      <div class="msg" id="msgS"></div>
+      <button class="btn" id="goSell">Publish offer</button>
+      <div class="lab" style="margin-top:10px" id="nFloor"></div>
+    </div>
+  </div>
+  <div id="vMine" style="display:none"><div id="mineList"></div></div>
+  <div class="msg" id="msg"></div>
+</div>
+<script type="module">
+(function(){})();
+</script>
+<script type="module">
+import * as F from '/gbx-launchpad-flow.mjs';
+import * as C from '/gbx-curve.mjs';
+const L=(localStorage.getItem('gbx_lang')||'en');
+const T={
+en:{title:'Direct Market',book:'BOOK',sell:'SELL',mine:'MINE',mkt:'Market price (live)',mn:'Minimum allowed (-1%)',floor:'Minimum price (market -1%)',amt:'GBX amount',price:'Price (USDC per GBX)',chain:'USDC chain',addr:'Your USDC address',pub:'Publish offer',cancel:'Cancel offer',locked:'Unlock your wallet first',reading:'Reading the chain…',working:'Signing and publishing…',sent:'Published. Tx:',failed:'Not published:',cancelSent:'Cancelled. Tx:',empty:'No open offers yet. Yours can be the first.',mineEmpty:'You have no offers yet.',badAmt:'Enter an amount above zero.',badPrice:'Enter a price above zero.',underFloor:'Below the minimum price. Offers cannot undercut the market by more than 1%.',badAddr:'That address does not match the selected chain.',noPrice:'Market price unavailable right now — publishing is paused to protect you.',open:'open',spent:'closed',buyNote:'To buy: settlement uses the atomic swap path. Coming in the next update — offers are live and verifiable now.'},
+ro:{title:'Piața directă',book:'OFERTE',sell:'VINDE',mine:'ALE MELE',mkt:'Preț de piață (live)',mn:'Minim permis (-1%)',floor:'Preț minim (piață -1%)',amt:'Sumă GBX',price:'Preț (USDC per GBX)',chain:'Lanț USDC',addr:'Adresa ta USDC',pub:'Publică oferta',cancel:'Anulează oferta',locked:'Deblochează portofelul întâi',reading:'Citesc lanțul…',working:'Semnez și public…',sent:'Publicat. Tx:',failed:'Nepublicat:',cancelSent:'Anulat. Tx:',empty:'Nicio ofertă deschisă încă. A ta poate fi prima.',mineEmpty:'Nu ai oferte încă.',badAmt:'Introdu o sumă peste zero.',badPrice:'Introdu un preț peste zero.',underFloor:'Sub prețul minim. Ofertele nu pot coborî sub piață cu mai mult de 1%.',badAddr:'Adresa nu corespunde lanțului ales.',noPrice:'Prețul pieței e indisponibil — publicarea e oprită pentru protecția ta.',open:'deschisă',spent:'închisă',buyNote:'Pentru cumpărare: decontarea folosește calea swap atomic. Vine în următorul update — ofertele sunt vii și verificabile de acum.'},
+de:{title:'Direktmarkt',book:'ANGEBOTE',sell:'VERKAUFEN',mine:'MEINE',mkt:'Marktpreis (live)',mn:'Minimum erlaubt (-1%)',floor:'Mindestpreis (Markt -1%)',amt:'GBX-Betrag',price:'Preis (USDC pro GBX)',chain:'USDC-Chain',addr:'Deine USDC-Adresse',pub:'Angebot veröffentlichen',cancel:'Angebot stornieren',locked:'Entsperre zuerst deine Wallet',reading:'Lese die Chain…',working:'Signiere und veröffentliche…',sent:'Veröffentlicht. Tx:',failed:'Nicht veröffentlicht:',cancelSent:'Storniert. Tx:',empty:'Noch keine offenen Angebote. Deins kann das erste sein.',mineEmpty:'Du hast noch keine Angebote.',badAmt:'Gib einen Betrag über null ein.',badPrice:'Gib einen Preis über null ein.',underFloor:'Unter dem Mindestpreis. Angebote dürfen den Markt um höchstens 1% unterbieten.',badAddr:'Die Adresse passt nicht zur gewählten Chain.',noPrice:'Marktpreis derzeit nicht verfügbar — Veröffentlichung pausiert zu deinem Schutz.',open:'offen',spent:'geschlossen',buyNote:'Zum Kauf: Abwicklung über den atomaren Swap-Pfad. Kommt im nächsten Update — Angebote sind jetzt live und überprüfbar.'},
+zh:{title:'直接市场',book:'挂单',sell:'出售',mine:'我的',mkt:'市场价（实时）',mn:'最低允许价（-1%）',floor:'最低价（市场价-1%）',amt:'GBX 数量',price:'价格（USDC/GBX）',chain:'USDC 链',addr:'你的 USDC 地址',pub:'发布挂单',cancel:'取消挂单',locked:'请先解锁钱包',reading:'正在读取链…',working:'正在签名并发布…',sent:'已发布。交易：',failed:'未发布：',cancelSent:'已取消。交易：',empty:'暂无挂单。你的可以是第一个。',mineEmpty:'你还没有挂单。',badAmt:'请输入大于零的数量。',badPrice:'请输入大于零的价格。',underFloor:'低于最低价。挂单不能比市场价低超过1%。',badAddr:'地址与所选链不匹配。',noPrice:'市场价格暂不可用——为保护你，发布已暂停。',open:'进行中',spent:'已关闭',buyNote:'购买：结算走原子交换路径。下个更新推出——挂单现已上线且可验证。'},
+ar:{title:'السوق المباشر',book:'العروض',sell:'بيع',mine:'عروضي',mkt:'سعر السوق (مباشر)',mn:'الحد الأدنى المسموح (-1%)',floor:'الحد الأدنى للسعر (السوق -1%)',amt:'كمية GBX',price:'السعر (USDC لكل GBX)',chain:'شبكة USDC',addr:'عنوان USDC الخاص بك',pub:'نشر العرض',cancel:'إلغاء العرض',locked:'افتح قفل محفظتك أولاً',reading:'جارٍ قراءة السلسلة…',working:'جارٍ التوقيع والنشر…',sent:'تم النشر. المعاملة:',failed:'لم يُنشر:',cancelSent:'أُلغي. المعاملة:',empty:'لا توجد عروض مفتوحة بعد. يمكن أن يكون عرضك الأول.',mineEmpty:'ليس لديك عروض بعد.',badAmt:'أدخل كمية أكبر من صفر.',badPrice:'أدخل سعراً أكبر من صفر.',underFloor:'أقل من الحد الأدنى. لا يمكن للعروض النزول عن السوق بأكثر من 1%.',badAddr:'العنوان لا يطابق الشبكة المختارة.',noPrice:'سعر السوق غير متاح الآن — النشر متوقف لحمايتك.',open:'مفتوح',spent:'مغلق',buyNote:'للشراء: التسوية عبر مسار المبادلة الذرية. يصل في التحديث القادم — العروض حية وقابلة للتحقق الآن.'}};
+const tt=k=>(T[L]&&T[L][k])||T.en[k]||k;
+if(L==='ar')document.body.dir='rtl';
+const $=i=>document.getElementById(i);
+$('tTitle').textContent=tt('title');$('tabBook').textContent=tt('book');$('tabSell').textContent=tt('sell');$('tabMine').textContent=tt('mine');
+$('lFloor').textContent=tt('floor');$('lMkt').textContent=tt('mkt');$('lMin').textContent=tt('mn');$('lAmt').textContent=tt('amt');$('lPrice').textContent=tt('price');$('lChain').textContent=tt('chain');$('lAddr').textContent=tt('addr');$('goSell').textContent=tt('pub');
+function say(el,kind,txt){const m=$(el);m.className='msg '+kind;m.textContent=txt;m.style.display='block';}
+function hideM(el){$(el).style.display='none';}
+async function ready(){for(let i=0;i<40&&!window.GBXRead;i++)await new Promise(r=>setTimeout(r,100));if(window.GBXReady)try{await window.GBXReady;}catch(e){}}
+async function crypto_(){for(let i=0;i<40&&!(window.GoldbrixCrypto&&window.GoldbrixCrypto.deriveKeypairFromMnemonic);i++)await new Promise(r=>setTimeout(r,100));return !!(window.GoldbrixCrypto&&window.GoldbrixCrypto.deriveKeypairFromMnemonic);}
+async function publish(rawtx){
+  const nodes=(window.GBX_NODES||[]).slice();
+  if(!nodes.length)throw new Error('no node');
+  let reason=null;
+  for(const n of nodes){
+    let r,body;
+    try{r=await fetch(String(n).replace(/\/+$/,'')+'/broadcast',{method:'POST',cache:'no-store',headers:{'content-type':'application/json'},body:JSON.stringify({rawtx})});body=await r.json().catch(()=>null);}catch(e){continue;}
+    const id=body&&(body.txid||body.tx_hash);
+    if(id){try{if(window.GoldbrixCrypto&&window.GoldbrixCrypto.spent)window.GoldbrixCrypto.spent.mark(rawtx);}catch(_e){}return id;}
+    const msg=body&&(body.error||body.message);
+    if(msg){reason=String(msg).replace(/\s+/g,' ').trim();break;}
+  }
+  throw new Error(reason||'no node accepted it');
+}
+let wallet=null,keys=null,pkHex='',secp=null,spkU=null,lastUsd=null,floorMicro=null;
+let myAddr={B:'',A:'',S:''};
+const hex=b=>Array.from(b,x=>x.toString(16).padStart(2,'0')).join('');
+async function boot(){
+  await ready();
+  wallet=(window.GBXSession&&window.GBXSession.activeWallet)?window.GBXSession.activeWallet():null;
+  loadBook();
+  if(wallet&&wallet.mnemonic&&await crypto_()){
+    keys=await window.GoldbrixCrypto.deriveKeypairFromMnemonic(wallet.mnemonic);
+    pkHex=hex(new Uint8Array(keys.publicKey));
+    secp=(await import('/vendor/secp256k1.mjs')).default;
+    const hm=await import('/vendor/gbx-h160.mjs');
+    const h=hm.ripemd160(hm.sha256(new Uint8Array(keys.publicKey)));
+    spkU=new Uint8Array(22);spkU[1]=0x14;spkU.set(h,2);
+    loadMine();
+    try{
+      for(let i=0;i<60&&!(window.GoldbrixMultichain&&window.GoldbrixMultichain.deriveEVM);i++)await new Promise(r=>setTimeout(r,200));
+      if(!(window.GoldbrixMultichain&&window.GoldbrixMultichain.deriveEVM))throw new Error('multichain module not loaded');
+      const evm=await window.GoldbrixMultichain.deriveEVM(wallet.mnemonic);
+      const sol=await window.GoldbrixMultichain.deriveSOL(wallet.mnemonic);
+      myAddr.B=evm.address; myAddr.A=evm.address; myAddr.S=sol.address;
+      fillAddr();
+    }catch(_e){ say('msg','err','autofill: '+(_e&&_e.message||_e)); }
+  }else{
+    if(!wallet||!wallet.mnemonic) say('msg','info','wallet locked - no autofill');
+  }
+}
+async function marketFloor(){
+  try{const st=await window.GBXRead.json('/api/gbx/stats');
+    if(st&&st.last_price_usd!=null){lastUsd=Number(st.last_price_usd);floorMicro=Math.round(lastUsd*1e6*0.99);return;}
+  }catch(e){}
+  lastUsd=null;floorMicro=null;
+}
+function paintPrices(){
+  $('vMkt').textContent = lastUsd!=null ? ('$'+lastUsd.toFixed(4)) : '—';
+  $('vMin').textContent = floorMicro!=null ? ('$'+(floorMicro/1e6).toFixed(4)) : '—';
+}
+function offerCard(o,mine){
+  const gbx=(Number(o.value_sat)/1e8).toLocaleString('en-US',{maximumFractionDigits:4});
+  const usd=(Number(o.price_micro)/1e6).toFixed(4);
+  const ch=o.chain==='B'?'Base':(o.chain==='A'?'Arbitrum':'Solana');
+  const st=o.spent?tt('spent'):tt('open');
+  return '<div class="card'+(mine?' mine':'')+'" data-tx="'+o.txid+'" data-nonce="'+o.nonce+'" data-spk="'+o.spk+'" data-vout="'+o.vout+'" data-val="'+o.value_sat+'">'
+   +'<div class="row"><span class="val amt">'+gbx+' GBX</span><span class="val price">$'+usd+'</span></div>'
+   +'<div class="row"><span class="lab chain'+o.chain+'">'+ch+'</span><span class="lab">'+(mine?st:'')+'</span></div>'
+   +(mine&&!o.spent?'<button class="btn red btnCancel">'+tt('cancel')+'</button>':'')
+   +'</div>';
+}
+async function loadBook(){
+  await marketFloor();
+  if(floorMicro!=null){$('floorCard').style.display='block';$('vFloor').textContent='$'+(floorMicro/1e6).toFixed(4);}
+  paintPrices();
+  try{
+    const j=await window.GBXRead.json('/api/offers');
+    const list=(j&&j.offers)||[];
+    const el=$('bookList');
+    const html=list.length?list.map(o=>offerCard(o,false)).join('')+'<div class="empty">'+tt('buyNote')+'</div>':'<div class="empty">'+tt('empty')+'</div>';
+    if(el.dataset.h!==html){el.innerHTML=html;el.dataset.h=html;}
+  }catch(e){}
+}
+async function loadMine(){
+  if(!pkHex)return;
+  try{
+    const j=await window.GBXRead.json('/api/offers/'+pkHex);
+    const list=(j&&j.offers)||[];
+    const el=$('mineList');
+    const html=list.length?list.map(o=>offerCard(o,true)).join(''):'<div class="empty">'+tt('mineEmpty')+'</div>';
+    if(el.dataset.h!==html){el.innerHTML=html;el.dataset.h=html;
+      el.querySelectorAll('.btnCancel').forEach(b=>b.addEventListener('click',onCancel));}
+  }catch(e){}
+}
+function validAddr(chain,a){
+  a=(a||'').trim();
+  if(chain==='S')return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(a);
+  return /^0x[0-9a-fA-F]{40}$/.test(a);
+}
+function addrBytes(chain,a){
+  if(chain!=='S')return C.unhex(a.trim().replace(/^0x/,''));
+  const A='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+  let n=0n;for(const c of a.trim())n=n*58n+BigInt(A.indexOf(c));
+  let b=[];while(n>0n){b.unshift(Number(n&255n));n>>=8n;}
+  for(const c of a.trim()){if(c==='1')b.unshift(0);else break;}
+  const u=new Uint8Array(b);
+  if(u.length!==32)throw new Error('sol addr len');
+  return u;
+}
+$('goSell').addEventListener('click',async()=>{
+  hideM('msgS');
+  if(!wallet||!wallet.mnemonic||!keys){say('msgS','err',tt('locked'));setTimeout(()=>{location.href='/v3/unlock.html?next='+encodeURIComponent('/v3/offers.html');},1200);return;}
+  const amtF=parseFloat(($('inAmt').value||'0').replace(',','.'));
+  const priceF=parseFloat(($('inPrice').value||'0').replace(',','.'));
+  const chain=$('inChain').value;const addr=$('inAddr').value;
+  if(!(amtF>0)){say('msgS','err',tt('badAmt'));return;}
+  if(!(priceF>0)){say('msgS','err',tt('badPrice'));return;}
+  if(!validAddr(chain,addr)){say('msgS','err',tt('badAddr'));return;}
+  await marketFloor();
+  if(floorMicro==null){say('msgS','err',tt('noPrice'));return;}
+  const priceMicro=Math.round(priceF*1e6);
+  if(priceMicro<floorMicro){say('msgS','err',tt('underFloor')+' ($'+(floorMicro/1e6).toFixed(4)+')');return;}
+  $('goSell').disabled=true;say('msgS','info',tt('reading'));
+  try{
+    const u=await window.GBXRead.json('/api/utxos/'+wallet.address+'?limit=1000',{timeout:45000});
+    const utxos=(u.unspents||[]).filter(x=>x.spendable!==false).map(x=>({txid:x.txid,vout:x.vout,value8:Math.round(x.amount*1e8)})).sort((a,b)=>b.value8-a.value8);
+    say('msgS','info',tt('working'));
+    const built=await F.buildOfferTx({chain,priceMicro:BigInt(priceMicro),usdcAddr:addrBytes(chain,addr),gbxSat:BigInt(Math.round(amtF*1e8)),utxos,pkU:new Uint8Array(keys.publicKey),p2wpkhSpkOf:()=>spkU});
+    const inputs=built.inputs.map(x=>({...x,kind:'p2wpkh'}));
+    const derSig=c=>{const tr=x=>{let i=0;while(i<31&&x[i]===0)i++;let v=x.subarray(i);if(v[0]&0x80)v=Uint8Array.of(0,...v);return v;};const r=tr(c.subarray(0,32)),s=tr(c.subarray(32,64));return Uint8Array.of(0x30,4+r.length+s.length,0x02,r.length,...r,0x02,s.length,...s);};
+    const sign=d=>derSig(secp.sign(d,new Uint8Array(keys.privateKey)));
+    const bytes=F.buildCurveTx(inputs,built.outs,new Uint8Array(keys.publicKey),sign);
+    const txid=await publish(C.hex(bytes));
+    say('msgS','ok',tt('sent')+' '+txid);
+    $('inAmt').value='';$('inPrice').value='';
+    setTimeout(()=>{loadBook();loadMine();},6000);
+  }catch(e){say('msgS','err',tt('failed')+' '+(e&&e.message||e));}
+  $('goSell').disabled=false;
+});
+async function onCancel(ev){
+  const card=ev.target.closest('.card');
+  hideM('msg');
+  try{
+    say('msg','info',tt('reading'));
+    const u=await window.GBXRead.json('/api/utxos/'+wallet.address+'?limit=1000',{timeout:45000});
+    const utxos=(u.unspents||[]).filter(x=>x.spendable!==false).map(x=>({txid:x.txid,vout:x.vout,value8:Math.round(x.amount*1e8)})).sort((a,b)=>b.value8-a.value8);
+    say('msg','info',tt('working'));
+    const built=await F.buildOfferCancelTx({offer:{nonceHex:card.dataset.nonce,spk:card.dataset.spk,txid:card.dataset.tx,vout:Number(card.dataset.vout),value8:Number(card.dataset.val)},utxos,pkU:new Uint8Array(keys.publicKey),p2wpkhSpkOf:()=>spkU});
+    const ws=C.unhex(built.offerWsHex);
+    const inputs=built.inputs.map((x,i)=>i===0?{...x,kind:'token',ws}:{...x,kind:'p2wpkh'});
+    const derSig=c=>{const tr=x=>{let i=0;while(i<31&&x[i]===0)i++;let v=x.subarray(i);if(v[0]&0x80)v=Uint8Array.of(0,...v);return v;};const r=tr(c.subarray(0,32)),s=tr(c.subarray(32,64));return Uint8Array.of(0x30,4+r.length+s.length,0x02,r.length,...r,0x02,s.length,...s);};
+    const sign=d=>derSig(secp.sign(d,new Uint8Array(keys.privateKey)));
+    const bytes=F.buildCurveTx(inputs,built.outs,new Uint8Array(keys.publicKey),sign);
+    const txid=await publish(C.hex(bytes));
+    say('msg','ok',tt('cancelSent')+' '+txid);
+    setTimeout(()=>{loadBook();loadMine();},6000);
+  }catch(e){say('msg','err',tt('failed')+' '+(e&&e.message||e));}
+}
+function showTab(which){
+  $('vBook').style.display=which==='book'?'':'none';
+  $('vSell').style.display=which==='sell'?'':'none';
+  $('vMine').style.display=which==='mine'?'':'none';
+  $('tabBook').classList.toggle('on',which==='book');
+  $('tabSell').classList.toggle('on',which==='sell');
+  $('tabMine').classList.toggle('on',which==='mine');
+}
+function fillAddr(){
+  const ch=$('inChain').value;
+  $('inAddr').placeholder = ch==='S' ? 'Solana address' : '0x…';
+  if(myAddr[ch] && !$('inAddr').dataset.userEdited) $('inAddr').value=myAddr[ch];
+}
+$('inChain').addEventListener('change',fillAddr);
+$('inAddr').addEventListener('input',()=>{$('inAddr').dataset.userEdited='1';});
+$('tabBook').addEventListener('click',()=>{showTab('book');loadBook();});
+$('tabSell').addEventListener('click',()=>showTab('sell'));
+$('tabMine').addEventListener('click',()=>{showTab('mine');loadMine();});
+setInterval(()=>{if($('vBook').style.display!=='none')loadBook();},30000);
+setInterval(async()=>{if($('vSell').style.display!=='none'){await marketFloor();paintPrices();}},15000);
+$('tabSell').addEventListener('click',async()=>{await marketFloor();paintPrices();});
+boot();
+window.addEventListener('pageshow',e=>{if(e.persisted)location.reload();});
+</script>
+<script src="/i18n.js?v=120" defer></script>
+<script src="/v3/nav-i18n.js?v=120" defer></script>
+<script src="/v3/gbx-autolock.js" defer></script>
+</body>
+</html>

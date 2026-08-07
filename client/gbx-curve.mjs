@@ -362,3 +362,47 @@ export function parseLogoChunkFromScriptHex(spkHex){
   const data = d.subarray(58, 58 + dLen);
   return { cid, idx, total, hash16, data };
 }
+
+// ── GBX:O direct-market offer. Lock: p2wsh( <mark:5> <nonce:8> OP_2DROP <seller_pk:33> OP_CHECKSIG ).
+// OP_RETURN: 'GBX:O:'+ver(1)+chain(1:'B'|'A'|'S')+price_microUSDC_per_GBX(8 BE)+aLen(1)+usdc_addr(20|32)+nonce(8).
+// The declaration is never trusted: indexers rebuild the p2wsh from declared values and
+// require it to be a real output of the SAME transaction. Amount = the real output value.
+export const OFFER_VER = 1;
+export function offerMark(){ return cat(new TextEncoder().encode('GBXO'), Uint8Array.of(OFFER_VER)); }
+export function offerWitnessScript(nonce8, pk){
+  if (nonce8.length!==8) throw new Error('nonce must be 8 bytes');
+  if (pk.length!==33) throw new Error('pk must be 33 bytes');
+  return cat(push(offerMark()), push(nonce8), Uint8Array.of(OP.DROP2), push(pk), Uint8Array.of(OP.CHECKSIG)); }
+export function offerPayload(chain, priceMicro, usdcAddr, nonce8){
+  if (chain!=='B' && chain!=='A' && chain!=='S') throw new Error('chain must be B|A|S');
+  const aLen = (chain==='S') ? 32 : 20;
+  if (usdcAddr.length!==aLen) throw new Error('usdc_addr must be '+aLen+' bytes');
+  if (nonce8.length!==8) throw new Error('nonce must be 8 bytes');
+  priceMicro=BigInt(priceMicro);
+  if (priceMicro<=0n) throw new Error('price must be > 0');
+  const tag = new TextEncoder().encode('GBX:O:');
+  const raw = cat(tag, Uint8Array.of(OFFER_VER), Uint8Array.of(chain.charCodeAt(0)), be8(priceMicro), Uint8Array.of(aLen), usdcAddr, nonce8);
+  const script = cat(Uint8Array.of(OP.RETURN), push(raw));
+  return { raw, script }; }
+export function parseOfferFromScriptHex(spkHex){
+  const b = unhex(spkHex);
+  if (b.length < 2 || b[0] !== OP.RETURN) return null;
+  let d;
+  if (b[1] <= 75) d = b.subarray(2);
+  else if (b[1] === 0x4c) d = b.subarray(3);
+  else return null;
+  const tag = new TextEncoder().encode('GBX:O:');
+  if (d.length < 45) return null;
+  for (let i = 0; i < 6; i++) if (d[i] !== tag[i]) return null;
+  if (d[6] !== OFFER_VER) return null;
+  const chain = String.fromCharCode(d[7]);
+  if (chain!=='B' && chain!=='A' && chain!=='S') return null;
+  let price = 0n; for (let i = 8; i < 16; i++) price = (price<<8n) | BigInt(d[i]);
+  if (price <= 0n) return null;
+  const aLen = d[16];
+  if (aLen !== ((chain==='S')?32:20)) return null;
+  if (d.length !== 17 + aLen + 8) return null;
+  const usdcAddr = d.subarray(17, 17 + aLen);
+  const nonce = d.subarray(17 + aLen);
+  return { chain, price, usdcAddr, nonce };
+}

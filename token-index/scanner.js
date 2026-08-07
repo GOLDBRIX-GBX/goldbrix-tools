@@ -122,6 +122,31 @@ function parseHtlcAnchor(tx){
   return null;
 }
 
+// ── GBX:O direct-market offer: 'GBX:O:'+ver(1)+chain(1:'B'|'A'|'S')+
+// price_microUSDC_per_GBX(8 BE)+aLen(1)+usdc_addr(20|32)+nonce(8). The
+// declaration is never trusted: the lock p2wsh is rebuilt from the declared
+// nonce + each witness pk and must be a real output of the SAME transaction.
+function parseOffer(tx){
+  for (const o of tx.vout){
+    const hex = (o.scriptPubKey && o.scriptPubKey.hex) || '';
+    if (!hex.startsWith('6a')) continue;
+    let data;
+    try { [data] = readPush(Buffer.from(hex,'hex'), 1); } catch { continue; }
+    if (data.length < 45) continue;
+    if (!data.subarray(0,6).equals(Buffer.from('GBX:O:'))) continue;
+    if (data[6] !== 1) continue;
+    const chain = String.fromCharCode(data[7]);
+    if (chain!=='B' && chain!=='A' && chain!=='S') continue;
+    const price = data.readBigUInt64BE(8);
+    if (price <= 0n) continue;
+    const aLen = data[16];
+    if (aLen !== ((chain==='S')?32:20)) continue;
+    if (data.length !== 17 + aLen + 8) continue;
+    return { chain, price, usdcAddr: data.subarray(17,17+aLen), nonce: data.subarray(17+aLen) };
+  }
+  return null;
+}
+
 // ── coin metadata (name/ticker) from the chain alone: 'GBX:M:'+ver(1)+cid(32)+
 // tLen(1)+ticker+nLen(1)+name. Valid ONLY if the tx is signed by the creator pk
 // from the CREATE intent (P2WPKH witness reveals it). First on chain wins.
@@ -226,6 +251,9 @@ function push(x){ return Buffer.concat([ x.length < 0x4c ? Buffer.from([x.length
 function tokenWS(cid, amt, pk){
   const a = Buffer.alloc(8); a.writeBigUInt64BE(amt);
   return Buffer.concat([push(cid), push(a), Buffer.from([0x6d]), push(pk), Buffer.from([0xac])]);
+}
+function offerWS(nonce, pk){
+  return Buffer.concat([push(Buffer.concat([Buffer.from('GBXO'), Buffer.from([1])])), push(nonce), Buffer.from([0x6d]), push(pk), Buffer.from([0xac])]);
 }
 const p2wsh = ws => '0020' + sha256(ws).toString('hex');
 const BURN_SPK = '0014' + '00'.repeat(20); // mirror of consensus CurveBurnScript
@@ -370,6 +398,16 @@ CREATE TABLE IF NOT EXISTS htlc_utxos(
   height INTEGER NOT NULL, spent_height INTEGER,
   PRIMARY KEY(txid, vout));
 CREATE INDEX IF NOT EXISTS hu_pk ON htlc_utxos(refund_pk) WHERE spent_height IS NULL;
+CREATE TABLE IF NOT EXISTS offers(
+  txid TEXT NOT NULL, vout INTEGER NOT NULL,
+  spk TEXT NOT NULL, value_sat TEXT NOT NULL,
+  seller_pk TEXT NOT NULL, chain TEXT NOT NULL,
+  price_micro TEXT NOT NULL, usdc_addr TEXT NOT NULL,
+  nonce TEXT NOT NULL,
+  height INTEGER NOT NULL, spent_height INTEGER,
+  PRIMARY KEY(txid, vout));
+CREATE INDEX IF NOT EXISTS of_open ON offers(spent_height) WHERE spent_height IS NULL;
+CREATE INDEX IF NOT EXISTS of_pk ON offers(seller_pk) WHERE spent_height IS NULL;
 `);
 try{ db.exec("ALTER TABLE curves ADD COLUMN creator_pk TEXT NOT NULL DEFAULT ''"); }catch(_e){}
 const q = {
@@ -389,6 +427,10 @@ const q = {
   hSpend:   db.prepare('UPDATE htlc_utxos SET spent_height=? WHERE txid=? AND vout=? AND spent_height IS NULL'),
   hRbNew:   db.prepare('DELETE FROM htlc_utxos WHERE height > ?'),
   hRbSpent: db.prepare('UPDATE htlc_utxos SET spent_height=NULL WHERE spent_height > ?'),
+  oPut:     db.prepare('INSERT OR IGNORE INTO offers(txid,vout,spk,value_sat,seller_pk,chain,price_micro,usdc_addr,nonce,height) VALUES(?,?,?,?,?,?,?,?,?,?)'),
+  oSpend:   db.prepare('UPDATE offers SET spent_height=? WHERE txid=? AND vout=? AND spent_height IS NULL'),
+  oRbNew:   db.prepare('DELETE FROM offers WHERE height > ?'),
+  oRbSpent: db.prepare('UPDATE offers SET spent_height=NULL WHERE spent_height > ?'),
   rbBlk:    db.prepare('DELETE FROM blocks WHERE height > ?'),
   holdings: db.prepare(`SELECT coin_id, pk, SUM(CAST(amount AS INTEGER)) amt
                         FROM token_utxos WHERE spent_height IS NULL GROUP BY coin_id, pk`),
@@ -447,7 +489,7 @@ function curveApply(h, tx, cid, m, hM, status){
 const scanned = () => parseInt(q.getMeta.get('scanned')?.v ?? String(START - 1), 10);
 
 const rollbackTo = db.transaction(h => {
-  q.rbNew.run(h); q.rbSpent.run(h); q.hRbNew.run(h); q.hRbSpent.run(h); q.rbBlk.run(h);
+  q.rbNew.run(h); q.rbSpent.run(h); q.hRbNew.run(h); q.hRbSpent.run(h); q.oRbNew.run(h); q.oRbSpent.run(h); q.rbBlk.run(h);
   q.cRb.run(h);
   q.mRb.run(h);
   q.m2Rb.run(h);
@@ -470,7 +512,7 @@ const rollbackTo = db.transaction(h => {
 const applyBlock = db.transaction((h, blk) => {
   for (const tx of blk.tx){
     for (const vin of (tx.vin || []))
-      if (vin.txid !== undefined) { q.spend.run(h, vin.txid, vin.vout); q.hSpend.run(h, vin.txid, vin.vout); }
+      if (vin.txid !== undefined) { q.spend.run(h, vin.txid, vin.vout); q.hSpend.run(h, vin.txid, vin.vout); q.oSpend.run(h, vin.txid, vin.vout); }
     const it = parseIntent(tx);
     // ── curve tracking — runs for EVERY curve op, tokensOut or not ──
     if (it && 'CBSRG'.includes(it.op) && !(LAUNCH_H > 0 && h < LAUNCH_H)){ // pre-activation X ops are NOT consensus-guarded -> never indexed
@@ -577,6 +619,20 @@ const applyBlock = db.transaction((h, blk) => {
         const hx = (o.scriptPubKey && o.scriptPubKey.hex) || '';
         if (!hx.startsWith('0020')) continue;
         q.hPut.run(tx.txid, o.n, hx, String(Math.round(o.value*1e8)), ha.pk.toString('hex'), ha.hashlock.toString('hex'), h);
+      }
+    }
+    // An offer credits the seller only when the rebuilt lock is a real output.
+    const off = parseOffer(tx);
+    if (off){
+      for (const pkHex of witnessPks(tx)){
+        const spkO = p2wsh(offerWS(off.nonce, Buffer.from(pkHex,'hex')));
+        for (const o of tx.vout){
+          if ((((o.scriptPubKey||{}).hex)||'') !== spkO) continue;
+          q.oPut.run(tx.txid, o.n, spkO, String(Math.round(o.value*1e8)), pkHex,
+                     off.chain, off.price.toString(), off.usdcAddr.toString('hex'),
+                     off.nonce.toString('hex'), h);
+        }
+        if (tx.vout.some(o => ((((o.scriptPubKey||{}).hex)||'')===spkO))) break;
       }
     }
     // A declared transfer credits the recipient only when the output proves it.

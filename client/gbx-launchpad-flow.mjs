@@ -13,6 +13,7 @@ import { curveFee, curveBuy, curveWitnessScript, parseCurveWitnessScript,
 import { verifyPow, POWLIMIT_MAIN } from './gbx-pow.mjs';
 import { coinIdFromOutpoint, transferPayload } from './gbx-curve.mjs';
 import { logoChunkPayload, parseLogoChunkFromScriptHex, LOGO_CHUNK_MAX, LOGO_TOTAL_MAX } from './gbx-curve.mjs';
+import { offerWitnessScript, offerPayload, parseOfferFromScriptHex } from './gbx-curve.mjs';
 export { LOGO_CHUNK_MAX, LOGO_TOTAL_MAX } from './gbx-curve.mjs';
 
 export const DUST_SAT = 546n;
@@ -424,5 +425,47 @@ export async function buildPoolSellTx({ pool, holding, tokensInSat, utxos, pkU, 
            tokenWsHex: hex(tokenWitnessScript(pool.cid, BigInt(holding.amount), pkU)),
            inputs: [{txid: pool.txid, vout: pool.vout, value8: Number(pool.gbxSat)},
                     {txid: holding.txid, vout: holding.vout, value8: Number(DUST_SAT)}, ...ins],
+           outs };
+}
+
+// ── GBX:O direct-market offer (on-chain p2p). The lock is a plain p2wsh the
+// seller alone can spend: publishing proves the GBX exists and is committed,
+// cancel is always available, and an offer dies endogenously when its UTXO is
+// spent. Execution settles ONLY through the proven HTLC path (gbx-htlc.mjs) —
+// there is no trust-based path by design.
+export async function buildOfferTx({ chain, priceMicro, usdcAddr, gbxSat, utxos, pkU, p2wpkhSpkOf }){
+  const lock = BigInt(gbxSat);
+  if (lock <= DUST_SAT) throw new Error('offer amount too small');
+  const nonce = crypto.getRandomValues(new Uint8Array(8));
+  const ws = offerWitnessScript(nonce, pkU);
+  const pay = offerPayload(chain, priceMicro, usdcAddr, nonce);
+  // self-verify: our own OP_RETURN parses back exactly like the indexer will
+  const rt = parseOfferFromScriptHex(hex(pay.script));
+  if (!rt || rt.chain!==chain || BigInt(rt.price)!==BigInt(priceMicro)) throw new Error('offer self-verify failed');
+  const need = lock + TRADE_FEE_SAT;
+  const { ins, sum } = selectUtxos(utxos, need);
+  const change = sum - need;
+  const outs = [];
+  outs.push({ spk: await p2wsh(ws), value8: Number(lock) });   // vout 0 = the offer lock
+  if (change > DUST_SAT) outs.push({ spk: p2wpkhSpkOf(pkU), value8: Number(change) });
+  outs.push({ spk: pay.script, value8: 0 });
+  return { lockSat: lock, nonceHex: hex(nonce), offerWsHex: hex(ws),
+           inputs: ins, outs };
+}
+
+// CANCEL: the seller spends the lock back to himself. Same signing contract as
+// every other p2wsh spend here: inputs[0] = the lock, scriptCode = offerWsHex.
+export async function buildOfferCancelTx({ offer, utxos, pkU, p2wpkhSpkOf }){
+  const ws = offerWitnessScript(unhex(offer.nonceHex), pkU);
+  if (hex(await p2wsh(ws)).toLowerCase() !== String(offer.spk).toLowerCase())
+    throw new Error('offer script mismatch — not this wallet\'s offer');
+  const lock = BigInt(offer.value8);
+  const { ins, sum } = selectUtxos(utxos, TRADE_FEE_SAT);
+  const change = sum - TRADE_FEE_SAT;
+  const outs = [];
+  outs.push({ spk: p2wpkhSpkOf(pkU), value8: Number(lock) }); // the locked GBX comes home, full
+  if (change > DUST_SAT) outs.push({ spk: p2wpkhSpkOf(pkU), value8: Number(change) });
+  return { offerWsHex: hex(ws),
+           inputs: [{txid: offer.txid, vout: offer.vout, value8: Number(lock)}, ...ins],
            outs };
 }

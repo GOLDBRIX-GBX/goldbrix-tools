@@ -553,6 +553,26 @@ const server = http.createServer(async (req, res) => {
       } catch (e) { res.writeHead(500); return res.end('my-coins error'); }
     }
     // curves live from the chain — list + detail (guarded by GBX_TOKENIDX_DB)
+    // GBX:O direct-market offers — open book (floor = this node's own last
+    // executed price, endogenous) or one seller's history via /api/offers/<pk>.
+    if (req.method === 'GET' && (url.pathname === '/api/offers' || url.pathname.startsWith('/api/offers/'))) {
+      const dbp = process.env.GBX_TOKENIDX_DB;
+      if (!dbp) { res.writeHead(404); return res.end('not enabled'); }
+      try {
+        const { openTokenIndex } = require('./gbx-token-read.js');
+        if (!global.__gbxTokenIdx) global.__gbxTokenIdx = openTokenIndex(dbp);
+        let out;
+        if (url.pathname === '/api/offers') {
+          let floorMicro = null;
+          try { const st = gbxTrades ? gbxTrades.stats() : null;
+                if (st && st.last_price_usd != null) floorMicro = st.last_price_usd * 1e6 * 0.99; } catch(_e){} // floor = last executed price - 1% (anti-dump, endogenous)
+          out = global.__gbxTokenIdx.offersOpen(floorMicro);
+        } else {
+          out = global.__gbxTokenIdx.offersByPk(url.pathname.slice('/api/offers/'.length));
+        }
+        return sendJson(res, 200, out);
+      } catch (e) { res.writeHead(500); return res.end('offers error'); }
+    }
     if (req.method === 'GET' && (url.pathname === '/api/curves' || url.pathname.startsWith('/api/curves/'))) {
       const dbp = process.env.GBX_TOKENIDX_DB;
       if (!dbp) { res.writeHead(404); return res.end('not enabled'); }

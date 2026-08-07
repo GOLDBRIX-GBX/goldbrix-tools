@@ -89,9 +89,41 @@ function openTokenIndex(dbPath){
              price_sat: BigInt(r.tokens) > 0n ? (BigInt(r.gbx_sat)/BigInt(r.tokens)).toString() : '0' };
   }
   const hByPk = db.prepare('SELECT txid,vout,spk,value_sat,refund_pk,hashlock,height,spent_height FROM htlc_utxos WHERE refund_pk=? ORDER BY height DESC');
+  let oOpen=null, oByPk=null;
+  try{
+    oOpen = db.prepare('SELECT txid,vout,spk,value_sat,seller_pk,chain,price_micro,usdc_addr,nonce,height FROM offers WHERE spent_height IS NULL ORDER BY CAST(price_micro AS INTEGER) ASC, height ASC');
+    oByPk = db.prepare('SELECT txid,vout,spk,value_sat,seller_pk,chain,price_micro,usdc_addr,nonce,height,spent_height FROM offers WHERE seller_pk=? ORDER BY height DESC');
+  }catch(_e){} // offers table appears after the first scanner run on this DB
   return {
     // Every HTLC lock anchored on chain for this refund key, spent or not.
     // The caller rebuilds the script and proves the spk before trusting a row.
+    // GBX:O open offers, cheapest first. floorMicro (optional): offers priced
+    // below the node's own last executed price are excluded — endogenous, no oracle.
+    offersOpen(floorMicro){
+      const tip = parseInt(q.meta.get('scanned')?.v ?? '0', 10);
+      if (!oOpen) return { ok:true, scanned:tip, offers:[] };
+      let rows; try{ rows = oOpen.all(); }catch(_e){ return { ok:true, scanned:tip, offers:[] }; }
+      const f = (floorMicro!=null && isFinite(floorMicro)) ? BigInt(Math.round(floorMicro)) : null;
+      const out=[];
+      for (const r of rows){
+        if (f!=null && BigInt(r.price_micro) < f) continue;
+        out.push({ txid:r.txid, vout:r.vout, spk:r.spk, value_sat:String(r.value_sat),
+                   seller_pk:r.seller_pk, chain:r.chain, price_micro:String(r.price_micro),
+                   usdc_addr:r.usdc_addr, nonce:r.nonce, height:r.height });
+      }
+      return { ok:true, scanned:tip, floor_micro: f!=null?String(f):null, offers:out };
+    },
+    // All offers of one seller, spent or not — for the owner's own view.
+    offersByPk(pkHex){
+      const tip = parseInt(q.meta.get('scanned')?.v ?? '0', 10);
+      if (!oByPk) return { ok:true, scanned:tip, offers:[] };
+      let rows; try{ rows = oByPk.all(String(pkHex||'').toLowerCase()); }catch(_e){ return { ok:true, scanned:tip, offers:[] }; }
+      return { ok:true, scanned:tip, offers: rows.map(r=>({
+        txid:r.txid, vout:r.vout, spk:r.spk, value_sat:String(r.value_sat),
+        seller_pk:r.seller_pk, chain:r.chain, price_micro:String(r.price_micro),
+        usdc_addr:r.usdc_addr, nonce:r.nonce, height:r.height,
+        spent: r.spent_height!=null, spent_height:r.spent_height })) };
+    },
     htlcByRefund(pkHex){
       const tip = parseInt(q.meta.get('scanned')?.v ?? '0', 10);
       let rows; try{ rows = hByPk.all(String(pkHex||'').toLowerCase()); }catch(_e){ return { ok:true, scanned:tip, locks:[] }; }
