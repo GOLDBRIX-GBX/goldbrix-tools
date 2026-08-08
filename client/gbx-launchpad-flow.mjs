@@ -303,7 +303,7 @@ export async function buildRefundTx({ curve, holding, utxos, pkU, p2wpkhSpkOf })
 }
 
 // ── mixed-input tx builder (BIP143): curve (anyone-can-spend) + token P2WSH + user P2WPKH ──
-import { dsha256, u32le, u64le, varint, serStr, concatBytes, hash160 } from './gbx-htlc.mjs';
+import { dsha256, u32le, u64le, varint, serStr, concatBytes, hash160, buildHtlcScript, p2wshSpk } from './gbx-htlc.mjs';
 import { unhex as _uh } from './gbx-curve.mjs';
 // inputs: [{txid, vout, value8, kind:'curve'|'token'|'p2wpkh', ws?:Uint8Array}]
 // outs:   [{spk, value8}] ; signDigest: 32B digest -> DER sig (no hashtype byte)
@@ -466,6 +466,40 @@ export async function buildOfferCancelTx({ offer, utxos, pkU, p2wpkhSpkOf }){
   outs.push({ spk: p2wpkhSpkOf(pkU), value8: Number(lock) }); // the locked GBX comes home, full
   if (change > DUST_SAT) outs.push({ spk: p2wpkhSpkOf(pkU), value8: Number(change) });
   return { offerWsHex: hex(ws),
+           inputs: [{txid: offer.txid, vout: offer.vout, value8: Number(lock)}, ...ins],
+           outs };
+}
+
+// EXECUTE: the seller spends his own offer lock into a GBX HTLC bound to the
+// buyer's hashlock: HTLC(H, pk_buyer claims with the preimage, pk_seller
+// refunds after T2). Same signing contract as cancel: inputs[0] = the lock,
+// scriptCode = offerWsHex. A second zero-value OP_RETURN carries the GBX:H
+// anchor ('GBX:H:'+ver(1)+hashlock(32)+refund_pk(33) = 72 bytes, the exact
+// format the indexer already records), so the lock stays findable from the
+// chain alone - no server, no local memory.
+export async function buildOfferExecuteTx({ offer, buyerPkHex, hashlockHex, tipHeight, utxos, pkU, p2wpkhSpkOf }){
+  const ws = offerWitnessScript(unhex(offer.nonceHex), pkU);
+  if (hex(await p2wsh(ws)).toLowerCase() !== String(offer.spk).toLowerCase())
+    throw new Error('offer script mismatch - not this wallet\'s offer');
+  const H = unhex(String(hashlockHex).replace(/^0x/,''));
+  if (H.length !== 32) throw new Error('bad hashlock');
+  const bpk = unhex(String(buyerPkHex));
+  if (bpk.length !== 33) throw new Error('bad buyer pk');
+  const tip = Number(tipHeight);
+  if (!(tip > 0)) throw new Error('bad tip height');
+  const T2 = tip + 100000; // blocks (~3.5 days at 3s) >> USDC timelock + margin
+  const htlcWs = buildHtlcScript(H, bpk, pkU, T2);
+  const lock = BigInt(offer.value8);
+  const { ins, sum } = selectUtxos(utxos, TRADE_FEE_SAT);
+  const change = sum - TRADE_FEE_SAT;
+  const a = new Uint8Array(72);
+  a.set([0x47,0x42,0x58,0x3a,0x48,0x3a],0); a[6]=1; a.set(H,7); a.set(pkU,39);
+  const anchorSpk = concatBytes([Uint8Array.of(0x6a,72), a]);
+  const outs = [];
+  outs.push({ spk: p2wshSpk(htlcWs), value8: Number(lock) }); // vout 0 = the GBX HTLC
+  if (change > DUST_SAT) outs.push({ spk: p2wpkhSpkOf(pkU), value8: Number(change) });
+  outs.push({ spk: anchorSpk, value8: 0 });
+  return { offerWsHex: hex(ws), htlcWsHex: hex(htlcWs), t2: T2,
            inputs: [{txid: offer.txid, vout: offer.vout, value8: Number(lock)}, ...ins],
            outs };
 }

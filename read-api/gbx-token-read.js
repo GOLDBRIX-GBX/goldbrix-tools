@@ -88,11 +88,12 @@ function openTokenIndex(dbPath){
              // spot price in base units per token (integer floor; quoting uses x*y=k)
              price_sat: BigInt(r.tokens) > 0n ? (BigInt(r.gbx_sat)/BigInt(r.tokens)).toString() : '0' };
   }
-  const hByPk = db.prepare('SELECT txid,vout,spk,value_sat,refund_pk,hashlock,height,spent_height FROM htlc_utxos WHERE refund_pk=? ORDER BY height DESC');
+  const hByPk = db.prepare('SELECT txid,vout,spk,value_sat,refund_pk,hashlock,height,spent_height,preimage FROM htlc_utxos WHERE refund_pk=? ORDER BY height DESC');
+  const hByHl = db.prepare('SELECT txid,vout,spk,value_sat,refund_pk,hashlock,height,spent_height,preimage FROM htlc_utxos WHERE hashlock=? ORDER BY height DESC');
   let oOpen=null, oByPk=null;
   try{
     oOpen = db.prepare('SELECT txid,vout,spk,value_sat,seller_pk,chain,price_micro,usdc_addr,nonce,height FROM offers WHERE spent_height IS NULL ORDER BY CAST(price_micro AS INTEGER) ASC, height ASC');
-    oByPk = db.prepare('SELECT txid,vout,spk,value_sat,seller_pk,chain,price_micro,usdc_addr,nonce,height,spent_height FROM offers WHERE seller_pk=? ORDER BY height DESC');
+    oByPk = db.prepare('SELECT txid,vout,spk,value_sat,seller_pk,chain,price_micro,usdc_addr,nonce,height,spent_height,exec_hashlock,exec_txid FROM offers WHERE seller_pk=? ORDER BY height DESC');
   }catch(_e){} // offers table appears after the first scanner run on this DB
   return {
     // Every HTLC lock anchored on chain for this refund key, spent or not.
@@ -122,7 +123,19 @@ function openTokenIndex(dbPath){
         txid:r.txid, vout:r.vout, spk:r.spk, value_sat:String(r.value_sat),
         seller_pk:r.seller_pk, chain:r.chain, price_micro:String(r.price_micro),
         usdc_addr:r.usdc_addr, nonce:r.nonce, height:r.height,
-        spent: r.spent_height!=null, spent_height:r.spent_height })) };
+        spent: r.spent_height!=null, spent_height:r.spent_height,
+        executed: r.exec_hashlock!=null, exec_hashlock:r.exec_hashlock||null, exec_txid:r.exec_txid||null })) };
+    },
+    // One lock by its hashlock: whoever holds the secret can find the coins from
+    // the chain alone, on any device, without ever having stored anything locally.
+    htlcByHashlock(hlHex){
+      const tip = parseInt(q.meta.get('scanned')?.v ?? '0', 10);
+      let rows; try{ rows = hByHl.all(String(hlHex||'').replace(/^0x/,'').toLowerCase()); }catch(_e){ return { ok:true, scanned:tip, locks:[] }; }
+      return { ok:true, scanned: tip, locks: rows.map(r=>({
+        txid:r.txid, vout:r.vout, spk:r.spk, value_sat:String(r.value_sat),
+        refund_pk:r.refund_pk, hashlock:r.hashlock, height:r.height,
+        spent: r.spent_height!=null, spent_height:r.spent_height,
+        preimage: r.preimage||null })) };
     },
     htlcByRefund(pkHex){
       const tip = parseInt(q.meta.get('scanned')?.v ?? '0', 10);
@@ -130,7 +143,8 @@ function openTokenIndex(dbPath){
       return { ok:true, scanned: tip, locks: rows.map(r=>({
         txid:r.txid, vout:r.vout, spk:r.spk, value_sat:String(r.value_sat),
         hashlock:r.hashlock, height:r.height,
-        spent: r.spent_height!=null, spent_height:r.spent_height })) };
+        spent: r.spent_height!=null, spent_height:r.spent_height,
+        preimage: r.preimage||null })) };
     },
     registry(){
       return { scanned: parseInt(q.meta.get('scanned')?.v ?? '-1', 10),

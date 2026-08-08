@@ -410,6 +410,9 @@ CREATE INDEX IF NOT EXISTS of_open ON offers(spent_height) WHERE spent_height IS
 CREATE INDEX IF NOT EXISTS of_pk ON offers(seller_pk) WHERE spent_height IS NULL;
 `);
 try{ db.exec("ALTER TABLE curves ADD COLUMN creator_pk TEXT NOT NULL DEFAULT ''"); }catch(_e){}
+try{ db.exec("ALTER TABLE offers ADD COLUMN exec_hashlock TEXT"); }catch(_e){}
+try{ db.exec("ALTER TABLE offers ADD COLUMN exec_txid TEXT"); }catch(_e){}
+try{ db.exec("ALTER TABLE htlc_utxos ADD COLUMN preimage TEXT"); }catch(_e){}
 const q = {
   getMeta:  db.prepare('SELECT v FROM meta WHERE k=?'),
   setMeta:  db.prepare('INSERT INTO meta(k,v) VALUES(?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v'),
@@ -424,13 +427,14 @@ const q = {
   rbNew:    db.prepare('DELETE FROM token_utxos WHERE height > ?'),
   rbSpent:  db.prepare('UPDATE token_utxos SET spent_height=NULL WHERE spent_height > ?'),
   hPut:     db.prepare('INSERT OR IGNORE INTO htlc_utxos(txid,vout,spk,value_sat,refund_pk,hashlock,height) VALUES(?,?,?,?,?,?,?)'),
-  hSpend:   db.prepare('UPDATE htlc_utxos SET spent_height=? WHERE txid=? AND vout=? AND spent_height IS NULL'),
+  hSpend:   db.prepare('UPDATE htlc_utxos SET spent_height=?, preimage=? WHERE txid=? AND vout=? AND spent_height IS NULL'),
   hRbNew:   db.prepare('DELETE FROM htlc_utxos WHERE height > ?'),
-  hRbSpent: db.prepare('UPDATE htlc_utxos SET spent_height=NULL WHERE spent_height > ?'),
+  hRbSpent: db.prepare('UPDATE htlc_utxos SET spent_height=NULL, preimage=NULL WHERE spent_height > ?'),
   oPut:     db.prepare('INSERT OR IGNORE INTO offers(txid,vout,spk,value_sat,seller_pk,chain,price_micro,usdc_addr,nonce,height) VALUES(?,?,?,?,?,?,?,?,?,?)'),
   oSpend:   db.prepare('UPDATE offers SET spent_height=? WHERE txid=? AND vout=? AND spent_height IS NULL'),
+  oExec:    db.prepare('UPDATE offers SET exec_hashlock=?, exec_txid=? WHERE txid=? AND vout=? AND spent_height IS NOT NULL'),
   oRbNew:   db.prepare('DELETE FROM offers WHERE height > ?'),
-  oRbSpent: db.prepare('UPDATE offers SET spent_height=NULL WHERE spent_height > ?'),
+  oRbSpent: db.prepare('UPDATE offers SET spent_height=NULL, exec_hashlock=NULL, exec_txid=NULL WHERE spent_height > ?'),
   rbBlk:    db.prepare('DELETE FROM blocks WHERE height > ?'),
   holdings: db.prepare(`SELECT coin_id, pk, SUM(CAST(amount AS INTEGER)) amt
                         FROM token_utxos WHERE spent_height IS NULL GROUP BY coin_id, pk`),
@@ -512,7 +516,16 @@ const rollbackTo = db.transaction(h => {
 const applyBlock = db.transaction((h, blk) => {
   for (const tx of blk.tx){
     for (const vin of (tx.vin || []))
-      if (vin.txid !== undefined) { q.spend.run(h, vin.txid, vin.vout); q.hSpend.run(h, vin.txid, vin.vout); q.oSpend.run(h, vin.txid, vin.vout); }
+      if (vin.txid !== undefined) {
+          q.spend.run(h, vin.txid, vin.vout);
+          // A claim reveals the preimage in witness[1]; a refund leaves it empty.
+          // Recording it makes the secret readable from the chain by anyone, so
+          // the other side of a swap never depends on the counterparty or a server.
+          const _w = vin.txinwitness;
+          const _pre = (_w && _w.length >= 2 && _w[1]) ? String(_w[1]) : null;
+          q.hSpend.run(h, _pre, vin.txid, vin.vout);
+          q.oSpend.run(h, vin.txid, vin.vout);
+        }
     const it = parseIntent(tx);
     // ── curve tracking — runs for EVERY curve op, tokensOut or not ──
     if (it && 'CBSRG'.includes(it.op) && !(LAUNCH_H > 0 && h < LAUNCH_H)){ // pre-activation X ops are NOT consensus-guarded -> never indexed
@@ -615,11 +628,18 @@ const applyBlock = db.transaction((h, blk) => {
     // An HTLC anchor records the lock outpoint(s) of its own transaction.
     const ha = parseHtlcAnchor(tx);
     if (ha){
+      let hadWsh = false;
       for (const o of tx.vout){
         const hx = (o.scriptPubKey && o.scriptPubKey.hex) || '';
         if (!hx.startsWith('0020')) continue;
+        hadWsh = true;
         q.hPut.run(tx.txid, o.n, hx, String(Math.round(o.value*1e8)), ha.pk.toString('hex'), ha.hashlock.toString('hex'), h);
       }
+      // A spend of an offer lock inside a tx that carries a GBX:H anchor and a
+      // real p2wsh output is an execution, not a close: record the hashlock so
+      // the settlement can be followed from the chain alone.
+      if (hadWsh) for (const vin of (tx.vin || []))
+        if (vin.txid !== undefined) q.oExec.run(ha.hashlock.toString('hex'), tx.txid, vin.txid, vin.vout);
     }
     // An offer credits the seller only when the rebuilt lock is a real output.
     const off = parseOffer(tx);

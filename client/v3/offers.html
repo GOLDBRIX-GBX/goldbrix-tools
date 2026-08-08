@@ -15,6 +15,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/v3/style.css?v=120">
 <style>
+html,body{overflow-x:hidden;max-width:100%}
 .wrap{max-width:640px;margin:0 auto;padding:14px 14px 90px}
 .hero{display:flex;align-items:center;gap:10px;margin:6px 0 14px}
 .hero h1{font-size:1.15rem;color:var(--gold);margin:0}
@@ -32,7 +33,8 @@ input,select{width:100%;background:#141414;border:1px solid var(--border);border
 .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text-primary)}
 .btn.red{background:var(--red);color:#2a0d08}
 .btn:disabled{opacity:.55}
-.msg{display:none;border-radius:10px;padding:10px;margin:8px 0;font-size:.85rem}
+.msg{display:none;border-radius:10px;padding:10px;margin:8px 0;font-size:.85rem;overflow-wrap:anywhere;word-break:break-word}
+.msgLocal{margin:8px 0 0}
 .msg.ok{display:block;background:rgba(87,255,158,.12);color:var(--green)}
 .msg.err{display:block;background:rgba(255,107,92,.12);color:var(--red)}
 .msg.info{display:block;background:rgba(255,217,138,.10);color:var(--gold)}
@@ -45,7 +47,7 @@ input,select{width:100%;background:#141414;border:1px solid var(--border);border
 <div class="wrap">
   <div class="hero"><a href="/v3/profile-x.html" id="backL" style="color:var(--gold);text-decoration:none">←</a><h1 id="tTitle">Direct Market</h1></div>
   <div class="tabs"><div class="tab on" id="tabBook">BOOK</div><div class="tab" id="tabSell">SELL</div><div class="tab" id="tabMine">MINE</div></div>
-  <div id="vBook"><div id="floorCard" class="card" style="display:none"><div class="row"><span class="lab" id="lFloor">Floor</span><span class="val price" id="vFloor">—</span></div></div><div id="bookList"></div></div>
+  <div id="vBook"><div id="buyPend"></div><div id="floorCard" class="card" style="display:none"><div class="row"><span class="lab" id="lFloor">Floor</span><span class="val price" id="vFloor">—</span></div></div><div id="bookList"></div></div>
   <div id="vSell" style="display:none">
     <div class="card">
       <div class="row"><span class="lab" id="lMkt">Market</span><span class="val price" id="vMkt">—</span></div>
@@ -72,23 +74,82 @@ import * as F from '/gbx-launchpad-flow.mjs';
 import * as C from '/gbx-curve.mjs';
 const L=(localStorage.getItem('gbx_lang')||'en');
 const T={
-en:{title:'Direct Market',book:'BOOK',sell:'SELL',mine:'MINE',mkt:'Market price (live)',mn:'Minimum allowed (-1%)',floor:'Minimum price (market -1%)',amt:'GBX amount',price:'Price (USDC per GBX)',chain:'USDC chain',addr:'Your USDC address',pub:'Publish offer',cancel:'Cancel offer',locked:'Unlock your wallet first',reading:'Reading the chain…',working:'Signing and publishing…',sent:'Published. Tx:',failed:'Not published:',cancelSent:'Cancelled. Tx:',empty:'No open offers yet. Yours can be the first.',mineEmpty:'You have no offers yet.',badAmt:'Enter an amount above zero.',badPrice:'Enter a price above zero.',underFloor:'Below the minimum price. Offers cannot undercut the market by more than 1%.',badAddr:'That address does not match the selected chain.',noPrice:'Market price unavailable right now — publishing is paused to protect you.',open:'open',spent:'closed',buyNote:'To buy: settlement uses the atomic swap path. Coming in the next update — offers are live and verifiable now.'},
-ro:{title:'Piața directă',book:'OFERTE',sell:'VINDE',mine:'ALE MELE',mkt:'Preț de piață (live)',mn:'Minim permis (-1%)',floor:'Preț minim (piață -1%)',amt:'Sumă GBX',price:'Preț (USDC per GBX)',chain:'Lanț USDC',addr:'Adresa ta USDC',pub:'Publică oferta',cancel:'Anulează oferta',locked:'Deblochează portofelul întâi',reading:'Citesc lanțul…',working:'Semnez și public…',sent:'Publicat. Tx:',failed:'Nepublicat:',cancelSent:'Anulat. Tx:',empty:'Nicio ofertă deschisă încă. A ta poate fi prima.',mineEmpty:'Nu ai oferte încă.',badAmt:'Introdu o sumă peste zero.',badPrice:'Introdu un preț peste zero.',underFloor:'Sub prețul minim. Ofertele nu pot coborî sub piață cu mai mult de 1%.',badAddr:'Adresa nu corespunde lanțului ales.',noPrice:'Prețul pieței e indisponibil — publicarea e oprită pentru protecția ta.',open:'deschisă',spent:'închisă',buyNote:'Pentru cumpărare: decontarea folosește calea swap atomic. Vine în următorul update — ofertele sunt vii și verificabile de acum.'},
-de:{title:'Direktmarkt',book:'ANGEBOTE',sell:'VERKAUFEN',mine:'MEINE',mkt:'Marktpreis (live)',mn:'Minimum erlaubt (-1%)',floor:'Mindestpreis (Markt -1%)',amt:'GBX-Betrag',price:'Preis (USDC pro GBX)',chain:'USDC-Chain',addr:'Deine USDC-Adresse',pub:'Angebot veröffentlichen',cancel:'Angebot stornieren',locked:'Entsperre zuerst deine Wallet',reading:'Lese die Chain…',working:'Signiere und veröffentliche…',sent:'Veröffentlicht. Tx:',failed:'Nicht veröffentlicht:',cancelSent:'Storniert. Tx:',empty:'Noch keine offenen Angebote. Deins kann das erste sein.',mineEmpty:'Du hast noch keine Angebote.',badAmt:'Gib einen Betrag über null ein.',badPrice:'Gib einen Preis über null ein.',underFloor:'Unter dem Mindestpreis. Angebote dürfen den Markt um höchstens 1% unterbieten.',badAddr:'Die Adresse passt nicht zur gewählten Chain.',noPrice:'Marktpreis derzeit nicht verfügbar — Veröffentlichung pausiert zu deinem Schutz.',open:'offen',spent:'geschlossen',buyNote:'Zum Kauf: Abwicklung über den atomaren Swap-Pfad. Kommt im nächsten Update — Angebote sind jetzt live und überprüfbar.'},
-zh:{title:'直接市场',book:'挂单',sell:'出售',mine:'我的',mkt:'市场价（实时）',mn:'最低允许价（-1%）',floor:'最低价（市场价-1%）',amt:'GBX 数量',price:'价格（USDC/GBX）',chain:'USDC 链',addr:'你的 USDC 地址',pub:'发布挂单',cancel:'取消挂单',locked:'请先解锁钱包',reading:'正在读取链…',working:'正在签名并发布…',sent:'已发布。交易：',failed:'未发布：',cancelSent:'已取消。交易：',empty:'暂无挂单。你的可以是第一个。',mineEmpty:'你还没有挂单。',badAmt:'请输入大于零的数量。',badPrice:'请输入大于零的价格。',underFloor:'低于最低价。挂单不能比市场价低超过1%。',badAddr:'地址与所选链不匹配。',noPrice:'市场价格暂不可用——为保护你，发布已暂停。',open:'进行中',spent:'已关闭',buyNote:'购买：结算走原子交换路径。下个更新推出——挂单现已上线且可验证。'},
-ar:{title:'السوق المباشر',book:'العروض',sell:'بيع',mine:'عروضي',mkt:'سعر السوق (مباشر)',mn:'الحد الأدنى المسموح (-1%)',floor:'الحد الأدنى للسعر (السوق -1%)',amt:'كمية GBX',price:'السعر (USDC لكل GBX)',chain:'شبكة USDC',addr:'عنوان USDC الخاص بك',pub:'نشر العرض',cancel:'إلغاء العرض',locked:'افتح قفل محفظتك أولاً',reading:'جارٍ قراءة السلسلة…',working:'جارٍ التوقيع والنشر…',sent:'تم النشر. المعاملة:',failed:'لم يُنشر:',cancelSent:'أُلغي. المعاملة:',empty:'لا توجد عروض مفتوحة بعد. يمكن أن يكون عرضك الأول.',mineEmpty:'ليس لديك عروض بعد.',badAmt:'أدخل كمية أكبر من صفر.',badPrice:'أدخل سعراً أكبر من صفر.',underFloor:'أقل من الحد الأدنى. لا يمكن للعروض النزول عن السوق بأكثر من 1%.',badAddr:'العنوان لا يطابق الشبكة المختارة.',noPrice:'سعر السوق غير متاح الآن — النشر متوقف لحمايتك.',open:'مفتوح',spent:'مغلق',buyNote:'للشراء: التسوية عبر مسار المبادلة الذرية. يصل في التحديث القادم — العروض حية وقابلة للتحقق الآن.'}};
+en:{title:'Direct Market',book:'BOOK',sell:'SELL',mine:'MINE',mkt:'Market price (live)',mn:'Minimum allowed (-1%)',floor:'Minimum price (market -1%)',amt:'GBX amount',price:'Price (USDC per GBX)',chain:'USDC chain',addr:'Your USDC address',pub:'Publish offer',cancel:'Cancel offer',locked:'Unlock your wallet first',reading:'Reading the chain…',working:'Signing and publishing…',sent:'Published. Tx:',failed:'Not published:',cancelSent:'Cancelled. Tx:',empty:'No open offers yet. Yours can be the first.',mineEmpty:'You have no offers yet.',badAmt:'Enter an amount above zero.',badPrice:'Enter a price above zero.',underFloor:'Below the minimum price. Offers cannot undercut the market by more than 1%.',badAddr:'That address does not match the selected chain.',noPrice:'Market price unavailable right now — publishing is paused to protect you.',open:'open',spent:'closed',buy:'Buy',buyEvm:'Buy with USDC',buyWait:'Solana direct buy arrives in the next update — Base and Arbitrum work now.',noEvm:'Unlock your wallet to buy.',locking:'Locking USDC on chain…',lockOk:'USDC locked. The seller now moves the GBX into the atomic lock.',inExec:'IN EXECUTION',execBtn:'Release GBX (atomic)',execing:'Building the atomic lock…',execOk:'GBX locked atomically. Tx:',claimGbx:'Claim your GBX',claimUsdc:'Claim your USDC',claiming:'Claiming…',claimOk:'Done. Tx:',refundBtn:'Refund my USDC',lockSeen:'USDC locked by a buyer:',verifyFail:'That lock does not match this offer:',gasNote:'You pay the network fee on the USDC chain yourself — no provider is involved.',eBusy:'The chain is still settling the previous step. Try again in a few seconds.',eDone:'This step is already done on chain — nothing more to send.',eSize:'Too many small pieces in this wallet for one transaction.',eFunds:'Not enough funds for this step, including the network fee.',eNet:'The network did not answer. Nothing was sent; try again.',eGen:'That did not go through. Nothing was sent.',taken:'Someone has already reserved this offer. Your money stays where it is.',notMine:'That USDC address is not this wallet. Publishing is stopped so the money cannot go elsewhere.',eNode:'No node answered right now. Nothing was sent; try again.',eNoRec:'The secret for this purchase is not on this device. Open the market on the device you bought from.',eNoPre:'The buyer has not taken the GBX yet, so the secret is not public. Try again once they do.',eNoLock:'This lock is no longer on chain — it has already been settled.',eScript:'This lock does not belong to this wallet. Nothing was signed.',waitSeller:'Waiting for the seller',canRefund:'Timed out — take your money back',refundIn:'Refundable in',cancelWarn:'A buyer has already locked the payment for this offer. If you cancel, their money stays locked until it times out. Cancel anyway?',working2:'Working…',eTxFail:'The chain rejected that step — nothing changed and no funds moved. The gas for the attempt is spent.',buyNote:'Buying settles atomically on Base and Arbitrum. Solana arrives in the next update.'},
+ro:{title:'Piața directă',book:'OFERTE',sell:'VINDE',mine:'ALE MELE',mkt:'Preț de piață (live)',mn:'Minim permis (-1%)',floor:'Preț minim (piață -1%)',amt:'Sumă GBX',price:'Preț (USDC per GBX)',chain:'Lanț USDC',addr:'Adresa ta USDC',pub:'Publică oferta',cancel:'Anulează oferta',locked:'Deblochează portofelul întâi',reading:'Citesc lanțul…',working:'Semnez și public…',sent:'Publicat. Tx:',failed:'Nepublicat:',cancelSent:'Anulat. Tx:',empty:'Nicio ofertă deschisă încă. A ta poate fi prima.',mineEmpty:'Nu ai oferte încă.',badAmt:'Introdu o sumă peste zero.',badPrice:'Introdu un preț peste zero.',underFloor:'Sub prețul minim. Ofertele nu pot coborî sub piață cu mai mult de 1%.',badAddr:'Adresa nu corespunde lanțului ales.',noPrice:'Prețul pieței e indisponibil — publicarea e oprită pentru protecția ta.',open:'deschisă',spent:'închisă',buy:'Cumpără',buyEvm:'Cumpără cu USDC',buyWait:'Cumpărarea directă pe Solana vine în update-ul următor — Base și Arbitrum merg acum.',noEvm:'Deblochează portofelul ca să cumperi.',locking:'Blochez USDC pe lanț…',lockOk:'USDC blocat. Vânzătorul mută acum GBX în lock-ul atomic.',inExec:'ÎN EXECUȚIE',execBtn:'Eliberează GBX (atomic)',execing:'Construiesc lock-ul atomic…',execOk:'GBX blocat atomic. Tx:',claimGbx:'Revendică GBX',claimUsdc:'Revendică USDC',claiming:'Revendic…',claimOk:'Gata. Tx:',refundBtn:'Recuperează USDC',lockSeen:'USDC blocat de un cumpărător:',verifyFail:'Lock-ul nu corespunde acestei oferte:',gasNote:'Plătești singur taxa de rețea pe lanțul USDC — niciun furnizor nu e implicat.',eBusy:'Lanțul încă decontează pasul anterior. Încearcă din nou în câteva secunde.',eDone:'Pasul acesta e deja făcut pe lanț — nu mai e nimic de trimis.',eSize:'Prea multe bucăți mici în portofel pentru o singură tranzacție.',eFunds:'Fonduri insuficiente pentru acest pas, inclusiv taxa de rețea.',eNet:'Rețeaua nu a răspuns. Nu s-a trimis nimic; încearcă din nou.',eGen:'Nu a mers. Nu s-a trimis nimic.',taken:'Oferta e deja rezervată de cineva. Banii tăi rămân unde sunt.',notMine:'Adresa USDC nu e a acestui portofel. Publicarea e oprită ca banii să nu ajungă altundeva.',eNode:'Niciun nod nu a răspuns acum. Nu s-a trimis nimic; încearcă din nou.',eNoRec:'Secretul acestei cumpărări nu e pe acest dispozitiv. Deschide piața pe dispozitivul de pe care ai cumpărat.',eNoPre:'Cumpărătorul încă nu a luat GBX, deci secretul nu e public. Încearcă după ce o face.',eNoLock:'Lock-ul nu mai e pe lanț — a fost deja decontat.',eScript:'Lock-ul nu aparține acestui portofel. Nu s-a semnat nimic.',waitSeller:'Aștept vânzătorul',canRefund:'Expirat — îți poți lua banii înapoi',refundIn:'Recuperabil în',cancelWarn:'Un cumpărător a blocat deja plata pentru această ofertă. Dacă anulezi, banii lui rămân blocați până la expirare. Anulezi oricum?',working2:'Lucrez…',eTxFail:'Lanțul a respins pasul — nimic nu s-a schimbat și niciun ban nu s-a mișcat. Taxa încercării e consumată.',buyNote:'Cumpărarea se decontează atomic pe Base și Arbitrum. Solana vine în update-ul următor.'},
+de:{title:'Direktmarkt',book:'ANGEBOTE',sell:'VERKAUFEN',mine:'MEINE',mkt:'Marktpreis (live)',mn:'Minimum erlaubt (-1%)',floor:'Mindestpreis (Markt -1%)',amt:'GBX-Betrag',price:'Preis (USDC pro GBX)',chain:'USDC-Chain',addr:'Deine USDC-Adresse',pub:'Angebot veröffentlichen',cancel:'Angebot stornieren',locked:'Entsperre zuerst deine Wallet',reading:'Lese die Chain…',working:'Signiere und veröffentliche…',sent:'Veröffentlicht. Tx:',failed:'Nicht veröffentlicht:',cancelSent:'Storniert. Tx:',empty:'Noch keine offenen Angebote. Deins kann das erste sein.',mineEmpty:'Du hast noch keine Angebote.',badAmt:'Gib einen Betrag über null ein.',badPrice:'Gib einen Preis über null ein.',underFloor:'Unter dem Mindestpreis. Angebote dürfen den Markt um höchstens 1% unterbieten.',badAddr:'Die Adresse passt nicht zur gewählten Chain.',noPrice:'Marktpreis derzeit nicht verfügbar — Veröffentlichung pausiert zu deinem Schutz.',open:'offen',spent:'geschlossen',buy:'Kaufen',buyEvm:'Mit USDC kaufen',buyWait:'Direktkauf auf Solana kommt im nächsten Update — Base und Arbitrum funktionieren jetzt.',noEvm:'Entsperre deine Wallet zum Kaufen.',locking:'USDC wird on-chain gesperrt…',lockOk:'USDC gesperrt. Der Verkäufer legt die GBX nun in den atomaren Lock.',inExec:'IN AUSFÜHRUNG',execBtn:'GBX freigeben (atomar)',execing:'Atomarer Lock wird gebaut…',execOk:'GBX atomar gesperrt. Tx:',claimGbx:'GBX abholen',claimUsdc:'USDC abholen',claiming:'Wird abgeholt…',claimOk:'Fertig. Tx:',refundBtn:'USDC zurückholen',lockSeen:'USDC von einem Käufer gesperrt:',verifyFail:'Dieser Lock passt nicht zu diesem Angebot:',gasNote:'Du zahlst die Netzgebühr auf der USDC-Chain selbst — kein Anbieter ist beteiligt.',eBusy:'Die Chain wickelt den vorherigen Schritt noch ab. Versuche es in ein paar Sekunden erneut.',eDone:'Dieser Schritt ist on-chain bereits erledigt — es gibt nichts mehr zu senden.',eSize:'Zu viele kleine Teile in dieser Wallet für eine Transaktion.',eFunds:'Nicht genug Guthaben für diesen Schritt, inklusive Netzgebühr.',eNet:'Das Netzwerk hat nicht geantwortet. Es wurde nichts gesendet; versuche es erneut.',eGen:'Das hat nicht geklappt. Es wurde nichts gesendet.',taken:'Dieses Angebot ist bereits reserviert. Dein Geld bleibt, wo es ist.',notMine:'Diese USDC-Adresse gehört nicht zu dieser Wallet. Die Veröffentlichung wird gestoppt, damit das Geld nicht woanders landet.',eNode:'Kein Knoten hat gerade geantwortet. Es wurde nichts gesendet; versuche es erneut.',eNoRec:'Das Geheimnis dieses Kaufs liegt nicht auf diesem Gerät. Öffne den Markt auf dem Gerät, mit dem du gekauft hast.',eNoPre:'Der Käufer hat die GBX noch nicht abgeholt, das Geheimnis ist also noch nicht öffentlich. Versuche es danach erneut.',eNoLock:'Dieser Lock ist nicht mehr on-chain — er wurde bereits abgewickelt.',eScript:'Dieser Lock gehört nicht zu dieser Wallet. Es wurde nichts signiert.',waitSeller:'Warte auf den Verkäufer',canRefund:'Abgelaufen — hol dir dein Geld zurück',refundIn:'Rückholbar in',cancelWarn:'Ein Käufer hat die Zahlung für dieses Angebot bereits gesperrt. Wenn du stornierst, bleibt sein Geld bis zum Ablauf gesperrt. Trotzdem stornieren?',working2:'Arbeite…',eTxFail:'Die Chain hat diesen Schritt abgelehnt — nichts hat sich geändert, kein Geld wurde bewegt. Die Gebühr des Versuchs ist verbraucht.',buyNote:'Der Kauf wird auf Base und Arbitrum atomar abgewickelt. Solana folgt im nächsten Update.'},
+zh:{title:'直接市场',book:'挂单',sell:'出售',mine:'我的',mkt:'市场价（实时）',mn:'最低允许价（-1%）',floor:'最低价（市场价-1%）',amt:'GBX 数量',price:'价格（USDC/GBX）',chain:'USDC 链',addr:'你的 USDC 地址',pub:'发布挂单',cancel:'取消挂单',locked:'请先解锁钱包',reading:'正在读取链…',working:'正在签名并发布…',sent:'已发布。交易：',failed:'未发布：',cancelSent:'已取消。交易：',empty:'暂无挂单。你的可以是第一个。',mineEmpty:'你还没有挂单。',badAmt:'请输入大于零的数量。',badPrice:'请输入大于零的价格。',underFloor:'低于最低价。挂单不能比市场价低超过1%。',badAddr:'地址与所选链不匹配。',noPrice:'市场价格暂不可用——为保护你，发布已暂停。',open:'进行中',spent:'已关闭',buy:'购买',buyEvm:'用 USDC 购买',buyWait:'Solana 直接购买将在下个更新推出 — Base 和 Arbitrum 现已可用。',noEvm:'请解锁钱包后购买。',locking:'正在链上锁定 USDC…',lockOk:'USDC 已锁定。卖方正在将 GBX 放入原子锁。',inExec:'执行中',execBtn:'释放 GBX（原子）',execing:'正在构建原子锁…',execOk:'GBX 已原子锁定。交易：',claimGbx:'领取你的 GBX',claimUsdc:'领取你的 USDC',claiming:'领取中…',claimOk:'完成。交易：',refundBtn:'退回我的 USDC',lockSeen:'买方已锁定 USDC：',verifyFail:'该锁定与此挂单不匹配：',gasNote:'你自行支付 USDC 链上的网络费 — 不涉及任何服务方。',eBusy:'链上仍在结算上一步。请几秒后重试。',eDone:'该步骤已在链上完成——无需再发送。',eSize:'钱包中零散数量过多，无法放入一笔交易。',eFunds:'资金不足以完成此步骤（含网络费）。',eNet:'网络没有响应。未发送任何内容；请重试。',eGen:'未能完成。未发送任何内容。',taken:'该挂单已被他人预定。你的资金原封不动。',notMine:'该 USDC 地址不属于此钱包。已停止发布，以免资金流向他处。',eNode:'当前没有节点响应。未发送任何内容；请重试。',eNoRec:'本次购买的密钥不在此设备上。请在购买时使用的设备上打开市场。',eNoPre:'买方尚未取走 GBX，密钥还未公开。请稍后再试。',eNoLock:'该锁定已不在链上——已完成结算。',eScript:'该锁定不属于此钱包。未签署任何内容。',waitSeller:'等待卖方',canRefund:'已超时——可取回你的资金',refundIn:'可退回时间',cancelWarn:'已有买家为此挂单锁定了付款。如果取消，其资金将被锁定至超时。仍要取消吗？',working2:'处理中…',eTxFail:'链上拒绝了该步骤——没有任何改变，资金未移动。此次尝试的手续费已消耗。',buyNote:'购买在 Base 与 Arbitrum 上原子结算。Solana 将在下个更新推出。'},
+ar:{title:'السوق المباشر',book:'العروض',sell:'بيع',mine:'عروضي',mkt:'سعر السوق (مباشر)',mn:'الحد الأدنى المسموح (-1%)',floor:'الحد الأدنى للسعر (السوق -1%)',amt:'كمية GBX',price:'السعر (USDC لكل GBX)',chain:'شبكة USDC',addr:'عنوان USDC الخاص بك',pub:'نشر العرض',cancel:'إلغاء العرض',locked:'افتح قفل محفظتك أولاً',reading:'جارٍ قراءة السلسلة…',working:'جارٍ التوقيع والنشر…',sent:'تم النشر. المعاملة:',failed:'لم يُنشر:',cancelSent:'أُلغي. المعاملة:',empty:'لا توجد عروض مفتوحة بعد. يمكن أن يكون عرضك الأول.',mineEmpty:'ليس لديك عروض بعد.',badAmt:'أدخل كمية أكبر من صفر.',badPrice:'أدخل سعراً أكبر من صفر.',underFloor:'أقل من الحد الأدنى. لا يمكن للعروض النزول عن السوق بأكثر من 1%.',badAddr:'العنوان لا يطابق الشبكة المختارة.',noPrice:'سعر السوق غير متاح الآن — النشر متوقف لحمايتك.',open:'مفتوح',spent:'مغلق',buy:'شراء',buyEvm:'اشترِ بـ USDC',buyWait:'الشراء المباشر على Solana يصل في التحديث القادم — Base و Arbitrum تعملان الآن.',noEvm:'افتح قفل محفظتك للشراء.',locking:'جارٍ قفل USDC على السلسلة…',lockOk:'تم قفل USDC. البائع ينقل GBX الآن إلى القفل الذري.',inExec:'قيد التنفيذ',execBtn:'حرِّر GBX (ذري)',execing:'جارٍ بناء القفل الذري…',execOk:'تم قفل GBX ذرياً. المعاملة:',claimGbx:'استلم GBX',claimUsdc:'استلم USDC',claiming:'جارٍ الاستلام…',claimOk:'تم. المعاملة:',refundBtn:'استرجع USDC',lockSeen:'قفل USDC من مشترٍ:',verifyFail:'هذا القفل لا يطابق هذا العرض:',gasNote:'تدفع رسوم الشبكة على سلسلة USDC بنفسك — لا يوجد أي مزود.',eBusy:'السلسلة ما زالت تُنهي الخطوة السابقة. حاول بعد ثوانٍ.',eDone:'هذه الخطوة تمت بالفعل على السلسلة — لا شيء آخر لإرساله.',eSize:'قطع صغيرة كثيرة جداً في المحفظة لمعاملة واحدة.',eFunds:'الرصيد غير كافٍ لهذه الخطوة، بما في ذلك رسوم الشبكة.',eNet:'الشبكة لم تستجب. لم يُرسل شيء؛ حاول مجدداً.',eGen:'لم تنجح العملية. لم يُرسل شيء.',taken:'هذا العرض محجوز بالفعل. أموالك تبقى كما هي.',notMine:'عنوان USDC هذا ليس لهذه المحفظة. تم إيقاف النشر حتى لا تذهب الأموال إلى مكان آخر.',eNode:'لم يستجب أي عقدة الآن. لم يُرسل شيء؛ حاول مجدداً.',eNoRec:'سر هذا الشراء ليس على هذا الجهاز. افتح السوق على الجهاز الذي اشتريت منه.',eNoPre:'المشتري لم يأخذ GBX بعد، لذا السر ليس علنياً. حاول بعد ذلك.',eNoLock:'هذا القفل لم يعد على السلسلة — تمت تسويته بالفعل.',eScript:'هذا القفل لا يخص هذه المحفظة. لم يتم توقيع أي شيء.',waitSeller:'في انتظار البائع',canRefund:'انتهت المهلة — استرجع أموالك',refundIn:'قابل للاسترجاع خلال',cancelWarn:'قام مشترٍ بقفل الدفع لهذا العرض. إذا ألغيت، تبقى أمواله مقفلة حتى انتهاء المهلة. هل تلغي رغم ذلك؟',working2:'جارٍ التنفيذ…',eTxFail:'رفضت السلسلة هذه الخطوة — لم يتغير شيء ولم تتحرك أي أموال. رسوم المحاولة قد صُرفت.',buyNote:'الشراء يُسوَّى ذرياً على Base و Arbitrum. Solana في التحديث القادم.'}};
 const tt=k=>(T[L]&&T[L][k])||T.en[k]||k;
 if(L==='ar')document.body.dir='rtl';
 const $=i=>document.getElementById(i);
 $('tTitle').textContent=tt('title');$('tabBook').textContent=tt('book');$('tabSell').textContent=tt('sell');$('tabMine').textContent=tt('mine');
 $('lFloor').textContent=tt('floor');$('lMkt').textContent=tt('mkt');$('lMin').textContent=tt('mn');$('lAmt').textContent=tt('amt');$('lPrice').textContent=tt('price');$('lChain').textContent=tt('chain');$('lAddr').textContent=tt('addr');$('goSell').textContent=tt('pub');
-function say(el,kind,txt){const m=$(el);m.className='msg '+kind;m.textContent=txt;m.style.display='block';}
-function hideM(el){$(el).style.display='none';}
+// Node and RPC errors are for the console, not for a person: the screen says
+// what happened in plain words, the raw text stays available for diagnosis.
+function humanMsg(t){
+  const raw=String(t==null?'':t); const low=raw.toLowerCase();
+  const M={E_TXFAIL:'eTxFail',E_NONODE:'eNode',E_MODULE:'eNet',E_ADDR:'badAddr',E_AMOUNT:'badAmt',E_TIP:'eNet',
+           E_NOREC:'eNoRec',E_NOPRE:'eNoPre',E_NOLOCK:'eNoLock',E_SCRIPT:'eScript'};
+  for(const k in M) if(raw.indexOf(k)>=0) return tt(M[k]);
+  if(low.indexOf('missingorspent')>=0||low.indexOf('-25')>=0) return tt('eBusy');
+  if(low.indexOf('insufficient fee')>=0||low.indexOf('replacement')>=0||low.indexOf('-26')>=0) return tt('eDone');
+  if(low.indexOf('tx-size')>=0||low.indexOf('too big')>=0) return tt('eSize');
+  if(low.indexOf('insufficient funds')>=0||low.indexOf('exceeds balance')>=0) return tt('eFunds');
+  if(low.indexOf('fetch')>=0||low.indexOf('network')>=0||low.indexOf('rpc')>=0||low.indexOf('timeout')>=0) return tt('eNet');
+  if(low.length>90) return tt('eGen');
+  return raw;
+}
+// One press, one transaction. A button that is working says so and refuses to
+// start a second copy of the same job - three taps must never mean three locks.
+// A broadcast hash is not a result. Until the receipt says 0x1 the transaction
+// may have reverted, and telling a person "done" over a failed claim is how they
+// end up paying gas again and again for nothing.
+function okTx(r){
+  if(!r) throw new Error('E_TXFAIL');
+  const st=(r.receipt&&r.receipt.status)!=null?r.receipt.status:null;
+  if(st!=null && String(st)!=='0x1' && String(st)!=='1') throw new Error('E_TXFAIL');
+  return r.hash;
+}
+function guard(fn){
+  return async function(ev){
+    const b=ev&&ev.target; 
+    if(b&&b.disabled) return;
+    _actBtn = (b && b.tagName==='BUTTON') ? b : null;
+    clearLocalMsgs();
+    let label=null;
+    if(b){ label=b.textContent; b.disabled=true; b.textContent=tt('working2'); }
+    try{ await fn.call(this,ev); }
+    finally{ if(b){ b.disabled=false; if(label!=null) b.textContent=label; } }
+  };
+}
+// The answer belongs next to the question: whatever a person just pressed is
+// where the result appears. Messages with no button behind them (publishing,
+// startup) still use the page-level box.
+let _actBtn=null;
+function localMsgFor(btn){
+  let m=btn.nextElementSibling;
+  if(!m || !m.classList || !m.classList.contains('msgLocal')){
+    m=document.createElement('div'); m.className='msg msgLocal';
+    btn.insertAdjacentElement('afterend', m);
+  }
+  return m;
+}
+function clearLocalMsgs(){ try{ document.querySelectorAll('.msgLocal').forEach(x=>{x.style.display='none';}); }catch(_e){} }
+function say(el,kind,txt){
+  const local=(el==='msg' && _actBtn && document.body.contains(_actBtn));
+  const m=local ? localMsgFor(_actBtn) : $(el);
+  m.className=(local?'msg msgLocal ':'msg ')+kind;
+  if(kind==='err'){ try{console.log('[gbx:offers]',txt);}catch(_e){} m.textContent=humanMsg(txt); }
+  else m.textContent=txt;
+  m.style.display='block';
+  try{ setTimeout(()=>m.scrollIntoView({behavior:'smooth',block:'nearest'}),50); }catch(_e){}
+}
+function hideM(el){ try{$(el).style.display='none';}catch(_e){} }
 async function ready(){for(let i=0;i<40&&!window.GBXRead;i++)await new Promise(r=>setTimeout(r,100));if(window.GBXReady)try{await window.GBXReady;}catch(e){}}
 async function crypto_(){for(let i=0;i<40&&!(window.GoldbrixCrypto&&window.GoldbrixCrypto.deriveKeypairFromMnemonic);i++)await new Promise(r=>setTimeout(r,100));return !!(window.GoldbrixCrypto&&window.GoldbrixCrypto.deriveKeypairFromMnemonic);}
 async function publish(rawtx){
   const nodes=(window.GBX_NODES||[]).slice();
-  if(!nodes.length)throw new Error('no node');
+  if(!nodes.length)throw new Error('E_NONODE');
   let reason=null;
   for(const n of nodes){
     let r,body;
@@ -101,6 +162,13 @@ async function publish(rawtx){
   throw new Error(reason||'no node accepted it');
 }
 let wallet=null,keys=null,pkHex='',secp=null,spkU=null,lastUsd=null,floorMicro=null;
+// Immutable, publicly verifiable contracts. Read from /api/htlc-registry when the
+// federation serves it; these are the fallback so a buy never depends on one node.
+const CH={B:{name:'Base',chainId:8453,usdc:'0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',htlc:'0x8e351c32dfb27aa22334a20dcf7262f54f78e0c0',rpcs:['https://mainnet.base.org','https://base-rpc.publicnode.com','https://base.drpc.org']},
+          A:{name:'Arbitrum',chainId:42161,usdc:'0xaf88d065e77c8cC2239327C5EDb3A432268e5831',htlc:'0xa43813d90adb98a5c400113ce2cc29d43d4ab867',rpcs:['https://arb1.arbitrum.io/rpc','https://arbitrum-one-rpc.publicnode.com','https://arbitrum.drpc.org']},
+          S:{name:'Solana',program:'AAbKiRpmY5jYfC37DuQ9aTsWnNqxZXLe4fvyGSb3YS1F',usdc:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'}};
+const T_USDC_SEC=86400;      // the buyer's USDC lock: 24h
+const T_MARGIN_SEC=43200;    // the seller refuses anything closer than 12h
 let myAddr={B:'',A:'',S:''};
 const hex=b=>Array.from(b,x=>x.toString(16).padStart(2,'0')).join('');
 async function boot(){
@@ -115,9 +183,10 @@ async function boot(){
     const h=hm.ripemd160(hm.sha256(new Uint8Array(keys.publicKey)));
     spkU=new Uint8Array(22);spkU[1]=0x14;spkU.set(h,2);
     loadMine();
+    renderBuyPend();
     try{
       for(let i=0;i<60&&!(window.GoldbrixMultichain&&window.GoldbrixMultichain.deriveEVM);i++)await new Promise(r=>setTimeout(r,200));
-      if(!(window.GoldbrixMultichain&&window.GoldbrixMultichain.deriveEVM))throw new Error('multichain module not loaded');
+      if(!(window.GoldbrixMultichain&&window.GoldbrixMultichain.deriveEVM))throw new Error('E_MODULE');
       const evm=await window.GoldbrixMultichain.deriveEVM(wallet.mnemonic);
       const sol=await window.GoldbrixMultichain.deriveSOL(wallet.mnemonic);
       myAddr.B=evm.address; myAddr.A=evm.address; myAddr.S=sol.address;
@@ -142,10 +211,12 @@ function offerCard(o,mine){
   const usd=(Number(o.price_micro)/1e6).toFixed(4);
   const ch=o.chain==='B'?'Base':(o.chain==='A'?'Arbitrum':'Solana');
   const st=o.spent?tt('spent'):tt('open');
-  return '<div class="card'+(mine?' mine':'')+'" data-tx="'+o.txid+'" data-nonce="'+o.nonce+'" data-spk="'+o.spk+'" data-vout="'+o.vout+'" data-val="'+o.value_sat+'">'
+  return '<div class="card'+(mine?' mine':'')+'" data-tx="'+o.txid+'" data-nonce="'+o.nonce+'" data-spk="'+o.spk+'" data-vout="'+o.vout+'" data-val="'+o.value_sat+'" data-chain="'+o.chain+'" data-addr="'+o.usdc_addr+'" data-price="'+o.price_micro+'">'
    +'<div class="row"><span class="val amt">'+gbx+' GBX</span><span class="val price">$'+usd+'</span></div>'
    +'<div class="row"><span class="lab chain'+o.chain+'">'+ch+'</span><span class="lab">'+(mine?st:'')+'</span></div>'
    +(mine&&!o.spent?'<button class="btn red btnCancel">'+tt('cancel')+'</button>':'')
+   +(mine&&o.executed?'<div class="lab" style="margin-top:6px">'+tt('inExec')+'</div><button class="btn btnClaimU" data-hl="'+o.exec_hashlock+'" data-chain="'+o.chain+'" data-addr="'+o.usdc_addr+'" data-ex="'+(o.exec_txid||'')+'" style="display:none">'+tt('claimUsdc')+'</button>':'')
+   +(!mine&&!o.spent?'<button class="btn btnBuy" data-chain="'+o.chain+'" data-addr="'+o.usdc_addr+'" data-price="'+o.price_micro+'" data-seller="'+o.seller_pk+'">'+tt('buy')+'</button>':'')
    +'</div>';
 }
 async function loadBook(){
@@ -157,8 +228,20 @@ async function loadBook(){
     const list=(j&&j.offers)||[];
     const el=$('bookList');
     const html=list.length?list.map(o=>offerCard(o,false)).join('')+'<div class="empty">'+tt('buyNote')+'</div>':'<div class="empty">'+tt('empty')+'</div>';
-    if(el.dataset.h!==html){el.innerHTML=html;el.dataset.h=html;}
+    if(el.dataset.h!==html){el.innerHTML=html;el.dataset.h=html;el.querySelectorAll('.btnBuy').forEach(b=>b.addEventListener('click',guard(onBuy)));}
   }catch(e){}
+}
+// After an action the page must not trust its own last render: the visible cards
+// carry buttons whose right to exist was decided by the chain a moment ago.
+// Dropping the fingerprint forces a fresh read and a fresh judgement.
+async function refreshVisibleButtons(){
+  try{ document.querySelectorAll('.btnClaimU').forEach(b=>showIfClaimable(b)); }catch(_e){}
+}
+async function refreshAll(){
+  try{ await loadBook(); }catch(_e){}
+  try{ await loadMine(); }catch(_e){}
+  try{ await renderBuyPend(); }catch(_e){}
+  try{ await refreshVisibleButtons(); }catch(_e){}
 }
 async function loadMine(){
   if(!pkHex)return;
@@ -168,7 +251,10 @@ async function loadMine(){
     const el=$('mineList');
     const html=list.length?list.map(o=>offerCard(o,true)).join(''):'<div class="empty">'+tt('mineEmpty')+'</div>';
     if(el.dataset.h!==html){el.innerHTML=html;el.dataset.h=html;
-      el.querySelectorAll('.btnCancel').forEach(b=>b.addEventListener('click',onCancel));}
+      el.querySelectorAll('.btnCancel').forEach(b=>b.addEventListener('click',guard(onCancel)));
+      el.querySelectorAll('.btnExec').forEach(b=>b.addEventListener('click',guard(onExec)));
+      el.querySelectorAll('.btnClaimU').forEach(b=>{ b.addEventListener('click',guard(onClaimUsdc)); showIfClaimable(b); });}
+      scanIncoming(list);
   }catch(e){}
 }
 function validAddr(chain,a){
@@ -183,10 +269,10 @@ function addrBytes(chain,a){
   let b=[];while(n>0n){b.unshift(Number(n&255n));n>>=8n;}
   for(const c of a.trim()){if(c==='1')b.unshift(0);else break;}
   const u=new Uint8Array(b);
-  if(u.length!==32)throw new Error('sol addr len');
+  if(u.length!==32)throw new Error('E_ADDR');
   return u;
 }
-$('goSell').addEventListener('click',async()=>{
+$('goSell').addEventListener('click',guard(async(ev)=>{
   hideM('msgS');
   if(!wallet||!wallet.mnemonic||!keys){say('msgS','err',tt('locked'));setTimeout(()=>{location.href='/v3/unlock.html?next='+encodeURIComponent('/v3/offers.html');},1200);return;}
   const amtF=parseFloat(($('inAmt').value||'0').replace(',','.'));
@@ -195,6 +281,7 @@ $('goSell').addEventListener('click',async()=>{
   if(!(amtF>0)){say('msgS','err',tt('badAmt'));return;}
   if(!(priceF>0)){say('msgS','err',tt('badPrice'));return;}
   if(!validAddr(chain,addr)){say('msgS','err',tt('badAddr'));return;}
+  if(myAddr[chain] && addr.trim().toLowerCase()!==String(myAddr[chain]).toLowerCase()){ say('msgS','err',tt('notMine')); return; }
   await marketFloor();
   if(floorMicro==null){say('msgS','err',tt('noPrice'));return;}
   const priceMicro=Math.round(priceF*1e6);
@@ -212,15 +299,28 @@ $('goSell').addEventListener('click',async()=>{
     const txid=await publish(C.hex(bytes));
     say('msgS','ok',tt('sent')+' '+txid);
     $('inAmt').value='';$('inPrice').value='';
-    setTimeout(()=>{loadBook();loadMine();},6000);
+    refreshAll(); setTimeout(refreshAll,6000); setTimeout(refreshAll,20000);
   }catch(e){say('msgS','err',tt('failed')+' '+(e&&e.message||e));}
   $('goSell').disabled=false;
-});
+}));
 async function onCancel(ev){
   const card=ev.target.closest('.card');
   hideM('msg');
   try{
     say('msg','info',tt('reading'));
+    // Cancelling is always the seller's right, but not a silent one: if a buyer
+    // already locked the payment, they must be told the money will sit until it
+    // times out. An honest warning, then the seller decides.
+    try{
+      const ch=card.dataset.chain, ad=card.dataset.addr;
+      if(ch && ad && CH[ch] && CH[ch].htlc){
+        const OE=await import('/gbx-offer-exec.mjs');
+        const seen=await OE.evmFindLocksForReceiver({rpc:evmRpcFor(CH[ch]),htlcAddr:CH[ch].htlc,receiverHex20:ad,scanBack:60000,win:9000});
+        const now0=Math.floor(Date.now()/1000);
+        const live=seen.find(L=>OE.checkLockAgainstOffer({offer:{value_sat:card.dataset.val,price_micro:card.dataset.price||'0'},lock:L,nowSec:now0,minMarginSec:0}).ok);
+        if(live && !confirm(tt('cancelWarn'))) { hideM('msg'); return; }
+      }
+    }catch(_e){}
     const u=await window.GBXRead.json('/api/utxos/'+wallet.address+'?limit=1000',{timeout:45000});
     const utxos=(u.unspents||[]).filter(x=>x.spendable!==false).map(x=>({txid:x.txid,vout:x.vout,value8:Math.round(x.amount*1e8)})).sort((a,b)=>b.value8-a.value8);
     say('msg','info',tt('working'));
@@ -232,8 +332,304 @@ async function onCancel(ev){
     const bytes=F.buildCurveTx(inputs,built.outs,new Uint8Array(keys.publicKey),sign);
     const txid=await publish(C.hex(bytes));
     say('msg','ok',tt('cancelSent')+' '+txid);
-    setTimeout(()=>{loadBook();loadMine();},6000);
-  }catch(e){say('msg','err',tt('failed')+' '+(e&&e.message||e));}
+    refreshAll(); setTimeout(refreshAll,6000); setTimeout(refreshAll,20000);
+  }catch(e){say('msg','err',(e&&e.message||e));}
+}
+// ---- BUY: the buyer locks USDC with H=SHA256(S) to the offer's own address.
+// Built and signed on this device against public RPCs: no gateway, no provider.
+// The buyer's GBX pubkey travels as 33 trailing calldata bytes (proven on chain).
+const _hex=b=>Array.from(b,x=>x.toString(16).padStart(2,'0')).join('');
+function evmRpcFor(c){ return async (m,p)=>{ let last;
+  for(const u of c.rpcs){ try{ const r=await fetch(u,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:m,params:p})}); const j=await r.json(); if(j.error) throw new Error(j.error.message||'rpc'); return j.result; }catch(e){ last=e; } }
+  throw last||new Error('no RPC answered'); }; }
+async function onBuy(ev){
+  const card=ev.target.closest('.card'); const chain=ev.target.dataset.chain;
+  hideM('msg');
+  if(!wallet||!wallet.mnemonic||!keys){ say('msg','err',tt('noEvm')); return; }
+  if(chain==='S'){ say('msg','info',tt('buyWait')); return; }
+  const c=CH[chain];
+  try{
+    const gbxSat=BigInt(card.dataset.val), priceMicro=BigInt(ev.target.dataset.price);
+    const need=(gbxSat*priceMicro)/100000000n;
+    if(need<=0n) throw new Error('E_AMOUNT');
+    say('msg','info',tt('reading'));
+    // One offer, one buyer: if this offer's address already holds a live lock,
+    // nobody's money goes in second. The chain is asked before anything is signed.
+    {
+      const OE=await import('/gbx-offer-exec.mjs');
+      const rpc0=evmRpcFor(c);
+      const seen=await OE.evmFindLocksForReceiver({rpc:rpc0,htlcAddr:c.htlc,receiverHex20:ev.target.dataset.addr,scanBack:60000,win:9000});
+      const now0=Math.floor(Date.now()/1000);
+      for(const L of seen){
+        const v=OE.checkLockAgainstOffer({offer:{value_sat:card.dataset.val,price_micro:ev.target.dataset.price},lock:L,usdcTokenExpected:c.usdc,nowSec:now0,minMarginSec:0});
+        if(!v.ok) continue;
+        // A lock only reserves the offer while it still holds money AND has not
+        // already been executed: old, settled trades to the same address must
+        // never block a new sale.
+        if(await OE.evmLockSettled({rpc:rpc0,htlcAddr:c.htlc,lockId:L.id,fromBlock:L.blockNumber})) continue;
+        let executed=false;
+        try{ const ex=await window.GBXRead.json('/api/htlc-by-hashlock/'+String(L.hashlock).replace(/^0x/,''));
+             executed=(((ex&&ex.locks)||[]).length>0); }catch(_e){}
+        if(executed) continue;
+        say('msg','err',tt('taken')); return;
+      }
+    }
+    say('msg','info',tt('locking'));
+    const ev0=await window.GoldbrixMultichain.deriveEVM(wallet.mnemonic);
+    const rpc=evmRpcFor(c);
+    const {makeEVMHTLC}=await import('/evm-htlc.mjs');
+    const {createEVM}=await import('/evm-tx-core.mjs');
+    const {secp256k1, keccak_256}=await import('/vendor/evm-secp.mjs');
+    const sign=(h,pv)=>{const sg=secp256k1.sign(h,pv,{lowS:true});const cc=sg.toCompactRawBytes();return {r:cc.slice(0,32),s:cc.slice(32,64),recovery:sg.recovery};};
+    const evm=createEVM({keccak256:keccak_256,sign,getPublicKey:pv=>secp256k1.getPublicKey(pv,false)});
+    const H=makeEVMHTLC({rpc,evm,chainId:c.chainId});
+    const S=crypto.getRandomValues(new Uint8Array(32));
+    const hl='0x'+_hex(new Uint8Array(await crypto.subtle.digest('SHA-256',S)));
+    const tl=Math.floor(Date.now()/1000)+T_USDC_SEC;
+    await H.approve(ev0.privateKey,c.usdc,c.htlc,need);
+    const data=evm.dataLock('0x'+ev.target.dataset.addr,c.usdc,need,hl,BigInt(tl))+pkHex;
+    const r=await H.send(ev0.privateKey,c.htlc,data); okTx(r);
+    try{ localStorage.setItem('gbx_offer_buy_'+hl,JSON.stringify({owner_pk:pkHex,hashlock:hl,secret:_hex(S),chain,offer_txid:card.dataset.tx,seller_pk:ev.target.dataset.seller,seller_addr:ev.target.dataset.addr,offer_vout:Number(card.dataset.vout),gbx_sat:String(gbxSat),usdc:String(need),timelock:tl,tx:r.hash,ts:Date.now()})); }catch(_e){}
+    say('msg','ok',tt('lockOk')+' '+r.hash);
+  }catch(e){ say('msg','err',(e&&e.message||e)); }
+}
+// ---- SELLER: an offer is "in execution" when a real USDC lock names this
+// offer's own address, carries a hashlock and enough time. Nothing is believed:
+// the lock is read from the chain and measured against the offer itself.
+const _inc={};   // hashlock -> {offer, lock, buyerPk}
+async function scanIncoming(mine){
+  const open=(mine||[]).filter(o=>!o.spent);
+  if(!open.length) return;
+  const OE=await import('/gbx-offer-exec.mjs');
+  const now=Math.floor(Date.now()/1000);
+  for(const o of open){
+    if(o.chain==='S') continue;              // Solana execution lands next update
+    const c=CH[o.chain]; if(!c) continue;
+    try{
+      const rpc=evmRpcFor(c);
+      const locks=await OE.evmFindLocksForReceiver({rpc,htlcAddr:c.htlc,receiverHex20:o.usdc_addr,scanBack:60000,win:9000});
+      for(const L of locks){
+        const v=OE.checkLockAgainstOffer({offer:o,lock:L,usdcTokenExpected:c.usdc,nowSec:now,minMarginSec:T_MARGIN_SEC});
+        if(!v.ok) continue;
+        const bpk=await OE.evmBuyerPkFromTx({rpc,txHash:L.txHash});
+        if(!bpk) continue;                    // no key carried = nothing to lock GBX to
+        if(await OE.evmLockSettled({rpc,htlcAddr:c.htlc,lockId:L.id,fromBlock:L.blockNumber})) continue;
+        // already executed for this hashlock? then there is nothing to release.
+        let done=false;
+        try{ const ex=await window.GBXRead.json('/api/htlc-by-hashlock/'+String(L.hashlock).replace(/^0x/,''));
+             done=(((ex&&ex.locks)||[]).length>0); }catch(_e){}
+        if(done) continue;
+        _inc[L.hashlock]={offer:o,lock:L,buyerPk:bpk,chain:o.chain};
+        const card=document.querySelector('.card.mine[data-tx="'+o.txid+'"]');
+        if(card && !card.querySelector('.btnExec')){
+          const d=document.createElement('div');
+          d.innerHTML='<div class="lab" style="margin-top:8px">'+tt('lockSeen')+' '+(Number(L.amount)/1e6).toFixed(4)+' USDC</div>'
+            +'<button class="btn btnExec" data-hl="'+L.hashlock+'">'+tt('execBtn')+'</button>';
+          card.appendChild(d);
+          d.querySelector('.btnExec').addEventListener('click',guard(onExec));
+        }
+        break;
+      }
+    }catch(_e){}
+  }
+}
+// The seller moves the GBX out of the offer lock into an HTLC bound to the same
+// hashlock: the buyer can only take it by revealing S, which pays the seller.
+async function onExec(ev){
+  const hl=ev.target.dataset.hl; const it=_inc[hl];
+  hideM('msg');
+  if(!it){ say('msg','err',tt('failed')+' lock'); return; }
+  try{
+    say('msg','info',tt('execing'));
+    const st=await window.GBXRead.json('/api/status');
+    const tip=Number((st&&(st.best_block_height||st.blocks||st.height))||0);
+    if(!(tip>0)) throw new Error('E_TIP');
+    const u=await window.GBXRead.json('/api/utxos/'+wallet.address+'?limit=1000',{timeout:45000});
+    const utxos=(u.unspents||[]).filter(x=>x.spendable!==false).map(x=>({txid:x.txid,vout:x.vout,value8:Math.round(x.amount*1e8)})).sort((a,b)=>b.value8-a.value8);
+    const o=it.offer;
+    const built=await F.buildOfferExecuteTx({offer:{nonceHex:o.nonce,spk:o.spk,txid:o.txid,vout:o.vout,value8:Number(o.value_sat)},
+      buyerPkHex:it.buyerPk,hashlockHex:hl,tipHeight:tip,utxos,pkU:new Uint8Array(keys.publicKey),p2wpkhSpkOf:()=>spkU});
+    const ws=C.unhex(built.offerWsHex);
+    const inputs=built.inputs.map((x,i)=>i===0?{...x,kind:'token',ws}:{...x,kind:'p2wpkh'});
+    const derSig=c=>{const tr=x=>{let i=0;while(i<31&&x[i]===0)i++;let v=x.subarray(i);if(v[0]&0x80)v=Uint8Array.of(0,...v);return v;};const r=tr(c.subarray(0,32)),s=tr(c.subarray(32,64));return Uint8Array.of(0x30,4+r.length+s.length,0x02,r.length,...r,0x02,s.length,...s);};
+    const sign=d=>derSig(secp.sign(d,new Uint8Array(keys.privateKey)));
+    const bytes=F.buildCurveTx(inputs,built.outs,new Uint8Array(keys.publicKey),sign);
+    const txid=await publish(C.hex(bytes));
+    try{ localStorage.setItem('gbx_offer_sell_'+hl,JSON.stringify({owner_pk:pkHex,hashlock:hl,chain:it.chain,lock_id:it.lock.id,gbx_txid:txid,htlcWsHex:built.htlcWsHex,t2:built.t2,ts:Date.now()})); }catch(_e){}
+    try{ const c0=document.querySelector('.card.mine[data-tx="'+it.offer.txid+'"]'); if(c0) c0.remove(); }catch(_e){}
+    say('msg','ok',tt('execOk')+' '+txid);
+    refreshAll(); setTimeout(refreshAll,6000); setTimeout(refreshAll,20000);
+  }catch(e){ say('msg','err',(e&&e.message||e)); }
+}
+// Once the buyer takes the GBX, S is public in the witness: the seller reads it
+// from the chain and claims the USDC. No server, no counterparty cooperation.
+// A button that cannot succeed is not offered: the USDC lock is read on its own
+// chain, and only a lock that still holds the money shows "claim".
+async function showIfClaimable(btn){
+  try{
+    const c=CH[btn.dataset.chain]; if(!c||!c.htlc) return;
+    const OE=await import('/gbx-offer-exec.mjs');
+    const rpc=evmRpcFor(c);
+    const hl='0x'+String(btn.dataset.hl||'').replace(/^0x/,'');
+    const locks=await OE.evmFindLocksForReceiver({rpc,htlcAddr:c.htlc,receiverHex20:btn.dataset.addr,scanBack:60000,win:9000});
+    const L=locks.find(x=>String(x.hashlock).toLowerCase()===hl.toLowerCase());
+    if(!L) return;
+    // Claim state comes from the contract's own event, the one public fact
+    // both sides can read without asking anyone.
+    const claimedSig='Claimed(bytes32,bytes)';
+    const {keccak_256}=await import('/vendor/evm-secp.mjs');
+    const ct='0x'+Array.from(keccak_256(new TextEncoder().encode(claimedSig))).map(x=>x.toString(16).padStart(2,'0')).join('');
+    const latest=parseInt(await rpc('eth_blockNumber',[]),16);
+    let claimed=false;
+    for(let hi=latest; hi>Math.max(0,latest-60000) && !claimed; hi-=9000){
+      const lo=Math.max(0,hi-8999);
+      let lg; try{ lg=await rpc('eth_getLogs',[{address:c.htlc,fromBlock:'0x'+lo.toString(16),toBlock:'0x'+hi.toString(16),topics:[ct,L.id]}]); }catch(_e){ continue; }
+      if(lg && lg.length) claimed=true;
+    }
+    btn.style.display = claimed ? 'none' : '';
+  }catch(_e){}
+}
+async function onClaimUsdc(ev){
+  const hl=ev.target.dataset.hl;
+  hideM('msg');
+  try{
+    say('msg','info',tt('claiming'));
+    // Nothing here comes from this device: the secret became public the moment the
+    // buyer took the GBX (it sits in the spending witness and every node indexes
+    // it), and the USDC lock is found on its own chain by this wallet's address.
+    // A seller can settle from any device, with only the wallet unlocked.
+    const hlHex=String(hl||'').replace(/^0x/,'');
+    const idx=await window.GBXRead.json('/api/htlc-by-hashlock/'+hlHex);
+    const row=((idx&&idx.locks)||[]).find(x=>x.preimage);
+    const S=row&&row.preimage;
+    if(!S) throw new Error('E_NOPRE');
+    const c=CH[ev.target.dataset.chain]; if(!c) throw new Error('E_NOLOCK');
+    const rpc=evmRpcFor(c);
+    const OE=await import('/gbx-offer-exec.mjs');
+    const locks=await OE.evmFindLocksForReceiver({rpc,htlcAddr:c.htlc,receiverHex20:ev.target.dataset.addr,scanBack:60000,win:9000});
+    // The same hashlock can appear on more than one lock (a retried purchase, an
+    // abandoned attempt). Only one of them still holds money: claiming any other
+    // reverts and costs the seller gas for nothing.
+    let L=null;
+    for(const x of locks){
+      if(String(x.hashlock).replace(/^0x/,'').toLowerCase()!==hlHex.toLowerCase()) continue;
+      if(await OE.evmLockSettled({rpc,htlcAddr:c.htlc,lockId:x.id,fromBlock:x.blockNumber})) continue;
+      L=x; break;
+    }
+    if(!L) throw new Error('E_NOLOCK');
+    const {makeEVMHTLC}=await import('/evm-htlc.mjs');
+    const {createEVM}=await import('/evm-tx-core.mjs');
+    const {secp256k1, keccak_256}=await import('/vendor/evm-secp.mjs');
+    const sign=(h,pv)=>{const sg=secp256k1.sign(h,pv,{lowS:true});const cc=sg.toCompactRawBytes();return {r:cc.slice(0,32),s:cc.slice(32,64),recovery:sg.recovery};};
+    const evm=createEVM({keccak256:keccak_256,sign,getPublicKey:pv=>secp256k1.getPublicKey(pv,false)});
+    const H=makeEVMHTLC({rpc,evm,chainId:c.chainId});
+    const ev0=await window.GoldbrixMultichain.deriveEVM(wallet.mnemonic);
+    const r=await H.claim(ev0.privateKey,c.htlc,L.id,'0x'+S); okTx(r);
+    say('msg','ok',tt('claimOk')+' '+r.hash);
+  }catch(e){ say('msg','err',(e&&e.message||e)); }
+}
+// ---- BUYER side: the GBX is in an HTLC only the preimage can open. The script
+// is rebuilt from H (this device), both pubkeys and the timelock, then proven
+// against the real p2wsh recorded on chain before anything is signed.
+async function renderBuyPend(){
+  const el=$('buyPend'); if(!el) return;
+  const keysLS=Object.keys(localStorage).filter(k=>k.indexOf('gbx_offer_buy_')===0);
+  let html='';
+  for(const k of keysLS){
+    let rec; try{ rec=JSON.parse(localStorage.getItem(k)); }catch(_e){ continue; }
+    if(!rec||rec.owner_pk!==pkHex) continue;
+    // the chain decides whether this still needs the user: a spent lock is done
+    try{
+      const st=await window.GBXRead.json('/api/htlc-by-hashlock/'+String(rec.hashlock).replace(/^0x/,''));
+      const ls=(st&&st.locks)||[];
+      if(ls.length && ls.every(x=>x.spent_height!=null)){ localStorage.removeItem(k); continue; }
+    }catch(_e){}
+    // Has the seller moved the GBX yet? The chain answers, and the card only
+    // offers what is actually possible right now. If the seller never executes
+    // (or cancels the offer), the money is not stuck: it comes back at timeout,
+    // and until then the buyer sees exactly how long that is.
+    let ready=false;
+    try{
+      const st=await window.GBXRead.json('/api/htlc-by-hashlock/'+String(rec.hashlock).replace(/^0x/,''));
+      ready=(((st&&st.locks)||[]).some(x=>x.spent_height==null));
+    }catch(_e){}
+    const left=Number(rec.timelock||0)-Math.floor(Date.now()/1000);
+    const hh=Math.floor(Math.max(0,left)/3600), mm=Math.floor((Math.max(0,left)%3600)/60);
+    const state = ready ? tt('inExec') : (left>0 ? tt('waitSeller') : tt('canRefund'));
+    html+='<div class="card" data-hl="'+rec.hashlock+'">'
+      +'<div class="row"><span class="val amt">'+(Number(rec.gbx_sat)/1e8).toFixed(4)+' GBX</span><span class="val price">'+(Number(rec.usdc)/1e6).toFixed(4)+' USDC</span></div>'
+      +'<div class="row"><span class="lab">'+CH[rec.chain].name+'</span><span class="lab">'+state+'</span></div>'
+      +(ready?'<button class="btn btnClaimG" data-hl="'+rec.hashlock+'">'+tt('claimGbx')+'</button>':'')
+      +(!ready&&left>0?'<div class="lab" style="margin-top:6px">'+tt('refundIn')+' '+hh+'h '+mm+'m</div>':'')
+      +(!ready&&left<=0?'<button class="btn red btnRefundU" data-hl="'+rec.hashlock+'" data-chain="'+rec.chain+'">'+tt('refundBtn')+'</button>':'')
+      +'</div>';
+  }
+  if(el.dataset.h!==html){ el.innerHTML=html; el.dataset.h=html;
+    el.querySelectorAll('.btnClaimG').forEach(b=>b.addEventListener('click',guard(onClaimGbx)));
+    el.querySelectorAll('.btnRefundU').forEach(b=>b.addEventListener('click',guard(onRefundUsdc))); }
+}
+// The buyer's way out, with nobody's permission: after the timeout the contract
+// returns the USDC to whoever locked it. No seller, no node, no server involved.
+async function onRefundUsdc(ev){
+  const hl=ev.target.dataset.hl;
+  hideM('msg');
+  try{
+    const rec=JSON.parse(localStorage.getItem('gbx_offer_buy_'+hl)||'null');
+    if(!rec) throw new Error('E_NOREC');
+    const c=CH[ev.target.dataset.chain]; if(!c||!c.htlc) throw new Error('E_NOLOCK');
+    say('msg','info',tt('claiming'));
+    const rpc=evmRpcFor(c);
+    const OE=await import('/gbx-offer-exec.mjs');
+    const ev0=await window.GoldbrixMultichain.deriveEVM(wallet.mnemonic);
+    const hlHex=String(hl).replace(/^0x/,'');
+    const locks=await OE.evmFindLocksForReceiver({rpc,htlcAddr:c.htlc,receiverHex20:rec.seller_addr||'',scanBack:60000,win:9000});
+    let L=locks.find(x=>String(x.hashlock).replace(/^0x/,'').toLowerCase()===hlHex.toLowerCase());
+    if(!L && rec.lock_id) L={id:rec.lock_id};
+    if(!L) throw new Error('E_NOLOCK');
+    const {makeEVMHTLC}=await import('/evm-htlc.mjs');
+    const {createEVM}=await import('/evm-tx-core.mjs');
+    const {secp256k1, keccak_256}=await import('/vendor/evm-secp.mjs');
+    const sign=(h,pv)=>{const sg=secp256k1.sign(h,pv,{lowS:true});const cc=sg.toCompactRawBytes();return {r:cc.slice(0,32),s:cc.slice(32,64),recovery:sg.recovery};};
+    const evm=createEVM({keccak256:keccak_256,sign,getPublicKey:pv=>secp256k1.getPublicKey(pv,false)});
+    const H=makeEVMHTLC({rpc,evm,chainId:c.chainId});
+    const r=await H.refund(ev0.privateKey,c.htlc,L.id); okTx(r);
+    try{ localStorage.removeItem('gbx_offer_buy_'+hl); }catch(_e){}
+    say('msg','ok',tt('claimOk')+' '+r.hash);
+    refreshAll(); setTimeout(refreshAll,6000); setTimeout(refreshAll,20000);
+  }catch(e){ say('msg','err',(e&&e.message||e)); }
+}
+async function onClaimGbx(ev){
+  const hl=ev.target.dataset.hl;
+  hideM('msg');
+  try{
+    const rec=JSON.parse(localStorage.getItem('gbx_offer_buy_'+hl)||'null');
+    if(!rec) throw new Error('E_NOREC');
+    say('msg','info',tt('claiming'));
+    const H=await import('/gbx-htlc.mjs');
+    const hlHex=String(hl).replace(/^0x/,'');
+    // the offer tells us the seller's key; the chain tells us which lock is ours
+    const idx=await window.GBXRead.json('/api/htlc-by-hashlock/'+hlHex);
+    const lock=((idx&&idx.locks)||[]).find(x=>x.spent_height==null);
+    if(!lock) throw new Error('E_NOLOCK');
+    const pkBuy=new Uint8Array(keys.publicKey), pkSell=C.unhex(lock.refund_pk);
+    const Hb=C.unhex(hlHex);
+    // T2 is deterministic (execution tip + 100000); the script is proven, never guessed
+    let script=null;
+    for(let t=Number(lock.height)+100000-40; t<=Number(lock.height)+100000+40; t++){
+      const cand=H.buildHtlcScript(Hb,pkBuy,pkSell,t);
+      if(H.hex(H.p2wshSpk(cand)).toLowerCase()===String(lock.spk).toLowerCase()){ script=cand; break; }
+    }
+    if(!script) throw new Error('E_SCRIPT');
+    const derSig=c=>{const tr=x=>{let i=0;while(i<31&&x[i]===0)i++;let v=x.subarray(i);if(v[0]&0x80)v=Uint8Array.of(0,...v);return v;};const r=tr(c.subarray(0,32)),s=tr(c.subarray(32,64));return Uint8Array.of(0x30,4+r.length+s.length,0x02,r.length,...r,0x02,s.length,...s);};
+    const val=Number(lock.value_sat);
+    const txhex=H.hex(H.buildClaimTx({prevTxid:lock.txid,vout:lock.vout,inValue8:val,htlcScript:script,
+      outScriptPubKey:spkU,outValue8:val-10000,nLockTime:0,preimage:C.unhex(rec.secret)},
+      d=>derSig(secp.sign(d,new Uint8Array(keys.privateKey)))));
+    const txid=await publish(txhex);
+    try{ localStorage.removeItem('gbx_offer_buy_'+hl); }catch(_e){}
+    say('msg','ok',tt('claimOk')+' '+txid);
+    refreshAll(); setTimeout(refreshAll,6000); setTimeout(refreshAll,20000);
+  }catch(e){ say('msg','err',(e&&e.message||e)); }
 }
 function showTab(which){
   $('vBook').style.display=which==='book'?'':'none';
@@ -254,6 +650,7 @@ $('tabBook').addEventListener('click',()=>{showTab('book');loadBook();});
 $('tabSell').addEventListener('click',()=>showTab('sell'));
 $('tabMine').addEventListener('click',()=>{showTab('mine');loadMine();});
 setInterval(()=>{if($('vBook').style.display!=='none')loadBook();},30000);
+setInterval(refreshAll,30000);
 setInterval(async()=>{if($('vSell').style.display!=='none'){await marketFloor();paintPrices();}},15000);
 $('tabSell').addEventListener('click',async()=>{await marketFloor();paintPrices();});
 boot();
