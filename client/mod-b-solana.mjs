@@ -44,9 +44,23 @@ export async function lockUsdcSolana(ctx){
 
 
 // ================= SELL GBX -> USDC pe Solana =================
-const SOL_RPCS=["https://solana-rpc.publicnode.com","https://solana.leorpc.com/?api_key=FREE","https://api.mainnet-beta.solana.com"];
-async function _solRpc(method,params){ let le=null;
-  for(const u of SOL_RPCS){ try{ const r=await fetch(u,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",id:1,method,params})}); const j=await r.json(); if(j.error){le=new Error(j.error.message);continue;} return j.result; }catch(e){le=e;} }
+/* Order matters for getProgramAccounts: some endpoints answer without the
+   account key, and one refuses the call outright. The endpoint that returns a
+   complete answer is asked first; the others stay as fallbacks. */
+/* Browser rules, not server rules: api.mainnet-beta answers 403 to any request
+   carrying an Origin, so it is useless here even though a node may use it.
+   These endpoints all answer a browser; a node keeps its own list. */
+const SOL_RPCS=["https://solana-rpc.publicnode.com","https://solana.leorpc.com/?api_key=FREE"];
+async function _solRpc(method,params,timeoutMs=12000){ let le=null;
+  /* A node that never answers must not hold a page forever: every attempt has its
+     own deadline, and the next endpoint gets the question. */
+  for(const u of SOL_RPCS){
+    const ac=(typeof AbortController!=="undefined")?new AbortController():null;
+    const t=ac?setTimeout(()=>ac.abort(),timeoutMs):null;
+    try{ const r=await fetch(u,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",id:1,method,params}),signal:ac?ac.signal:undefined}); const j=await r.json(); if(j.error){le=new Error(j.error.message);continue;} return j.result; }
+    catch(e){le=e;}
+    finally{ if(t) clearTimeout(t); }
+  }
   throw le||new Error("sol rpc fail"); }
 async function _swapPda(programStr,swapIdBytes){ const { PublicKey }=await import("/vendor/solana.mjs");
   const pid=new PublicKey(programStr); const seeds=[new TextEncoder().encode("swap"),swapIdBytes];
@@ -86,6 +100,100 @@ export async function sellGbxSolana(ctx){
    refund only to the account that funded the lock (sender_ata is checked against
    swap.sender on chain), so the LP can relay it and pay the gas without being able
    to divert anything. Signing it ourselves stays the fallback. */
+/* DIRECT MARKET: the buyer builds and signs the USDC lock on this device, against
+   public RPCs. No gateway, no LP, no server of anyone's: that is the whole point of
+   the direct market, and the honest consequence is that the buyer pays their own
+   fee and rent on Solana. The rent comes back at claim or refund.
+   swap_id == hashlock, exactly as fetchSolSwap/claim/refund already read it.
+   The seller's token account is created idempotently in the SAME transaction:
+   claim requires receiver_ata to exist, and a button that cannot succeed is not
+   offered. The buyer's GBX pubkey travels as a Memo in the same transaction. */
+/* The same public-RPC path the module already uses, exposed so a page can read a
+   chain without inventing its own host list. */
+export async function solRpc(method,params){ return _solRpc(method,params); }
+/* The swap account of a hashlock, read at the address the hashlock itself
+   derives. Cheap, allowed by every public endpoint, and the only proof the
+   client accepts before moving coins. */
+export async function fetchSolSwapByHashlock(programStr, hashlockHex){
+  const h=String(hashlockHex||"").replace(/^0x/,"").toLowerCase();
+  if(h.length!==64) return null;
+  const H=new Uint8Array(32); for(let i=0;i<32;i++) H[i]=parseInt(h.substr(i*2,2),16);
+  const sw=await fetchSolSwap(programStr,H).catch(()=>null);
+  if(!sw) return null;
+  /* The raw account gives 32-byte keys; everything downstream - the offer guard,
+     the UI, the API - speaks base58. Converting here keeps one shape in one place
+     instead of every caller guessing which one it got. */
+  const _b58=(b)=>{ const A='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+    let n=0n; for(const x of b) n=(n<<8n)|BigInt(x);
+    let o=''; while(n>0n){ o=A[Number(n%58n)]+o; n/=58n; }
+    for(const x of b){ if(x===0) o='1'+o; else break; } return o||'1'; };
+  return { pda:sw.pda.toBase58?sw.pda.toBase58():String(sw.pda), sender:_b58(sw.sender),
+           receiver:_b58(sw.receiver), mint:_b58(sw.mint), amount:sw.amount, hashlock:sw.hashlock,
+           timelock:sw.timelock, claimed:sw.claimed, refunded:sw.refunded };
+}
+export async function solPreflight(program){
+  const r=await _solRpc("getAccountInfo",[program,{encoding:"base64",commitment:"confirmed"}]);
+  const v=r&&r.value;
+  return !!(v && v.executable===true);
+}
+export async function solBuildLockTx(ctx){
+  const { program, mint, solKeypair, receiverB58, usdcAmount, hashlockHex, timelockSec, buyerPkHex }=ctx;
+  const { PublicKey, Transaction, TransactionInstruction, getAssociatedTokenAddress,
+          createAssociatedTokenAccountIdempotentInstruction }=await import("/vendor/solana.mjs");
+  if(!(await solPreflight(program))) throw new Error("E_SOLDOWN");
+  const _h=String(hashlockHex||"").replace(/^0x/,"").toLowerCase();
+  if(_h.length!==64) throw new Error("E_HASHLOCK");
+  const H=new Uint8Array(32); for(let i=0;i<32;i++) H[i]=parseInt(_h.substr(i*2,2),16);
+  const pkHex=String(buyerPkHex||"").toLowerCase();
+  if(!/^(02|03)[0-9a-f]{64}$/.test(pkHex)) throw new Error("E_BUYERPK");
+  const amt=BigInt(usdcAmount); if(!(amt>0n)) throw new Error("E_AMOUNT");
+  const tl=BigInt(Math.floor(Number(timelockSec)));
+  if(!(tl>BigInt(Math.floor(Date.now()/1000)))) throw new Error("E_TIMELOCK");
+  const PID=new PublicKey(program), MINT=new PublicKey(mint);
+  const RCV=new PublicKey(receiverB58);
+  const userPk=solKeypair.publicKey;
+  const enc=new TextEncoder();
+  const pda=(PublicKey.findProgramAddressSync?PublicKey.findProgramAddressSync([enc.encode("swap"),H],PID)[0]
+    :(await PublicKey.findProgramAddress([enc.encode("swap"),H],PID))[0]);
+  const vault=(PublicKey.findProgramAddressSync?PublicKey.findProgramAddressSync([enc.encode("vault"),H],PID)[0]
+    :(await PublicKey.findProgramAddress([enc.encode("vault"),H],PID))[0]);
+  const senderAta=await getAssociatedTokenAddress(MINT,userPk);
+  const rcvAta=await getAssociatedTokenAddress(MINT,RCV);
+  // Anchor: discriminator = sha256("global:lock")[:8], then Borsh args in order.
+  const disc=(await _sha256(enc.encode("global:lock"))).slice(0,8);
+  const data=new Uint8Array(8+32+8+32+8);
+  data.set(disc,0); data.set(H,8);
+  const dv=new DataView(data.buffer);
+  dv.setBigUint64(40,amt,true);
+  data.set(H,48);
+  dv.setBigInt64(80,tl,true);
+  const ixAta=createAssociatedTokenAccountIdempotentInstruction(userPk,rcvAta,RCV,MINT);
+  const ixLock=new TransactionInstruction({programId:PID,keys:[
+    {pubkey:userPk,isSigner:true,isWritable:true},
+    {pubkey:userPk,isSigner:true,isWritable:true},
+    {pubkey:RCV,isSigner:false,isWritable:false},
+    {pubkey:MINT,isSigner:false,isWritable:false},
+    {pubkey:pda,isSigner:false,isWritable:true},
+    {pubkey:vault,isSigner:false,isWritable:true},
+    {pubkey:senderAta,isSigner:false,isWritable:true},
+    {pubkey:new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"),isSigner:false,isWritable:false},
+    {pubkey:new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),isSigner:false,isWritable:false},
+    {pubkey:new PublicKey("11111111111111111111111111111111"),isSigner:false,isWritable:false},
+    {pubkey:new PublicKey("SysvarRent111111111111111111111111111111111"),isSigner:false,isWritable:false}],data});
+  const ixMemo=new TransactionInstruction({programId:new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
+    keys:[],data:enc.encode(pkHex)});
+  const bh=await _solRpc("getLatestBlockhash",[{commitment:"confirmed"}]);
+  const tx=new Transaction({recentBlockhash:((bh&&bh.value)||bh).blockhash,feePayer:userPk});
+  tx.add(ixAta); tx.add(ixLock); tx.add(ixMemo);
+  return { tx, pda:pda.toBase58(), vault:vault.toBase58(), rcvAta:rcvAta.toBase58() };
+}
+export async function solDirectLock(ctx){
+  const built=await solBuildLockTx(ctx);
+  built.tx.sign(ctx.solKeypair);
+  const raw=btoa(String.fromCharCode(...built.tx.serialize()));
+  const sig=await _solRpc("sendTransaction",[raw,{encoding:"base64",skipPreflight:false,preflightCommitment:"confirmed"}]);
+  return { sig:(sig&&sig.value)||sig, pda:built.pda, vault:built.vault };
+}
 export async function refundUsdcSolana(ctx){
   const { gatewayBase, program, mint, solKeypair, swapId }=ctx;
   const { PublicKey, Transaction, TransactionInstruction, getAssociatedTokenAddress }=await import("/vendor/solana.mjs");
@@ -173,9 +281,15 @@ export async function claimUsdcSolana(ctx){
       {pubkey:vault,isSigner:false,isWritable:true},
       {pubkey:rAta,isSigner:false,isWritable:true},
       {pubkey:new PK("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"),isSigner:false,isWritable:false}],data});
+    /* Same broadcast shape the refund path has proven on chain: some public
+       endpoints refuse or drop a submission that asks them to run preflight,
+       and the response envelope differs between them. */
     const bh=await _solRpc("getLatestBlockhash",[{commitment:"confirmed"}]);
-    const tx2=new Transaction(); tx2.add(ix); tx2.feePayer=userPk; tx2.recentBlockhash=bh.value.blockhash; tx2.sign(solKeypair);
-    sig=await _solRpc("sendTransaction",[btoa(String.fromCharCode(...tx2.serialize())),{encoding:"base64"}]);
+    const tx2=new Transaction({recentBlockhash:((bh&&bh.value)||bh).blockhash,feePayer:userPk}).add(ix);
+    tx2.sign(solKeypair);
+    const _raw=btoa(String.fromCharCode(...tx2.serialize()));
+    const _s=await _solRpc("sendTransaction",[_raw,{encoding:"base64",skipPreflight:false,preflightCommitment:"confirmed"}]);
+    sig=(_s&&_s.value)||_s;
   }
   onStatus&&onStatus("usdc_claimed",{sig});
   try{ localStorage.removeItem("gbx_pending_"+Hhex); }catch(_e){}

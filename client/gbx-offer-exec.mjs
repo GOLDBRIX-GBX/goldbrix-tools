@@ -58,8 +58,15 @@ export async function solFindLocksForReceiver({ solRpc, program, receiverBytes32
     filters:[{memcmp:{offset:40,bytes:b58enc(receiverBytes32)}}]}]);
   const out=[];
   for(const a of (res||[])){
+    // Some public RPCs answer without the account key. A row we cannot name is a
+    // row we cannot read further: skipping it beats calling the chain with
+    // "undefined" and waiting forever.
+    if(!a || !a.pubkey) continue;
     const u=b64b(a.account.data[0]);
     if(u.length<154) continue;
+    // Settled swaps are history, not candidates. Dropping them here keeps every
+    // later call - signatures, transactions - off a list that can be years long.
+    if(u[152]===1 || u[153]===1) continue;
     out.push({ pda:a.pubkey, sender:u.slice(8,40), receiver:u.slice(40,72), mint:b58enc(u.slice(72,104)),
                amount:u64le(u,104), hashlock:'0x'+hex(u.slice(112,144)),
                timelock:Number(u64le(u,144)), claimed:u[152]===1, refunded:u[153]===1 });

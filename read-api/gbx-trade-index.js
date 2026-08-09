@@ -48,12 +48,20 @@ CREATE TABLE IF NOT EXISTS gbx_legs (
   gbx_sats INTEGER NOT NULL, height INTEGER NOT NULL, ts INTEGER NOT NULL, kind TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS usdc_legs (
   hashlock TEXT PRIMARY KEY, chain TEXT NOT NULL, usdc_micro INTEGER NOT NULL, block INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS sol_locks (
+  pda TEXT PRIMARY KEY, receiver TEXT NOT NULL, mint TEXT NOT NULL,
+  amount INTEGER NOT NULL, hashlock TEXT NOT NULL, timelock INTEGER NOT NULL,
+  claimed INTEGER NOT NULL, refunded INTEGER NOT NULL, buyer_pk TEXT, seen INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS idx_sol_rcv ON sol_locks(receiver) WHERE claimed=0 AND refunded=0;
 CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT);
 CREATE INDEX IF NOT EXISTS idx_legs_ts ON gbx_legs(ts);
 `);
 const Q = {
   addGbx:  db.prepare(`INSERT OR REPLACE INTO gbx_legs (hashlock,txid,vout,gbx_sats,height,ts,kind) VALUES (?,?,?,?,?,?,?)`),
   addUsdc: db.prepare(`INSERT OR REPLACE INTO usdc_legs (hashlock,chain,usdc_micro,block) VALUES (?,?,?,?)`),
+  addSol:  db.prepare(`INSERT OR REPLACE INTO sol_locks (pda,receiver,mint,amount,hashlock,timelock,claimed,refunded,buyer_pk,seen) VALUES (?,?,?,?,?,?,?,?,?,?)`),
+  getSolPk:db.prepare(`SELECT buyer_pk FROM sol_locks WHERE pda=?`),
+  delSolGone: db.prepare(`DELETE FROM sol_locks WHERE seen < ?`),
   delAbove:db.prepare(`DELETE FROM gbx_legs WHERE height > ?`),
   getMeta: db.prepare(`SELECT v FROM meta WHERE k=?`),
   setMeta: db.prepare(`INSERT OR REPLACE INTO meta (k,v) VALUES (?,?)`),
@@ -167,6 +175,77 @@ async function evmLocked(rpcs, htlc, fromBlock) {
 
 // Solana has no eth_getLogs: HTLCs are Anchor accounts. Same hashlock, same join, same keyless proof.
 // Uses the LP-box CLI (read-only, no key needed for a listing).
+// Solana locks, read straight from the chain over public RPC - no CLI, no IDL,
+// no LP package. A browser cannot ask for getProgramAccounts (public endpoints
+// refuse it or answer without the account key), but a node can, and every node
+// can: that is what keeps the seller's side of a direct sale federated instead
+// of behind somebody's paid endpoint.
+const SOL_RPCS_DEFAULT = ['https://api.mainnet-beta.solana.com','https://solana-rpc.publicnode.com'];
+const B58A='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+function b58e(b){ let n=0n; for(const x of b) n=(n<<8n)|BigInt(x); let o=''; while(n>0n){ o=B58A[Number(n%58n)]+o; n/=58n; } for(const x of b){ if(x===0) o='1'+o; else break; } return o||'1'; }
+async function solRpc(rpcs, method, params) {
+  let lastErr=null;
+  for (const url of rpcs) {
+    try {
+      const r = await fetch(url, {method:'POST', headers:{'content-type':'application/json'},
+        body: JSON.stringify({jsonrpc:'2.0', id:1, method, params})});
+      const j = await r.json();
+      if (j.error) { lastErr=new Error(method+': '+JSON.stringify(j.error)); continue; }
+      return j.result;
+    } catch(e) { lastErr=e; continue; }
+  }
+  throw lastErr || new Error('all Solana RPC failed for '+method);
+}
+const SOL_MEMO='MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr';
+// The buyer's GBX key rides as a Memo in the transaction that created the swap
+// account. Read once per lock and stored: the account never changes its origin.
+async function solBuyerPk(rpcs, pda) {
+  try {
+    const sigs = await solRpc(rpcs,'getSignaturesForAddress',[pda,{limit:10}]);
+    if (!sigs || !sigs.length) return null;
+    for (let i=sigs.length-1; i>=0; i--) {
+      const tx = await solRpc(rpcs,'getTransaction',[sigs[i].signature,
+        {encoding:'jsonParsed', maxSupportedTransactionVersion:0, commitment:'confirmed'}]);
+      if (!tx) continue;
+      const ins = ((tx.transaction||{}).message||{}).instructions || [];
+      for (const it of ins) {
+        if (it.program==='spl-memo' || it.programId===SOL_MEMO) {
+          const m = String(it.parsed!=null?it.parsed:(it.data||'')).trim().toLowerCase();
+          if (/^(02|03)[0-9a-f]{64}$/.test(m)) return m;
+        }
+      }
+    }
+  } catch(_e) {}
+  return null;
+}
+async function syncSolLocks(program, rpcs) {
+  const res = await solRpc(rpcs,'getProgramAccounts',[program,{encoding:'base64',commitment:'confirmed'}]);
+  const now = Math.floor(Date.now()/1000);
+  let n=0, live=0;
+  const rows=[];
+  for (const a of (res||[])) {
+    if (!a || !a.pubkey || !a.account || !a.account.data) continue;
+    const u = Buffer.from(a.account.data[0], 'base64');
+    if (u.length < 154) continue;
+    const claimed=u[152]===1, refunded=u[153]===1;
+    const hashlock = u.subarray(112,144).toString('hex');
+    const timelock = Number(u.readBigInt64LE(144));
+    let pk=null;
+    if (!claimed && !refunded) {
+      live++;
+      const kept = Q.getSolPk.get(a.pubkey);
+      pk = (kept && kept.buyer_pk) ? kept.buyer_pk : await solBuyerPk(rpcs, a.pubkey);
+    }
+    rows.push([a.pubkey, b58e(u.subarray(40,72)), b58e(u.subarray(72,104)),
+               Number(u.readBigUInt64LE(104)), hashlock, timelock,
+               claimed?1:0, refunded?1:0, pk, now]);
+    n++;
+  }
+  if (rows.length) db.transaction(rs => { for (const r of rs) Q.addSol.run(...r); })(rows);
+  // An account that vanished from the chain must vanish here too.
+  Q.delSolGone.run(now);
+  log(`[TRADE] solana locks: ${n} accounts, ${live} live`);
+}
 async function syncSOL(c) {
   const { execFile } = require('child_process');
   const cli = process.env.GBX_SOL_CLI || '/opt/gbx-lp/sol-htlc-cli.mjs';
@@ -245,6 +324,33 @@ async function syncEVM() {
   }
 }
 
+// The HTLC program is announced on chain (GBX:HTLC); a local chains.json still
+// wins for an operator with their own setup, and the deployed address is the
+// last resort so a fresh node works with no configuration at all.
+const SOL_PROGRAM_FALLBACK='AAbKiRpmY5jYfC37DuQ9aTsWnNqxZXLe4fvyGSb3YS1F';
+function solProgram() {
+  try {
+    const f = process.env.GBX_CHAINS_F;
+    if (f && fs.existsSync(f)) {
+      const c = JSON.parse(fs.readFileSync(f,'utf8'));
+      if (c && c.solana && c.solana.program) return c.solana.program;
+    }
+  } catch(_e) {}
+  try {
+    const st = process.env.GBX_NODEREG_STATE;
+    if (st && fs.existsSync(st)) {
+      const j = JSON.parse(fs.readFileSync(st,'utf8'));
+      const h = (j && j.htlcs) || {};
+      for (const k of Object.keys(h)) if (k.startsWith('solana:')) return k.split(':')[1];
+    }
+  } catch(_e) {}
+  return SOL_PROGRAM_FALLBACK;
+}
+function solRpcs() {
+  const e = (process.env.GBX_SOL_RPCS||'').split(',').map(x=>x.trim()).filter(Boolean);
+  return e.length ? e : SOL_RPCS_DEFAULT;
+}
+async function syncSolAll() { return syncSolLocks(solProgram(), solRpcs()); }
 async function loop() {
   log('gbx-trade-index START · trades=' + DB_PATH + ' · index=' + IDX_DB);
   let evmTick = 0;
@@ -253,6 +359,12 @@ async function loop() {
       let more = true;
       while (more) more = await syncL1();
       if (evmTick % 6 === 0) await syncEVM();     // EVM ~ la 2 min
+      // Solana on its own guard: a chain that will not answer must not stop the
+      // others, and the seller's side of a direct sale depends on this list.
+      if (evmTick % 6 === 0) {
+        try { await syncSolAll(); }
+        catch(e) { log('[TRADE] solana locks FAIL:', String(e.message).slice(0,140)); }
+      }
       evmTick++;
     } catch(e) { log('[TRADE] cycle error:', String(e.message).slice(0,160)); }
     await sleep(POLL_MS);

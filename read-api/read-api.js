@@ -527,6 +527,17 @@ const server = http.createServer(async (req, res) => {
         return res.end(JSON.stringify(out));
       } catch (e) { res.writeHead(500); return res.end('htlc-index error'); }
     }
+    // sol-locks-by-receiver - live Solana USDC locks aimed at one address.
+    // Read by the node because a browser cannot read it, proven by the client
+    // against the chain before any GBX moves.
+    if (req.method === 'GET' && url.pathname.startsWith('/api/sol-locks-by-receiver/')) {
+      if (!gbxTrades || !gbxTrades.solLocksByReceiver) return sendJson(res, 503, { error: 'trade_index_unavailable' });
+      try {
+        const out = gbxTrades.solLocksByReceiver(url.pathname.slice('/api/sol-locks-by-receiver/'.length));
+        res.writeHead(200, {'Content-Type':'application/json'});
+        return res.end(JSON.stringify(out));
+      } catch (e) { res.writeHead(500); return res.end('sol-locks error'); }
+    }
     if (req.method === 'GET' && url.pathname.startsWith('/api/htlc-by-refund-pubkey/')) {
       const dbp = process.env.GBX_TOKENIDX_DB;
       if (!dbp) { res.writeHead(404); return res.end('not enabled'); }

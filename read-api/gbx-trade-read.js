@@ -60,4 +60,34 @@ function stats() {
     method: 'L1 HTLC claim (witness=4) joined to EVM USDC Locked event on the same hashlock. Keyless, no LP is trusted.',
   };
 }
-module.exports = { trades, candles, stats, DB_PATH };
+// Live USDC locks on Solana for one receiver address. A browser cannot ask the
+// chain this question - public endpoints refuse getProgramAccounts or answer
+// without the account key - so every node answers it instead, and the client
+// still proves each row against the chain before signing anything.
+function solLocksByReceiver(receiverB58) {
+  const r = String(receiverB58 || '').trim();
+  if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(r)) return { ok:false, error:'bad_receiver', locks:[] };
+  let rows = [];
+  try {
+    rows = db().prepare(
+      `SELECT pda,receiver,mint,amount,hashlock,timelock,buyer_pk,seen
+         FROM sol_locks WHERE receiver=? AND claimed=0 AND refunded=0
+         ORDER BY timelock DESC`).all(r);
+  } catch (e) { return { ok:false, error:'not_indexed', locks:[] }; }
+  const now = Math.floor(Date.now() / 1000);
+  let seen = 0;
+  try { const m = db().prepare(`SELECT MAX(seen) s FROM sol_locks`).get(); seen = (m && m.s) || 0; } catch (_e) {}
+  return {
+    ok: true,
+    // How stale this answer may be. A client that cares can refuse an old one.
+    indexed_age_s: seen ? (now - seen) : null,
+    locks: rows.map(x => ({
+      pda: x.pda, receiver: x.receiver, mint: x.mint,
+      amount: String(x.amount), hashlock: '0x' + x.hashlock,
+      timelock: x.timelock, buyer_pk: x.buyer_pk || null,
+      claimed: false, refunded: false
+    }))
+  };
+}
+
+module.exports = { trades, candles, stats, solLocksByReceiver, DB_PATH };
