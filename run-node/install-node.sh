@@ -299,6 +299,19 @@ if ! command -v caddy >/dev/null 2>&1; then
   echo "WARN: caddy not available from this distribution. Node works locally on :8088;"
   echo "      serve ${TOOLSDIR}/client and proxy /api yourself (see docs/RUN-NODE-CADDY.md)."
 else
+  # The distribution unit ships Restart=no: a crashed web server leaves the node
+  # mute until a human notices it. Every other unit here restarts itself; the
+  # layer users actually reach must do the same, whoever owns the config.
+  install -d /etc/systemd/system/caddy.service.d
+  cat > /etc/systemd/system/caddy.service.d/self-heal.conf << 'DROPIN'
+# managed by install-node.sh - remove this file to keep your own policy
+[Service]
+Restart=always
+RestartSec=5
+StartLimitIntervalSec=0
+DROPIN
+  systemctl daemon-reload >/dev/null 2>&1 || true
+
   LPBLOCK=""
   if ss -ltn 2>/dev/null | grep -q ':18099'; then
     LPBLOCK=$'\n\thandle_path /lp/* {\n\t\treverse_proxy 127.0.0.1:18099\n\t}'
