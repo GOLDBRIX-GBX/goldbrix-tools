@@ -477,7 +477,11 @@ export async function buildOfferCancelTx({ offer, utxos, pkU, p2wpkhSpkOf }){
 // anchor ('GBX:H:'+ver(1)+hashlock(32)+refund_pk(33) = 72 bytes, the exact
 // format the indexer already records), so the lock stays findable from the
 // chain alone - no server, no local memory.
-export async function buildOfferExecuteTx({ offer, buyerPkHex, hashlockHex, tipHeight, utxos, pkU, p2wpkhSpkOf }){
+// Chain rhythm and the smallest window worth offering: below this the buyer
+// could not realistically claim in time, so the execution is refused instead.
+const BLOCK_SEC = 3;
+const MIN_GBX_WINDOW_SEC = 3600;
+export async function buildOfferExecuteTx({ offer, buyerPkHex, hashlockHex, tipHeight, utxos, pkU, p2wpkhSpkOf, usdcTimelockSec, marginSec = 43200 }){
   const ws = offerWitnessScript(unhex(offer.nonceHex), pkU);
   if (hex(await p2wsh(ws)).toLowerCase() !== String(offer.spk).toLowerCase())
     throw new Error('offer script mismatch - not this wallet\'s offer');
@@ -487,7 +491,17 @@ export async function buildOfferExecuteTx({ offer, buyerPkHex, hashlockHex, tipH
   if (bpk.length !== 33) throw new Error('bad buyer pk');
   const tip = Number(tipHeight);
   if (!(tip > 0)) throw new Error('bad tip height');
-  const T2 = tip + 100000; // blocks (~3.5 days at 3s) >> USDC timelock + margin
+  // The one who holds the secret must move FIRST and get the SHORTER window.
+  // Otherwise, once the USDC lock expires, the buyer can refund the payment and
+  // still claim the GBX with the secret - taking both. So the GBX window is
+  // derived from the buyer's own USDC lock, minus the seller's margin, never
+  // from a constant: T_gbx < T_usdc - margin, always.
+  const usdcT = Number(usdcTimelockSec);
+  if (!(usdcT > 0)) throw new Error('E_TIMELOCK');
+  const nowS = Math.floor(Date.now() / 1000);
+  const winSec = usdcT - nowS - Number(marginSec);
+  if (!(winSec >= MIN_GBX_WINDOW_SEC)) throw new Error('E_TIMELOCK');
+  const T2 = tip + Math.floor(winSec / BLOCK_SEC);
   const htlcWs = buildHtlcScript(H, bpk, pkU, T2);
   const lock = BigInt(offer.value8);
   const { ins, sum } = selectUtxos(utxos, TRADE_FEE_SAT);

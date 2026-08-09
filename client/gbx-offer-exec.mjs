@@ -11,17 +11,18 @@ export const LOCKED_SIG='Locked(bytes32,address,address,address,uint256,bytes32,
 export function lockedTopic(){ return '0x'+hex(keccak_256(new TextEncoder().encode(LOCKED_SIG))); }
 
 // All Locked events for one receiver (the offer's usdc_addr), newest first.
-export async function evmFindLocksForReceiver({ rpc, htlcAddr, receiverHex20, scanBack=200000, win=9000 }){
-  const rcv='0x'+String(receiverHex20).replace(/^0x/,'').toLowerCase().padStart(64,'0');
+export async function evmFindLocks({ rpc, htlcAddr, receiverHex20, senderHex20, scanBack=200000, win=9000 }){
+  const p32=(x)=>x==null?null:'0x'+String(x).replace(/^0x/,'').toLowerCase().padStart(64,'0');
+  const rcv=p32(receiverHex20), snd=p32(senderHex20);
   const t0=lockedTopic();
   const latest=parseInt(await rpc('eth_blockNumber',[]),16);
   const out=[];
   for(let hi=latest; hi>Math.max(0,latest-scanBack); hi-=win){
     const lo=Math.max(0,hi-win+1);
-    let logs; try{ logs=await rpc('eth_getLogs',[{address:htlcAddr,fromBlock:'0x'+lo.toString(16),toBlock:'0x'+hi.toString(16),topics:[t0,null,null,rcv]}]); }catch(_e){ continue; }
+    let logs; try{ logs=await rpc('eth_getLogs',[{address:htlcAddr,fromBlock:'0x'+lo.toString(16),toBlock:'0x'+hi.toString(16),topics:[t0,null,snd,rcv]}]); }catch(_e){ continue; }
     for(const l of logs){
       const d=String(l.data).replace(/^0x/,''); const sl=i=>'0x'+d.slice(i*64,(i+1)*64);
-      out.push({ id:l.topics[1], sender:'0x'+String(l.topics[2]).slice(-40), txHash:l.transactionHash,
+      out.push({ id:l.topics[1], sender:'0x'+String(l.topics[2]).slice(-40), receiver:'0x'+String(l.topics[3]).slice(-40), txHash:l.transactionHash,
                  token:'0x'+sl(0).slice(-40), amount:BigInt(sl(1)), hashlock:sl(2),
                  timelock:Number(BigInt(sl(3))), blockNumber:parseInt(l.blockNumber,16) });
     }
@@ -29,6 +30,11 @@ export async function evmFindLocksForReceiver({ rpc, htlcAddr, receiverHex20, sc
   out.sort((a,b)=>b.blockNumber-a.blockNumber);
   return out;
 }
+
+// Same query, the other side of the trade: what did THIS wallet lock? The buyer
+// needs no local memory to find money it can take back - the chain lists it.
+export async function evmFindLocksForReceiver(o){ return evmFindLocks(o); }
+export async function evmFindLocksBySender(o){ return evmFindLocks(o); }
 
 // The buyer's GBX pubkey = the last 33 bytes of the lock call's calldata
 // (the EVM ignores trailing bytes; the chain still carries them forever).

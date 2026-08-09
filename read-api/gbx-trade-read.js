@@ -90,4 +90,38 @@ function solLocksByReceiver(receiverB58) {
   };
 }
 
-module.exports = { trades, candles, stats, solLocksByReceiver, DB_PATH };
+// Settled state per hashlock, answered from the node's own tables. The contract
+// itself said it (Claimed / Refunded on EVM, the swap account on Solana); the
+// node only remembers, so a phone does not have to ask a chain dozens of times
+// just to draw a label. Money still moves only after the client proves the lock
+// against the chain.
+function settledByHashlocks(list) {
+  const hls = (Array.isArray(list) ? list : [])
+    .map(x => String(x || '').replace(/^0x/, '').toLowerCase())
+    .filter(x => /^[0-9a-f]{64}$/.test(x)).slice(0, 200);
+  const out = {};
+  if (!hls.length) return { ok: true, indexed_age_s: null, settled: out };
+  let age = null;
+  try {
+    const d = db();
+    const evm = d.prepare(
+      `SELECT m.hashlock h, s.kind k FROM lock_map m
+         JOIN htlc_settled s ON s.lock_id = m.lock_id`).all();
+    for (const r of evm) {
+      const h = String(r.h).replace(/^0x/, '').toLowerCase();
+      if (hls.includes(h)) out[h] = r.k;
+    }
+    const sol = d.prepare(
+      `SELECT hashlock h, claimed c, refunded r FROM sol_locks`).all();
+    for (const r of sol) {
+      const h = String(r.h).replace(/^0x/, '').toLowerCase();
+      if (hls.includes(h) && (r.c || r.r)) out[h] = r.c ? 'claimed' : 'refunded';
+    }
+    const now = Math.floor(Date.now() / 1000);
+    const m = d.prepare(`SELECT MAX(seen) s FROM htlc_settled`).get();
+    age = (m && m.s) ? (now - m.s) : null;
+  } catch (e) { return { ok: false, error: 'not_indexed', settled: {} }; }
+  return { ok: true, indexed_age_s: age, settled: out };
+}
+
+module.exports = { trades, candles, stats, solLocksByReceiver, settledByHashlocks, DB_PATH };

@@ -74,11 +74,11 @@ import * as F from '/gbx-launchpad-flow.mjs';
 import * as C from '/gbx-curve.mjs';
 const L=(localStorage.getItem('gbx_lang')||'en');
 const T={
-en:{title:'Direct Market',book:'BOOK',sell:'SELL',mine:'MINE',mkt:'Market price (live)',mn:'Minimum allowed (-1%)',floor:'Minimum price (market -1%)',amt:'GBX amount',price:'Price (USDC per GBX)',chain:'USDC chain',addr:'Your USDC address',pub:'Publish offer',cancel:'Cancel offer',locked:'Unlock your wallet first',reading:'Reading the chain…',working:'Signing and publishing…',sent:'Published. Tx:',failed:'Not published:',cancelSent:'Cancelled. Tx:',empty:'No open offers yet. Yours can be the first.',mineEmpty:'You have no offers yet.',badAmt:'Enter an amount above zero.',badPrice:'Enter a price above zero.',underFloor:'Below the minimum price. Offers cannot undercut the market by more than 1%.',badAddr:'That address does not match the selected chain.',noPrice:'Market price unavailable right now — publishing is paused to protect you.',open:'open',spent:'closed',buy:'Buy',buyEvm:'Buy with USDC',buyWait:'Preparing the Solana lock…',noEvm:'Unlock your wallet to buy.',locking:'Locking USDC on chain…',lockOk:'USDC locked. The seller now moves the GBX into the atomic lock.',inExec:'IN EXECUTION',execBtn:'Release GBX (atomic)',execing:'Building the atomic lock…',execOk:'GBX locked atomically. Tx:',claimGbx:'Claim your GBX',claimUsdc:'Claim your USDC',claiming:'Claiming…',claimOk:'Done. Tx:',refundBtn:'Refund my USDC',lockSeen:'USDC locked by a buyer:',verifyFail:'That lock does not match this offer:',gasNote:'You pay the network fee on the USDC chain yourself — no provider is involved.',eBusy:'The chain is still settling the previous step. Try again in a few seconds.',eDone:'This step is already done on chain — nothing more to send.',eSize:'Too many small pieces in this wallet for one transaction.',eFunds:'Not enough funds for this step, including the network fee.',eNet:'The network did not answer. Nothing was sent; try again.',eGen:'That did not go through. Nothing was sent.',taken:'Someone has already reserved this offer. Your money stays where it is.',notMine:'That USDC address is not this wallet. Publishing is stopped so the money cannot go elsewhere.',eNode:'No node answered right now. Nothing was sent; try again.',eNoRec:'The secret for this purchase is not on this device. Open the market on the device you bought from.',eNoPre:'The buyer has not taken the GBX yet, so the secret is not public. Try again once they do.',eNoLock:'This lock is no longer on chain — it has already been settled.',eChain:'That chain is not answering right now. Nothing was sent; try again later.',eScript:'This lock does not belong to this wallet. Nothing was signed.',waitSeller:'Waiting for the seller',canRefund:'Timed out — take your money back',refundIn:'Refundable in',cancelWarn:'A buyer has already locked the payment for this offer. If you cancel, their money stays locked until it times out. Cancel anyway?',working2:'Working…',eTxFail:'The chain rejected that step — nothing changed and no funds moved. The gas for the attempt is spent.',buyNote:'Buying settles atomically on Base, Arbitrum and Solana. You pay your own network fee on the USDC chain.'},
-ro:{title:'Piața directă',book:'OFERTE',sell:'VINDE',mine:'ALE MELE',mkt:'Preț de piață (live)',mn:'Minim permis (-1%)',floor:'Preț minim (piață -1%)',amt:'Sumă GBX',price:'Preț (USDC per GBX)',chain:'Lanț USDC',addr:'Adresa ta USDC',pub:'Publică oferta',cancel:'Anulează oferta',locked:'Deblochează portofelul întâi',reading:'Citesc lanțul…',working:'Semnez și public…',sent:'Publicat. Tx:',failed:'Nepublicat:',cancelSent:'Anulat. Tx:',empty:'Nicio ofertă deschisă încă. A ta poate fi prima.',mineEmpty:'Nu ai oferte încă.',badAmt:'Introdu o sumă peste zero.',badPrice:'Introdu un preț peste zero.',underFloor:'Sub prețul minim. Ofertele nu pot coborî sub piață cu mai mult de 1%.',badAddr:'Adresa nu corespunde lanțului ales.',noPrice:'Prețul pieței e indisponibil — publicarea e oprită pentru protecția ta.',open:'deschisă',spent:'închisă',buy:'Cumpără',buyEvm:'Cumpără cu USDC',buyWait:'Pregătesc blocarea pe Solana…',noEvm:'Deblochează portofelul ca să cumperi.',locking:'Blochez USDC pe lanț…',lockOk:'USDC blocat. Vânzătorul mută acum GBX în lock-ul atomic.',inExec:'ÎN EXECUȚIE',execBtn:'Eliberează GBX (atomic)',execing:'Construiesc lock-ul atomic…',execOk:'GBX blocat atomic. Tx:',claimGbx:'Revendică GBX',claimUsdc:'Revendică USDC',claiming:'Revendic…',claimOk:'Gata. Tx:',refundBtn:'Recuperează USDC',lockSeen:'USDC blocat de un cumpărător:',verifyFail:'Lock-ul nu corespunde acestei oferte:',gasNote:'Plătești singur taxa de rețea pe lanțul USDC — niciun furnizor nu e implicat.',eBusy:'Lanțul încă decontează pasul anterior. Încearcă din nou în câteva secunde.',eDone:'Pasul acesta e deja făcut pe lanț — nu mai e nimic de trimis.',eSize:'Prea multe bucăți mici în portofel pentru o singură tranzacție.',eFunds:'Fonduri insuficiente pentru acest pas, inclusiv taxa de rețea.',eNet:'Rețeaua nu a răspuns. Nu s-a trimis nimic; încearcă din nou.',eGen:'Nu a mers. Nu s-a trimis nimic.',taken:'Oferta e deja rezervată de cineva. Banii tăi rămân unde sunt.',notMine:'Adresa USDC nu e a acestui portofel. Publicarea e oprită ca banii să nu ajungă altundeva.',eNode:'Niciun nod nu a răspuns acum. Nu s-a trimis nimic; încearcă din nou.',eNoRec:'Secretul acestei cumpărări nu e pe acest dispozitiv. Deschide piața pe dispozitivul de pe care ai cumpărat.',eNoPre:'Cumpărătorul încă nu a luat GBX, deci secretul nu e public. Încearcă după ce o face.',eNoLock:'Lock-ul nu mai e pe lanț — a fost deja decontat.',eChain:'Lanțul nu răspunde acum. Nu s-a trimis nimic; încearcă mai târziu.',eScript:'Lock-ul nu aparține acestui portofel. Nu s-a semnat nimic.',waitSeller:'Aștept vânzătorul',canRefund:'Expirat — îți poți lua banii înapoi',refundIn:'Recuperabil în',cancelWarn:'Un cumpărător a blocat deja plata pentru această ofertă. Dacă anulezi, banii lui rămân blocați până la expirare. Anulezi oricum?',working2:'Lucrez…',eTxFail:'Lanțul a respins pasul — nimic nu s-a schimbat și niciun ban nu s-a mișcat. Taxa încercării e consumată.',buyNote:'Cumpărarea se decontează atomic pe Base, Arbitrum și Solana. Plătești singur taxa de rețea pe lanțul USDC.'},
-de:{title:'Direktmarkt',book:'ANGEBOTE',sell:'VERKAUFEN',mine:'MEINE',mkt:'Marktpreis (live)',mn:'Minimum erlaubt (-1%)',floor:'Mindestpreis (Markt -1%)',amt:'GBX-Betrag',price:'Preis (USDC pro GBX)',chain:'USDC-Chain',addr:'Deine USDC-Adresse',pub:'Angebot veröffentlichen',cancel:'Angebot stornieren',locked:'Entsperre zuerst deine Wallet',reading:'Lese die Chain…',working:'Signiere und veröffentliche…',sent:'Veröffentlicht. Tx:',failed:'Nicht veröffentlicht:',cancelSent:'Storniert. Tx:',empty:'Noch keine offenen Angebote. Deins kann das erste sein.',mineEmpty:'Du hast noch keine Angebote.',badAmt:'Gib einen Betrag über null ein.',badPrice:'Gib einen Preis über null ein.',underFloor:'Unter dem Mindestpreis. Angebote dürfen den Markt um höchstens 1% unterbieten.',badAddr:'Die Adresse passt nicht zur gewählten Chain.',noPrice:'Marktpreis derzeit nicht verfügbar — Veröffentlichung pausiert zu deinem Schutz.',open:'offen',spent:'geschlossen',buy:'Kaufen',buyEvm:'Mit USDC kaufen',buyWait:'Solana-Sperre wird vorbereitet…',noEvm:'Entsperre deine Wallet zum Kaufen.',locking:'USDC wird on-chain gesperrt…',lockOk:'USDC gesperrt. Der Verkäufer legt die GBX nun in den atomaren Lock.',inExec:'IN AUSFÜHRUNG',execBtn:'GBX freigeben (atomar)',execing:'Atomarer Lock wird gebaut…',execOk:'GBX atomar gesperrt. Tx:',claimGbx:'GBX abholen',claimUsdc:'USDC abholen',claiming:'Wird abgeholt…',claimOk:'Fertig. Tx:',refundBtn:'USDC zurückholen',lockSeen:'USDC von einem Käufer gesperrt:',verifyFail:'Dieser Lock passt nicht zu diesem Angebot:',gasNote:'Du zahlst die Netzgebühr auf der USDC-Chain selbst — kein Anbieter ist beteiligt.',eBusy:'Die Chain wickelt den vorherigen Schritt noch ab. Versuche es in ein paar Sekunden erneut.',eDone:'Dieser Schritt ist on-chain bereits erledigt — es gibt nichts mehr zu senden.',eSize:'Zu viele kleine Teile in dieser Wallet für eine Transaktion.',eFunds:'Nicht genug Guthaben für diesen Schritt, inklusive Netzgebühr.',eNet:'Das Netzwerk hat nicht geantwortet. Es wurde nichts gesendet; versuche es erneut.',eGen:'Das hat nicht geklappt. Es wurde nichts gesendet.',taken:'Dieses Angebot ist bereits reserviert. Dein Geld bleibt, wo es ist.',notMine:'Diese USDC-Adresse gehört nicht zu dieser Wallet. Die Veröffentlichung wird gestoppt, damit das Geld nicht woanders landet.',eNode:'Kein Knoten hat gerade geantwortet. Es wurde nichts gesendet; versuche es erneut.',eNoRec:'Das Geheimnis dieses Kaufs liegt nicht auf diesem Gerät. Öffne den Markt auf dem Gerät, mit dem du gekauft hast.',eNoPre:'Der Käufer hat die GBX noch nicht abgeholt, das Geheimnis ist also noch nicht öffentlich. Versuche es danach erneut.',eNoLock:'Dieser Lock ist nicht mehr on-chain — er wurde bereits abgewickelt.',eChain:'Diese Chain antwortet gerade nicht. Es wurde nichts gesendet; versuche es später.',eScript:'Dieser Lock gehört nicht zu dieser Wallet. Es wurde nichts signiert.',waitSeller:'Warte auf den Verkäufer',canRefund:'Abgelaufen — hol dir dein Geld zurück',refundIn:'Rückholbar in',cancelWarn:'Ein Käufer hat die Zahlung für dieses Angebot bereits gesperrt. Wenn du stornierst, bleibt sein Geld bis zum Ablauf gesperrt. Trotzdem stornieren?',working2:'Arbeite…',eTxFail:'Die Chain hat diesen Schritt abgelehnt — nichts hat sich geändert, kein Geld wurde bewegt. Die Gebühr des Versuchs ist verbraucht.',buyNote:'Der Kauf wird auf Base, Arbitrum und Solana atomar abgewickelt. Die Netzgebühr auf der USDC-Chain zahlst du selbst.'},
-zh:{title:'直接市场',book:'挂单',sell:'出售',mine:'我的',mkt:'市场价（实时）',mn:'最低允许价（-1%）',floor:'最低价（市场价-1%）',amt:'GBX 数量',price:'价格（USDC/GBX）',chain:'USDC 链',addr:'你的 USDC 地址',pub:'发布挂单',cancel:'取消挂单',locked:'请先解锁钱包',reading:'正在读取链…',working:'正在签名并发布…',sent:'已发布。交易：',failed:'未发布：',cancelSent:'已取消。交易：',empty:'暂无挂单。你的可以是第一个。',mineEmpty:'你还没有挂单。',badAmt:'请输入大于零的数量。',badPrice:'请输入大于零的价格。',underFloor:'低于最低价。挂单不能比市场价低超过1%。',badAddr:'地址与所选链不匹配。',noPrice:'市场价格暂不可用——为保护你，发布已暂停。',open:'进行中',spent:'已关闭',buy:'购买',buyEvm:'用 USDC 购买',buyWait:'正在准备 Solana 锁定…',noEvm:'请解锁钱包后购买。',locking:'正在链上锁定 USDC…',lockOk:'USDC 已锁定。卖方正在将 GBX 放入原子锁。',inExec:'执行中',execBtn:'释放 GBX（原子）',execing:'正在构建原子锁…',execOk:'GBX 已原子锁定。交易：',claimGbx:'领取你的 GBX',claimUsdc:'领取你的 USDC',claiming:'领取中…',claimOk:'完成。交易：',refundBtn:'退回我的 USDC',lockSeen:'买方已锁定 USDC：',verifyFail:'该锁定与此挂单不匹配：',gasNote:'你自行支付 USDC 链上的网络费 — 不涉及任何服务方。',eBusy:'链上仍在结算上一步。请几秒后重试。',eDone:'该步骤已在链上完成——无需再发送。',eSize:'钱包中零散数量过多，无法放入一笔交易。',eFunds:'资金不足以完成此步骤（含网络费）。',eNet:'网络没有响应。未发送任何内容；请重试。',eGen:'未能完成。未发送任何内容。',taken:'该挂单已被他人预定。你的资金原封不动。',notMine:'该 USDC 地址不属于此钱包。已停止发布，以免资金流向他处。',eNode:'当前没有节点响应。未发送任何内容；请重试。',eNoRec:'本次购买的密钥不在此设备上。请在购买时使用的设备上打开市场。',eNoPre:'买方尚未取走 GBX，密钥还未公开。请稍后再试。',eNoLock:'该锁定已不在链上——已完成结算。',eChain:'该链暂时没有响应。未发送任何内容；请稍后再试。',eScript:'该锁定不属于此钱包。未签署任何内容。',waitSeller:'等待卖方',canRefund:'已超时——可取回你的资金',refundIn:'可退回时间',cancelWarn:'已有买家为此挂单锁定了付款。如果取消，其资金将被锁定至超时。仍要取消吗？',working2:'处理中…',eTxFail:'链上拒绝了该步骤——没有任何改变，资金未移动。此次尝试的手续费已消耗。',buyNote:'购买在 Base、Arbitrum 与 Solana 上原子结算。USDC 链上的网络费由你自行支付。'},
-ar:{title:'السوق المباشر',book:'العروض',sell:'بيع',mine:'عروضي',mkt:'سعر السوق (مباشر)',mn:'الحد الأدنى المسموح (-1%)',floor:'الحد الأدنى للسعر (السوق -1%)',amt:'كمية GBX',price:'السعر (USDC لكل GBX)',chain:'شبكة USDC',addr:'عنوان USDC الخاص بك',pub:'نشر العرض',cancel:'إلغاء العرض',locked:'افتح قفل محفظتك أولاً',reading:'جارٍ قراءة السلسلة…',working:'جارٍ التوقيع والنشر…',sent:'تم النشر. المعاملة:',failed:'لم يُنشر:',cancelSent:'أُلغي. المعاملة:',empty:'لا توجد عروض مفتوحة بعد. يمكن أن يكون عرضك الأول.',mineEmpty:'ليس لديك عروض بعد.',badAmt:'أدخل كمية أكبر من صفر.',badPrice:'أدخل سعراً أكبر من صفر.',underFloor:'أقل من الحد الأدنى. لا يمكن للعروض النزول عن السوق بأكثر من 1%.',badAddr:'العنوان لا يطابق الشبكة المختارة.',noPrice:'سعر السوق غير متاح الآن — النشر متوقف لحمايتك.',open:'مفتوح',spent:'مغلق',buy:'شراء',buyEvm:'اشترِ بـ USDC',buyWait:'جارٍ تحضير القفل على Solana…',noEvm:'افتح قفل محفظتك للشراء.',locking:'جارٍ قفل USDC على السلسلة…',lockOk:'تم قفل USDC. البائع ينقل GBX الآن إلى القفل الذري.',inExec:'قيد التنفيذ',execBtn:'حرِّر GBX (ذري)',execing:'جارٍ بناء القفل الذري…',execOk:'تم قفل GBX ذرياً. المعاملة:',claimGbx:'استلم GBX',claimUsdc:'استلم USDC',claiming:'جارٍ الاستلام…',claimOk:'تم. المعاملة:',refundBtn:'استرجع USDC',lockSeen:'قفل USDC من مشترٍ:',verifyFail:'هذا القفل لا يطابق هذا العرض:',gasNote:'تدفع رسوم الشبكة على سلسلة USDC بنفسك — لا يوجد أي مزود.',eBusy:'السلسلة ما زالت تُنهي الخطوة السابقة. حاول بعد ثوانٍ.',eDone:'هذه الخطوة تمت بالفعل على السلسلة — لا شيء آخر لإرساله.',eSize:'قطع صغيرة كثيرة جداً في المحفظة لمعاملة واحدة.',eFunds:'الرصيد غير كافٍ لهذه الخطوة، بما في ذلك رسوم الشبكة.',eNet:'الشبكة لم تستجب. لم يُرسل شيء؛ حاول مجدداً.',eGen:'لم تنجح العملية. لم يُرسل شيء.',taken:'هذا العرض محجوز بالفعل. أموالك تبقى كما هي.',notMine:'عنوان USDC هذا ليس لهذه المحفظة. تم إيقاف النشر حتى لا تذهب الأموال إلى مكان آخر.',eNode:'لم يستجب أي عقدة الآن. لم يُرسل شيء؛ حاول مجدداً.',eNoRec:'سر هذا الشراء ليس على هذا الجهاز. افتح السوق على الجهاز الذي اشتريت منه.',eNoPre:'المشتري لم يأخذ GBX بعد، لذا السر ليس علنياً. حاول بعد ذلك.',eNoLock:'هذا القفل لم يعد على السلسلة — تمت تسويته بالفعل.',eChain:'هذه السلسلة لا تستجيب الآن. لم يُرسل شيء؛ حاول لاحقاً.',eScript:'هذا القفل لا يخص هذه المحفظة. لم يتم توقيع أي شيء.',waitSeller:'في انتظار البائع',canRefund:'انتهت المهلة — استرجع أموالك',refundIn:'قابل للاسترجاع خلال',cancelWarn:'قام مشترٍ بقفل الدفع لهذا العرض. إذا ألغيت، تبقى أمواله مقفلة حتى انتهاء المهلة. هل تلغي رغم ذلك؟',working2:'جارٍ التنفيذ…',eTxFail:'رفضت السلسلة هذه الخطوة — لم يتغير شيء ولم تتحرك أي أموال. رسوم المحاولة قد صُرفت.',buyNote:'الشراء يُسوَّى ذرياً على Base و Arbitrum و Solana. تدفع رسوم الشبكة على سلسلة USDC بنفسك.'}};
+en:{title:'Direct Market',book:'BOOK',sell:'SELL',mine:'MINE',mkt:'Market price (live)',mn:'Minimum allowed (-1%)',floor:'Minimum price (market -1%)',amt:'GBX amount',price:'Price (USDC per GBX)',chain:'USDC chain',addr:'Your USDC address',pub:'Publish offer',cancel:'Cancel offer',locked:'Unlock your wallet first',reading:'Reading the chain…',working:'Signing and publishing…',sent:'Published. Tx:',failed:'Not published:',cancelSent:'Cancelled. Tx:',empty:'No open offers yet. Yours can be the first.',mineEmpty:'You have no offers yet.',badAmt:'Enter an amount above zero.',badPrice:'Enter a price above zero.',underFloor:'Below the minimum price. Offers cannot undercut the market by more than 1%.',badAddr:'That address does not match the selected chain.',noPrice:'Market price unavailable right now — publishing is paused to protect you.',open:'open',spent:'closed',buy:'Buy',buyEvm:'Buy with USDC',buyWait:'Preparing the Solana lock…',noEvm:'Unlock your wallet to buy.',locking:'Locking USDC on chain…',lockOk:'USDC locked. The seller now moves the GBX into the atomic lock.',inExec:'IN EXECUTION',execDone:'SETTLED',viewTx:'View this trade',eShortWin:'This payment expires too soon to settle safely. Nothing was sent — the buyer can take their money back once it times out.',execBtn:'Release GBX (atomic)',execing:'Building the atomic lock…',execOk:'GBX locked atomically. Tx:',claimGbx:'Claim your GBX',claimUsdc:'Claim your USDC',claiming:'Claiming…',claimOk:'Done. Tx:',refundBtn:'Refund my USDC',lockSeen:'USDC locked by a buyer:',verifyFail:'That lock does not match this offer:',gasNote:'You pay the network fee on the USDC chain yourself — no provider is involved.',eBusy:'The chain is still settling the previous step. Try again in a few seconds.',eDone:'This step is already done on chain — nothing more to send.',eSize:'Too many small pieces in this wallet for one transaction.',eFunds:'Not enough funds for this step, including the network fee.',eNet:'The network did not answer. Nothing was sent; try again.',eGen:'That did not go through. Nothing was sent.',taken:'Someone has already reserved this offer. Your money stays where it is.',notMine:'That USDC address is not this wallet. Publishing is stopped so the money cannot go elsewhere.',eNode:'No node answered right now. Nothing was sent; try again.',eNoRec:'The secret for this purchase is not on this device. Open the market on the device you bought from.',eNoPre:'The buyer has not taken the GBX yet, so the secret is not public. Try again once they do.',eNoLock:'This lock is no longer on chain — it has already been settled.',eChain:'That chain is not answering right now. Nothing was sent; try again later.',eScript:'This lock does not belong to this wallet. Nothing was signed.',waitSeller:'Waiting for the seller',canRefund:'Timed out — take your money back',refundIn:'Refundable in',cancelWarn:'A buyer has already locked the payment for this offer. If you cancel, their money stays locked until it times out. Cancel anyway?',working2:'Working…',eTxFail:'The chain rejected that step — nothing changed and no funds moved. The gas for the attempt is spent.',buyNote:'Buying settles atomically on Base, Arbitrum and Solana. You pay your own network fee on the USDC chain.'},
+ro:{title:'Piața directă',book:'OFERTE',sell:'VINDE',mine:'ALE MELE',mkt:'Preț de piață (live)',mn:'Minim permis (-1%)',floor:'Preț minim (piață -1%)',amt:'Sumă GBX',price:'Preț (USDC per GBX)',chain:'Lanț USDC',addr:'Adresa ta USDC',pub:'Publică oferta',cancel:'Anulează oferta',locked:'Deblochează portofelul întâi',reading:'Citesc lanțul…',working:'Semnez și public…',sent:'Publicat. Tx:',failed:'Nepublicat:',cancelSent:'Anulat. Tx:',empty:'Nicio ofertă deschisă încă. A ta poate fi prima.',mineEmpty:'Nu ai oferte încă.',badAmt:'Introdu o sumă peste zero.',badPrice:'Introdu un preț peste zero.',underFloor:'Sub prețul minim. Ofertele nu pot coborî sub piață cu mai mult de 1%.',badAddr:'Adresa nu corespunde lanțului ales.',noPrice:'Prețul pieței e indisponibil — publicarea e oprită pentru protecția ta.',open:'deschisă',spent:'închisă',buy:'Cumpără',buyEvm:'Cumpără cu USDC',buyWait:'Pregătesc blocarea pe Solana…',noEvm:'Deblochează portofelul ca să cumperi.',locking:'Blochez USDC pe lanț…',lockOk:'USDC blocat. Vânzătorul mută acum GBX în lock-ul atomic.',inExec:'ÎN EXECUȚIE',execDone:'DECONTAT',viewTx:'Vezi tranzacția',eShortWin:'Plata expiră prea curând ca decontarea să fie sigură. Nu s-a trimis nimic — cumpărătorul își poate lua banii înapoi la expirare.',execBtn:'Eliberează GBX (atomic)',execing:'Construiesc lock-ul atomic…',execOk:'GBX blocat atomic. Tx:',claimGbx:'Revendică GBX',claimUsdc:'Revendică USDC',claiming:'Revendic…',claimOk:'Gata. Tx:',refundBtn:'Recuperează USDC',lockSeen:'USDC blocat de un cumpărător:',verifyFail:'Lock-ul nu corespunde acestei oferte:',gasNote:'Plătești singur taxa de rețea pe lanțul USDC — niciun furnizor nu e implicat.',eBusy:'Lanțul încă decontează pasul anterior. Încearcă din nou în câteva secunde.',eDone:'Pasul acesta e deja făcut pe lanț — nu mai e nimic de trimis.',eSize:'Prea multe bucăți mici în portofel pentru o singură tranzacție.',eFunds:'Fonduri insuficiente pentru acest pas, inclusiv taxa de rețea.',eNet:'Rețeaua nu a răspuns. Nu s-a trimis nimic; încearcă din nou.',eGen:'Nu a mers. Nu s-a trimis nimic.',taken:'Oferta e deja rezervată de cineva. Banii tăi rămân unde sunt.',notMine:'Adresa USDC nu e a acestui portofel. Publicarea e oprită ca banii să nu ajungă altundeva.',eNode:'Niciun nod nu a răspuns acum. Nu s-a trimis nimic; încearcă din nou.',eNoRec:'Secretul acestei cumpărări nu e pe acest dispozitiv. Deschide piața pe dispozitivul de pe care ai cumpărat.',eNoPre:'Cumpărătorul încă nu a luat GBX, deci secretul nu e public. Încearcă după ce o face.',eNoLock:'Lock-ul nu mai e pe lanț — a fost deja decontat.',eChain:'Lanțul nu răspunde acum. Nu s-a trimis nimic; încearcă mai târziu.',eScript:'Lock-ul nu aparține acestui portofel. Nu s-a semnat nimic.',waitSeller:'Aștept vânzătorul',canRefund:'Expirat — îți poți lua banii înapoi',refundIn:'Recuperabil în',cancelWarn:'Un cumpărător a blocat deja plata pentru această ofertă. Dacă anulezi, banii lui rămân blocați până la expirare. Anulezi oricum?',working2:'Lucrez…',eTxFail:'Lanțul a respins pasul — nimic nu s-a schimbat și niciun ban nu s-a mișcat. Taxa încercării e consumată.',buyNote:'Cumpărarea se decontează atomic pe Base, Arbitrum și Solana. Plătești singur taxa de rețea pe lanțul USDC.'},
+de:{title:'Direktmarkt',book:'ANGEBOTE',sell:'VERKAUFEN',mine:'MEINE',mkt:'Marktpreis (live)',mn:'Minimum erlaubt (-1%)',floor:'Mindestpreis (Markt -1%)',amt:'GBX-Betrag',price:'Preis (USDC pro GBX)',chain:'USDC-Chain',addr:'Deine USDC-Adresse',pub:'Angebot veröffentlichen',cancel:'Angebot stornieren',locked:'Entsperre zuerst deine Wallet',reading:'Lese die Chain…',working:'Signiere und veröffentliche…',sent:'Veröffentlicht. Tx:',failed:'Nicht veröffentlicht:',cancelSent:'Storniert. Tx:',empty:'Noch keine offenen Angebote. Deins kann das erste sein.',mineEmpty:'Du hast noch keine Angebote.',badAmt:'Gib einen Betrag über null ein.',badPrice:'Gib einen Preis über null ein.',underFloor:'Unter dem Mindestpreis. Angebote dürfen den Markt um höchstens 1% unterbieten.',badAddr:'Die Adresse passt nicht zur gewählten Chain.',noPrice:'Marktpreis derzeit nicht verfügbar — Veröffentlichung pausiert zu deinem Schutz.',open:'offen',spent:'geschlossen',buy:'Kaufen',buyEvm:'Mit USDC kaufen',buyWait:'Solana-Sperre wird vorbereitet…',noEvm:'Entsperre deine Wallet zum Kaufen.',locking:'USDC wird on-chain gesperrt…',lockOk:'USDC gesperrt. Der Verkäufer legt die GBX nun in den atomaren Lock.',inExec:'IN AUSFÜHRUNG',execDone:'ABGEWICKELT',viewTx:'Diesen Handel ansehen',eShortWin:'Diese Zahlung läuft zu bald ab für eine sichere Abwicklung. Es wurde nichts gesendet — der Käufer kann sein Geld nach Ablauf zurückholen.',execBtn:'GBX freigeben (atomar)',execing:'Atomarer Lock wird gebaut…',execOk:'GBX atomar gesperrt. Tx:',claimGbx:'GBX abholen',claimUsdc:'USDC abholen',claiming:'Wird abgeholt…',claimOk:'Fertig. Tx:',refundBtn:'USDC zurückholen',lockSeen:'USDC von einem Käufer gesperrt:',verifyFail:'Dieser Lock passt nicht zu diesem Angebot:',gasNote:'Du zahlst die Netzgebühr auf der USDC-Chain selbst — kein Anbieter ist beteiligt.',eBusy:'Die Chain wickelt den vorherigen Schritt noch ab. Versuche es in ein paar Sekunden erneut.',eDone:'Dieser Schritt ist on-chain bereits erledigt — es gibt nichts mehr zu senden.',eSize:'Zu viele kleine Teile in dieser Wallet für eine Transaktion.',eFunds:'Nicht genug Guthaben für diesen Schritt, inklusive Netzgebühr.',eNet:'Das Netzwerk hat nicht geantwortet. Es wurde nichts gesendet; versuche es erneut.',eGen:'Das hat nicht geklappt. Es wurde nichts gesendet.',taken:'Dieses Angebot ist bereits reserviert. Dein Geld bleibt, wo es ist.',notMine:'Diese USDC-Adresse gehört nicht zu dieser Wallet. Die Veröffentlichung wird gestoppt, damit das Geld nicht woanders landet.',eNode:'Kein Knoten hat gerade geantwortet. Es wurde nichts gesendet; versuche es erneut.',eNoRec:'Das Geheimnis dieses Kaufs liegt nicht auf diesem Gerät. Öffne den Markt auf dem Gerät, mit dem du gekauft hast.',eNoPre:'Der Käufer hat die GBX noch nicht abgeholt, das Geheimnis ist also noch nicht öffentlich. Versuche es danach erneut.',eNoLock:'Dieser Lock ist nicht mehr on-chain — er wurde bereits abgewickelt.',eChain:'Diese Chain antwortet gerade nicht. Es wurde nichts gesendet; versuche es später.',eScript:'Dieser Lock gehört nicht zu dieser Wallet. Es wurde nichts signiert.',waitSeller:'Warte auf den Verkäufer',canRefund:'Abgelaufen — hol dir dein Geld zurück',refundIn:'Rückholbar in',cancelWarn:'Ein Käufer hat die Zahlung für dieses Angebot bereits gesperrt. Wenn du stornierst, bleibt sein Geld bis zum Ablauf gesperrt. Trotzdem stornieren?',working2:'Arbeite…',eTxFail:'Die Chain hat diesen Schritt abgelehnt — nichts hat sich geändert, kein Geld wurde bewegt. Die Gebühr des Versuchs ist verbraucht.',buyNote:'Der Kauf wird auf Base, Arbitrum und Solana atomar abgewickelt. Die Netzgebühr auf der USDC-Chain zahlst du selbst.'},
+zh:{title:'直接市场',book:'挂单',sell:'出售',mine:'我的',mkt:'市场价（实时）',mn:'最低允许价（-1%）',floor:'最低价（市场价-1%）',amt:'GBX 数量',price:'价格（USDC/GBX）',chain:'USDC 链',addr:'你的 USDC 地址',pub:'发布挂单',cancel:'取消挂单',locked:'请先解锁钱包',reading:'正在读取链…',working:'正在签名并发布…',sent:'已发布。交易：',failed:'未发布：',cancelSent:'已取消。交易：',empty:'暂无挂单。你的可以是第一个。',mineEmpty:'你还没有挂单。',badAmt:'请输入大于零的数量。',badPrice:'请输入大于零的价格。',underFloor:'低于最低价。挂单不能比市场价低超过1%。',badAddr:'地址与所选链不匹配。',noPrice:'市场价格暂不可用——为保护你，发布已暂停。',open:'进行中',spent:'已关闭',buy:'购买',buyEvm:'用 USDC 购买',buyWait:'正在准备 Solana 锁定…',noEvm:'请解锁钱包后购买。',locking:'正在链上锁定 USDC…',lockOk:'USDC 已锁定。卖方正在将 GBX 放入原子锁。',inExec:'执行中',execDone:'已结算',viewTx:'查看此交易',eShortWin:'这笔付款过快到期，无法安全结算。未发送任何内容——买方可在超时后取回资金。',execBtn:'释放 GBX（原子）',execing:'正在构建原子锁…',execOk:'GBX 已原子锁定。交易：',claimGbx:'领取你的 GBX',claimUsdc:'领取你的 USDC',claiming:'领取中…',claimOk:'完成。交易：',refundBtn:'退回我的 USDC',lockSeen:'买方已锁定 USDC：',verifyFail:'该锁定与此挂单不匹配：',gasNote:'你自行支付 USDC 链上的网络费 — 不涉及任何服务方。',eBusy:'链上仍在结算上一步。请几秒后重试。',eDone:'该步骤已在链上完成——无需再发送。',eSize:'钱包中零散数量过多，无法放入一笔交易。',eFunds:'资金不足以完成此步骤（含网络费）。',eNet:'网络没有响应。未发送任何内容；请重试。',eGen:'未能完成。未发送任何内容。',taken:'该挂单已被他人预定。你的资金原封不动。',notMine:'该 USDC 地址不属于此钱包。已停止发布，以免资金流向他处。',eNode:'当前没有节点响应。未发送任何内容；请重试。',eNoRec:'本次购买的密钥不在此设备上。请在购买时使用的设备上打开市场。',eNoPre:'买方尚未取走 GBX，密钥还未公开。请稍后再试。',eNoLock:'该锁定已不在链上——已完成结算。',eChain:'该链暂时没有响应。未发送任何内容；请稍后再试。',eScript:'该锁定不属于此钱包。未签署任何内容。',waitSeller:'等待卖方',canRefund:'已超时——可取回你的资金',refundIn:'可退回时间',cancelWarn:'已有买家为此挂单锁定了付款。如果取消，其资金将被锁定至超时。仍要取消吗？',working2:'处理中…',eTxFail:'链上拒绝了该步骤——没有任何改变，资金未移动。此次尝试的手续费已消耗。',buyNote:'购买在 Base、Arbitrum 与 Solana 上原子结算。USDC 链上的网络费由你自行支付。'},
+ar:{title:'السوق المباشر',book:'العروض',sell:'بيع',mine:'عروضي',mkt:'سعر السوق (مباشر)',mn:'الحد الأدنى المسموح (-1%)',floor:'الحد الأدنى للسعر (السوق -1%)',amt:'كمية GBX',price:'السعر (USDC لكل GBX)',chain:'شبكة USDC',addr:'عنوان USDC الخاص بك',pub:'نشر العرض',cancel:'إلغاء العرض',locked:'افتح قفل محفظتك أولاً',reading:'جارٍ قراءة السلسلة…',working:'جارٍ التوقيع والنشر…',sent:'تم النشر. المعاملة:',failed:'لم يُنشر:',cancelSent:'أُلغي. المعاملة:',empty:'لا توجد عروض مفتوحة بعد. يمكن أن يكون عرضك الأول.',mineEmpty:'ليس لديك عروض بعد.',badAmt:'أدخل كمية أكبر من صفر.',badPrice:'أدخل سعراً أكبر من صفر.',underFloor:'أقل من الحد الأدنى. لا يمكن للعروض النزول عن السوق بأكثر من 1%.',badAddr:'العنوان لا يطابق الشبكة المختارة.',noPrice:'سعر السوق غير متاح الآن — النشر متوقف لحمايتك.',open:'مفتوح',spent:'مغلق',buy:'شراء',buyEvm:'اشترِ بـ USDC',buyWait:'جارٍ تحضير القفل على Solana…',noEvm:'افتح قفل محفظتك للشراء.',locking:'جارٍ قفل USDC على السلسلة…',lockOk:'تم قفل USDC. البائع ينقل GBX الآن إلى القفل الذري.',inExec:'قيد التنفيذ',execDone:'تمت التسوية',viewTx:'عرض هذه الصفقة',eShortWin:'تنتهي صلاحية هذه الدفعة قريباً جداً لتسوية آمنة. لم يُرسل شيء — يمكن للمشتري استرجاع أمواله عند انتهاء المهلة.',execBtn:'حرِّر GBX (ذري)',execing:'جارٍ بناء القفل الذري…',execOk:'تم قفل GBX ذرياً. المعاملة:',claimGbx:'استلم GBX',claimUsdc:'استلم USDC',claiming:'جارٍ الاستلام…',claimOk:'تم. المعاملة:',refundBtn:'استرجع USDC',lockSeen:'قفل USDC من مشترٍ:',verifyFail:'هذا القفل لا يطابق هذا العرض:',gasNote:'تدفع رسوم الشبكة على سلسلة USDC بنفسك — لا يوجد أي مزود.',eBusy:'السلسلة ما زالت تُنهي الخطوة السابقة. حاول بعد ثوانٍ.',eDone:'هذه الخطوة تمت بالفعل على السلسلة — لا شيء آخر لإرساله.',eSize:'قطع صغيرة كثيرة جداً في المحفظة لمعاملة واحدة.',eFunds:'الرصيد غير كافٍ لهذه الخطوة، بما في ذلك رسوم الشبكة.',eNet:'الشبكة لم تستجب. لم يُرسل شيء؛ حاول مجدداً.',eGen:'لم تنجح العملية. لم يُرسل شيء.',taken:'هذا العرض محجوز بالفعل. أموالك تبقى كما هي.',notMine:'عنوان USDC هذا ليس لهذه المحفظة. تم إيقاف النشر حتى لا تذهب الأموال إلى مكان آخر.',eNode:'لم يستجب أي عقدة الآن. لم يُرسل شيء؛ حاول مجدداً.',eNoRec:'سر هذا الشراء ليس على هذا الجهاز. افتح السوق على الجهاز الذي اشتريت منه.',eNoPre:'المشتري لم يأخذ GBX بعد، لذا السر ليس علنياً. حاول بعد ذلك.',eNoLock:'هذا القفل لم يعد على السلسلة — تمت تسويته بالفعل.',eChain:'هذه السلسلة لا تستجيب الآن. لم يُرسل شيء؛ حاول لاحقاً.',eScript:'هذا القفل لا يخص هذه المحفظة. لم يتم توقيع أي شيء.',waitSeller:'في انتظار البائع',canRefund:'انتهت المهلة — استرجع أموالك',refundIn:'قابل للاسترجاع خلال',cancelWarn:'قام مشترٍ بقفل الدفع لهذا العرض. إذا ألغيت، تبقى أمواله مقفلة حتى انتهاء المهلة. هل تلغي رغم ذلك؟',working2:'جارٍ التنفيذ…',eTxFail:'رفضت السلسلة هذه الخطوة — لم يتغير شيء ولم تتحرك أي أموال. رسوم المحاولة قد صُرفت.',buyNote:'الشراء يُسوَّى ذرياً على Base و Arbitrum و Solana. تدفع رسوم الشبكة على سلسلة USDC بنفسك.'}};
 const tt=k=>(T[L]&&T[L][k])||T.en[k]||k;
 if(L==='ar')document.body.dir='rtl';
 const $=i=>document.getElementById(i);
@@ -90,7 +90,7 @@ function humanMsg(t){
   const raw=String(t==null?'':t); const low=raw.toLowerCase();
   const M={E_TXFAIL:'eTxFail',E_NONODE:'eNode',E_MODULE:'eNet',E_ADDR:'badAddr',E_AMOUNT:'badAmt',E_TIP:'eNet',
            E_NOREC:'eNoRec',E_NOPRE:'eNoPre',E_NOLOCK:'eNoLock',E_SCRIPT:'eScript',
-           E_SOLDOWN:'eChain',E_HASHLOCK:'eGen',E_BUYERPK:'eGen',E_TIMELOCK:'eGen'};
+           E_SOLDOWN:'eChain',E_HASHLOCK:'eGen',E_BUYERPK:'eGen',E_TIMELOCK:'eShortWin'};
   for(const k in M) if(raw.indexOf(k)>=0) return tt(M[k]);
   if(low.indexOf('missingorspent')>=0||low.indexOf('-25')>=0) return tt('eBusy');
   if(low.indexOf('insufficient fee')>=0||low.indexOf('replacement')>=0||low.indexOf('-26')>=0) return tt('eDone');
@@ -165,8 +165,8 @@ async function publish(rawtx){
 let wallet=null,keys=null,pkHex='',secp=null,spkU=null,lastUsd=null,floorMicro=null;
 // Immutable, publicly verifiable contracts. Read from /api/htlc-registry when the
 // federation serves it; these are the fallback so a buy never depends on one node.
-const CH={B:{name:'Base',chainId:8453,usdc:'0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',htlc:'0x8e351c32dfb27aa22334a20dcf7262f54f78e0c0',rpcs:['https://mainnet.base.org','https://base-rpc.publicnode.com','https://base.drpc.org']},
-          A:{name:'Arbitrum',chainId:42161,usdc:'0xaf88d065e77c8cC2239327C5EDb3A432268e5831',htlc:'0xa43813d90adb98a5c400113ce2cc29d43d4ab867',rpcs:['https://arb1.arbitrum.io/rpc','https://arbitrum-one-rpc.publicnode.com','https://arbitrum.drpc.org']},
+const CH={B:{name:'Base',chainId:8453,scan:100000,usdc:'0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',htlc:'0x8e351c32dfb27aa22334a20dcf7262f54f78e0c0',rpcs:['https://mainnet.base.org','https://base-rpc.publicnode.com','https://base.drpc.org']},
+          A:{name:'Arbitrum',chainId:42161,scan:800000,usdc:'0xaf88d065e77c8cC2239327C5EDb3A432268e5831',htlc:'0xa43813d90adb98a5c400113ce2cc29d43d4ab867',rpcs:['https://arb1.arbitrum.io/rpc','https://arbitrum-one-rpc.publicnode.com','https://arbitrum.drpc.org']},
           S:{name:'Solana',program:'AAbKiRpmY5jYfC37DuQ9aTsWnNqxZXLe4fvyGSb3YS1F',usdc:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'}};
 const T_USDC_SEC=86400;      // the buyer's USDC lock: 24h
 const T_MARGIN_SEC=43200;    // the seller refuses anything closer than 12h
@@ -207,6 +207,8 @@ function paintPrices(){
   $('vMkt').textContent = lastUsd!=null ? ('$'+lastUsd.toFixed(4)) : '—';
   $('vMin').textContent = floorMicro!=null ? ('$'+(floorMicro/1e6).toFixed(4)) : '—';
 }
+// A finished trade is a public fact: the GBX side opens in the federation's own
+// explorer, from the transaction the chain recorded.
 function offerCard(o,mine){
   const gbx=(Number(o.value_sat)/1e8).toLocaleString('en-US',{maximumFractionDigits:4});
   const usd=(Number(o.price_micro)/1e6).toFixed(4);
@@ -216,8 +218,8 @@ function offerCard(o,mine){
    +'<div class="row"><span class="val amt">'+gbx+' GBX</span><span class="val price">$'+usd+'</span></div>'
    +'<div class="row"><span class="lab chain'+o.chain+'">'+ch+'</span><span class="lab">'+(mine?st:'')+'</span></div>'
    +(mine&&!o.spent?'<button class="btn red btnCancel">'+tt('cancel')+'</button>':'')
-   +(mine&&o.executed?'<div class="lab" style="margin-top:6px">'+tt('inExec')+'</div><button class="btn btnClaimU" data-hl="'+o.exec_hashlock+'" data-chain="'+o.chain+'" data-addr="'+o.usdc_addr+'" data-ex="'+(o.exec_txid||'')+'" style="display:none">'+tt('claimUsdc')+'</button>':'')
-   +(!mine&&!o.spent?'<button class="btn btnBuy" data-chain="'+o.chain+'" data-addr="'+o.usdc_addr+'" data-price="'+o.price_micro+'" data-seller="'+o.seller_pk+'">'+tt('buy')+'</button>':'')
+   +(mine&&o.executed?'<div class="lab lExec" style="margin-top:6px">'+(o.exec_settled?tt('execDone'):tt('inExec'))+'</div><button class="btn btnClaimU" data-hl="'+o.exec_hashlock+'" data-chain="'+o.chain+'" data-addr="'+o.usdc_addr+'" data-ex="'+(o.exec_txid||'')+'" data-settled="'+(o.exec_settled||'')+'" style="display:none">'+tt('claimUsdc')+'</button>':'')
+   +(mine&&o.exec_txid?'<a class="txLink" href="/v3/explorer.html?q='+o.exec_txid+'" style="display:block;margin-top:6px;padding:6px 9px;border:1px solid rgba(255,217,138,.35);border-radius:7px;color:#FFD98A;text-decoration:none;font-weight:600;font-size:.8rem">'+tt('viewTx')+' \u2192</a>':'')   +(!mine&&!o.spent?'<button class="btn btnBuy" data-chain="'+o.chain+'" data-addr="'+o.usdc_addr+'" data-price="'+o.price_micro+'" data-seller="'+o.seller_pk+'">'+tt('buy')+'</button>':'')
    +'</div>';
 }
 async function loadBook(){
@@ -316,7 +318,7 @@ async function onCancel(ev){
       const ch=card.dataset.chain, ad=card.dataset.addr;
       if(ch && ad && CH[ch] && CH[ch].htlc){
         const OE=await import('/gbx-offer-exec.mjs');
-        const seen=await OE.evmFindLocksForReceiver({rpc:evmRpcFor(CH[ch]),htlcAddr:CH[ch].htlc,receiverHex20:ad,scanBack:60000,win:9000});
+        const seen=await OE.evmFindLocksForReceiver({rpc:evmRpcFor(CH[ch]),htlcAddr:CH[ch].htlc,receiverHex20:ad,scanBack:CH[ch].scan||100000,win:9000});
         const now0=Math.floor(Date.now()/1000);
         const live=seen.find(L=>OE.checkLockAgainstOffer({offer:{value_sat:card.dataset.val,price_micro:card.dataset.price||'0'},lock:L,nowSec:now0,minMarginSec:0}).ok);
         if(live && !confirm(tt('cancelWarn'))) { hideM('msg'); return; }
@@ -359,7 +361,7 @@ async function onBuy(ev){
     {
       const OE=await import('/gbx-offer-exec.mjs');
       const rpc0=evmRpcFor(c);
-      const seen=await OE.evmFindLocksForReceiver({rpc:rpc0,htlcAddr:c.htlc,receiverHex20:ev.target.dataset.addr,scanBack:60000,win:9000});
+      const seen=await OE.evmFindLocksForReceiver({rpc:rpc0,htlcAddr:c.htlc,receiverHex20:ev.target.dataset.addr,scanBack:(c&&c.scan)||100000,win:9000});
       const now0=Math.floor(Date.now()/1000);
       for(const L of seen){
         const v=OE.checkLockAgainstOffer({offer:{value_sat:card.dataset.val,price_micro:ev.target.dataset.price},lock:L,usdcTokenExpected:c.usdc,nowSec:now0,minMarginSec:0});
@@ -485,7 +487,7 @@ async function scanIncoming(mine){
     const c=CH[o.chain]; if(!c) continue;
     try{
       const rpc=evmRpcFor(c);
-      const locks=await OE.evmFindLocksForReceiver({rpc,htlcAddr:c.htlc,receiverHex20:o.usdc_addr,scanBack:60000,win:9000});
+      const locks=await OE.evmFindLocksForReceiver({rpc,htlcAddr:c.htlc,receiverHex20:o.usdc_addr,scanBack:(c&&c.scan)||100000,win:9000});
       for(const L of locks){
         const v=OE.checkLockAgainstOffer({offer:o,lock:L,usdcTokenExpected:c.usdc,nowSec:now,minMarginSec:T_MARGIN_SEC});
         if(!v.ok) continue;
@@ -601,7 +603,8 @@ async function onExec(ev){
     const utxos=(u.unspents||[]).filter(x=>x.spendable!==false).map(x=>({txid:x.txid,vout:x.vout,value8:Math.round(x.amount*1e8)})).sort((a,b)=>b.value8-a.value8);
     const o=it.offer;
     const built=await F.buildOfferExecuteTx({offer:{nonceHex:o.nonce,spk:o.spk,txid:o.txid,vout:o.vout,value8:Number(o.value_sat)},
-      buyerPkHex:it.buyerPk,hashlockHex:hl,tipHeight:tip,utxos,pkU:new Uint8Array(keys.publicKey),p2wpkhSpkOf:()=>spkU});
+      buyerPkHex:it.buyerPk,hashlockHex:hl,tipHeight:tip,utxos,pkU:new Uint8Array(keys.publicKey),p2wpkhSpkOf:()=>spkU,
+      usdcTimelockSec:Number(it.lock&&it.lock.timelock),marginSec:T_MARGIN_SEC});
     const ws=C.unhex(built.offerWsHex);
     const inputs=built.inputs.map((x,i)=>i===0?{...x,kind:'token',ws}:{...x,kind:'p2wpkh'});
     const derSig=c=>{const tr=x=>{let i=0;while(i<31&&x[i]===0)i++;let v=x.subarray(i);if(v[0]&0x80)v=Uint8Array.of(0,...v);return v;};const r=tr(c.subarray(0,32)),s=tr(c.subarray(32,64));return Uint8Array.of(0x30,4+r.length+s.length,0x02,r.length,...r,0x02,s.length,...s);};
@@ -623,35 +626,44 @@ async function onExec(ev){
 async function showIfClaimable(btn){
   try{
     const c=CH[btn.dataset.chain]; if(!c) return;
+    // The node already read the chain for this lock, on every chain it serves.
+    // A settled execution is history: no button, no scan, nothing asked of any
+    // endpoint. Only an open one is still worth proving against the chain.
+    if(btn.dataset.settled){
+      btn.style.display='none';
+      try{ const cd=btn.closest('.card'); const lb=cd&&cd.querySelector('.lExec');
+        if(lb) lb.textContent=tt('execDone'); }catch(_e){}
+      return;
+    }
     // Solana keeps the settlement state inside the swap account itself, and the
     // account address derives from the hashlock: one cheap read answers whether
     // this money is still there to be taken.
     if(btn.dataset.chain==='S'){
       const MS=await import('/mod-b-solana.mjs');
       const st=await MS.fetchSolSwapByHashlock(c.program,String(btn.dataset.hl||'').replace(/^0x/,''));
-      btn.style.display = (st && !st.claimed && !st.refunded) ? '' : 'none';
+      const live = !!(st && !st.claimed && !st.refunded);
+      btn.style.display = live ? '' : 'none';
+      try{ const cd=btn.closest('.card'); const lb=cd&&cd.querySelector('.lExec');
+        if(lb) lb.textContent = live ? tt('inExec') : tt('execDone'); }catch(_e){}
       return;
     }
     if(!c.htlc) return;
     const OE=await import('/gbx-offer-exec.mjs');
     const rpc=evmRpcFor(c);
     const hl='0x'+String(btn.dataset.hl||'').replace(/^0x/,'');
-    const locks=await OE.evmFindLocksForReceiver({rpc,htlcAddr:c.htlc,receiverHex20:btn.dataset.addr,scanBack:60000,win:9000});
+    const locks=await OE.evmFindLocksForReceiver({rpc,htlcAddr:c.htlc,receiverHex20:btn.dataset.addr,scanBack:(c&&c.scan)||100000,win:9000});
     const L=locks.find(x=>String(x.hashlock).toLowerCase()===hl.toLowerCase());
-    if(!L) return;
-    // Claim state comes from the contract's own event, the one public fact
-    // both sides can read without asking anyone.
-    const claimedSig='Claimed(bytes32,bytes)';
-    const {keccak_256}=await import('/vendor/evm-secp.mjs');
-    const ct='0x'+Array.from(keccak_256(new TextEncoder().encode(claimedSig))).map(x=>x.toString(16).padStart(2,'0')).join('');
-    const latest=parseInt(await rpc('eth_blockNumber',[]),16);
-    let claimed=false;
-    for(let hi=latest; hi>Math.max(0,latest-60000) && !claimed; hi-=9000){
-      const lo=Math.max(0,hi-8999);
-      let lg; try{ lg=await rpc('eth_getLogs',[{address:c.htlc,fromBlock:'0x'+lo.toString(16),toBlock:'0x'+hi.toString(16),topics:[ct,L.id]}]); }catch(_e){ continue; }
-      if(lg && lg.length) claimed=true;
-    }
-    btn.style.display = claimed ? 'none' : '';
+    if(!L){ btn.style.display='none'; return; }
+    // One judgement for "is this money still there", shared with every other
+    // caller: Claimed AND Refunded both close a lock. A button that cannot
+    // succeed is never offered.
+    let done=true;
+    try{ done=await OE.evmLockSettled({rpc,htlcAddr:c.htlc,lockId:L.id,fromBlock:L.blockNumber}); }catch(_e){ return; }
+    btn.style.display = done ? 'none' : '';
+    // The label tells the same truth as the button: a settled execution is
+    // history, not a pending step. Both come from the one chain read above.
+    try{ const cd=btn.closest('.card'); const lb=cd&&cd.querySelector('.lExec');
+      if(lb) lb.textContent = done ? tt('execDone') : tt('inExec'); }catch(_e){}
   }catch(_e){}
 }
 async function onClaimUsdc(ev){
@@ -672,7 +684,7 @@ async function onClaimUsdc(ev){
     const c=CH[ev.target.dataset.chain]; if(!c) throw new Error('E_NOLOCK');
     const rpc=evmRpcFor(c);
     const OE=await import('/gbx-offer-exec.mjs');
-    const locks=await OE.evmFindLocksForReceiver({rpc,htlcAddr:c.htlc,receiverHex20:ev.target.dataset.addr,scanBack:60000,win:9000});
+    const locks=await OE.evmFindLocksForReceiver({rpc,htlcAddr:c.htlc,receiverHex20:ev.target.dataset.addr,scanBack:(c&&c.scan)||100000,win:9000});
     // The same hashlock can appear on more than one lock (a retried purchase, an
     // abandoned attempt). Only one of them still holds money: claiming any other
     // reverts and costs the seller gas for nothing.
@@ -734,9 +746,45 @@ async function renderBuyPend(){
       +(!ready&&left<=0?'<button class="btn red btnRefundU" data-hl="'+rec.hashlock+'" data-chain="'+rec.chain+'">'+tt('refundBtn')+'</button>':'')
       +'</div>';
   }
-  if(el.dataset.h!==html){ el.innerHTML=html; el.dataset.h=html;
+  // Paint what is already known before scanning for anything else. The cards
+  // above are complete: local memory plus the chain's own verdict. Making them
+  // wait for a wide multi-chain scan means a phone often never shows them at
+  // all - the money is there, the screen is empty. Draw first, recover after.
+  paint(html);
+
+  // Local memory is a convenience, never the source of truth: the chain lists
+  // every lock this wallet still owns. Refund needs no secret, so a wiped
+  // device (or any other device) can still take the money back.
+  try{
+    const OE=await import('/gbx-offer-exec.mjs');
+    const now2=Math.floor(Date.now()/1000);
+    const have=new Set(keysLS.map(k=>String(k.slice('gbx_offer_buy_'.length)).replace(/^0x/,'').toLowerCase()));
+    for(const ch of ['B','A']){
+    const c=CH[ch]; const me=myAddr[ch];
+    if(!c||!c.htlc||!me) continue;
+      const rpc=evmRpcFor(c);
+      let mine=[]; try{ mine=await OE.evmFindLocksBySender({rpc,htlcAddr:c.htlc,senderHex20:me,scanBack:c.scan||100000,win:9000}); }catch(_e){ continue; }
+      for(const L2 of mine){
+        const hlx=String(L2.hashlock).replace(/^0x/,'').toLowerCase();
+        if(have.has(hlx)) continue;
+      if(Number(L2.timelock)>now2) continue;
+        let done=true; try{ done=await OE.evmLockSettled({rpc,htlcAddr:c.htlc,lockId:L2.id,fromBlock:L2.blockNumber}); }catch(_e){ continue; }
+      if(done) continue;
+        html+='<div class="card" data-hl="'+hlx+'">'
+          +'<div class="row"><span class="val price">'+(Number(L2.amount)/1e6).toFixed(4)+' USDC</span><span class="lab">'+c.name+'</span></div>'
+          +'<div class="row"><span class="lab">'+tt('canRefund')+'</span></div>'
+          +'<button class="btn red btnRefundU" data-hl="'+hlx+'" data-chain="'+ch+'" data-lockid="'+L2.id+'">'+tt('refundBtn')+'</button>'
+          +'</div>';
+      }
+    }
+  }catch(_e){}
+  paint(html);
+  function paint(h){
+    if(el.dataset.h===h) return;
+    el.innerHTML=h; el.dataset.h=h;
     el.querySelectorAll('.btnClaimG').forEach(b=>b.addEventListener('click',guard(onClaimGbx)));
-    el.querySelectorAll('.btnRefundU').forEach(b=>b.addEventListener('click',guard(onRefundUsdc))); }
+    el.querySelectorAll('.btnRefundU').forEach(b=>b.addEventListener('click',guard(onRefundUsdc)));
+  }
 }
 // The buyer's way out, with nobody's permission: after the timeout the contract
 // returns the USDC to whoever locked it. No seller, no node, no server involved.
@@ -745,7 +793,8 @@ async function onRefundUsdc(ev){
   hideM('msg');
   try{
     const rec=JSON.parse(localStorage.getItem('gbx_offer_buy_'+hl)||'null');
-    if(!rec) throw new Error('E_NOREC');
+    const lidChain=ev.target.dataset.lockid||'';
+    if(!rec && !lidChain) throw new Error('E_NOREC');
     if(ev.target.dataset.chain==='S'){
       const MS=await import('/mod-b-solana.mjs');
       const sol=await window.GoldbrixMultichain.deriveSOL(wallet.mnemonic);
@@ -761,9 +810,13 @@ async function onRefundUsdc(ev){
     const OE=await import('/gbx-offer-exec.mjs');
     const ev0=await window.GoldbrixMultichain.deriveEVM(wallet.mnemonic);
     const hlHex=String(hl).replace(/^0x/,'');
-    const locks=await OE.evmFindLocksForReceiver({rpc,htlcAddr:c.htlc,receiverHex20:rec.seller_addr||'',scanBack:60000,win:9000});
-    let L=locks.find(x=>String(x.hashlock).replace(/^0x/,'').toLowerCase()===hlHex.toLowerCase());
-    if(!L && rec.lock_id) L={id:rec.lock_id};
+    let L=null;
+    if(lidChain){ L={id:lidChain}; }
+    else {
+      const locks=await OE.evmFindLocksForReceiver({rpc,htlcAddr:c.htlc,receiverHex20:rec.seller_addr||'',scanBack:(c&&c.scan)||100000,win:9000});
+      L=locks.find(x=>String(x.hashlock).replace(/^0x/,'').toLowerCase()===hlHex.toLowerCase());
+      if(!L && rec.lock_id) L={id:rec.lock_id};
+    }
     if(!L) throw new Error('E_NOLOCK');
     const {makeEVMHTLC}=await import('/evm-htlc.mjs');
     const {createEVM}=await import('/evm-tx-core.mjs');
@@ -792,11 +845,20 @@ async function onClaimGbx(ev){
     if(!lock) throw new Error('E_NOLOCK');
     const pkBuy=new Uint8Array(keys.publicKey), pkSell=C.unhex(lock.refund_pk);
     const Hb=C.unhex(hlHex);
-    // T2 is deterministic (execution tip + 100000); the script is proven, never guessed
+    // T2 is derived from the buyer's own USDC lock, exactly as the seller
+    // derived it: (timelock - execution time - margin) / block time. The old
+    // convention (+100000) is still tried so locks made before this rule stay
+    // claimable. The script is always proven against the real p2wsh, never guessed.
     let script=null;
-    for(let t=Number(lock.height)+100000-40; t<=Number(lock.height)+100000+40; t++){
-      const cand=H.buildHtlcScript(Hb,pkBuy,pkSell,t);
-      if(H.hex(H.p2wshSpk(cand)).toLowerCase()===String(lock.spk).toLowerCase()){ script=cand; break; }
+    const h0=Number(lock.height);
+    const derived=h0+Math.floor((Number(rec.timelock)-Math.floor(Date.now()/1000)-T_MARGIN_SEC)/3);
+    const centres=[derived, h0+14400, h0+100000];
+    for(const c0 of centres){
+      for(let t=c0-3000; t<=c0+3000; t++){
+        const cand=H.buildHtlcScript(Hb,pkBuy,pkSell,t);
+        if(H.hex(H.p2wshSpk(cand)).toLowerCase()===String(lock.spk).toLowerCase()){ script=cand; break; }
+      }
+      if(script) break;
     }
     if(!script) throw new Error('E_SCRIPT');
     const derSig=c=>{const tr=x=>{let i=0;while(i<31&&x[i]===0)i++;let v=x.subarray(i);if(v[0]&0x80)v=Uint8Array.of(0,...v);return v;};const r=tr(c.subarray(0,32)),s=tr(c.subarray(32,64));return Uint8Array.of(0x30,4+r.length+s.length,0x02,r.length,...r,0x02,s.length,...s);};

@@ -591,6 +591,23 @@ const server = http.createServer(async (req, res) => {
           out = global.__gbxTokenIdx.offersOpen(floorMicro);
         } else {
           out = global.__gbxTokenIdx.offersByPk(url.pathname.slice('/api/offers/'.length));
+          // The node already knows whether each executed lock is settled, on all
+          // three chains. Serving it here spares every phone dozens of chain
+          // queries just to draw a label; money still moves only after the
+          // client proves the lock against the chain itself.
+          try {
+            if (gbxTrades && gbxTrades.settledByHashlocks && out && Array.isArray(out.offers)) {
+              const hls = out.offers.map(o => o.exec_hashlock).filter(Boolean);
+              const sv = gbxTrades.settledByHashlocks(hls);
+              if (sv && sv.ok) {
+                out.indexed_age_s = sv.indexed_age_s;
+                for (const o of out.offers) {
+                  const h = String(o.exec_hashlock || '').replace(/^0x/, '').toLowerCase();
+                  o.exec_settled = h ? (sv.settled[h] || null) : null;
+                }
+              }
+            }
+          } catch (_e) { /* a missing trade index must never break the offer list */ }
         }
         return sendJson(res, 200, out);
       } catch (e) { res.writeHead(500); return res.end('offers error'); }

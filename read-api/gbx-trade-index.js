@@ -22,6 +22,11 @@ const POLL_MS     = parseInt(process.env.GBX_TRADE_POLL_MS || '20000', 10);
 const COOKIE      = path.join(GBX_DATADIR, '.cookie');
 const HTLC_PREFIX = '63a820';
 const TOPIC_LOCKED = '0x14442dbf5e9aa943f3b7681bdf4e57c3256930c69ccc137263150f7e01bd51cf';
+// A lock is settled when the contract itself says so - claimed or refunded.
+// Proven on chain before it was written: Base 7 unique, Arbitrum 2, matching
+// the same verdict the client computes locally.
+const TOPIC_CLAIMED  = '0x54e9dcf96aeed1fa6849e3f39d94c3115fa88d93c20d7f7f44afed0428596e2f';
+const TOPIC_REFUNDED = '0xfe509803c09416b28ff3d8f690c8b0c61462a892c46d5430c8fb20abe472daf0';
 
 const log = (...a) => console.log(new Date().toISOString(), ...a);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -53,12 +58,21 @@ CREATE TABLE IF NOT EXISTS sol_locks (
   amount INTEGER NOT NULL, hashlock TEXT NOT NULL, timelock INTEGER NOT NULL,
   claimed INTEGER NOT NULL, refunded INTEGER NOT NULL, buyer_pk TEXT, seen INTEGER NOT NULL);
 CREATE INDEX IF NOT EXISTS idx_sol_rcv ON sol_locks(receiver) WHERE claimed=0 AND refunded=0;
+CREATE TABLE IF NOT EXISTS htlc_settled (
+  lock_id TEXT PRIMARY KEY, chain TEXT NOT NULL, kind TEXT NOT NULL, block INTEGER NOT NULL, seen INTEGER NOT NULL);
+-- The bridge between the two names of one lock: the contract emits both in the
+-- same Locked event, so nothing extra is ever asked of any chain.
+CREATE TABLE IF NOT EXISTS lock_map (
+  lock_id TEXT PRIMARY KEY, hashlock TEXT NOT NULL, chain TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS idx_lockmap_hl ON lock_map(hashlock);
 CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT);
 CREATE INDEX IF NOT EXISTS idx_legs_ts ON gbx_legs(ts);
 `);
 const Q = {
   addGbx:  db.prepare(`INSERT OR REPLACE INTO gbx_legs (hashlock,txid,vout,gbx_sats,height,ts,kind) VALUES (?,?,?,?,?,?,?)`),
   addUsdc: db.prepare(`INSERT OR REPLACE INTO usdc_legs (hashlock,chain,usdc_micro,block) VALUES (?,?,?,?)`),
+  addSettled: db.prepare(`INSERT OR REPLACE INTO htlc_settled (lock_id,chain,kind,block,seen) VALUES (?,?,?,?,?)`),
+  addLockMap: db.prepare(`INSERT OR REPLACE INTO lock_map (lock_id,hashlock,chain) VALUES (?,?,?)`),
   addSol:  db.prepare(`INSERT OR REPLACE INTO sol_locks (pda,receiver,mint,amount,hashlock,timelock,claimed,refunded,buyer_pk,seen) VALUES (?,?,?,?,?,?,?,?,?,?)`),
   getSolPk:db.prepare(`SELECT buyer_pk FROM sol_locks WHERE pda=?`),
   delSolGone: db.prepare(`DELETE FROM sol_locks WHERE seen < ?`),
@@ -158,7 +172,7 @@ async function evmLocked(rpcs, htlc, fromBlock) {
       for (const l of logs) {
         const d = l.data.replace(/^0x/,'');
         const sl = i => d.slice(i*64,(i+1)*64);
-        out.push({ hashlock:'0x'+sl(2), amount: Number(BigInt('0x'+sl(1))), block: parseInt(l.blockNumber,16) });
+        out.push({ id: l.topics[1], hashlock:'0x'+sl(2), amount: Number(BigInt('0x'+sl(1))), block: parseInt(l.blockNumber,16) });
       }
       from = to + 1;
       if (win < 9000) win = Math.min(9000, win*2);
@@ -171,6 +185,32 @@ async function evmLocked(rpcs, htlc, fromBlock) {
     }
   }
   return { events: out, latest };
+}
+
+// The settled side of the same story. Same adaptive windows as evmLocked, one
+// cursor per contract, so a chain that goes quiet costs nothing on the next pass.
+async function evmSettled(rpcs, htlc, fromBlock) {
+  const latest = parseInt(await evmRpc(rpcs,'eth_blockNumber',[]), 16);
+  let out = [];
+  for (const [topic, kind] of [[TOPIC_CLAIMED,'claimed'], [TOPIC_REFUNDED,'refunded']]) {
+    let from = fromBlock, win = 9000;
+    while (from <= latest) {
+      const to = Math.min(from + win - 1, latest);
+      try {
+        const logs = await evmRpc(rpcs,'eth_getLogs',[{address:htlc, fromBlock:'0x'+from.toString(16), toBlock:'0x'+to.toString(16), topics:[topic]}]);
+        for (const l of logs) out.push({ id: l.topics[1], kind, block: parseInt(l.blockNumber,16) });
+        from = to + 1;
+        if (win < 9000) win = Math.min(9000, win*2);
+      } catch(e) {
+        const m = String(e.message).match(/(\d+)\s*block/i);
+        const lim = m ? parseInt(m[1],10) : 0;
+        if (lim > 0 && lim < win) { win = Math.max(1, lim); continue; }
+        if (win > 10) { win = 10; continue; }
+        throw e;
+      }
+    }
+  }
+  return { settled: out, latest };
 }
 
 // Solana has no eth_getLogs: HTLCs are Anchor accounts. Same hashlock, same join, same keyless proof.
@@ -311,9 +351,23 @@ async function syncEVM() {
         const fromC = ct.mkey===key ? from : parseInt(metaGet(ct.mkey) || String(ct.from||0), 10);
         if (!fromC && ct.mkey!==key) { log(`[TRADE] ${name} announced HTLC ${ct.addr} has no from_block — skipped (announce with :from_block)`); continue; }
         const { events, latest } = await evmLocked(c.rpcs, ct.addr, fromC);
-        if (events.length) db.transaction(es => { for (const e of es) Q.addUsdc.run(e.hashlock, name, e.amount, e.block); })(events);
+        if (events.length) db.transaction(es => { for (const e of es) {
+          Q.addUsdc.run(e.hashlock, name, e.amount, e.block);
+          if (e.id) Q.addLockMap.run(e.id, e.hashlock, name);
+        } })(events);
         if (latest) metaSet(ct.mkey, latest);
         if (events.length) log(`[TRADE] ${name} ${ct.addr.slice(0,10)}: +${events.length} USDC locks (through block ${latest})`);
+        // Settled state, read on the node so no browser has to ask the chain
+        // dozens of times just to draw a label.
+        try {
+          const skey = 'evm_settled_' + name + '_' + ct.addr.toLowerCase();
+          const fromS = parseInt(metaGet(skey) || String(ct.from||0), 10);
+          const st = await evmSettled(c.rpcs, ct.addr, fromS);
+          const nowS = Math.floor(Date.now()/1000);
+          if (st.settled.length) db.transaction(rs => { for (const r of rs) Q.addSettled.run(r.id, name, r.kind, r.block, nowS); })(st.settled);
+          if (st.latest) metaSet(skey, st.latest);
+          if (st.settled.length) log(`[TRADE] ${name} ${ct.addr.slice(0,10)}: +${st.settled.length} settled (through block ${st.latest})`);
+        } catch(e) { log(`[TRADE] ${name} settled FAIL:`, String(e.message).slice(0,120)); }
       }
     } catch(e) { log(`[TRADE] ${name} getLogs FAIL:`, String(e.message).slice(0,120)); }
   }
