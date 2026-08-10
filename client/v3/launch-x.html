@@ -372,18 +372,21 @@ $('logoFile').onchange=e=>{
     g.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,S,S);
     logoData=c.toDataURL('image/jpeg',0.85);
     $('logoBox').innerHTML='<img src="'+logoData+'">';
-    /* on-chain copy: 64x64 webp under 4KB, written at launch */
+    /* On-chain copy. The cards on screen draw this at 100-160px, so a 64px
+       source arrives stretched and blurry while half the chain budget sits
+       unused. 128px at the full 6900-byte budget is what the buyer actually
+       sees; quality steps down first, size only as a last resort. */
     logoBytes=null;
     try{
-      const c2=document.createElement('canvas'); c2.width=64; c2.height=64;
-      c2.getContext('2d').drawImage(c,0,0,64,64);
       (async()=>{
-        let blob=null;
-        for(let q=0.8;q>=0.3;q-=0.15){
-          blob=await new Promise(r=>c2.toBlob(r,'image/webp',q));
-          if(blob && blob.size<=4096) break;
+        for(const S2 of [128,96,64]){
+          const c2=document.createElement('canvas'); c2.width=S2; c2.height=S2;
+          c2.getContext('2d').drawImage(c,0,0,S2,S2);
+          for(let q=0.85;q>=0.3;q-=0.1){
+            const blob=await new Promise(r=>c2.toBlob(r,'image/webp',q));
+            if(blob && blob.size<=6900){ logoBytes=new Uint8Array(await blob.arrayBuffer()); return; }
+          }
         }
-        if(blob && blob.size<=4096) logoBytes=new Uint8Array(await blob.arrayBuffer());
       })();
     }catch(_e){}
   };
