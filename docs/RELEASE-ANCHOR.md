@@ -26,6 +26,7 @@ GBX:R:<tag>:<sha256-hex>
 | v31-gbx-federation (anchored as `v31f`) | 78ea0bbcfe960c5245986f3c7eba0133c26954869b0b3c325ed26c23e23f804e | ba26367636fc7b00c70a391c3664aa5171ff04438b1b935a93db52e271d236a0 |
 | v31-gbx-launchpad, APK 1.0.116 (anchored as `v31a`) | 4ddb0dc8dc5e05b0a53d13ed2f6f18127be336e8d84fb64acb0b3faeea7b124f | 4d6935eff835c970b7f125548c73289668b0841b07f454178073a9e84e75f1cd |
 | v31-gbx-launchpad, APK 1.0.117 (anchored as `v31b`) | 311998e8b1f55d84b365444c0eed698491a7e9edd05dcb5911aefe34f20a2bf4 | 60043e70f9090142fceddee447689ed6c7bfcbb2c7cfe2fcbda75e400af41923 |
+| v31-gbx-launchpad, APK 1.0.118 (anchored as `v31c`) | 10e544b2ceac6fa542a307fe884f3ae007d2777636b5da60e7f7d2f3ec01ef1e | 915957343b396a40b6e0edc9f312c75f104eb9bc33eb3720ab6ea0b6f951f715 |
 
 ## Verify (any node, no permission needed)
 
