@@ -272,22 +272,34 @@ function showFollowed(){
   var keys=lsGet('gbx_followed_pk');
   var body=keys.length?keys.map(function(k){
     var a=(window.GoldbrixCrypto&&window.GoldbrixCrypto.addressFromPublicKey)?window.GoldbrixCrypto.addressFromPublicKey(k):null;
-    return '<a class="h" style="text-decoration:none;color:inherit" href="/v3/profile-x.html?pk='+k+'">'
+    return '<div style="display:flex;align-items:center;gap:8px">'
+      +'<a class="h" style="text-decoration:none;color:inherit;flex:1;min-width:0" href="/v3/profile-x.html?pk='+k+'">'
       +'<span class="av">@</span><span class="hn"><span class="ht">'+esc(a||(k.slice(0,10)+'…'))+'</span>'
-      +'<span class="hs">'+esc(k.slice(0,16))+'…</span></span></a>';
+      +'<span class="hs">'+esc(k.slice(0,16))+'…</span></span></a>'
+      +'<span class="foldCopy" data-copy="'+esc(a||k)+'" style="color:var(--gold);cursor:pointer;padding:8px;font-size:16px;flex:0 0 auto">⧉</span>'
+      +'</div>';
   }).join(''):('<div class="muted">'+esc(tt('none'))+'</div>');
   var m=document.getElementById('foldModal');
   if(!m){m=document.createElement('div');m.id='foldModal';
-    m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9997;display:flex;align-items:flex-end;justify-content:center';
+    m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9997;display:flex;align-items:flex-end;justify-content:center;padding-bottom:calc(84px + env(safe-area-inset-bottom))';
     m.addEventListener('click',function(e){if(e.target===m)m.remove();});
     document.body.appendChild(m);}
-  m.innerHTML='<div style="background:linear-gradient(180deg,var(--bg-elevated),var(--bg-card));width:100%;max-width:600px;max-height:80vh;overflow:auto;border-radius:20px 20px 0 0;border:1px solid var(--border);padding:18px">'
+  m.innerHTML='<div style="background:linear-gradient(180deg,var(--bg-elevated),var(--bg-card));width:100%;max-width:600px;min-height:45vh;max-height:72vh;overflow-y:auto;overflow-x:hidden;overflow-wrap:anywhere;border-radius:20px;border:1px solid var(--border);padding:18px">'
     +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'
     +'<span class="sect" style="margin:0">'+esc(tt('fold'))+'</span>'
     +'<span id="foldX" style="color:var(--gold);font-size:24px;cursor:pointer;padding:0 8px">&times;</span></div>'
     +body+'</div>';
   var x=document.getElementById('foldX');
   if(x)x.addEventListener('click',function(){m.remove();});
+  m.querySelectorAll('.foldCopy').forEach(function(b){
+    b.addEventListener('click',function(e){
+      e.preventDefault(); e.stopPropagation();
+      var v=b.getAttribute('data-copy');
+      (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(v):Promise.reject())
+        .catch(function(){ try{ var t=document.createElement('textarea'); t.value=v; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }catch(_e){} })
+        .then(function(){ b.textContent='✓'; setTimeout(function(){ b.textContent='⧉'; },1200); });
+    });
+  });
 }
 function lockedUI(){
   hideSocial();
