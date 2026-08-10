@@ -5,8 +5,30 @@
 (function() {
   'use strict';
 
-  var APK_URL = 'https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/download/v31-gbx-launchpad/goldbrix-1.0.114-114.apk';
+  // The published build changes; a URL frozen at build time turns into a 404
+  // the day the next release lands. version.json is served by every federation
+  // node, so the link is read from it and the constant is only a last resort.
+  var APK_URL = 'https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/download/v31-gbx-launchpad/goldbrix-1.0.118-118.apk';
+  var APK_SIZE = '';
   var deferredPrompt = null;
+
+  function fmtMB(n) { return n > 0 ? (n / 1048576).toFixed(0) + ' MB' : ''; }
+
+  function refreshApkInfo() {
+    try {
+      fetch('/version.json?t=' + Date.now(), { cache: 'no-store' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (!d) return;
+          if (d.downloadUrl) APK_URL = d.downloadUrl;
+          // The size travels with the metadata: asking the release host costs a
+          // cross-origin request it does not answer, and a figure written by
+          // hand goes stale at the next build.
+          APK_SIZE = fmtMB(d.sizeBytes ? parseInt(d.sizeBytes, 10) : 0);
+        })
+        .catch(function() { /* no figure is better than a wrong figure */ });
+    } catch (e) {}
+  }
 
   function getPlatform() {
     var ua = navigator.userAgent || '';
@@ -60,7 +82,7 @@
     showModal({
       icon: '📦',
       title: 'Install GoldBrix Android App',
-      body: '<p style="margin:12px 0;color:#ccc;line-height:1.5;font-size:14px;">Tap below to download official APK (~21 MB). Open file to install.</p>' +
+      body: '<p style="margin:12px 0;color:#ccc;line-height:1.5;font-size:14px;">Tap below to download the official APK' + (APK_SIZE ? ' (' + APK_SIZE + ')' : '') + '. Open file to install.</p>' +
             '<p style="margin:12px 0;font-size:12px;color:#888;">⚠️ Allow install from this source if prompted.</p>' +
             '<p style="margin:6px 0;font-size:11px;color:#666;">Cert SHA: 34bf...7085 (verify Settings → Apps → GoldBrix)</p>',
       primary: { label: '📥 DOWNLOAD APK', action: function() {
@@ -86,12 +108,28 @@
   }
 
   function showDesktopModal() {
-    var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(APK_URL);
+    // A QR built by a third-party host puts the distribution path in someone
+    // else's hands. The library is already in the client; it is loaded here on
+    // demand, because this modal is the only place that needs it.
+    setTimeout(function() {
+      var box = document.getElementById('gbxApkQr');
+      if (!box) return;
+      var draw = function() {
+        try { new QRCode(box, { text: APK_URL, width: 220, height: 220, colorDark: '#13100b', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M }); }
+        catch (e) { box.style.display = 'none'; }
+      };
+      if (window.QRCode) return draw();
+      var sc = document.createElement('script');
+      sc.src = '/qrcode.min.js';
+      sc.onload = draw;
+      sc.onerror = function() { box.style.display = 'none'; };
+      document.head.appendChild(sc);
+    }, 0);
     showModal({
       icon: '💻', title: 'Install GoldBrix',
       body: '<div style="text-align:center;margin:14px 0;">' +
             '<p style="margin:0 0 12px;color:#ccc;font-size:14px;">Scan with phone for Android app:</p>' +
-            '<img src="' + qrUrl + '" width="220" height="220" style="background:#fff;padding:10px;border-radius:10px;" onerror="this.style.display=\'none\'"></div>' +
+            '<div id="gbxApkQr" style="display:inline-block;background:#fff;padding:10px;border-radius:10px;"></div></div>' +
             '<p style="text-align:center;margin:10px 0;color:#888;font-size:12px;">— OR —</p>' +
             '<p style="text-align:center;margin:8px 0;"><a href="' + APK_URL + '" download style="display:inline-block;background:#FFC107;color:#000;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:700;font-size:13px;">📥 Download APK</a></p>' +
             '<p style="text-align:center;margin:14px 0 4px;"><a href="#" onclick="window.pwaInstallDesktop();return false;" style="color:#FFC107;font-size:12px;text-decoration:underline;">Install as PWA shortcut</a></p>',
@@ -167,6 +205,7 @@
     hijackInstall();
   }
   window.addEventListener('load', hijackInstall); // bulletproof: runs after EVERYTHING
+  window.addEventListener('load', refreshApkInfo);
 
   // GBX-PERF-LOCK — register SW v5 (stale-while-revalidate shell, network-only API)
   if ('serviceWorker' in navigator) {
