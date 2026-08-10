@@ -1,7 +1,7 @@
 // gbx-update-check.js v3 — Settings-driven update UX
 // State exposed via window.__GBX_UPDATE_STATE__ + events
-window.__GBX_BUILD_LOCAL__ = 114;
-window.__GBX_VERSION_LOCAL__ = "1.0.114";
+window.__GBX_BUILD_LOCAL__ = 118;
+window.__GBX_VERSION_LOCAL__ = "1.0.118";
 window.__GBX_DEBUG__ = false;
 
 (function() {
