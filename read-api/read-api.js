@@ -538,6 +538,14 @@ const server = http.createServer(async (req, res) => {
         return res.end(JSON.stringify(out));
       } catch (e) { res.writeHead(500); return res.end('sol-locks error'); }
     }
+    if (req.method === 'GET' && url.pathname.startsWith('/api/sol-locks-by-sender/')) {
+      if (!gbxTrades || !gbxTrades.solLocksBySender) return sendJson(res, 503, { error: 'trade_index_unavailable' });
+      try {
+        const out = gbxTrades.solLocksBySender(url.pathname.slice('/api/sol-locks-by-sender/'.length));
+        res.writeHead(200, {'Content-Type':'application/json'});
+        return res.end(JSON.stringify(out));
+      } catch (e) { res.writeHead(500); return res.end('sol-locks error'); }
+    }
     if (req.method === 'GET' && url.pathname.startsWith('/api/htlc-by-refund-pubkey/')) {
       const dbp = process.env.GBX_TOKENIDX_DB;
       if (!dbp) { res.writeHead(404); return res.end('not enabled'); }

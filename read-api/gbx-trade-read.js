@@ -124,4 +124,33 @@ function settledByHashlocks(list) {
   return { ok: true, indexed_age_s: age, settled: out };
 }
 
-module.exports = { trades, candles, stats, solLocksByReceiver, settledByHashlocks, DB_PATH };
+// The mirror of the query above, for the other side of the same lock: the
+// buyer knows only their own address, and no public Solana endpoint will
+// enumerate accounts for a browser.
+function solLocksBySender(senderB58) {
+  const r = String(senderB58 || '').trim();
+  if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(r)) return { ok:false, error:'bad_sender', locks:[] };
+  let rows = [];
+  try {
+    rows = db().prepare(
+      `SELECT pda,receiver,mint,amount,hashlock,timelock,buyer_pk,seen
+         FROM sol_locks WHERE sender=? AND claimed=0 AND refunded=0
+         ORDER BY timelock DESC`).all(r);
+  } catch (e) { return { ok:false, error:'not_indexed', locks:[] }; }
+  const now = Math.floor(Date.now() / 1000);
+  let seen = 0;
+  try { const m = db().prepare(`SELECT MAX(seen) s FROM sol_locks`).get(); seen = (m && m.s) || 0; } catch (_e) {}
+  return {
+    ok: true,
+    // How stale this answer may be. A client that cares can refuse an old one.
+    indexed_age_s: seen ? (now - seen) : null,
+    locks: rows.map(x => ({
+      pda: x.pda, receiver: x.receiver, mint: x.mint,
+      amount: String(x.amount), hashlock: '0x' + x.hashlock,
+      timelock: x.timelock, buyer_pk: x.buyer_pk || null,
+      claimed: false, refunded: false
+    }))
+  };
+}
+
+module.exports = { trades, candles, stats, solLocksByReceiver, solLocksBySender, settledByHashlocks, DB_PATH };

@@ -777,6 +777,28 @@ async function renderBuyPend(){
           +'</div>';
       }
     }
+
+    // Solana keeps no log a browser can search, so the federation answers for
+    // the buyer the same way it already answers for the seller: by address.
+    // Without this, a wallet that lost its local memory could not see its own
+    // money, even though the account is alive on chain and belongs to it.
+    try{
+      const sol=await window.GoldbrixMultichain.deriveSOL(wallet.mnemonic);
+      const me58=sol&&(sol.address||sol.publicKey);
+      if(me58){
+        const j=await window.GBXRead.json('/api/sol-locks-by-sender/'+me58);
+        for(const L3 of ((j&&j.locks)||[])){
+          const hlx=String(L3.hashlock).replace(/^0x/,'').toLowerCase();
+          if(have.has(hlx)) continue;
+          if(Number(L3.timelock)>now2) continue;
+          html+='<div class="card" data-hl="'+hlx+'">'
+            +'<div class="row"><span class="val price">'+(Number(L3.amount)/1e6).toFixed(4)+' USDC</span><span class="lab">'+CH.S.name+'</span></div>'
+            +'<div class="row"><span class="lab">'+tt('canRefund')+'</span></div>'
+            +'<button class="btn red btnRefundU" data-hl="'+hlx+'" data-chain="S">'+tt('refundBtn')+'</button>'
+            +'</div>';
+        }
+      }
+    }catch(_e){}
   }catch(_e){}
   paint(html);
   function paint(h){

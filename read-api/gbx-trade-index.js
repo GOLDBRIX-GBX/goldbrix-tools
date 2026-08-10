@@ -56,7 +56,8 @@ CREATE TABLE IF NOT EXISTS usdc_legs (
 CREATE TABLE IF NOT EXISTS sol_locks (
   pda TEXT PRIMARY KEY, receiver TEXT NOT NULL, mint TEXT NOT NULL,
   amount INTEGER NOT NULL, hashlock TEXT NOT NULL, timelock INTEGER NOT NULL,
-  claimed INTEGER NOT NULL, refunded INTEGER NOT NULL, buyer_pk TEXT, seen INTEGER NOT NULL);
+  claimed INTEGER NOT NULL, refunded INTEGER NOT NULL, buyer_pk TEXT, seen INTEGER NOT NULL,
+  sender TEXT);
 CREATE INDEX IF NOT EXISTS idx_sol_rcv ON sol_locks(receiver) WHERE claimed=0 AND refunded=0;
 CREATE TABLE IF NOT EXISTS htlc_settled (
   lock_id TEXT PRIMARY KEY, chain TEXT NOT NULL, kind TEXT NOT NULL, block INTEGER NOT NULL, seen INTEGER NOT NULL);
@@ -68,12 +69,22 @@ CREATE INDEX IF NOT EXISTS idx_lockmap_hl ON lock_map(hashlock);
 CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT);
 CREATE INDEX IF NOT EXISTS idx_legs_ts ON gbx_legs(ts);
 `);
+
+{
+  const have = new Set(db.prepare("PRAGMA table_info(sol_locks)").all().map(c => c.name));
+  if (!have.has('sender')) db.exec("ALTER TABLE sol_locks ADD COLUMN sender TEXT");
+  // The index has to come after the column exists: CREATE TABLE IF NOT EXISTS
+  // leaves an older table untouched, so on any database built before this the
+  // column arrives only here.
+  db.exec("CREATE INDEX IF NOT EXISTS idx_sol_snd ON sol_locks(sender) WHERE claimed=0 AND refunded=0");
+}
+
 const Q = {
   addGbx:  db.prepare(`INSERT OR REPLACE INTO gbx_legs (hashlock,txid,vout,gbx_sats,height,ts,kind) VALUES (?,?,?,?,?,?,?)`),
   addUsdc: db.prepare(`INSERT OR REPLACE INTO usdc_legs (hashlock,chain,usdc_micro,block) VALUES (?,?,?,?)`),
   addSettled: db.prepare(`INSERT OR REPLACE INTO htlc_settled (lock_id,chain,kind,block,seen) VALUES (?,?,?,?,?)`),
   addLockMap: db.prepare(`INSERT OR REPLACE INTO lock_map (lock_id,hashlock,chain) VALUES (?,?,?)`),
-  addSol:  db.prepare(`INSERT OR REPLACE INTO sol_locks (pda,receiver,mint,amount,hashlock,timelock,claimed,refunded,buyer_pk,seen) VALUES (?,?,?,?,?,?,?,?,?,?)`),
+  addSol:  db.prepare(`INSERT OR REPLACE INTO sol_locks (pda,receiver,mint,amount,hashlock,timelock,claimed,refunded,buyer_pk,seen,sender) VALUES (?,?,?,?,?,?,?,?,?,?,?)`),
   getSolPk:db.prepare(`SELECT buyer_pk FROM sol_locks WHERE pda=?`),
   delSolGone: db.prepare(`DELETE FROM sol_locks WHERE seen < ?`),
   delAbove:db.prepare(`DELETE FROM gbx_legs WHERE height > ?`),
@@ -278,7 +289,7 @@ async function syncSolLocks(program, rpcs) {
     }
     rows.push([a.pubkey, b58e(u.subarray(40,72)), b58e(u.subarray(72,104)),
                Number(u.readBigUInt64LE(104)), hashlock, timelock,
-               claimed?1:0, refunded?1:0, pk, now]);
+               claimed?1:0, refunded?1:0, pk, now, b58e(u.subarray(8,40))]);
     n++;
   }
   if (rows.length) db.transaction(rs => { for (const r of rs) Q.addSol.run(...r); })(rows);
