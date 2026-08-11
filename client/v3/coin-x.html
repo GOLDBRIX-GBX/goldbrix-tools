@@ -478,10 +478,10 @@ function render(){
       c.width=s0; c.height=s0;
       c.getContext('2d').drawImage(img,(img.width-s0)/2,(img.height-s0)/2,s0,s0,0,0,s0,s0);
       let logoBytes=null;
-      const LOGO_BUDGET=F.LOGO_CHUNK_MAX*F.LOGO_TOTAL_MAX;
+      function __dscale(src,S){let cur=src;while(cur.width>2*S){const t=document.createElement('canvas');t.width=Math.ceil(cur.width/2);t.height=Math.ceil(cur.height/2);const g=t.getContext('2d');g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(cur,0,0,t.width,t.height);cur=t;}const o=document.createElement('canvas');o.width=S;o.height=S;const g2=o.getContext('2d');g2.imageSmoothingEnabled=true;g2.imageSmoothingQuality='high';g2.drawImage(cur,0,0,S,S);return o;}
+        const LOGO_BUDGET=F.LOGO_CHUNK_MAX*F.LOGO_TOTAL_MAX;
       outer: for(const S2 of [128,96,64]){
-        const c2=document.createElement('canvas'); c2.width=S2; c2.height=S2;
-        c2.getContext('2d').drawImage(c,0,0,S2,S2);
+        const c2=__dscale(c,S2);
         for(let q=0.85;q>=0.3;q-=0.1){
           const blob=await new Promise(r=>c2.toBlob(r,'image/webp',q));
           if(blob && blob.size<=LOGO_BUDGET){ logoBytes=new Uint8Array(await blob.arrayBuffer()); break outer; }
