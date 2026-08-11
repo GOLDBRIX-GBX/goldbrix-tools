@@ -218,7 +218,7 @@ function offerCard(o,mine){
    +'<div class="row"><span class="val amt">'+gbx+' GBX</span><span class="val price">$'+usd+'</span></div>'
    +'<div class="row"><span class="lab chain'+o.chain+'">'+ch+'</span><span class="lab">'+(mine?st:'')+'</span></div>'
    +(mine&&!o.spent?'<button class="btn red btnCancel">'+tt('cancel')+'</button>':'')
-   +(mine&&o.executed?'<div class="lab lExec" style="margin-top:6px">'+(o.exec_settled?tt('execDone'):tt('inExec'))+'</div><button class="btn btnClaimU" data-hl="'+o.exec_hashlock+'" data-chain="'+o.chain+'" data-addr="'+o.usdc_addr+'" data-ex="'+(o.exec_txid||'')+'" data-settled="'+(o.exec_settled||'')+'" style="display:none">'+tt('claimUsdc')+'</button>':'')
+   +(mine&&o.executed?'<div class="lab lExec" style="margin-top:6px">'+((o.exec_settled&&window.__gbxIdxFresh)?tt('execDone'):tt('inExec'))+'</div><button class="btn btnClaimU" data-hl="'+o.exec_hashlock+'" data-chain="'+o.chain+'" data-addr="'+o.usdc_addr+'" data-ex="'+(o.exec_txid||'')+'" data-settled="'+(o.exec_settled||'')+'" style="display:none">'+tt('claimUsdc')+'</button>':'')
    +(mine&&o.exec_txid?'<a class="txLink" href="/v3/explorer.html?q='+o.exec_txid+'" style="display:block;margin-top:6px;padding:6px 9px;border:1px solid rgba(255,217,138,.35);border-radius:7px;color:#FFD98A;text-decoration:none;font-weight:600;font-size:.8rem">'+tt('viewTx')+' \u2192</a>':'')   +(!mine&&!o.spent?'<button class="btn btnBuy" data-chain="'+o.chain+'" data-addr="'+o.usdc_addr+'" data-price="'+o.price_micro+'" data-seller="'+o.seller_pk+'">'+tt('buy')+'</button>':'')
    +'</div>';
 }
@@ -250,6 +250,7 @@ async function loadMine(){
   if(!pkHex)return;
   try{
     const j=await window.GBXRead.json('/api/offers/'+pkHex);
+    window.__gbxIdxFresh=!!(j&&j.indexed_age_s!=null&&j.indexed_age_s<=120);
     const list=(j&&j.offers)||[];
     const el=$('mineList');
     const html=list.length?list.map(o=>offerCard(o,true)).join(''):'<div class="empty">'+tt('mineEmpty')+'</div>';

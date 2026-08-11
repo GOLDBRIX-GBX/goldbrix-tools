@@ -38,6 +38,14 @@
     return 'desktop';
   }
 
+  var GBX_PWA_I18N={
+en:{native:'RUNNING IN NATIVE APP \u2713',pwaOk:'PWA INSTALLED \u2713',dlAnd:'\ud83d\udce5 DOWNLOAD ANDROID APP',instIos:'\ud83d\udcf1 INSTALL ON iOS',instApp:'\ud83d\udcbb INSTALL GOLDBRIX APP',getApp:'\ud83d\udce5 GET APP',instS:'\ud83d\udcf1 INSTALL',instD:'\ud83d\udcbb INSTALL',already:'Already installed \u2713',andTitle:'Install GoldBrix Android App',andBody:'Tap below to download the official APK',andOpen:'Open file to install.',andWarn:'\u26a0\ufe0f Allow install from this source if prompted.',cert:'Cert SHA: 34bf...7085 (verify Settings \u2192 Apps \u2192 GoldBrix)',dlApk:'\ud83d\udce5 DOWNLOAD APK',dlApkS:'\ud83d\udce5 Download APK',dlStart:'Download started \u2193',cancel:'Cancel',iosTitle:'Install on iOS',iosUse:'Use <b>Safari</b>:',ios1:'Tap <b>Share</b> \u2b06\ufe0f (bottom of Safari)',ios2:'Scroll \u2192 <b>"Add to Home Screen"</b>',ios3:'Tap <b>Add</b> (top right)',iosSoon:'Native iOS app coming soon.',gotIt:'Got it',deskTitle:'Install GoldBrix',scan:'Scan with phone for Android app:',orX:'\u2014 OR \u2014',shortcut:'Install as PWA shortcut',close:'Close',pwaDone:'PWA installed \u2713',cancelled:'Cancelled',menuHint:'Use browser menu \u2192 Install GoldBrix'},
+ro:{native:'RULEAZ\u0102 \u00ceN APLICA\u021aIA NATIV\u0102 \u2713',pwaOk:'PWA INSTALAT \u2713',dlAnd:'\ud83d\udce5 DESCARC\u0102 APLICA\u021aIA ANDROID',instIos:'\ud83d\udcf1 INSTALEAZ\u0102 PE iOS',instApp:'\ud83d\udcbb INSTALEAZ\u0102 GOLDBRIX',getApp:'\ud83d\udce5 IA APLICA\u021aIA',instS:'\ud83d\udcf1 INSTALEAZ\u0102',instD:'\ud83d\udcbb INSTALEAZ\u0102',already:'Deja instalat \u2713',andTitle:'Instaleaz\u0103 aplica\u021bia GoldBrix Android',andBody:'Apas\u0103 mai jos pentru a desc\u0103rca APK-ul oficial',andOpen:'Deschide fi\u0219ierul pentru instalare.',andWarn:'\u26a0\ufe0f Permite instalarea din aceast\u0103 surs\u0103 dac\u0103 \u021bi se cere.',cert:'SHA certificat: 34bf...7085 (verific\u0103 Set\u0103ri \u2192 Aplica\u021bii \u2192 GoldBrix)',dlApk:'\ud83d\udce5 DESCARC\u0102 APK',dlApkS:'\ud83d\udce5 Descarc\u0103 APK',dlStart:'Desc\u0103rcare pornit\u0103 \u2193',cancel:'Anuleaz\u0103',iosTitle:'Instaleaz\u0103 pe iOS',iosUse:'Folose\u0219te <b>Safari</b>:',ios1:'Apas\u0103 <b>Share</b> \u2b06\ufe0f (jos \u00een Safari)',ios2:'Deruleaz\u0103 \u2192 <b>\u201eAdd to Home Screen\u201d</b>',ios3:'Apas\u0103 <b>Add</b> (dreapta sus)',iosSoon:'Aplica\u021bia iOS nativ\u0103 vine cur\u00e2nd.',gotIt:'Am \u00een\u021beles',deskTitle:'Instaleaz\u0103 GoldBrix',scan:'Scaneaz\u0103 cu telefonul pentru aplica\u021bia Android:',orX:'\u2014 SAU \u2014',shortcut:'Instaleaz\u0103 ca scurt\u0103tur\u0103 PWA',close:'\u00cenchide',pwaDone:'PWA instalat \u2713',cancelled:'Anulat',menuHint:'Meniul browserului \u2192 Install GoldBrix'},
+de:{native:'L\u00c4UFT IN NATIVER APP \u2713',pwaOk:'PWA INSTALLIERT \u2713',dlAnd:'\ud83d\udce5 ANDROID-APP HERUNTERLADEN',instIos:'\ud83d\udcf1 AUF iOS INSTALLIEREN',instApp:'\ud83d\udcbb GOLDBRIX INSTALLIEREN',getApp:'\ud83d\udce5 APP HOLEN',instS:'\ud83d\udcf1 INSTALLIEREN',instD:'\ud83d\udcbb INSTALLIEREN',already:'Bereits installiert \u2713',andTitle:'GoldBrix Android-App installieren',andBody:'Unten tippen, um die offizielle APK zu laden',andOpen:'Datei zum Installieren \u00f6ffnen.',andWarn:'\u26a0\ufe0f Installation aus dieser Quelle erlauben, falls gefragt.',cert:'Zertifikat-SHA: 34bf...7085 (pr\u00fcfen: Einstellungen \u2192 Apps \u2192 GoldBrix)',dlApk:'\ud83d\udce5 APK HERUNTERLADEN',dlApkS:'\ud83d\udce5 APK herunterladen',dlStart:'Download gestartet \u2193',cancel:'Abbrechen',iosTitle:'Auf iOS installieren',iosUse:'<b>Safari</b> verwenden:',ios1:'<b>Teilen</b> \u2b06\ufe0f tippen (unten in Safari)',ios2:'Scrollen \u2192 <b>\u201eZum Home-Bildschirm\u201c</b>',ios3:'<b>Hinzuf\u00fcgen</b> tippen (oben rechts)',iosSoon:'Native iOS-App kommt bald.',gotIt:'Verstanden',deskTitle:'GoldBrix installieren',scan:'Mit dem Handy scannen f\u00fcr die Android-App:',orX:'\u2014 ODER \u2014',shortcut:'Als PWA-Verkn\u00fcpfung installieren',close:'Schlie\u00dfen',pwaDone:'PWA installiert \u2713',cancelled:'Abgebrochen',menuHint:'Browser-Men\u00fc \u2192 GoldBrix installieren'},
+zh:{native:'\u6b63\u5728\u539f\u751f\u5e94\u7528\u4e2d\u8fd0\u884c \u2713',pwaOk:'PWA \u5df2\u5b89\u88c5 \u2713',dlAnd:'\ud83d\udce5 \u4e0b\u8f7d\u5b89\u5353\u5e94\u7528',instIos:'\ud83d\udcf1 \u5728 iOS \u5b89\u88c5',instApp:'\ud83d\udcbb \u5b89\u88c5 GOLDBRIX',getApp:'\ud83d\udce5 \u83b7\u53d6\u5e94\u7528',instS:'\ud83d\udcf1 \u5b89\u88c5',instD:'\ud83d\udcbb \u5b89\u88c5',already:'\u5df2\u5b89\u88c5 \u2713',andTitle:'\u5b89\u88c5 GoldBrix \u5b89\u5353\u5e94\u7528',andBody:'\u70b9\u51fb\u4e0b\u65b9\u4e0b\u8f7d\u5b98\u65b9 APK',andOpen:'\u6253\u5f00\u6587\u4ef6\u5b89\u88c5\u3002',andWarn:'\u26a0\ufe0f \u5982\u63d0\u793a\uff0c\u8bf7\u5141\u8bb8\u6b64\u6765\u6e90\u5b89\u88c5\u3002',cert:'\u8bc1\u4e66 SHA\uff1a34bf...7085\uff08\u9a8c\u8bc1\uff1a\u8bbe\u7f6e \u2192 \u5e94\u7528 \u2192 GoldBrix\uff09',dlApk:'\ud83d\udce5 \u4e0b\u8f7d APK',dlApkS:'\ud83d\udce5 \u4e0b\u8f7d APK',dlStart:'\u5f00\u59cb\u4e0b\u8f7d \u2193',cancel:'\u53d6\u6d88',iosTitle:'\u5728 iOS \u5b89\u88c5',iosUse:'\u4f7f\u7528 <b>Safari</b>\uff1a',ios1:'\u70b9\u51fb<b>\u5206\u4eab</b> \u2b06\ufe0f\uff08Safari \u5e95\u90e8\uff09',ios2:'\u6ed1\u52a8 \u2192 <b>\u201c\u6dfb\u52a0\u5230\u4e3b\u5c4f\u5e55\u201d</b>',ios3:'\u70b9\u51fb<b>\u6dfb\u52a0</b>\uff08\u53f3\u4e0a\u89d2\uff09',iosSoon:'\u539f\u751f iOS \u5e94\u7528\u5373\u5c06\u63a8\u51fa\u3002',gotIt:'\u77e5\u9053\u4e86',deskTitle:'\u5b89\u88c5 GoldBrix',scan:'\u7528\u624b\u673a\u626b\u7801\u83b7\u53d6\u5b89\u5353\u5e94\u7528\uff1a',orX:'\u2014 \u6216 \u2014',shortcut:'\u5b89\u88c5\u4e3a PWA \u5feb\u6377\u65b9\u5f0f',close:'\u5173\u95ed',pwaDone:'PWA \u5df2\u5b89\u88c5 \u2713',cancelled:'\u5df2\u53d6\u6d88',menuHint:'\u6d4f\u89c8\u5668\u83dc\u5355 \u2192 \u5b89\u88c5 GoldBrix'},
+ar:{native:'\u064a\u0639\u0645\u0644 \u0641\u064a \u0627\u0644\u062a\u0637\u0628\u064a\u0642 \u0627\u0644\u0623\u0635\u0644\u064a \u2713',pwaOk:'PWA \u0645\u062b\u0628\u062a \u2713',dlAnd:'\ud83d\udce5 \u062a\u0646\u0632\u064a\u0644 \u062a\u0637\u0628\u064a\u0642 \u0623\u0646\u062f\u0631\u0648\u064a\u062f',instIos:'\ud83d\udcf1 \u0627\u0644\u062a\u062b\u0628\u064a\u062a \u0639\u0644\u0649 iOS',instApp:'\ud83d\udcbb \u062a\u062b\u0628\u064a\u062a GOLDBRIX',getApp:'\ud83d\udce5 \u0627\u062d\u0635\u0644 \u0639\u0644\u0649 \u0627\u0644\u062a\u0637\u0628\u064a\u0642',instS:'\ud83d\udcf1 \u062a\u062b\u0628\u064a\u062a',instD:'\ud83d\udcbb \u062a\u062b\u0628\u064a\u062a',already:'\u0645\u062b\u0628\u062a \u0628\u0627\u0644\u0641\u0639\u0644 \u2713',andTitle:'\u062a\u062b\u0628\u064a\u062a \u062a\u0637\u0628\u064a\u0642 GoldBrix \u0644\u0623\u0646\u062f\u0631\u0648\u064a\u062f',andBody:'\u0627\u0636\u063a\u0637 \u0623\u062f\u0646\u0627\u0647 \u0644\u062a\u0646\u0632\u064a\u0644 APK \u0627\u0644\u0631\u0633\u0645\u064a',andOpen:'\u0627\u0641\u062a\u062d \u0627\u0644\u0645\u0644\u0641 \u0644\u0644\u062a\u062b\u0628\u064a\u062a.',andWarn:'\u26a0\ufe0f \u0627\u0633\u0645\u062d \u0628\u0627\u0644\u062a\u062b\u0628\u064a\u062a \u0645\u0646 \u0647\u0630\u0627 \u0627\u0644\u0645\u0635\u062f\u0631 \u0625\u0630\u0627 \u0637\u064f\u0644\u0628.',cert:'SHA \u0627\u0644\u0634\u0647\u0627\u062f\u0629: 34bf...7085 (\u062a\u062d\u0642\u0642: \u0627\u0644\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u2190 \u0627\u0644\u062a\u0637\u0628\u064a\u0642\u0627\u062a \u2190 GoldBrix)',dlApk:'\ud83d\udce5 \u062a\u0646\u0632\u064a\u0644 APK',dlApkS:'\ud83d\udce5 \u062a\u0646\u0632\u064a\u0644 APK',dlStart:'\u0628\u062f\u0623 \u0627\u0644\u062a\u0646\u0632\u064a\u0644 \u2193',cancel:'\u0625\u0644\u063a\u0627\u0621',iosTitle:'\u0627\u0644\u062a\u062b\u0628\u064a\u062a \u0639\u0644\u0649 iOS',iosUse:'\u0627\u0633\u062a\u062e\u062f\u0645 <b>Safari</b>:',ios1:'\u0627\u0636\u063a\u0637 <b>\u0645\u0634\u0627\u0631\u0643\u0629</b> \u2b06\ufe0f (\u0623\u0633\u0641\u0644 Safari)',ios2:'\u0645\u0631\u0631 \u2190 <b>\u0625\u0636\u0627\u0641\u0629 \u0625\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629 \u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629</b>',ios3:'\u0627\u0636\u063a\u0637 <b>\u0625\u0636\u0627\u0641\u0629</b> (\u0623\u0639\u0644\u0649 \u0627\u0644\u064a\u0645\u064a\u0646)',iosSoon:'\u062a\u0637\u0628\u064a\u0642 iOS \u0627\u0644\u0623\u0635\u0644\u064a \u0642\u0627\u062f\u0645 \u0642\u0631\u064a\u0628\u0627\u064b.',gotIt:'\u0641\u0647\u0645\u062a',deskTitle:'\u062a\u062b\u0628\u064a\u062a GoldBrix',scan:'\u0627\u0645\u0633\u062d \u0628\u0627\u0644\u0647\u0627\u062a\u0641 \u0644\u062a\u0637\u0628\u064a\u0642 \u0623\u0646\u062f\u0631\u0648\u064a\u062f:',orX:'\u2014 \u0623\u0648 \u2014',shortcut:'\u062a\u062b\u0628\u064a\u062a \u0643\u0627\u062e\u062a\u0635\u0627\u0631 PWA',close:'\u0625\u063a\u0644\u0627\u0642',pwaDone:'PWA \u0645\u062b\u0628\u062a \u2713',cancelled:'\u0623\u064f\u0644\u063a\u064a',menuHint:'\u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0645\u062a\u0635\u0641\u062d \u2190 \u062a\u062b\u0628\u064a\u062a GoldBrix'}};
+  function gbxPwaT(k){var l='en';try{l=(localStorage.getItem('gbx_lang')||localStorage.getItem('goldbrix_lang')||localStorage.getItem('gbx-lang')||(navigator.language||'en')).slice(0,2);}catch(e){}
+    var d=GBX_PWA_I18N[l]||GBX_PWA_I18N.en;return d[k]||GBX_PWA_I18N.en[k]||k;}
   function isStandalone() {
     return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
            window.navigator.standalone === true;
@@ -53,26 +61,26 @@
     var lbl = document.getElementById('pwaBtnLabel');
     if (btn && lbl) {
       var plat = getPlatform();
-      if (plat === 'native') { btn.style.opacity='0.5'; btn.disabled=true; lbl.textContent='RUNNING IN NATIVE APP ✓'; }
-      else if (isStandalone()) { btn.style.opacity='0.5'; btn.disabled=true; lbl.textContent='PWA INSTALLED ✓'; }
-      else if (plat === 'android') lbl.textContent = '📥 DOWNLOAD ANDROID APP';
-      else if (plat === 'ios') lbl.textContent = '📱 INSTALL ON iOS';
-      else lbl.textContent = '💻 INSTALL GOLDBRIX APP';
+      if (plat === 'native') { btn.style.opacity='0.5'; btn.disabled=true; lbl.textContent=gbxPwaT('native'); }
+      else if (isStandalone()) { btn.style.opacity='0.5'; btn.disabled=true; lbl.textContent=gbxPwaT('pwaOk'); }
+      else if (plat === 'android') lbl.textContent = gbxPwaT('dlAnd');
+      else if (plat === 'ios') lbl.textContent = gbxPwaT('instIos');
+      else lbl.textContent = gbxPwaT('instApp');
     }
     // Also update welcome banner button if exists
     var bannerBtn = document.getElementById('pwaInstallBtn');
     if (bannerBtn) {
       var plat2 = getPlatform();
-      if (plat2 === 'android') bannerBtn.textContent = '📥 GET APP';
-      else if (plat2 === 'ios') bannerBtn.textContent = '📱 INSTALL';
-      else bannerBtn.textContent = '💻 INSTALL';
+      if (plat2 === 'android') bannerBtn.textContent = gbxPwaT('getApp');
+      else if (plat2 === 'ios') bannerBtn.textContent = gbxPwaT('instS');
+      else bannerBtn.textContent = gbxPwaT('instD');
     }
   }
 
   // === Smart install (stored under immutable name) ===
   window._gbxSmartInstall = function() {
     var plat = getPlatform();
-    if (plat === 'native' || isStandalone()) { showToast('Already installed ✓'); return; }
+    if (plat === 'native' || isStandalone()) { showToast(gbxPwaT('already')); return; }
     if (plat === 'android') return showAndroidModal();
     if (plat === 'ios') return showIOSModal();
     return showDesktopModal();
@@ -81,29 +89,29 @@
   function showAndroidModal() {
     showModal({
       icon: '📦',
-      title: 'Install GoldBrix Android App',
-      body: '<p style="margin:12px 0;color:#ccc;line-height:1.5;font-size:14px;">Tap below to download the official APK' + (APK_SIZE ? ' (' + APK_SIZE + ')' : '') + '. Open file to install.</p>' +
-            '<p style="margin:12px 0;font-size:12px;color:#888;">⚠️ Allow install from this source if prompted.</p>' +
-            '<p style="margin:6px 0;font-size:11px;color:#666;">Cert SHA: 34bf...7085 (verify Settings → Apps → GoldBrix)</p>',
-      primary: { label: '📥 DOWNLOAD APK', action: function() {
+      title: gbxPwaT('andTitle'),
+      body: '<p style="margin:12px 0;color:#ccc;line-height:1.5;font-size:14px;">'+gbxPwaT('andBody')+'' + (APK_SIZE ? ' (' + APK_SIZE + ')' : '') + '. '+gbxPwaT('andOpen')+'</p>' +
+            '<p style="margin:12px 0;font-size:12px;color:#888;">'+gbxPwaT('andWarn')+'</p>' +
+            '<p style="margin:6px 0;font-size:11px;color:#666;">'+gbxPwaT('cert')+'</p>',
+      primary: { label: gbxPwaT('dlApk'), action: function() {
         window.location.href = APK_URL;
         closeModal();
-        setTimeout(function() { showToast('Download started ↓'); }, 600);
+        setTimeout(function() { showToast(gbxPwaT('dlStart')); }, 600);
       }},
-      secondary: { label: 'Cancel', action: closeModal }
+      secondary: { label: gbxPwaT('cancel'), action: closeModal }
     });
   }
 
   function showIOSModal() {
     showModal({
-      icon: '📱', title: 'Install on iOS',
-      body: '<p style="margin:12px 0;color:#ccc;font-size:14px;">Use <b>Safari</b>:</p>' +
+      icon: '📱', title: gbxPwaT('iosTitle'),
+      body: '<p style="margin:12px 0;color:#ccc;font-size:14px;">'+gbxPwaT('iosUse')+'</p>' +
             '<ol style="margin:12px 0;padding-left:22px;color:#ccc;line-height:1.9;font-size:13px;">' +
-            '<li>Tap <b>Share</b> ⬆️ (bottom of Safari)</li>' +
-            '<li>Scroll → <b>"Add to Home Screen"</b></li>' +
-            '<li>Tap <b>Add</b> (top right)</li></ol>' +
-            '<p style="margin:14px 0;font-size:12px;color:#888;">Native iOS app coming soon.</p>',
-      primary: { label: 'Got it', action: closeModal }
+            '<li>'+gbxPwaT('ios1')+'</li>' +
+            '<li>'+gbxPwaT('ios2')+'</li>' +
+            '<li>'+gbxPwaT('ios3')+'</li></ol>' +
+            '<p style="margin:14px 0;font-size:12px;color:#888;">'+gbxPwaT('iosSoon')+'</p>',
+      primary: { label: gbxPwaT('gotIt'), action: closeModal }
     });
   }
 
@@ -126,14 +134,14 @@
       document.head.appendChild(sc);
     }, 0);
     showModal({
-      icon: '💻', title: 'Install GoldBrix',
+      icon: '💻', title: gbxPwaT('deskTitle'),
       body: '<div style="text-align:center;margin:14px 0;">' +
-            '<p style="margin:0 0 12px;color:#ccc;font-size:14px;">Scan with phone for Android app:</p>' +
+            '<p style="margin:0 0 12px;color:#ccc;font-size:14px;">'+gbxPwaT('scan')+'</p>' +
             '<div id="gbxApkQr" style="display:inline-block;background:#fff;padding:10px;border-radius:10px;"></div></div>' +
-            '<p style="text-align:center;margin:10px 0;color:#888;font-size:12px;">— OR —</p>' +
-            '<p style="text-align:center;margin:8px 0;"><a href="' + APK_URL + '" download style="display:inline-block;background:#FFC107;color:#000;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:700;font-size:13px;">📥 Download APK</a></p>' +
-            '<p style="text-align:center;margin:14px 0 4px;"><a href="#" onclick="window.pwaInstallDesktop();return false;" style="color:#FFC107;font-size:12px;text-decoration:underline;">Install as PWA shortcut</a></p>',
-      primary: { label: 'Close', action: closeModal }
+            '<p style="text-align:center;margin:10px 0;color:#888;font-size:12px;">'+gbxPwaT('orX')+'</p>' +
+            '<p style="text-align:center;margin:8px 0;"><a href="' + APK_URL + '" download style="display:inline-block;background:#FFC107;color:#000;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:700;font-size:13px;">'+gbxPwaT('dlApkS')+'</a></p>' +
+            '<p style="text-align:center;margin:14px 0 4px;"><a href="#" onclick="window.pwaInstallDesktop();return false;" style="color:#FFC107;font-size:12px;text-decoration:underline;">'+gbxPwaT('shortcut')+'</a></p>',
+      primary: { label: gbxPwaT('close'), action: closeModal }
     });
   }
 
@@ -142,9 +150,9 @@
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then(function(c) {
         deferredPrompt = null; closeModal();
-        showToast(c.outcome === 'accepted' ? 'PWA installed ✓' : 'Cancelled');
+        showToast(c.outcome === 'accepted' ? gbxPwaT('pwaDone') : gbxPwaT('cancelled'));
       });
-    } else { showToast('Use browser menu → Install GoldBrix'); }
+    } else { showToast(gbxPwaT('menuHint')); }
   };
 
   function showModal(opts) {
