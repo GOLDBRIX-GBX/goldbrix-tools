@@ -123,6 +123,8 @@ body[dir="rtl"]{direction:rtl;}
     <div id="mDesc" style="display:none;color:var(--text-primary);font-size:13px;line-height:1.6;margin-top:10px"></div>
     <div id="mLinks" style="display:none;margin-top:6px"></div>
     <button id="mAdd" class="pctb" style="display:none;margin-top:10px;flex:none;padding:7px 14px" data-x="m.add">Add description</button>
+    <button id="lgAdd" class="pctb" style="display:none;margin-top:10px;flex:none;padding:7px 14px" data-x="lg.add">Add logo</button>
+    <input type="file" id="lgFile" accept="image/*" style="display:none">
     <div id="mForm" style="display:none;margin-top:10px">
       <textarea class="inp" id="mDescIn" maxlength="150" rows="2" style="width:100%;resize:none;font-family:inherit;margin-bottom:6px"></textarea>
       <input class="inp" id="mLinksIn" maxlength="64" style="width:100%;margin-bottom:8px" placeholder="x.com/… t.me/… https://…">
@@ -265,7 +267,7 @@ import { buildFundTx } from '/gbx-htlc.mjs';
 /* ── i18n ── */
 const L=(()=>{try{return localStorage.getItem('gbx_lang')||localStorage.getItem('goldbrix_lang')||'en';}catch(e){return 'en';}})();
 const T={
-en:{loading:'reading the chain…','m.add':'Add description','m.write':'Write on chain','m.done':'Written. It appears once the chain confirms it.','m.err':'Could not write. Nothing was sent.','r.price':'Price','r.liq':'Curve liquidity','r.sold':'Tokens sold','r.holders':'Holders',
+en:{loading:'reading the chain…','lg.add':'Add logo','lg.done':'Logo written. It appears once the chain confirms it.','lg.err':'Could not write the logo. Nothing was sent.','m.add':'Add description','m.write':'Write on chain','m.done':'Written. It appears once the chain confirms it.','m.err':'Could not write. Nothing was sent.','r.price':'Price','r.liq':'Curve liquidity','r.sold':'Tokens sold','r.holders':'Holders',
  's.grad':'Graduation · honest',
  'g.note':'The target is alive: it is 20× the largest trade of the last ~7 days (never less than 2,000 GBX). A whale raising the price raises its own bar. No fixed sum, ever.',
  'g.done':'Graduated — the liquidity moved to the open pool. This history is the curve\u2019s life.',
@@ -282,7 +284,7 @@ en:{loading:'reading the chain…','m.add':'Add description','m.write':'Write on
  'b.grad':'GRADUATE THE COIN','e.amt':'Enter a valid amount','e.net':'Network unavailable. Nothing was sent. Try again.',
  'e.funds':'Insufficient available funds or a previous transaction is still confirming.','e.max':'Amount too large for one transaction right now — try a smaller amount.','e.busy':'The chain is processing your previous trade. Try again in a few seconds.','e.wait':'Waiting for the network to confirm your previous trade...','e.err':'Something went wrong. Nothing was lost. Try again.','e.wallet':'Wallet locked — unlocking…','e.notlive':'Test mode: the launchpad rules are not active on the network yet. Nothing was sent.',
  'e.notoken':'You hold no tokens of this coin on this device.','sent':'Sent. The chain will confirm in seconds.','x.indexing':'The chain is indexing this coin \u2014 a few seconds\u2026'},
-ro:{loading:'citesc lanțul…','m.add':'Adaugă descriere','m.write':'Scrie pe lanț','m.done':'Scris. Apare după ce lanțul confirmă.','m.err':'Nu s-a putut scrie. Nimic nu a fost trimis.','r.price':'Preț','r.liq':'Lichiditatea curbei','r.sold':'Tokens vânduți','r.holders':'Deținători',
+ro:{loading:'citesc lanțul…','lg.add':'Adaug\u0103 logo','lg.done':'Logo scris. Apare dup\u0103 confirmarea lan\u021bului.','lg.err':'Logo-ul nu a putut fi scris. Nu s-a trimis nimic.','m.add':'Adaugă descriere','m.write':'Scrie pe lanț','m.done':'Scris. Apare după ce lanțul confirmă.','m.err':'Nu s-a putut scrie. Nimic nu a fost trimis.','r.price':'Preț','r.liq':'Lichiditatea curbei','r.sold':'Tokens vânduți','r.holders':'Deținători',
  's.grad':'Graduare · onestă',
  'g.note':'Ținta e vie: e 20× cel mai mare trade din ultimele ~7 zile (niciodată sub 2.000 GBX). Balena care urcă prețul își urcă propriul prag. Nicio sumă fixă, niciodată.',
  'g.done':'Graduat — lichiditatea s-a mutat în pool-ul deschis. Istoricul de aici e viața curbei.',
@@ -299,7 +301,7 @@ ro:{loading:'citesc lanțul…','m.add':'Adaugă descriere','m.write':'Scrie pe 
  'b.grad':'GRADUEAZĂ MONEDA','e.amt':'Introdu o sumă validă','e.net':'Rețea indisponibilă. Nu s-a trimis nimic. Încearcă din nou.',
  'e.funds':'Fonduri insuficiente sau o tranzacție anterioară e încă în confirmare.','e.max':'Suma e prea mare pentru o singură tranzacție acum — încearcă o sumă mai mică.','e.busy':'Lanțul procesează tranzacția ta anterioară. Reîncearcă în câteva secunde.','e.wait':'Se așteaptă confirmarea tranzacției tale anterioare...','e.err':'A apărut o problemă. Nu s-a pierdut nimic. Încearcă din nou.','e.wallet':'Portofel blocat — deblocare…','e.notlive':'Mod de test: regulile launchpad-ului nu sunt încă active în rețea. Nu s-a trimis nimic.',
  'e.notoken':'Nu deții tokens ai acestui coin pe acest dispozitiv.','sent':'Trimis. Lanțul confirmă în câteva secunde.','x.indexing':'Lanțul indexează moneda \u2014 câteva secunde\u2026'},
-de:{loading:'lese die Chain…','m.add':'Beschreibung hinzufügen','m.write':'Auf die Chain schreiben','m.done':'Geschrieben. Erscheint nach Bestätigung der Chain.','m.err':'Konnte nicht schreiben. Nichts wurde gesendet.','r.price':'Preis','r.liq':'Kurven-Liquidität','r.sold':'Verkaufte Tokens','r.holders':'Halter',
+de:{loading:'lese die Chain…','lg.add':'Logo hinzuf\u00fcgen','lg.done':'Logo geschrieben. Erscheint nach Best\u00e4tigung der Chain.','lg.err':'Logo konnte nicht geschrieben werden. Nichts wurde gesendet.','m.add':'Beschreibung hinzufügen','m.write':'Auf die Chain schreiben','m.done':'Geschrieben. Erscheint nach Bestätigung der Chain.','m.err':'Konnte nicht schreiben. Nichts wurde gesendet.','r.price':'Preis','r.liq':'Kurven-Liquidität','r.sold':'Verkaufte Tokens','r.holders':'Halter',
  's.grad':'Graduierung · ehrlich',
  'g.note':'Das Ziel lebt: es ist 20× der größte Trade der letzten ~7 Tage (nie unter 2.000 GBX). Ein Wal, der den Preis hebt, hebt seine eigene Latte. Nie eine feste Summe.',
  'g.done':'Graduiert — die Liquidität ist in den offenen Pool gewandert. Diese Historie ist das Leben der Kurve.',
@@ -316,7 +318,7 @@ de:{loading:'lese die Chain…','m.add':'Beschreibung hinzufügen','m.write':'Au
  'b.grad':'MÜNZE GRADUIEREN','e.amt':'Gültigen Betrag eingeben','e.net':'Netzwerk nicht erreichbar. Nichts wurde gesendet.',
  'e.funds':'Unzureichende verfügbare Mittel oder eine vorherige Transaktion wird noch bestätigt.','e.max':'Betrag derzeit zu groß für eine Transaktion — versuche einen kleineren Betrag.','e.busy':'Die Chain verarbeitet deinen vorherigen Trade. Versuche es in wenigen Sekunden erneut.','e.wait':'Warte auf die Bestätigung deines vorherigen Trades...','e.err':'Etwas ist schiefgelaufen. Nichts ging verloren. Versuche es erneut.','e.wallet':'Wallet gesperrt — entsperren…','e.notlive':'Testmodus: Die Launchpad-Regeln sind im Netzwerk noch nicht aktiv. Nichts wurde gesendet.',
  'e.notoken':'Du hältst keine Tokens dieser Münze auf diesem Gerät.','sent':'Gesendet. Die Chain bestätigt in Sekunden.','x.indexing':'Die Chain indexiert diese Münze \u2014 wenige Sekunden\u2026'},
-zh:{loading:'正在读取链…','m.add':'添加描述','m.write':'写入链上','m.done':'已写入。链上确认后显示。','m.err':'写入失败。未发送任何内容。','r.price':'价格','r.liq':'曲线流动性','r.sold':'已售代币','r.holders':'持有者',
+zh:{loading:'正在读取链…','lg.add':'\u6dfb\u52a0\u5fbd\u6807','lg.done':'\u5fbd\u6807\u5df2\u5199\u5165\u3002\u94fe\u4e0a\u786e\u8ba4\u540e\u663e\u793a\u3002','lg.err':'\u5fbd\u6807\u65e0\u6cd5\u5199\u5165\u3002\u672a\u53d1\u9001\u4efb\u4f55\u5185\u5bb9\u3002','m.add':'添加描述','m.write':'写入链上','m.done':'已写入。链上确认后显示。','m.err':'写入失败。未发送任何内容。','r.price':'价格','r.liq':'曲线流动性','r.sold':'已售代币','r.holders':'持有者',
  's.grad':'毕业 · 诚实',
  'g.note':'目标是活的：为最近约7天最大交易的20倍（绝不低于2,000 GBX）。鲸鱼抬价即抬高自己的门槛。永无固定金额。',
  'g.done':'已毕业——流动性已进入开放池。这段历史是曲线的一生。',
@@ -333,7 +335,7 @@ zh:{loading:'正在读取链…','m.add':'添加描述','m.write':'写入链上'
  'b.grad':'让币毕业','e.amt':'请输入有效金额','e.net':'网络不可用。未发送任何内容。',
  'e.funds':'可用资金不足，或上一笔交易仍在确认中。','e.max':'当前单笔交易金额过大——请尝试较小的金额。','e.busy':'链正在处理你上一笔交易。请几秒后重试。','e.wait':'正在等待你上一笔交易被确认...','e.err':'出现问题。没有任何损失。请重试。','e.wallet':'钱包已锁定——正在解锁…','e.notlive':'测试模式：启动板规则尚未在网络上激活。未发送任何内容。',
  'e.notoken':'此设备上没有该币的代币。','sent':'已发送。链将在数秒内确认。','x.indexing':'链正在索引该币 \u2014 请稍等几秒…'},
-ar:{loading:'قراءة السلسلة…','m.add':'أضف وصفًا','m.write':'اكتب على السلسلة','m.done':'كُتب. يظهر بعد تأكيد السلسلة.','m.err':'تعذّرت الكتابة. لم يُرسل شيء.','r.price':'السعر','r.liq':'سيولة المنحنى','r.sold':'الرموز المباعة','r.holders':'الحائزون',
+ar:{loading:'قراءة السلسلة…','lg.add':'\u0625\u0636\u0627\u0641\u0629 \u0627\u0644\u0634\u0639\u0627\u0631','lg.done':'\u062a\u0645\u062a \u0643\u062a\u0627\u0628\u0629 \u0627\u0644\u0634\u0639\u0627\u0631. \u064a\u0638\u0647\u0631 \u0628\u0639\u062f \u062a\u0623\u0643\u064a\u062f \u0627\u0644\u0633\u0644\u0633\u0644\u0629.','lg.err':'\u062a\u0639\u0630\u0651\u0631 \u0643\u062a\u0627\u0628\u0629 \u0627\u0644\u0634\u0639\u0627\u0631. \u0644\u0645 \u064a\u064f\u0631\u0633\u0644 \u0634\u064a\u0621.','m.add':'أضف وصفًا','m.write':'اكتب على السلسلة','m.done':'كُتب. يظهر بعد تأكيد السلسلة.','m.err':'تعذّرت الكتابة. لم يُرسل شيء.','r.price':'السعر','r.liq':'سيولة المنحنى','r.sold':'الرموز المباعة','r.holders':'الحائزون',
  's.grad':'التخرج · بأمانة',
  'g.note':'الهدف حي: إنه 20× أكبر صفقة في آخر ~7 أيام (لا يقل أبداً عن 2,000 GBX). الحوت الذي يرفع السعر يرفع عتبته. لا مبلغ ثابت أبداً.',
  'g.done':'تخرجت — انتقلت السيولة إلى المجمع المفتوح. هذا التاريخ هو حياة المنحنى.',
@@ -456,12 +458,61 @@ function render(){
   }
   (async()=>{try{
     const w=loadWallet();
-    if(w && !D.desc && !D.links && D.creator_pk){
+    if(w && D.creator_pk){
       const k=await window.GoldbrixCrypto.deriveKeypairFromMnemonic(w.mnemonic);
-      if(C.hex(new Uint8Array(k.publicKey))===D.creator_pk) $('mAdd').style.display='inline-block';
+      if(C.hex(new Uint8Array(k.publicKey))===D.creator_pk){
+        if(!D.desc && !D.links) $('mAdd').style.display='inline-block';
+        if(!D.logo) $('lgAdd').style.display='inline-block';
+      }
     }
   }catch(e){}})();
   $('mAdd').onclick=()=>{ $('mAdd').style.display='none'; $('mForm').style.display='block'; };
+  /* the creator can write a missing logo on chain, chunk by chunk, signed on device */
+  $('lgAdd').onclick=()=>$('lgFile').click();
+  $('lgFile').onchange=async()=>{
+    const f=$('lgFile').files[0]; if(!f) return;
+    try{
+      $('lgAdd').disabled=true; $('lgAdd').textContent='\u2026';
+      const img=await createImageBitmap(f);
+      const c=document.createElement('canvas'); const s0=Math.min(img.width,img.height);
+      c.width=s0; c.height=s0;
+      c.getContext('2d').drawImage(img,(img.width-s0)/2,(img.height-s0)/2,s0,s0,0,0,s0,s0);
+      let logoBytes=null;
+      const LOGO_BUDGET=F.LOGO_CHUNK_MAX*F.LOGO_TOTAL_MAX;
+      outer: for(const S2 of [128,96,64]){
+        const c2=document.createElement('canvas'); c2.width=S2; c2.height=S2;
+        c2.getContext('2d').drawImage(c,0,0,S2,S2);
+        for(let q=0.85;q>=0.3;q-=0.1){
+          const blob=await new Promise(r=>c2.toBlob(r,'image/webp',q));
+          if(blob && blob.size<=LOGO_BUDGET){ logoBytes=new Uint8Array(await blob.arrayBuffer()); break outer; }
+        }
+      }
+      if(!logoBytes) throw new Error('size');
+      wallet=loadWallet(); if(!wallet){ toast(tt('e.wallet')); throw new Error('wallet'); }
+      await ensureKeys();
+      const pkU=new Uint8Array(keys.publicKey);
+      const sign=d=>derSig(secp.sign(d,new Uint8Array(keys.privateKey)));
+      const h16=new Uint8Array(await crypto.subtle.digest('SHA-256',logoBytes)).slice(0,16);
+      const total=Math.ceil(logoBytes.length/F.LOGO_CHUNK_MAX);
+      const need=Number(F.META_FEE_SAT)*total+546;
+      const raw=await window.GoldbrixCrypto.fetchUtxos(wallet.address,(need+50000)/1e8);
+      const u=raw.filter(x=>x.spendable!==false).map(x=>({txid:x.txid,vout:x.vout,value8:Math.round(x.amount*1e8)}))
+                 .find(x=>x.value8>=need);
+      if(!u) throw new Error('bal');
+      let chainTxid=u.txid, chainVout=u.vout, chainVal=u.value8;
+      for(let i=0;i<total;i++){
+        const part=logoBytes.subarray(i*F.LOGO_CHUNK_MAX, Math.min((i+1)*F.LOGO_CHUNK_MAX, logoBytes.length));
+        const lt=F.buildLogoChunkTx({cidHex:cid, idx:i, total, hash16:h16, data:part,
+          utxos:[{txid:chainTxid, vout:chainVout, value8:chainVal}], pkU, buildFundTx, sign, p2wpkhSpkOf:()=>spkU});
+        const t=await gwBroadcast(lt.txHex);
+        chainTxid=t; chainVout=0; chainVal-=Number(F.META_FEE_SAT);
+      }
+      try{ const rd=new FileReader(); rd.onload=()=>{ try{ localStorage.setItem('gbx_logo_'+cid, rd.result); $('cLogo').innerHTML='<img src="'+rd.result+'">'; }catch(e){} };
+           rd.readAsDataURL(new Blob([logoBytes],{type:'image/webp'})); }catch(e){}
+      $('lgAdd').style.display='none';
+      $('mMsg').style.display='block'; $('mMsg').textContent=tt('lg.done');
+    }catch(e){ console.warn('[logo]',e); $('lgAdd').disabled=false; $('lgAdd').textContent=tt('lg.add'); $('mMsg').style.display='block'; $('mMsg').textContent=tt('lg.err'); }
+  };
   $('mSend').onclick=async()=>{
     try{
       const d2=$('mDescIn').value.trim(), l2=$('mLinksIn').value.trim();
