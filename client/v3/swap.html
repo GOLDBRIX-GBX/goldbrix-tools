@@ -93,13 +93,25 @@ window.GBX_LP_ROUTE = (async function(){
     if(!window.GBX_CHAINS) return null;
     var d = {lps: await window.GBX_LPS()};
     if(!d || !Array.isArray(d.lps) || !d.lps.length) return null;
+    // A provider is judged by what it delivers: a live quote. /lp-info is
+    // metadata - a gateway that quotes but does not describe itself is still
+    // a working gateway for the chains that need no address from it.
     async function ok(lp){
+      var i=null;
       try{
         var c=new AbortController(); var t=setTimeout(function(){c.abort();},4000);
-        var i=await (await fetch(lp.base_url+'/lp-info',{cache:'no-store',signal:c.signal})).json();
+        i=await (await fetch(lp.base_url+'/lp-info',{cache:'no-store',signal:c.signal})).json();
         clearTimeout(t);
-        return (i && i.lp_evm_addr && !(i.breaker && i.breaker.active)) ? i : null;
-      }catch(e){ return null; }
+        if(i && i.breaker && i.breaker.active) return null;
+        if(i && i.lp_evm_addr) return i;
+      }catch(e){ i=null; }
+      try{
+        var c2=new AbortController(); var t2=setTimeout(function(){c2.abort();},4000);
+        var q=await (await fetch(lp.base_url+'/quote?usd=1',{cache:'no-store',signal:c2.signal})).json();
+        clearTimeout(t2);
+        if(q && Number(q.price_usd)>0 && !q.breaker) return (i||{quote_only:true});
+      }catch(e2){}
+      return null;
     }
     var chosen={};
     for(var ci=0; ci<d.lps.length; ci++){
