@@ -527,6 +527,58 @@ const server = http.createServer(async (req, res) => {
         return res.end(JSON.stringify(out));
       } catch (e) { res.writeHead(500); return res.end('htlc-index error'); }
     }
+    // announcements - ephemeral creator updates, RAM only, 24h TTL, no disk
+    if (url.pathname === '/api/chat/recent' && req.method === 'GET') {
+      try {
+        const now = Date.now();
+        global.__gbxChat = (global.__gbxChat||[]).filter(m => now - m.ts < 86400000);
+        res.writeHead(200, {'Content-Type':'application/json'});
+        return res.end(JSON.stringify({ok:true, items: global.__gbxChat}));
+      } catch (e) { res.writeHead(500); return res.end('chat error'); }
+    }
+    if (url.pathname === '/api/chat' && req.method === 'POST') {
+      let body='';
+      req.on('data', c => { body += c; if (body.length > 4096) req.destroy(); });
+      req.on('end', async () => {
+        try {
+          const now = Date.now();
+          const j = JSON.parse(body);
+          const pk = String(j.pk||'').toLowerCase();
+          const ts = Number(j.ts||0);
+          const text = String(j.text||'');
+          const sig = String(j.sig||'');
+          const bad = c => { res.writeHead(400, {'Content-Type':'application/json'}); res.end(JSON.stringify({ok:false, error:c})); };
+          if (!/^0[23][0-9a-f]{64}$/.test(pk)) return bad('bad_pk');
+          if (!/^[0-9a-f]{128}$/.test(sig)) return bad('bad_sig');
+          if (!text || text.length > 280) return bad('bad_text');
+          if (Math.abs(now - ts) > 600000) return bad('bad_ts');
+          const dbp = process.env.GBX_TOKENIDX_DB;
+          if (!dbp) { res.writeHead(404); return res.end('not enabled'); }
+          if (!global.__gbxChatDb) {
+            const BS = require('better-sqlite3');
+            global.__gbxChatDb = new BS(dbp, {readonly:true});
+            global.__gbxChatCreator = global.__gbxChatDb.prepare('SELECT 1 FROM curves WHERE creator_pk=? LIMIT 1');
+          }
+          if (!global.__gbxChatCreator.get(pk)) return bad('not_creator');
+          global.__gbxChatRate = global.__gbxChatRate || {};
+          if (now - (global.__gbxChatRate[pk]||0) < 600000) return bad('rate_limited');
+          if (!global.__gbxSecp) global.__gbxSecp = (await import(path.join(__dirname,'..','client','vendor','secp256k1.mjs'))).default
+            || await import(path.join(__dirname,'..','client','vendor','secp256k1.mjs'));
+          const crypto = require('crypto');
+          const digest = crypto.createHash('sha256').update('GBXCHAT1|'+pk+'|'+ts+'|'+text,'utf8').digest();
+          const pkB = Buffer.from(pk,'hex'), sigB = Buffer.from(sig,'hex');
+          let okSig=false; try { okSig = global.__gbxSecp.verify(digest, pkB, sigB); } catch(_e) {}
+          if (!okSig) return bad('bad_signature');
+          global.__gbxChat = (global.__gbxChat||[]).filter(m => now - m.ts < 86400000);
+          global.__gbxChat.unshift({pk, ts, text, sig});
+          if (global.__gbxChat.length > 200) global.__gbxChat.length = 200;
+          global.__gbxChatRate[pk] = now;
+          res.writeHead(200, {'Content-Type':'application/json'});
+          return res.end(JSON.stringify({ok:true}));
+        } catch (e) { try{res.writeHead(400);res.end('bad request');}catch(_){} }
+      });
+      return;
+    }
     // sol-locks-by-receiver - live Solana USDC locks aimed at one address.
     // Read by the node because a browser cannot read it, proven by the client
     // against the chain before any GBX moves.
