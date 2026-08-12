@@ -410,7 +410,15 @@ const cid=new URLSearchParams(location.search).get('coin')||'';
     var se=document.getElementById('cShare');
     if(se&&!se.__gbx){se.__gbx=1;se.addEventListener('click',function(){
       var tk=(document.getElementById('cTick')||{}).textContent||'';
-      var u='https://goldbrix.app/v3/coin-x.html?coin='+cid;
+      // The link points at the node the reader is already on: no host is
+      // the address of this project, and a shared link keeps working when
+      // any single one of them goes away.
+      var _o=location.origin;
+      if(/^https?:\/\/(localhost|127\.|10\.0\.2\.2)/.test(_o)){
+        var _n=(window.GBX_NODES||[])[0]||'https://goldbrix.app/api';
+        _o=String(_n).replace(/\/api\/?$/,'').replace(/\/+$/,'');
+      }
+      var u=_o+'/v3/coin-x.html?coin='+cid;
       if(navigator.share){navigator.share({title:tk,text:tk+' on GoldBrix',url:u}).catch(function(){});}
       else if(navigator.clipboard){navigator.clipboard.writeText(tk+' \u00b7 '+u);se.textContent='\u2713';setTimeout(function(){se.textContent='\u2934\ufe0f';},1200);}
     });}
