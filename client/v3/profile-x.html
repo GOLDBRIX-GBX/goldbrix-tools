@@ -8,15 +8,15 @@
 <link rel="icon" href="/assets/coin/gbx-coin-32.png">
 <link rel="stylesheet" href="/v3/style.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-<script src="/promo-banner.js?v=120" defer></script>
-<script src="/v3/nav-i18n.js?v=120" defer></script>
-<script src="/v3/gbx-session.js?v=120"></script>
-<script src="/v3/gbx-read.js?v=120"></script>
-<script src="/v3/gbx-lp.js?v=120"></script>
+<script src="/promo-banner.js?v=121" defer></script>
+<script src="/v3/nav-i18n.js?v=121" defer></script>
+<script src="/v3/gbx-session.js?v=121"></script>
+<script src="/v3/gbx-read.js?v=121"></script>
+<script src="/v3/gbx-lp.js?v=121"></script>
 <link rel="stylesheet" href="/lib/price-chart.css">
 <script src="/lib/lightweight-charts.standalone.production.js" defer></script>
-<script src="/lib/price-chart.js?v=120" defer></script>
-<script type="module" src="/crypto-utils-v2.js?v=120"></script>
+<script src="/lib/price-chart.js?v=121" defer></script>
+<script type="module" src="/crypto-utils-v2.js?v=121"></script>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg-primary)}
@@ -370,13 +370,13 @@ function ownerUI(){
   var cb=$('ownerActs').querySelector('.a-conv');
   if(cb)cb.addEventListener('click',function(e){e.preventDefault();
     if(window.openConvertModal){window.openConvertModal();return;}
-    var sc=document.createElement('script');sc.src='/v3/convert-ui.js?v=120';
+    var sc=document.createElement('script');sc.src='/v3/convert-ui.js?v=121';
     sc.onload=function(){if(window.openConvertModal)window.openConvertModal();};
     document.head.appendChild(sc);});
   var cw=$('chainWrap');
   cw.innerHTML='<div class="card"><div class="sect">'+esc(tt('chains'))+'</div><div id="tokensList" class="muted">…</div></div>';
-  var m=document.createElement('script');m.type='module';m.src='/multichain-utils.js?v=120';document.head.appendChild(m);
-  var c=document.createElement('script');c.src='/v3/chain-balances.js?v=120';c.onload=function(){
+  var m=document.createElement('script');m.type='module';m.src='/multichain-utils.js?v=121';document.head.appendChild(m);
+  var c=document.createElement('script');c.src='/v3/chain-balances.js?v=121';c.onload=function(){
     if(window.loadChainBalances&&window.__gbxMyWallet)try{window.loadChainBalances(window.__gbxMyWallet);}catch(e){}};
   document.head.appendChild(c);
 }

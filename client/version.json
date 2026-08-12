@@ -1,10 +1,10 @@
 {
-  "build": 120,
-  "version": "1.0.120",
-  "downloadUrl": "https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/download/v31-gbx-launchpad/goldbrix-1.0.120-120.apk",
+  "build": 121,
+  "version": "1.0.121",
+  "downloadUrl": "https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/download/v31-gbx-launchpad/goldbrix-1.0.121-121.apk",
   "minBuild": 1,
-  "releasedAt": "2026-08-12T13:11:04Z",
-  "sha256": "80a260aa507abdcb0a13969a621e387e2ce2de0a980ada36e4f4ae6cd80d25c8",
+  "releasedAt": "2026-08-12T13:33:45Z",
+  "sha256": "acefa970aaf0039463bdac31f74f8bc80098fda6eadbe8d3bb3d137fd015d715",
   "sizeBytes": 10498298,
-  "changelog": "Build 120 v1.0.120"
+  "changelog": "Build 121 v1.0.121"
 }
