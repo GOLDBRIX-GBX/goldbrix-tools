@@ -1170,7 +1170,14 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
       box.dataset.gbxOk='1';
     }catch(e){ /* Keep the last good content on a transient fetch failure;
       an em dash only when nothing was ever shown (honest empty, no flicker). */
-      if(box.dataset.gbxOk!=='1') box.textContent='—'; }
+      if(box.dataset.gbxOk==='1') return;
+      /* Honest degradation on a quote_only LP (/lp-info absent): the floor is
+         derived from the federated executed price already in the page; explorer
+         links need lp_addr from /lp-info and are omitted, never invented. */
+      var mk=(+window._gbxMktUsd>0)?+window._gbxMktUsd:0;
+      if(mk>0){ var _ff=(mk*0.99).toFixed(4).replace(/0+$/,'').replace(/\.$/,'');
+        box.innerHTML='• '+String(t.piSimple||'').replace('{f}',_ff);
+      } else { box.textContent='—'; } }
   }
   try{ window.loadPriceInfo=loadPriceInfo; }catch(_e){}
   document.addEventListener('click',function(ev){
