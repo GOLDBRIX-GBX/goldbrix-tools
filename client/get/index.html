@@ -78,7 +78,7 @@
     </div>
     <div class="newver" id="t_newver">🚀 New version available!</div>
     <div style="color:var(--txt2);font-size:13px;font-family:'JetBrains Mono',monospace" id="m_changelog">—</div>
-    <a class="btn-dl" id="dlBtn" href="https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/download/v31-gbx-launchpad/goldbrix-1.0.114-114.apk">📦 <span id="t_download">DOWNLOAD APK</span></a>
+    <a class="btn-dl" id="dlBtn" href="https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/tag/v31-gbx-launchpad">📦 <span id="t_download">DOWNLOAD APK</span></a>
     <div class="grid">
       <div><div class="lbl" id="t_version">Version</div><div class="val" id="m_version2">—</div></div>
       <div><div class="lbl" id="t_build">Build</div><div class="val" id="m_build2">—</div></div>
@@ -88,7 +88,7 @@
   </div>
   <div class="card">
     <div class="sec-title">🔗 <span id="t_altlinks">Alternative Download Links</span></div>
-    <a class="dl-link" href="https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/download/v31-gbx-launchpad/goldbrix-1.0.114-114.apk">
+    <a class="dl-link" href="https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/tag/v31-gbx-launchpad">
       <div><div class="t" id="t_latest">Latest Version</div><div class="p">GitHub Release (canonical)</div></div><span class="arr">↓</span>
     </a>
     <a class="dl-link" id="versionedLink" href="#" download>
@@ -106,6 +106,7 @@
   <div class="foot">GoldBrix · v<span id="m_version3">—</span> · <span id="m_build3">—</span></div>
 </div>
 <div class="toast" id="toast"></div>
+<script src="/v3/gbx-read.js"></script>
 <script>
 var T={
 en:{subtitle:'NON-CUSTODIAL · MAINNET',signed:'✓ Signed Release',newver:'🚀 New version available!',download:'DOWNLOAD APK',version:'Version',build:'Build',size:'Size',date:'Date',altlinks:'Alternative Download Links',latest:'Latest Version',versioned:'Versioned File',verify:'Verification',cert:'(Signature Certificate)',copied:'✓ Copied!',note:'<b>Note:</b> This version updates your existing install without deleting wallet, seed or data — as long as the signature certificate stays unchanged (shown above).'},
@@ -122,7 +123,9 @@ document.querySelectorAll('#langbar button').forEach(function(b){b.classList.tog
 (function(){var bar=document.getElementById('langbar');LANGS.forEach(function(L){var b=document.createElement('button');b.textContent=L[1];b.dataset.l=L[0];b.onclick=function(){applyLang(L[0])};bar.appendChild(b)});applyLang(curLang());})();
 function fmtSize(b){if(!b)return'—';return(b/1048576).toFixed(2)+' MB'}
 function fmtDate(i){if(!i)return'—';try{return new Date(i).toLocaleDateString()}catch(e){return(i.split('T')[0]||'—')}}
-(async function(){try{var r=await fetch('/version.json?t='+Date.now(),{cache:'no-store'});var d=await r.json();var ver=d.version||'—',build=d.build||'—';
+(async function(){try{var _cands=[];try{var _lo=(typeof location!=='undefined')?location.origin:'';var _loc=/^https?:\/\/(localhost|127\.|10\.0\.2\.2)/.test(_lo);if(_lo&&!_loc)_cands.push('/version.json');(window.GBX_NODES||[]).forEach(function(n){var u=String(n).replace(/\/api\/?$/,'').replace(/\/+$/,'')+'/version.json';if(_cands.indexOf(u)===-1)_cands.push(u);});if(!_cands.length)_cands.push('/version.json');}catch(_e){_cands=['/version.json'];}
+var d=null;for(var _ci=0;_ci<_cands.length&&!d;_ci++){try{var _r=await fetch(_cands[_ci]+'?t='+Date.now(),{cache:'no-store'});if(_r.ok)d=await _r.json();}catch(_e){}}
+if(!d)throw new Error('no version source');var ver=d.version||'—',build=d.build||'—';
 document.getElementById('m_version').textContent='v'+ver;document.getElementById('m_version2').textContent=ver;document.getElementById('m_version3').textContent=ver;
 document.getElementById('m_build').textContent=build;document.getElementById('m_build2').textContent=build;document.getElementById('m_build3').textContent=build;
 document.getElementById('m_changelog').textContent=d.changelog||'';document.getElementById('m_date').textContent=fmtDate(d.releasedAt);document.getElementById('m_sha256').textContent=d.sha256||'—';
@@ -147,7 +150,7 @@ if(d.downloadUrl)document.getElementById('dlBtn').href=d.downloadUrl;
   document.querySelectorAll('a[href*="latest.apk"], a[href*=".apk"]').forEach(function(a){ a.addEventListener('click',openApk); });
 })();
 var vp=(d&&d.downloadUrl)||('https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/download/v31-gbx-launchpad/goldbrix-'+ver+'-'+build+'.apk');document.getElementById('versionedLink').href=vp;document.getElementById('m_versioned_path').textContent=vp.split('/').pop();
-try{var h=await fetch(vp,{method:'HEAD'});var len=h.headers.get('content-length');document.getElementById('m_size').textContent=fmtSize(len?parseInt(len):0)}catch(e){document.getElementById('m_size').textContent='\u2014'}
+document.getElementById('m_size').textContent=fmtSize(d.sizeBytes||0);
 }catch(e){}})();
 function copyHash(id){var txt=document.getElementById(id).textContent;if(!txt||txt==='—')return;navigator.clipboard&&navigator.clipboard.writeText(txt);var t=document.getElementById('toast');t.textContent=(T[curLang()]||T.en).copied;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},1500)}
 

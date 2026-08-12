@@ -948,7 +948,7 @@ async function loadChainStatus() {
               setText(lbl0, 'DOWNLOAD v' + v.version);
               e.btn.onclick = function(ev) {
                 ev && ev.preventDefault && ev.preventDefault();
-                window.location.href = v.downloadUrl || 'https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/download/v31-gbx-launchpad/goldbrix-1.0.114-114.apk';
+                window.location.href = v.downloadUrl || 'https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/tag/v31-gbx-launchpad';
                 return false;
               };
             })
@@ -956,7 +956,7 @@ async function loadChainStatus() {
               setText(e.sub, 'Add to home screen \u00b7 fast \u00b7 offline \u00b7 native');
               e.btn.onclick = function(ev) {
                 ev && ev.preventDefault && ev.preventDefault();
-                window.location.href = 'https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/download/v31-gbx-launchpad/goldbrix-1.0.114-114.apk';
+                window.location.href = 'https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/tag/v31-gbx-launchpad';
                 return false;
               };
             });
@@ -984,7 +984,7 @@ async function loadChainStatus() {
             ev && ev.preventDefault && ev.preventDefault();
             // GBX — deschide pagina /get (SHA + trust + download) in loc de download direct
             // /get is bundled inside the app at /get/index.html (no Caddy rewrite in the APK)
-            if (window.gbxStartUpdate) { window.gbxStartUpdate(); return false; } var _abs=(s.remote&&s.remote.downloadUrl)||'https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/download/v31-gbx-launchpad/goldbrix-1.0.114-114.apk'; try{var _P=window.Capacitor&&window.Capacitor.Plugins; if(_P&&_P.Browser){_P.Browser.open({url:_abs}); return false;}}catch(_e){} window.open(_abs,'_system')||(window.location.href=_abs);
+            if (window.gbxStartUpdate) { window.gbxStartUpdate(); return false; } var _abs=(s.remote&&s.remote.downloadUrl)||'https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/tag/v31-gbx-launchpad'; try{var _P=window.Capacitor&&window.Capacitor.Plugins; if(_P&&_P.Browser){_P.Browser.open({url:_abs}); return false;}}catch(_e){} window.open(_abs,'_system')||(window.location.href=_abs);
             return false;
           };
           return;

@@ -120,7 +120,7 @@ window.__GBX_DEBUG__ = false;
   window.gbxStartUpdate = function() {
     var remote = window.__GBX_UPDATE_STATE__.remote;
     if (!remote) return false;
-    var url = remote.downloadUrl || 'https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/download/v31-gbx-launchpad/goldbrix-1.0.114-114.apk';
+    var url = remote.downloadUrl || 'https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/tag/v31-gbx-launchpad';
     var P = window.Capacitor && window.Capacitor.Plugins;
     if (P && P.Browser) P.Browser.open({ url: url });
     else window.open(url, '_system');

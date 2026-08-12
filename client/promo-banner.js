@@ -54,7 +54,7 @@
     bannerEl.innerHTML='<div class="gbx-promo-track">'+html+html+'</div>';
     bannerEl.querySelectorAll('.gbx-promo-item').forEach(el=>{ el.onclick=()=>{ if(el.dataset.cat==='update'){
       // GBX — plic = descarcare DIRECTA (browser extern). Butoanele din settings duc la pagina /get.
-      var ABS='https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/download/v31-gbx-launchpad/goldbrix-1.0.114-114.apk';
+      var ABS='https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/tag/v31-gbx-launchpad';
       try{ var P=window.Capacitor&&window.Capacitor.Plugins; if(P&&P.Browser){ P.Browser.open({url:ABS}); return; } }catch(_){}
       window.open(ABS,'_system')||(window.location.href=ABS);
     } else { if(el.dataset.cat==='join'){window.location.href='/v3/join.html';}else{window.location.href='/v3/coin-x.html?coin='+el.dataset.coin;} } }; });
