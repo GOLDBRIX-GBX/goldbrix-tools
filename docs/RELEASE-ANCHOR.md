@@ -64,7 +64,7 @@ a build as the true one. What replaces authority:
   publisher.
 - **Your node, your rules.** A patch that changes consensus is not an
   update — it is a different chain. Every operator decides for themselves
-  what code they run, exactly as in Bitcoin.
+  what code they run.
 - **Adoption is the only signal.** A release "wins" only by independent
   operators choosing to run it. Nothing else confers legitimacy.
 
