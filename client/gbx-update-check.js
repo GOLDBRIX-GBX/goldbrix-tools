@@ -55,12 +55,12 @@ window.__GBX_DEBUG__ = false;
   }
 
   async function fetchVersion() {
-    /* Try every known federation node in order; the first good answer wins.
-       A dead node is skipped, not fatal - there is no privileged host. */
+    /* Every known federation node is asked; the answer with the highest
+       build wins. A node that lags behind cannot hide a release, and a
+       dead node is skipped, not fatal - there is no privileged host. */
     var urls = versionUrls();
     var P = window.Capacitor && window.Capacitor.Plugins;
-    for (var i = 0; i < urls.length; i++) {
-      var u = urls[i];
+    async function one(u){
       if (P && P.CapacitorHttp) {
         try {
           var resp = await P.CapacitorHttp.get({
@@ -69,17 +69,24 @@ window.__GBX_DEBUG__ = false;
             params: { t: String(Date.now()) }
           });
           log('← HTTP ' + resp.status + ' ' + u);
-          if (resp.status === 200 && resp.data) return resp.data;
-          continue;
-        } catch (e) { log('✗ ' + (e.message||e).substr(0,40)); continue; }
+          if (resp.status === 200 && resp.data) return (typeof resp.data==='string')?JSON.parse(resp.data):resp.data;
+          return null;
+        } catch (e) { log('✗ ' + (e.message||e).substr(0,40)); return null; }
       }
       try {
         var r = await fetch(u + '?t=' + Date.now(), { cache: 'no-store' });
         log('← Fetch ' + r.status + ' ' + u);
         if (r.ok) return await r.json();
       } catch (e) { log('✗ ' + (e.message||e).substr(0,40)); }
+      return null;
     }
-    return null;
+    var all = await Promise.all(urls.map(one));
+    var best = null;
+    for (var i = 0; i < all.length; i++) {
+      var d = all[i];
+      if (d && Number(d.build) > 0 && (!best || Number(d.build) > Number(best.build))) best = d;
+    }
+    return best;
   }
 
   async function runCheck() {
