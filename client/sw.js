@@ -1,6 +1,6 @@
 /* GoldBrix SW v6 — HTML network-first (always fresh code), assets SWR, API network-only.
  * Fix: stale-while-revalidate on HTML was serving old code. */
-const CACHE = 'gbx-shell-v306-20260813-s95-localfonts';
+const CACHE = 'gbx-shell-v307-20260813-s95-offlineroot';
 
 function isNetworkOnly(url) {
   // /lp/ + lps.json + ANY cross-origin = network-only. Stale quotes/prices from cache are forbidden (no-loss rule).
@@ -47,7 +47,11 @@ self.addEventListener('fetch', (event) => {
         if (res && res.status === 200 && res.type === 'basic') cache.put(req, res.clone());
         return res;
       } catch (e) {
-        const cached = await cache.match(req);
+        // Offline: exact request first, then the SPA shell (the root path is a
+        // redirect and is never stored under its own key), then the home view.
+        const cached = await cache.match(req)
+          || (req.mode === 'navigate' ? await cache.match('/app.html') : null)
+          || (req.mode === 'navigate' ? await cache.match('/home.html') : null);
         return cached || Response.error();
       }
     })());
