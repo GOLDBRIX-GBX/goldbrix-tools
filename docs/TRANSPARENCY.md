@@ -21,6 +21,12 @@ stays exactly as it happened, stated here in the open.
   release anchor and is inert by design. The valid `tools-v1` anchor is tx
   `379ab503...`.
 
+## Permanent archive
+
+- The public source is permanently stored on Arweave and anchored on-chain
+  (see ARWEAVE.md). Two duplicate `GBX:ARW:` anchor transactions exist due to
+  a repeated broadcast; they carry identical messages and are harmless.
+
 ## Derived-data limits (declared, not hidden)
 
 - The L1 side of the trade index is rebuilt identically from the chain by any
