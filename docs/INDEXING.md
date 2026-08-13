@@ -92,6 +92,12 @@ every machine that replays the same chain.
 - Metadata and logo declarations are ignored by consensus. They are client
   and index level only: an invalid declaration costs its author a fee and
   is discarded by every honest indexer.
+- The trade index has two legs. The L1 leg is rebuilt identically from the
+  chain by any node. The external leg (EVM/Solana settlement logs) only
+  reaches as far back as the node's public RPC endpoints serve history, so a
+  node that joins late may derive a shorter external history. Configuring
+  deeper-history RPCs and rebuilding (`rm gbx-trades.db` + restart) recovers
+  what those RPCs still serve. Money settlement never depends on this index.
 
 ## Rebuild the index yourself
 

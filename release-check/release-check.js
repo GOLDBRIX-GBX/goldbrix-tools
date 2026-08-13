@@ -62,7 +62,7 @@ function save(s){const tmp=STATE+'.tmp';fs.writeFileSync(tmp,JSON.stringify(s,nu
       log(ok?'ANCHOR VALID':'ANCHOR IGNORED (lineage)',a.tag,a.commit.slice(0,12),'@',h);
     }
     st.scanned_height=h;
-    if(h%20000===0)save(st);
+    if(h%20000===0){save(st);log('progress',h,'/',tip);}
   }
   const valid=Object.entries(st.anchors).filter(([,v])=>v.lineage_valid);
   valid.sort((a,b)=>a[1].height-b[1].height);
