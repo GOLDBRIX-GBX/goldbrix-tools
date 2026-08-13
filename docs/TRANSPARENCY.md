@@ -12,6 +12,9 @@ stays exactly as it happened, stated here in the open.
   addresses, `dev@goldbrix.app`) from before the identity was consolidated.
 - 218 commits carry a `+0200` timezone, 95 carry `+0000`. Commit timestamps
   reflect the machines they were made on, nothing more.
+- The core repository counts 81 commits, all under project identities
+  (77 as `goldbrixgbx@protonmail.com`, 4 as GitHub noreply); 45 carry
+  `+0200`, 36 carry `+0000`.
 
 ## On-chain anchors
 
