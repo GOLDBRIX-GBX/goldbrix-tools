@@ -1,0 +1,13 @@
+{
+  "appId": "io.goldbrix.app",
+  "appName": "GoldBrix",
+  "webDir": "www",
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": false
+    },
+    "CapacitorCookies": {
+      "enabled": true
+    }
+  }
+}

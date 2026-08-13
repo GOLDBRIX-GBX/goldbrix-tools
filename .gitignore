@@ -10,3 +10,14 @@ run-node/node.env
 __pycache__/
 client/downloads/
 release-check/release-check.json
+app-android/www/
+app-android/node_modules
+app-android/android/build/
+app-android/android/.gradle/
+app-android/android/app/build/
+app-android/android/capacitor-cordova-android-plugins/
+app-android/android/app/src/main/assets/public/
+app-android/android/app/src/main/assets/capacitor.config.json
+app-android/android/app/src/main/assets/capacitor.plugins.json
+app-android/android/app/src/main/res/xml/config.xml
+app-android/android/local.properties

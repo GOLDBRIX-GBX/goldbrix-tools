@@ -1,0 +1,20 @@
+package io.goldbrix.app;
+
+import android.os.Bundle;
+import android.webkit.PermissionRequest;
+import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.BridgeWebChromeClient;
+
+public class MainActivity extends BridgeActivity {
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    // Capacitor's chrome client (keeps file chooser) + auto-grant camera for QR getUserMedia
+    this.bridge.getWebView().setWebChromeClient(new BridgeWebChromeClient(this.bridge) {
+      @Override
+      public void onPermissionRequest(final PermissionRequest request) {
+        runOnUiThread(() -> request.grant(request.getResources()));
+      }
+    });
+  }
+}
