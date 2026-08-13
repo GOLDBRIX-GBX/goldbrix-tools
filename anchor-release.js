@@ -19,8 +19,8 @@ async function cli(args, useWallet) {
 
 (async () => {
   const [tag, sha] = process.argv.slice(2);
-  if (!tag || !/^[0-9a-f]{64}$/.test(sha || '')) {
-    console.error('usage: node anchor-release.js <tag> <64-hex-sha256>'); process.exit(1);
+  if (!tag || !/^[0-9a-f]{40}$|^[0-9a-f]{64}$/.test(sha || '')) {
+    console.error('usage: node anchor-release.js <tag> <sha: 40-hex commit or 64-hex sha256>'); process.exit(1);
   }
   const msg = `GBX:R:${tag}:${sha}`;
   if (Buffer.byteLength(msg) > 80) { console.error('message > 80 bytes (tag too long)'); process.exit(1); }

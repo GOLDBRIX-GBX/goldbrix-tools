@@ -1,0 +1,10 @@
+[Unit]
+Description=GBX release check (keyless, read-only: verifies on-chain anchored releases, never applies)
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/goldbrix-tools/release-check
+Environment=GBX_DATADIR=/var/lib/goldbrix
+Environment=GBX_RELEASE_ROOT=6aef6c971eac85c50990de354f5bb8386ff264ae09616c74c7a3949e66950400
+ExecStart=/usr/bin/node /opt/goldbrix-tools/release-check/release-check.js

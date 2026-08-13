@@ -9,3 +9,4 @@ node-registry/announce-state.json
 run-node/node.env
 __pycache__/
 client/downloads/
+release-check/release-check.json

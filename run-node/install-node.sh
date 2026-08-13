@@ -127,7 +127,20 @@ fi
 chown -R gbx:gbx "$DATADIR"
 
 echo "[4/7] read-api + indexer from goldbrix-tools"
-[ -d "$TOOLSDIR/.git" ] && git -C "$TOOLSDIR" pull -q || git clone -q "$TOOLS_REPO" "$TOOLSDIR"
+[ -d "$TOOLSDIR/.git" ] && git -C "$TOOLSDIR" fetch -q --tags origin || git clone -q "$TOOLS_REPO" "$TOOLSDIR"
+# A fresh node runs the latest anchored release (tools-* tag), never a moving
+# branch. At install time the local chain is not synced yet, so the tag is a
+# bootstrap; once synced, gbx-release-check verifies the anchor against the
+# node's OWN chain daily and reports in /gbx-node-info. Applying any future
+# release is always a deliberate operator action (apply-release.sh).
+git -C "$TOOLSDIR" fetch -q --tags origin 2>/dev/null || true
+REL_TAG=$(git -C "$TOOLSDIR" tag -l 'tools-*' --sort=version:refname | tail -1)
+if [ -n "$REL_TAG" ]; then
+  git -C "$TOOLSDIR" -c advice.detachedHead=false checkout -q "refs/tags/$REL_TAG"
+  echo "TOOLS: pinned to anchored release $REL_TAG"
+else
+  echo "TOOLS: no release tag found - staying on default branch (verify manually)"
+fi
 cd "$TOOLSDIR/read-api"
 npm install --omit=dev --silent better-sqlite3
 
@@ -197,6 +210,32 @@ RestartSec=10
 [Install]
 WantedBy=multi-user.target goldbrixd.service
 UNIT
+cat > /etc/systemd/system/gbx-release-check.service << UNIT
+[Unit]
+Description=GBX release check (keyless, read-only: verifies on-chain anchored releases, never applies)
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=${TOOLSDIR}/release-check
+Environment=GBX_DATADIR=${DATADIR}
+Environment=GBX_RELEASE_ROOT=6aef6c971eac85c50990de354f5bb8386ff264ae09616c74c7a3949e66950400
+ExecStart=/usr/bin/node ${TOOLSDIR}/release-check/release-check.js
+UNIT
+
+cat > /etc/systemd/system/gbx-release-check.timer << UNIT
+[Unit]
+Description=Daily GBX release check
+
+[Timer]
+OnCalendar=daily
+RandomizedDelaySec=3600
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+UNIT
+
 systemctl daemon-reload
 cat > /etc/systemd/system/gbx-node-registry.service << UNIT
 [Unit]
@@ -283,6 +322,7 @@ RestartSec=5
 WantedBy=multi-user.target goldbrixd.service
 UNIT
 systemctl enable --now goldbrixd gbx-read-api gbx-indexer gbx-node-registry gbx-curve-index gbx-trade-index gbx-node-info
+systemctl enable --now gbx-release-check.timer
 
 echo "[6/7] web server (Caddy) — this node also serves the wallet"
 # A node that only serves data still leaves the wallet itself hosted somewhere else.

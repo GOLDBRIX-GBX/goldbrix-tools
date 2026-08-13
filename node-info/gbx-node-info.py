@@ -10,6 +10,7 @@ RPC_PORT = int(sys.argv[1]) if len(sys.argv) > 1 else int(os.environ.get("GBX_RP
 COOKIE_FILE = os.environ.get("GBX_COOKIE", "/root/.bitcoin/.cookie")
 BINARY = os.environ.get("GBX_BINARY", "/usr/local/bin/goldbrixd")
 LISTEN_PORT = int(os.environ.get("GBX_NODEINFO_PORT", "8390"))
+RELCHK_STATE = os.environ.get("GBX_RELCHK_STATE", "/opt/goldbrix-tools/release-check/release-check.json")
 START = time.time()
 
 def binary_sha():
@@ -31,6 +32,16 @@ def rpc(method, params=None):
                  "Authorization":"Basic "+base64.b64encode(auth.encode()).decode()})
     return json.loads(urlopen(req, timeout=5).read())["result"]
 
+def release_report():
+    # Release verifier state, if the check service runs on this node.
+    # Absent file / any error -> field omitted; the endpoint never breaks on it.
+    try:
+        with open(RELCHK_STATE) as f:
+            r = json.load(f).get("report")
+        return {"release": r} if r else {}
+    except Exception:
+        return {}
+
 class H(BaseHTTPRequestHandler):
     def log_message(self, *a): pass
     def do_GET(self):
@@ -47,7 +58,8 @@ class H(BaseHTTPRequestHandler):
                 "protocol": ni["protocolversion"],
                 "binary_sha256": BIN_SHA,
                 "uptime_s": int(time.time() - START),
-                "ts": int(time.time())
+                "ts": int(time.time()),
+                **release_report()
             }).encode()
             self.send_response(200)
             self.send_header("Content-Type","application/json")
