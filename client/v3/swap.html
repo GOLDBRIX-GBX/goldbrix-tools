@@ -330,7 +330,7 @@ input, textarea, .copyable, [data-copyable], .addr, .hash, .txid, code, .gbx-amo
   </div>
   <footer data-i="foot">Non-custodial · atomic · no one holds your keys</footer>
 </div>
-<script src="/v3/gbx-read.js?v=121"></script>
+<script src="/v3/gbx-read.js?v=124"></script>
 <script src="/v3/gbx-lp.js?v=121"></script>
 <script src="/v3/gbx-session.js?v=121"></script>
 <script type="module" src="/crypto-utils-v2.js?v=121"></script>
@@ -748,7 +748,9 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
       }else{
         const _a=(await window.GoldbrixCrypto.deriveKeypairFromMnemonic(w.mnemonic)).address;
         // sold REAL din summary (quorum P6.A), nu felie de UTXO (limit=1000 dadea sume partiale -> mesaj fals)
-        const _sr=await (await window.gbxRead('/address/'+_a,{quorum:true,field:'spendable_gbx'})).json();
+        let _sr;
+        try{ _sr=await (await window.gbxRead('/address/'+_a,{quorum:true,field:'spendable_gbx',strict:true})).json(); }
+        catch(_qe){ if(_qe&&_qe.code==='QUORUM_UNAVAILABLE'){ const _MQ={en:'Network nodes disagree right now. For your safety the swap was NOT started. Try again in a minute.',ro:'Nodurile rețelei nu sunt de acord acum. Pentru siguranța ta, swap-ul NU a fost pornit. Încearcă peste un minut.',de:'Die Netzwerkknoten sind sich gerade uneinig. Zu deiner Sicherheit wurde der Swap NICHT gestartet. Versuche es in einer Minute erneut.',zh:'网络节点当前数据不一致。为了您的安全，兑换未启动。请一分钟后重试。',ar:'عقد الشبكة غير متفقة الآن. لسلامتك لم يبدأ التبديل. حاول بعد دقيقة.'}; setMsg(_MQ[lang]||_MQ.en); _reset(); return; } throw _qe; }
         const _have=Math.round((+_sr.spendable_gbx||0)*1e8), _need=Math.round(v*1e8);
         if(_have<_need){ setMsg((_M[lang]||_M.en)+(_have/1e8).toLocaleString()+' GBX'); _reset(); return; }
         // Anti-dump pre-check BEFORE the L1 lock (otherwise GBX stays locked until the T1 refund)

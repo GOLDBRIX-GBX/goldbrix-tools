@@ -57,7 +57,7 @@ const HTLC_VALID = /^[a-z0-9]{2,16}:(0x[0-9a-fA-F]{40}|[1-9A-HJ-NP-Za-km-z]{32,4
         for (const tx of blk.tx) for (const v of (tx.vout||[])) {
           if (!v.scriptPubKey || v.scriptPubKey.type!=='nulldata') continue;
           const a = decode(v.scriptPubKey.asm);
-          if (a && (a.kind==='htlcs' || VALID.test(a.url))) { (st[a.kind]=st[a.kind]||{})[a.url] = {height:h, txid:tx.txid}; log('ANNOUNCE',a.kind,a.url,'@',h); }
+          if (a && (a.kind==='htlcs' || VALID.test(a.url))) { var m=(st[a.kind]=st[a.kind]||{}); var p=m[a.url]; m[a.url] = {height:h, txid:tx.txid, first_height:(p&&p.first_height)||h, seen:((p&&p.seen)||0)+1}; log('ANNOUNCE',a.kind,a.url,'@',h); }
         }
         st.scanned_height = h;
         if (h % 5000 === 0) { prune(st, tip); save(st); }

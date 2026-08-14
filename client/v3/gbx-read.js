@@ -166,7 +166,19 @@
     }
     var results = [];
     var want = Math.min(3, nodes.length);
-    for (var i=0; i<nodes.length && results.length<want; i++){
+    /* The first `want` nodes are asked in PARALLEL: one slow node no longer
+       delays the answer. Failures are refilled sequentially from the rest. */
+    async function _one(n){
+      var r = await _fetchNode(n, path);
+      var j = await r.clone().json();
+      return {r:r, j:j, n:n};
+    }
+    var settled = await Promise.allSettled(nodes.slice(0, want).map(_one));
+    for (var si=0; si<settled.length; si++){
+      if (settled[si].status === 'fulfilled'){ _ok(settled[si].value.n); results.push(settled[si].value); }
+      else _fail(nodes[si]);
+    }
+    for (var i=want; i<nodes.length && results.length<want; i++){
       try {
         var r = await _fetchNode(nodes[i], path);
         var j = await r.clone().json();
