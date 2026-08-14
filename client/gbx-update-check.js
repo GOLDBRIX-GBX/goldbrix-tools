@@ -1,7 +1,7 @@
 // gbx-update-check.js v3 — Settings-driven update UX
 // State exposed via window.__GBX_UPDATE_STATE__ + events
-window.__GBX_BUILD_LOCAL__ = 121;
-window.__GBX_VERSION_LOCAL__ = "1.0.121";
+window.__GBX_BUILD_LOCAL__ = 122;
+window.__GBX_VERSION_LOCAL__ = "1.0.122";
 window.__GBX_DEBUG__ = false;
 
 (function() {
@@ -52,6 +52,20 @@ window.__GBX_DEBUG__ = false;
 
   function isNative() {
     return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  }
+
+  async function nativeBuild() {
+    /* The APK manifest is the single truth about the installed build; the
+       constants above are only the web fallback. */
+    if (!isNative()) return null;
+    try {
+      var P = window.Capacitor && window.Capacitor.Plugins;
+      if (!P || !P.App || !P.App.getInfo) return null;
+      var info = await P.App.getInfo();
+      var b = parseInt(info && info.build, 10);
+      if (b > 0) return { build: b, version: String(info.version || '') };
+    } catch (_e) {}
+    return null;
   }
 
   async function fetchVersion() {
@@ -111,9 +125,11 @@ window.__GBX_DEBUG__ = false;
       return;
     }
 
-    var L = window.__GBX_BUILD_LOCAL__ || 0;
+    var nat = await nativeBuild();
+    if (nat) { window.__GBX_BUILD_LOCAL__ = nat.build; if (nat.version) window.__GBX_VERSION_LOCAL__ = nat.version; }
+    var L = (nat && nat.build) || window.__GBX_BUILD_LOCAL__ || 0;
     var R = parseInt(remote.build) || 0;
-    log('local=' + L + ' remote=' + R);
+    log('local=' + L + (nat ? ' (manifest)' : ' (const)') + ' remote=' + R);
 
     window.__GBX_UPDATE_STATE__.remote = remote;
     window.__GBX_UPDATE_STATE__.available = R > L;
