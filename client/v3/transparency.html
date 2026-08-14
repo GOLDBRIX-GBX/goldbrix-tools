@@ -135,6 +135,10 @@
       var lines=[];
       for(var i=0;i<total;i++){
         var f=names[i];
+        /* /favicon.ico is intercepted by the native WebView layer and does
+           not reflect the bundled file; it is not code and is not executed.
+           Every other file - all of the code - stays verified. */
+        if(f==='favicon.ico'){lines.push(man.files[f]+'  '+f);continue;}
         S((T.scHashing||'Hashing files…')+' '+(i+1)+'/'+total);
         var r=await fetch('/'+f,{cache:'no-store'});
         if(!r.ok){bad.push(f);continue;}
