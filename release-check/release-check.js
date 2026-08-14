@@ -29,7 +29,11 @@ function decode(asm){ // scriptPubKey.asm: "OP_RETURN <hex>"
   if(!asm||!asm.startsWith('OP_RETURN '))return null;
   try{const t=Buffer.from(asm.slice(10).trim(),'hex').toString('utf8');
     const m=t.match(/^GBX:R:tools-([A-Za-z0-9._-]{1,24}):([0-9a-f]{40})$/);
-    return m?{tag:'tools-'+m[1],commit:m[2]}:null;}catch(e){return null;}}
+    if(m)return {kind:'tools',tag:'tools-'+m[1],commit:m[2]};
+    /* App/bundle anchors: GBX:R:<tag>:<64-hex sha256> (e.g. signed-APK sha,
+       or the www bundle top-hash). Additive: stored apart from tools anchors. */
+    const a=t.match(/^GBX:R:([A-Za-z0-9._-]{1,9}):([0-9a-f]{64})$/);
+    return a?{kind:'app',tag:a[1],sha:a[2]}:null;}catch(e){return null;}}
 async function verifyLineage(txid){ // walk vin[0] back to the published root
   let cur=txid;
   for(let i=0;i<MAXWALK;i++){
@@ -39,7 +43,7 @@ async function verifyLineage(txid){ // walk vin[0] back to the published root
     cur=vin.txid;
   } return false;}
 function localVersion(){try{
-  return execFileSync('git',['-C',TOOLSDIR,'describe','--tags','--always'],{encoding:'utf8'}).trim();
+  return execFileSync('git',['-C',TOOLSDIR,'describe','--tags','--match','tools-*','--always'],{encoding:'utf8'}).trim();
  }catch(e){return null;}}
 function load(){try{return JSON.parse(fs.readFileSync(STATE,'utf8'));}
   catch(e){return {scanned_height:0,anchors:{}};}}
@@ -58,8 +62,13 @@ function save(s){const tmp=STATE+'.tmp';fs.writeFileSync(tmp,JSON.stringify(s,nu
       if(!v.scriptPubKey||v.scriptPubKey.type!=='nulldata')continue;
       const a=decode(v.scriptPubKey.asm); if(!a)continue;
       const ok=await verifyLineage(tx.txid);
-      st.anchors[a.tag]={commit:a.commit,txid:tx.txid,height:h,lineage_valid:ok};
-      log(ok?'ANCHOR VALID':'ANCHOR IGNORED (lineage)',a.tag,a.commit.slice(0,12),'@',h);
+      if(a.kind==='app'){
+        (st.app_anchors=st.app_anchors||{})[a.tag]={sha:a.sha,txid:tx.txid,height:h,lineage_valid:ok};
+        log(ok?'APP ANCHOR VALID':'APP ANCHOR IGNORED (lineage)',a.tag,a.sha.slice(0,12),'@',h);
+      } else {
+        st.anchors[a.tag]={commit:a.commit,txid:tx.txid,height:h,lineage_valid:ok};
+        log(ok?'ANCHOR VALID':'ANCHOR IGNORED (lineage)',a.tag,a.commit.slice(0,12),'@',h);
+      }
     }
     st.scanned_height=h;
     if(h%20000===0){save(st);log('progress',h,'/',tip);}

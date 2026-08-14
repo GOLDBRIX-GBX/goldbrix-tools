@@ -64,6 +64,12 @@
       <div data-t="verifyTitle">🔎 Verify independently</div>
       <a class="tr-link" href="/v3/explorer.html" data-t="verifyExplorer">Open block explorer →</a>
     </div>
+    <div class="tr-verify" id="selfCheckBox">
+      <div data-t="scTitle">🧩 App integrity (self-check)</div>
+      <div style="font-size:12px;opacity:.85;margin:6px 0" data-t="scNote">Hashes every file of this app and compares the result with the release anchor written on the chain. Nothing to trust — only math.</div>
+      <div id="scStatus" style="font-family:'JetBrains Mono',monospace;font-size:13px;margin:8px 0">—</div>
+      <a class="tr-link" href="#" id="scRun" data-t="scRun">Run self-check →</a>
+    </div>
     <div class="tr-meta"><span data-t="blockLbl">Block</span> <span id="blockHeight">—</span> · <span data-t="updatedLbl">Updated</span> <span id="updated">—</span></div>
   </div>
 </div>
@@ -105,12 +111,62 @@
 })();
 </script>
 <script>
+/* App integrity self-check: bundle files -> sha256 (WebCrypto) -> manifest ->
+   manifest top-hash -> on-chain release anchor read through the federated
+   quorum layer. VERIFIED means: chain -> anchor -> manifest -> every file. */
+(function(){
+  function S(msg,color){var e=document.getElementById('scStatus');if(e){e.textContent=msg;e.style.color=color||'#FFFDF7';}}
+  async function sha256hex(buf){var h=await crypto.subtle.digest('SHA-256',buf);
+    return Array.from(new Uint8Array(h)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');}
+  async function run(ev){
+    if(ev)ev.preventDefault();
+    var T=(window.TR_T&&TR_T[localStorage.getItem('gbx_lang')||'en'])||{};
+    try{
+      S((T.scLoading||'Reading bundle manifest…'));
+      var mr=await fetch('/bundle-manifest.json',{cache:'no-store'});
+      /* The SPA fallback answers 200+HTML for missing paths: only a JSON
+         content-type is a real manifest. */
+      var mct=(mr.headers.get('content-type')||'');
+      if(!mr.ok||mct.indexOf('json')===-1){S((T.scNoManifest||'No bundle manifest here (web/dev copy). The installed app ships one.'),'#FFD98A');return;}
+      var man=await mr.json();
+      var names=Object.keys(man.files||{}); var total=names.length; var bad=[];
+      /* Recompute the manifest body EXACTLY as the build does, from the live
+         files of this very origin, then hash it into the top hash. */
+      var lines=[];
+      for(var i=0;i<total;i++){
+        var f=names[i];
+        S((T.scHashing||'Hashing files…')+' '+(i+1)+'/'+total);
+        var r=await fetch('/'+f,{cache:'no-store'});
+        if(!r.ok){bad.push(f);continue;}
+        var hx=await sha256hex(await r.arrayBuffer());
+        if(hx!==man.files[f])bad.push(f);
+        lines.push(hx+'  '+f);
+      }
+      if(bad.length){S((T.scMismatch||'MISMATCH — this copy differs from its manifest:')+' '+bad.slice(0,3).join(', ')+(bad.length>3?' +'+(bad.length-3):''),'#FF6B5C');return;}
+      var body=lines.join('\n')+'\n';
+      var top=await sha256hex(new TextEncoder().encode(body));
+      if(top!==man.top){S((T.scMismatch||'MISMATCH — manifest top hash differs.'),'#FF6B5C');return;}
+      S((T.scAnchor||'Checking the on-chain anchor…'));
+      var an=null;
+      try{an=await (await window.gbxRead('/release-anchors')).json();}
+      catch(e){S((T.scNoNodes||'Bundle intact — but no live node reachable to read the on-chain anchor. Try again online.'),'#FFD98A');return;}
+      var hit=null;
+      if(an&&an.app_anchors)for(var k in an.app_anchors){var a2=an.app_anchors[k];
+        if(a2&&a2.lineage_valid&&String(a2.sha).toLowerCase()===top)hit={tag:k,txid:a2.txid};}
+      if(hit){S((T.scVerified||'VERIFIED — every file matches the release anchored on-chain')+' ('+hit.tag+' · tx '+String(hit.txid).slice(0,12)+'…)','#57FF9E');}
+      else{S((T.scUnanchored||'Bundle intact (matches its manifest) — no on-chain anchor for this exact bundle yet.'),'#FFD98A');}
+    }catch(e){S('self-check error: '+(e&&e.message?e.message:e),'#FF6B5C');}
+  }
+  var b=document.getElementById('scRun'); if(b)b.addEventListener('click',run);
+})();
+</script>
+<script>
 var TR_T={
- en:{pageTitle:'🛡️ TRANSPARENCY',liqTitle:'🛡️ PROTOCOL-OWNED LIQUIDITY',badgeOk:'ON-CHAIN · KEYLESS',liqSub:'Locked inside consensus pools — anyone can verify it on the chain',poolReserves:'Pool reserves',memecoins:'Memecoins',circulating:'Circulating supply',chainHeight:'Chain height',polNote:'Liquidity lives inside consensus pools — no keys, no owner, no withdraw function. It is keyless today, not at some future handover.',deflationTitle:'🔥 DEFLATION',burnedForever:'Burned forever',lpBurns:'Launchpad burns',burnNote:'100% of all fees are burned. No party profits from fees.',verifyTitle:'🔎 Verify independently',verifyExplorer:'Open block explorer →',blockLbl:'Block',updatedLbl:'Updated'},
- ro:{pageTitle:'🛡️ TRANSPARENȚĂ',liqTitle:'🛡️ LICHIDITATE A PROTOCOLULUI',badgeOk:'ON-CHAIN · FĂRĂ CHEI',liqSub:'Blocată în pool-urile din consens — oricine o poate verifica pe lanț',poolReserves:'Rezerve pool',memecoins:'Memecoins',circulating:'În circulație',chainHeight:'Înălțime lanț',polNote:'Lichiditatea trăiește în pool-urile din consens — fără chei, fără proprietar, fără funcție de retragere. E fără chei AZI, nu la un handover viitor.',deflationTitle:'🔥 DEFLAȚIE',burnedForever:'Ars pentru totdeauna',lpBurns:'Arderi launchpad',burnNote:'100% din taxe se ard. Nimeni nu profită din taxe.',verifyTitle:'🔎 Verifică independent',verifyExplorer:'Deschide block explorer →',blockLbl:'Bloc',updatedLbl:'Actualizat'},
- de:{pageTitle:'🛡️ TRANSPARENZ',liqTitle:'🛡️ PROTOKOLLEIGENE LIQUIDITÄT',badgeOk:'ON-CHAIN · SCHLÜSSELLOS',liqSub:'In Konsens-Pools gesperrt — jeder kann es auf der Chain prüfen',poolReserves:'Pool-Reserven',memecoins:'Memecoins',circulating:'Im Umlauf',chainHeight:'Chain-Höhe',polNote:'Liquidität lebt in Konsens-Pools — keine Schlüssel, kein Eigentümer, keine Abhebefunktion. Schlüssellos HEUTE, nicht bei einem künftigen Handover.',deflationTitle:'🔥 DEFLATION',burnedForever:'Für immer verbrannt',lpBurns:'Launchpad-Burns',burnNote:'100% aller Gebühren werden verbrannt. Niemand profitiert davon.',verifyTitle:'🔎 Unabhängig prüfen',verifyExplorer:'Block-Explorer öffnen →',blockLbl:'Block',updatedLbl:'Aktualisiert'},
- zh:{pageTitle:'🛡️ 透明度',liqTitle:'🛡️ 协议自有流动性',badgeOk:'链上 · 无密钥',liqSub:'锁定在共识池中——任何人都可在链上验证',poolReserves:'池储备',memecoins:'Memecoins',circulating:'流通量',chainHeight:'链高度',polNote:'流动性存在于共识池中——没有密钥、没有所有者、没有提取功能。今天就是无密钥的，而不是等待未来交接。',deflationTitle:'🔥 通缩',burnedForever:'永久销毁',lpBurns:'发射台销毁',burnNote:'100% 的费用全部销毁，无人获利。',verifyTitle:'🔎 独立验证',verifyExplorer:'打开区块浏览器 →',blockLbl:'区块',updatedLbl:'更新于'},
- ar:{pageTitle:'🛡️ الشفافية',liqTitle:'🛡️ سيولة مملوكة للبروتوكول',badgeOk:'على السلسلة · بلا مفاتيح',liqSub:'مقفلة داخل مجمعات الإجماع — يمكن لأي شخص التحقق منها على السلسلة',poolReserves:'احتياطي المجمعات',memecoins:'ميمكوين',circulating:'المعروض المتداول',chainHeight:'ارتفاع السلسلة',polNote:'السيولة تعيش داخل مجمعات الإجماع — بلا مفاتيح، بلا مالك، بلا دالة سحب. إنها بلا مفاتيح اليوم، وليس عند تسليم مستقبلي.',deflationTitle:'🔥 الانكماش',burnedForever:'محروق إلى الأبد',lpBurns:'حرق منصة الإطلاق',burnNote:'تُحرق 100% من الرسوم. لا أحد يستفيد منها.',verifyTitle:'🔎 تحقق بشكل مستقل',verifyExplorer:'افتح مستكشف الكتل →',blockLbl:'الكتلة',updatedLbl:'محدّث'}
+ en:{scNoNodes:'Bundle intact — but no live node reachable to read the on-chain anchor. Try again online.',scTitle:'🧩 App integrity (self-check)',scNote:'Hashes every file of this app and compares the result with the release anchor written on the chain. Nothing to trust — only math.',scRun:'Run self-check →',scLoading:'Reading bundle manifest…',scNoManifest:'No bundle manifest here (web/dev copy). The installed app ships one.',scHashing:'Hashing files…',scMismatch:'MISMATCH — this copy differs from the release:',scAnchor:'Checking the on-chain anchor…',scVerified:'VERIFIED — every file matches the release anchored on-chain',scUnanchored:'Bundle intact (matches its manifest) — no on-chain anchor for this exact bundle yet.',pageTitle:'🛡️ TRANSPARENCY',liqTitle:'🛡️ PROTOCOL-OWNED LIQUIDITY',badgeOk:'ON-CHAIN · KEYLESS',liqSub:'Locked inside consensus pools — anyone can verify it on the chain',poolReserves:'Pool reserves',memecoins:'Memecoins',circulating:'Circulating supply',chainHeight:'Chain height',polNote:'Liquidity lives inside consensus pools — no keys, no owner, no withdraw function. It is keyless today, not at some future handover.',deflationTitle:'🔥 DEFLATION',burnedForever:'Burned forever',lpBurns:'Launchpad burns',burnNote:'100% of all fees are burned. No party profits from fees.',verifyTitle:'🔎 Verify independently',verifyExplorer:'Open block explorer →',blockLbl:'Block',updatedLbl:'Updated'},
+ ro:{scNoNodes:'Bundle intact — dar niciun nod viu accesibil pentru citirea ancorei on-chain. Reîncearcă online.',scTitle:'🧩 Integritatea aplicației (self-check)',scNote:'Calculează hash-ul fiecărui fișier al aplicației și compară rezultatul cu ancora release-ului scrisă pe lanț. Nimic de crezut pe cuvânt — doar matematică.',scRun:'Rulează verificarea →',scLoading:'Se citește manifestul…',scNoManifest:'Nu există manifest aici (copie web/dev). Aplicația instalată îl include.',scHashing:'Se calculează hash-urile…',scMismatch:'NEPOTRIVIRE — această copie diferă de release:',scAnchor:'Se verifică ancora on-chain…',scVerified:'VERIFICAT — fiecare fișier corespunde release-ului ancorat pe lanț',scUnanchored:'Bundle intact (corespunde manifestului) — încă fără ancoră on-chain pentru acest bundle exact.',pageTitle:'🛡️ TRANSPARENȚĂ',liqTitle:'🛡️ LICHIDITATE A PROTOCOLULUI',badgeOk:'ON-CHAIN · FĂRĂ CHEI',liqSub:'Blocată în pool-urile din consens — oricine o poate verifica pe lanț',poolReserves:'Rezerve pool',memecoins:'Memecoins',circulating:'În circulație',chainHeight:'Înălțime lanț',polNote:'Lichiditatea trăiește în pool-urile din consens — fără chei, fără proprietar, fără funcție de retragere. E fără chei AZI, nu la un handover viitor.',deflationTitle:'🔥 DEFLAȚIE',burnedForever:'Ars pentru totdeauna',lpBurns:'Arderi launchpad',burnNote:'100% din taxe se ard. Nimeni nu profită din taxe.',verifyTitle:'🔎 Verifică independent',verifyExplorer:'Deschide block explorer →',blockLbl:'Bloc',updatedLbl:'Actualizat'},
+ de:{scNoNodes:'Bundle intakt — aber kein erreichbarer Node zum Lesen des On-Chain-Ankers. Online erneut versuchen.',scTitle:'🧩 App-Integrität (Selbstprüfung)',scNote:'Berechnet den Hash jeder Datei dieser App und vergleicht das Ergebnis mit dem auf der Chain verankerten Release. Nichts zu glauben — nur Mathematik.',scRun:'Selbstprüfung starten →',scLoading:'Manifest wird gelesen…',scNoManifest:'Kein Bundle-Manifest hier (Web/Dev-Kopie). Die installierte App enthält eines.',scHashing:'Dateien werden gehasht…',scMismatch:'ABWEICHUNG — diese Kopie unterscheidet sich vom Release:',scAnchor:'On-Chain-Anker wird geprüft…',scVerified:'VERIFIZIERT — jede Datei entspricht dem on-chain verankerten Release',scUnanchored:'Bundle intakt (entspricht dem Manifest) — noch kein On-Chain-Anker für genau dieses Bundle.',pageTitle:'🛡️ TRANSPARENZ',liqTitle:'🛡️ PROTOKOLLEIGENE LIQUIDITÄT',badgeOk:'ON-CHAIN · SCHLÜSSELLOS',liqSub:'In Konsens-Pools gesperrt — jeder kann es auf der Chain prüfen',poolReserves:'Pool-Reserven',memecoins:'Memecoins',circulating:'Im Umlauf',chainHeight:'Chain-Höhe',polNote:'Liquidität lebt in Konsens-Pools — keine Schlüssel, kein Eigentümer, keine Abhebefunktion. Schlüssellos HEUTE, nicht bei einem künftigen Handover.',deflationTitle:'🔥 DEFLATION',burnedForever:'Für immer verbrannt',lpBurns:'Launchpad-Burns',burnNote:'100% aller Gebühren werden verbrannt. Niemand profitiert davon.',verifyTitle:'🔎 Unabhängig prüfen',verifyExplorer:'Block-Explorer öffnen →',blockLbl:'Block',updatedLbl:'Aktualisiert'},
+ zh:{scNoNodes:'包完整——但无可达节点读取链上锚点。请联网后重试。',scTitle:'🧩 应用完整性（自检）',scNote:'计算本应用每个文件的哈希，并与写入链上的发布锚点比对。无需信任——只有数学。',scRun:'运行自检 →',scLoading:'正在读取清单…',scNoManifest:'此处无清单（网页/开发副本）。安装版应用内置清单。',scHashing:'正在计算哈希…',scMismatch:'不匹配——此副本与发布版本不同：',scAnchor:'正在检查链上锚点…',scVerified:'已验证——每个文件均与链上锚定的发布版本一致',scUnanchored:'包完整（与清单一致）——此包尚无链上锚点。',pageTitle:'🛡️ 透明度',liqTitle:'🛡️ 协议自有流动性',badgeOk:'链上 · 无密钥',liqSub:'锁定在共识池中——任何人都可在链上验证',poolReserves:'池储备',memecoins:'Memecoins',circulating:'流通量',chainHeight:'链高度',polNote:'流动性存在于共识池中——没有密钥、没有所有者、没有提取功能。今天就是无密钥的，而不是等待未来交接。',deflationTitle:'🔥 通缩',burnedForever:'永久销毁',lpBurns:'发射台销毁',burnNote:'100% 的费用全部销毁，无人获利。',verifyTitle:'🔎 独立验证',verifyExplorer:'打开区块浏览器 →',blockLbl:'区块',updatedLbl:'更新于'},
+ ar:{scNoNodes:'الحزمة سليمة — لكن لا يوجد عقدة حية لقراءة المرساة. حاول متصلاً.',scTitle:'🧩 سلامة التطبيق (فحص ذاتي)',scNote:'يحسب تجزئة كل ملف في هذا التطبيق ويقارن النتيجة بمرساة الإصدار المكتوبة على السلسلة. لا شيء للتصديق — رياضيات فقط.',scRun:'شغّل الفحص الذاتي ←',scLoading:'قراءة البيان…',scNoManifest:'لا يوجد بيان هنا (نسخة ويب/تطوير). التطبيق المثبت يتضمنه.',scHashing:'حساب التجزئات…',scMismatch:'عدم تطابق — هذه النسخة تختلف عن الإصدار:',scAnchor:'التحقق من المرساة على السلسلة…',scVerified:'موثّق — كل ملف يطابق الإصدار المرسّى على السلسلة',scUnanchored:'الحزمة سليمة (تطابق بيانها) — لا مرساة على السلسلة لهذه الحزمة بعد.',pageTitle:'🛡️ الشفافية',liqTitle:'🛡️ سيولة مملوكة للبروتوكول',badgeOk:'على السلسلة · بلا مفاتيح',liqSub:'مقفلة داخل مجمعات الإجماع — يمكن لأي شخص التحقق منها على السلسلة',poolReserves:'احتياطي المجمعات',memecoins:'ميمكوين',circulating:'المعروض المتداول',chainHeight:'ارتفاع السلسلة',polNote:'السيولة تعيش داخل مجمعات الإجماع — بلا مفاتيح، بلا مالك، بلا دالة سحب. إنها بلا مفاتيح اليوم، وليس عند تسليم مستقبلي.',deflationTitle:'🔥 الانكماش',burnedForever:'محروق إلى الأبد',lpBurns:'حرق منصة الإطلاق',burnNote:'تُحرق 100% من الرسوم. لا أحد يستفيد منها.',verifyTitle:'🔎 تحقق بشكل مستقل',verifyExplorer:'افتح مستكشف الكتل →',blockLbl:'الكتلة',updatedLbl:'محدّث'}
 };
 function applyTrLang(){
   var lang=localStorage.getItem('gbx_lang')||localStorage.getItem('goldbrix_lang')||'en';
