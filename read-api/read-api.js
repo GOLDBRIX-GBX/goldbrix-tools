@@ -797,6 +797,30 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, await getStatus());
     }
 
+    if (req.method === 'GET' && url.pathname === '/api/emission') {
+      // Real emission, read from the chain itself (no hardcoded subsidy):
+      // coinbase total of the tip block + average block spacing over the last
+      // 1440 blocks. 60s cache. Keyless, federated: any node serves it.
+      try {
+        if (!global.__gbxEmission || (Date.now()-global.__gbxEmission.ts) > 60000) {
+          const tip = Number(await runCli(['getblockcount']));
+          const hash = (await runCli(['getblockhash', _assertInt(tip)])).trim();
+          const blk = JSON.parse(await runCli(['getblock', _assertHex(hash,'blockhash'), '2']));
+          const cb = blk.tx && blk.tx[0];
+          const reward = cb ? cb.vout.reduce((a,v)=>a+Number(v.value||0),0) : null;
+          const span = 1440;
+          const h1 = Math.max(1, tip - span);
+          const hash1 = (await runCli(['getblockhash', _assertInt(h1)])).trim();
+          const hd1 = JSON.parse(await runCli(['getblockheader', _assertHex(hash1,'blockhash')]));
+          const spacing = (blk.time - hd1.time) / (tip - h1);
+          global.__gbxEmission = { ts: Date.now(), out: { height: tip, block_reward_gbx: reward, avg_block_seconds: Math.round(spacing*100)/100, sampled_blocks: tip - h1 } };
+        }
+        return sendJson(res, 200, global.__gbxEmission.out);
+      } catch (e) {
+        return sendJson(res, 200, { height: 0, error: String(e && e.message ? e.message : e) });
+      }
+    }
+
     if (req.method === 'GET' && url.pathname === '/api/powtpl') {
       // CREATE-PoW template: height + best hash + bits. Keyless, read-only.
       // Same semantics as the LP gateway /powtpl, served federated by any node.

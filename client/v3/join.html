@@ -36,6 +36,14 @@
   <div><b id="jnLps">—</b><span id="jnLpsL"></span></div>
   <div><b id="jnH">—</b><span id="jnHL"></span></div>
  </div>
+ <div class="jn-live" id="jnEcon" style="flex-wrap:wrap;gap:8px">
+  <div style="flex-basis:100%;color:#FFE9A8;font-size:.72rem;letter-spacing:.1em;font-weight:800" id="jnEconT"></div>
+  <div><b id="jnEmit">—</b><span id="jnEmitL"></span></div>
+  <div><b id="jnHash">—</b><span id="jnHashL"></span></div>
+  <div><b id="jnTvl">—</b><span id="jnTvlL"></span></div>
+  <div><b id="jnVol">—</b><span id="jnVolL"></span></div>
+  <div style="flex-basis:100%;color:#FFFDF7;font-size:.68rem;opacity:.85" id="jnEconN"></div>
+ </div>
  <div style="text-align:center;margin:14px 0 4px">
   <button id="jnShare" class="jn-copy" style="font-size:.9rem;padding:10px 22px">📤</button>
  </div>
@@ -193,6 +201,30 @@ window.GBXRead.json('/api/node-registry').then(function(j){
 window.GBXLp.list().then(function(a){
   S('jnLps',String((a&&a.length)||0));
 }).catch(function(){});
+/* THE NUMBERS — every figure read from the chain through the federated
+   layer; nothing configured, nothing promised. Honest dash on error. */
+(function(){
+ var E={en:{t:'THE NUMBERS, FROM THE CHAIN',emit:'GBX MINTED / DAY',hash:'NETWORK HASHRATE',tvl:'AMM LIQUIDITY',vol:'DEX VOLUME 24H',n:'Minted/day = tip-block coinbase × real block spacing, measured over the last 1440 blocks. Liquidity and volume come from the consensus pools. No figure here is configured — all of it is read from the chain, by this very page.'},
+  ro:{t:'CIFRELE, DIN LANȚ',emit:'GBX EMIS / ZI',hash:'HASHRATE REȚEA',tvl:'LICHIDITATE AMM',vol:'VOLUM DEX 24H',n:'Emisia/zi = coinbase-ul blocului curent × ritmul real al blocurilor, măsurat pe ultimele 1440. Lichiditatea și volumul vin din pool-urile de consens. Nicio cifră nu e configurată — totul e citit din lanț, chiar de această pagină.'},
+  de:{t:'DIE ZAHLEN, VON DER CHAIN',emit:'GBX GEPRÄGT / TAG',hash:'NETZWERK-HASHRATE',tvl:'AMM-LIQUIDITÄT',vol:'DEX-VOLUMEN 24H',n:'Prägung/Tag = Coinbase des Spitzenblocks × realer Blockabstand, gemessen über die letzten 1440 Blöcke. Liquidität und Volumen stammen aus den Konsens-Pools. Keine Zahl ist konfiguriert — alles wird von der Chain gelesen, von genau dieser Seite.'},
+  zh:{t:'数字，来自链上',emit:'每日铸造 GBX',hash:'全网算力',tvl:'AMM 流动性',vol:'DEX 24小时交易量',n:'每日铸造 = 当前区块的 coinbase × 实测出块间隔（最近 1440 个区块）。流动性与交易量来自共识池。这里没有任何配置的数字——全部由本页面直接从链上读取。'},
+  ar:{t:'الأرقام، من السلسلة',emit:'GBX المسكوك / يوم',hash:'قوة تجزئة الشبكة',tvl:'سيولة AMM',vol:'حجم DEX ‏24س',n:'السكّ اليومي = coinbase لأحدث كتلة × الإيقاع الفعلي للكتل، مقاسًا على آخر 1440 كتلة. السيولة والحجم من مجمعات الإجماع. لا رقم هنا مُعدّ مسبقًا — كل شيء يُقرأ من السلسلة بهذه الصفحة نفسها.'}};
+ var e=E[g]||E.en;
+ S('jnEconT',e.t);S('jnEmitL',e.emit);S('jnHashL',e.hash);S('jnTvlL',e.tvl);S('jnVolL',e.vol);S('jnEconN',e.n);
+ function fmt(n,d){return Number(n).toLocaleString('en-US',{maximumFractionDigits:d==null?0:d});}
+ window.GBXRead.json('/api/emission').then(function(j){
+  if(j&&j.block_reward_gbx!=null&&j.avg_block_seconds>0)
+   S('jnEmit',fmt(j.block_reward_gbx*86400/j.avg_block_seconds)+ ' GBX');
+ }).catch(function(){});
+ window.GBXRead.json('/api/status').then(function(j){
+  if(j&&j.networkhashps!=null){var v=Number(j.networkhashps);
+   S('jnHash', v>=1e9?fmt(v/1e9,2)+' GH/s': v>=1e6?fmt(v/1e6,2)+' MH/s':fmt(v)+' H/s');}
+ }).catch(function(){});
+ window.GBXRead.json('/api/stats24').then(function(j){
+  if(j&&j.tvl_sat!=null)S('jnTvl',fmt(Number(j.tvl_sat)/1e8)+' GBX');
+  if(j&&j.vol24_sat!=null)S('jnVol',fmt(Number(j.vol24_sat)/1e8)+' GBX');
+ }).catch(function(){});
+})();
  /* own nav hidden inside SPA shell */
  if(window.__SPA_PATH2ROUTE){var n=document.getElementById('jnNav');if(n)n.style.display='none';}
 })();
