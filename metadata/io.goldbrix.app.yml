@@ -26,14 +26,14 @@ Description: |-
 
 RepoType: git
 Repo: https://github.com/GOLDBRIX-GBX/goldbrix-tools.git
-Binaries: https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/download/v31-gbx-launchpad/goldbrix-%v-%c.apk
+Binaries: https://github.com/GOLDBRIX-GBX/goldbrix-tools/releases/download/app-v%v/goldbrix-%v-%c.apk
 
 AllowedAPKSigningKeys: 34bf319c2f52709e32669588536a3911a9e90c991697ff4209a2bc63855b7085
 
 Builds:
-  - versionName: 1.0.123
-    versionCode: 123
-    commit: app-v1.0.123
+  - versionName: 1.0.125
+    versionCode: 125
+    commit: app-v1.0.125
     subdir: app-android/android/app
     sudo:
       - apt-get update
@@ -48,5 +48,5 @@ Builds:
 
 AutoUpdateMode: None
 UpdateCheckMode: Tags ^app-v
-CurrentVersion: 1.0.123
-CurrentVersionCode: 123
+CurrentVersion: 1.0.125
+CurrentVersionCode: 125
