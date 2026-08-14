@@ -1,0 +1,11 @@
+GoldBrix is a non-custodial wallet and on-chain market for the GoldBrix network, a proof-of-work chain with an on-chain token launchpad.
+
+Keys are generated and stored only on your device. The app talks to a federation of independent nodes discovered through an on-chain registry: there is no privileged server, no fixed host, and no third-party service. If a node disappears, the app switches to another one on its own.
+
+Features:
+
+* Non-custodial wallet for GBX and launchpad tokens
+* On-chain token launchpad with bonding curves and endogenous graduation
+* Direct peer-to-peer market with atomic HTLC settlement
+* Cross-chain swaps settled by hash time-locked contracts
+* Works offline; every page and font ships inside the app

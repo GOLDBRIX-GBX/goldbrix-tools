@@ -1,0 +1,1 @@
+Self-hosted fonts, offline root navigation, and the installed version is now read from the app manifest.
