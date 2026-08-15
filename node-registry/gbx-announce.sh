@@ -58,7 +58,21 @@ emit(){
   local last
   last=$(python3 -c "import json;print(json.load(open('$STATE')).get('$key',0))" 2>/dev/null || echo 0)
   if [ $(( TIP - last )) -le $HALF ] && [ "$last" -gt 0 ]; then
-    log "$label fresh (last=$last tip=$TIP, half=$HALF) — skip"; return 0
+    # Fresh by height is not proof of presence: a node missing from the registry
+    # is invisible to the federation. Only a definite absence overrides the skip;
+    # an unreachable registry keeps it, so no fee is spent on a network error.
+    listed=yes
+    if [ "$key" = "node" ] && [ -n "$arg" ]; then
+      reg=$(curl -s -m 8 "${GBX_READAPI:-http://127.0.0.1:8088}/api/node-registry" 2>/dev/null)
+      if printf '%s' "$reg" | grep -q '"nodes"'; then
+        printf '%s' "$reg" | grep -qF "\"$arg\"" || listed=no
+      fi
+    fi
+    if [ "$listed" = "no" ]; then
+      log "$label fresh by height but NOT listed in the registry — re-announcing"
+    else
+      log "$label fresh (last=$last tip=$TIP, half=$HALF) — skip"; return 0
+    fi
   fi
   if ! have_balance; then
     log "$label wallet '$WALLET' zero balance — cannot pay fee, retry next cycle"; return 0
