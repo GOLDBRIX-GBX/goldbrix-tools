@@ -1,5 +1,6 @@
 {
   "node": "https://YOUR-HOST/api",
   "lp": "https://YOUR-HOST/lp",
-  "wallet": "lp_hot"
+  "wallet": "lp_hot",
+  "htlcs": []
 }

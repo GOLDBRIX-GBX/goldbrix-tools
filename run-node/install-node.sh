@@ -12,6 +12,9 @@ BASE="https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/download/${REL}"
 TOOLS_REPO="https://github.com/GOLDBRIX-GBX/goldbrix-tools.git"
 DATADIR="/var/lib/goldbrix"
 TOOLSDIR="/opt/goldbrix-tools"
+# Local state lives outside the code tree: a code sync (rsync --delete, git clean)
+# must never be able to erase this node's identity or its scan progress.
+STATEDIR="${DATADIR}/gbx-state"
 
 [ "$(id -u)" -eq 0 ] || { echo "run as root"; exit 1; }
 ARCH="$(uname -m)"; [ "$ARCH" = "x86_64" ] || { echo "x86_64 only (got $ARCH)"; exit 1; }
@@ -145,6 +148,7 @@ cd "$TOOLSDIR/read-api"
 npm install --omit=dev --silent better-sqlite3
 
 echo "[5/7] systemd units"
+install -d -m 0755 "$STATEDIR"
 cat > /etc/systemd/system/goldbrixd.service << UNIT
 [Unit]
 Description=GoldBrix Core full node
@@ -181,7 +185,7 @@ PartOf=goldbrixd.service
 User=gbx
 # Answers only to the proxy on this machine. The public door is HTTPS.
 Environment=GBX_CLI=/usr/local/bin/goldbrix-cli GBX_RPC_PORT=8332 GBX_DATADIR=${DATADIR} PORT=8088 GBX_BIND=127.0.0.1
-Environment=GBX_NODEREG_STATE=${TOOLSDIR}/node-registry/node-registry.json
+Environment=GBX_NODEREG_STATE=${STATEDIR}/node-registry.json
 # read-api MUST read the local index; without it, address/utxo routes fall back to a full UTXO scan (2.5G RSS -> OOM).
 Environment=GBX_INDEX_DB=${DATADIR}/index/gbx-index.db
 # Without this the coin endpoints answer "not enabled", even while the index runs.
@@ -219,6 +223,7 @@ After=network-online.target
 Type=oneshot
 WorkingDirectory=${TOOLSDIR}/release-check
 Environment=GBX_DATADIR=${DATADIR}
+Environment=GBX_RELCHK_STATE=${STATEDIR}/release-check.json
 Environment=GBX_RELEASE_ROOT=6aef6c971eac85c50990de354f5bb8386ff264ae09616c74c7a3949e66950400
 ExecStart=/usr/bin/node ${TOOLSDIR}/release-check/release-check.js
 UNIT
@@ -244,7 +249,7 @@ After=goldbrixd.service
 Requires=goldbrixd.service
 [Service]
 Environment=GBX_DATADIR=${DATADIR}
-Environment=GBX_NODEREG_STATE=${TOOLSDIR}/node-registry/node-registry.json
+Environment=GBX_NODEREG_STATE=${STATEDIR}/node-registry.json
 WorkingDirectory=${TOOLSDIR}/node-registry
 ExecStart=/usr/bin/node scanner.js
 Restart=always
@@ -293,7 +298,7 @@ User=gbx
 Environment=GBX_RPC_PORT=8332 GBX_DATADIR=${DATADIR}
 Environment=GBX_INDEX_DB=${DATADIR}/index/gbx-index.db
 Environment=GBX_TRADE_DB=${DATADIR}/index/gbx-trades.db
-Environment=GBX_NODEREG_STATE=${TOOLSDIR}/node-registry/node-registry.json
+Environment=GBX_NODEREG_STATE=${STATEDIR}/node-registry.json
 Environment=GBX_TRADE_FROM=1173294
 WorkingDirectory=${TOOLSDIR}/read-api
 ExecStart=/usr/bin/node gbx-trade-index.js
@@ -423,7 +428,7 @@ elif [ -z "$NODE_URL" ]; then
   echo "ANNOUNCE: no public address for this node, so wallets cannot be sent here."
   echo "          Set NODE_PUBLIC_URL in ${NODE_ENV} and re-run to join the federation."
 else
-  NREG=${TOOLSDIR}/node-registry
+  NREG=${STATEDIR}
   CLI_A="goldbrix-cli -datadir=${DATADIR} -conf=goldbrix.conf"
   $CLI_A loadwallet "$AWALLET" >/dev/null 2>&1 \
     || $CLI_A createwallet "$AWALLET" >/dev/null 2>&1 || true
@@ -437,12 +442,12 @@ cfg=json.load(open(f)) if os.path.exists(f) else {}
 cfg["node"]=node; cfg["wallet"]=w
 json.dump(cfg,open(f,"w"),indent=2)
 PYJSON
-  cp $NREG/gbx-announce.service /etc/systemd/system/
-  cp $NREG/gbx-announce.timer   /etc/systemd/system/
+  cp ${TOOLSDIR}/node-registry/gbx-announce.service /etc/systemd/system/
+  cp ${TOOLSDIR}/node-registry/gbx-announce.timer   /etc/systemd/system/
   install -d /etc/systemd/system/gbx-announce.service.d
-  printf '[Service]\nEnvironment=GBX_DATADIR=%s\n' "$DATADIR" > /etc/systemd/system/gbx-announce.service.d/datadir.conf
+  printf '[Service]\nEnvironment=GBX_DATADIR=%s\nEnvironment=GBX_STATE_DIR=%s\n' "$DATADIR" "$STATEDIR" > /etc/systemd/system/gbx-announce.service.d/datadir.conf
   systemctl daemon-reload && systemctl enable --now gbx-announce.timer
-  GBX_DATADIR=$DATADIR bash $NREG/gbx-announce.sh || true
+  GBX_DATADIR=$DATADIR GBX_STATE_DIR=$STATEDIR bash ${TOOLSDIR}/node-registry/gbx-announce.sh || true
   echo "ANNOUNCE: enabled. This node lists itself at ${NODE_URL} and keeps the entry"
   echo "          alive on its own, for as long as it runs."
   if python3 -c "import sys;sys.exit(0 if float('${ABAL:-0}')>0 else 1)" 2>/dev/null; then
