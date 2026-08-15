@@ -5,4 +5,5 @@ After=goldbrixd.service
 Type=oneshot
 Environment=GBX_CLI=goldbrix-cli
 Environment=GBX_NODEREG_WINDOW=200000
-ExecStart=/usr/bin/env bash /opt/goldbrix-tools/node-registry/gbx-announce.sh
+Environment=GBX_TOOLSDIR=/opt/goldbrix-tools
+ExecStart=/usr/bin/env bash ${GBX_TOOLSDIR}/node-registry/gbx-announce.sh

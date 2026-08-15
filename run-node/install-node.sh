@@ -445,7 +445,7 @@ PYJSON
   cp ${TOOLSDIR}/node-registry/gbx-announce.service /etc/systemd/system/
   cp ${TOOLSDIR}/node-registry/gbx-announce.timer   /etc/systemd/system/
   install -d /etc/systemd/system/gbx-announce.service.d
-  printf '[Service]\nEnvironment=GBX_DATADIR=%s\nEnvironment=GBX_STATE_DIR=%s\n' "$DATADIR" "$STATEDIR" > /etc/systemd/system/gbx-announce.service.d/datadir.conf
+  printf '[Service]\nEnvironment=GBX_DATADIR=%s\nEnvironment=GBX_STATE_DIR=%s\nEnvironment=GBX_TOOLSDIR=%s\n' "$DATADIR" "$STATEDIR" "$TOOLSDIR" > /etc/systemd/system/gbx-announce.service.d/datadir.conf
   systemctl daemon-reload && systemctl enable --now gbx-announce.timer
   GBX_DATADIR=$DATADIR GBX_STATE_DIR=$STATEDIR bash ${TOOLSDIR}/node-registry/gbx-announce.sh || true
   echo "ANNOUNCE: enabled. This node lists itself at ${NODE_URL} and keeps the entry"

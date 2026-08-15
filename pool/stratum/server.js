@@ -32,7 +32,11 @@ function rpc(method, params) {
   return new Promise((resolve, reject) => {
     let cookie;
     try { cookie = fs.readFileSync(RPC_DATADIR + '/.cookie', 'utf8').trim(); }
-    catch (e) { return reject(new Error('cookie read: ' + e.message)); }
+    catch (e) {
+      const u = process.env.GBX_RPC_USER, w = process.env.GBX_RPC_PASS;
+      if (u && w) cookie = u + ':' + w;
+      else return reject(new Error('no .cookie at ' + RPC_DATADIR + ' and no GBX_RPC_USER/GBX_RPC_PASS'));
+    }
     const body = JSON.stringify({ jsonrpc: '1.0', id: 'gbxpool', method, params: params || [] });
     const req = http.request({
       host: RPC_HOST, port: RPC_PORT, method: 'POST', auth: cookie,
