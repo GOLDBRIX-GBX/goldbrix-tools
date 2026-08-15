@@ -30,6 +30,13 @@ def _autodb():
 E = {k: os.environ.get("GBX_"+k, v) for k, v in _D.items()}
 def _autonodereg():
     import os as _o
+    # State can live outside the code tree; an explicit path or state dir wins.
+    _e = os.environ.get("GBX_NODEREG_STATE")
+    if _e and _o.path.exists(_e): return _e
+    _sd = os.environ.get("GBX_STATE_DIR")
+    if _sd:
+        _c = _o.path.join(_sd, "node-registry.json")
+        if _o.path.exists(_c): return _c
     for c in ("/opt/goldbrix-tools/node-registry/node-registry.json",
               "/root/goldbrix-tools/node-registry/node-registry.json"):
         if _o.path.exists(c): return c
