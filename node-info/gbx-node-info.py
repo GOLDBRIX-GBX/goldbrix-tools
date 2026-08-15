@@ -23,8 +23,14 @@ def binary_sha():
 BIN_SHA = binary_sha()
 
 def rpc(method, params=None):
-    with open(COOKIE_FILE) as f:
-        auth = f.read().strip()
+    try:
+        with open(COOKIE_FILE) as f:
+            auth = f.read().strip()
+    except OSError:
+        u, w = os.environ.get("GBX_RPC_USER"), os.environ.get("GBX_RPC_PASS")
+        if not (u and w):
+            raise RuntimeError("no cookie at %s and no GBX_RPC_USER/GBX_RPC_PASS" % COOKIE_FILE)
+        auth = u + ":" + w
     import base64
     req = Request(f"http://127.0.0.1:{RPC_PORT}/",
         data=json.dumps({"jsonrpc":"1.0","id":"ni","method":method,"params":params or []}).encode(),

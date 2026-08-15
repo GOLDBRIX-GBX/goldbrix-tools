@@ -31,7 +31,14 @@ const TOPIC_REFUNDED = '0xfe509803c09416b28ff3d8f690c8b0c61462a892c46d5430c8fb20
 const log = (...a) => console.log(new Date().toISOString(), ...a);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-function rpcAuth(){ return 'Basic ' + Buffer.from(fs.readFileSync(COOKIE,'utf8').trim()).toString('base64'); }
+function rpcAuth(){
+  try { return 'Basic ' + Buffer.from(fs.readFileSync(COOKIE,'utf8').trim()).toString('base64'); }
+  catch (e) {
+    const u = process.env.GBX_RPC_USER, w = process.env.GBX_RPC_PASS;
+    if (u && w) return 'Basic ' + Buffer.from(u + ':' + w).toString('base64');
+    throw new Error('no .cookie at ' + COOKIE + ' and no GBX_RPC_USER/GBX_RPC_PASS');
+  }
+}
 function rpc(method, params=[]) {
   return new Promise((resolve,reject)=>{
     const body = JSON.stringify({jsonrpc:'1.0',id:'gbxtrade',method,params});

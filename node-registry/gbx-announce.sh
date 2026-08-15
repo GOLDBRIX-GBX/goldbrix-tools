@@ -7,8 +7,9 @@
 # Any field may be omitted. Zero balance => logs and exits 0 (never crashes the node).
 set -u
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CFG="${GBX_ANNOUNCE_CFG:-$DIR/announce.json}"
-STATE="${GBX_ANNOUNCE_STATE:-$DIR/announce-state.json}"
+SDIR="${GBX_STATE_DIR:-$DIR}"
+CFG="${GBX_ANNOUNCE_CFG:-$SDIR/announce.json}"
+STATE="${GBX_ANNOUNCE_STATE:-$SDIR/announce-state.json}"
 CLI="${GBX_CLI:-goldbrix-cli}"
 DATADIR="${GBX_DATADIR:-}"
 WINDOW="${GBX_NODEREG_WINDOW:-200000}"

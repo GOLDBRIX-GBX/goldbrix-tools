@@ -7,14 +7,20 @@
 const fs = require('fs'); const path = require('path'); const http = require('http');
 const GBX_DATADIR = process.env.GBX_DATADIR || '/var/lib/goldbrix';
 const RPC_PORT = parseInt(process.env.GBX_RPC_PORT || '8332', 10);
-const STATE = process.env.GBX_NODEREG_STATE || '/root/goldbrix-tools/node-registry/node-registry.json';
+const STATE = process.env.GBX_NODEREG_STATE || path.join(process.env.GBX_STATE_DIR || __dirname,'node-registry.json');
 const START_HEIGHT = parseInt(process.env.GBX_NODEREG_START || '0', 10);
 const WINDOW = parseInt(process.env.GBX_NODEREG_WINDOW || '200000', 10);
 const POLL_MS = 3000;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const log = (...a) => console.log(new Date().toISOString(), ...a);
-function rpcAuth(){ const c = fs.readFileSync(path.join(GBX_DATADIR,'.cookie'),'utf8').trim();
-  return 'Basic ' + Buffer.from(c).toString('base64'); }
+function rpcAuth(){
+  try{ return 'Basic '+Buffer.from(fs.readFileSync(path.join(GBX_DATADIR,'.cookie'),'utf8').trim()).toString('base64'); }
+  catch(e){
+    const u=process.env.GBX_RPC_USER, p=process.env.GBX_RPC_PASS;
+    if(u&&p) return 'Basic '+Buffer.from(u+':'+p).toString('base64');
+    throw new Error('no .cookie at '+GBX_DATADIR+' and no GBX_RPC_USER/GBX_RPC_PASS');
+  }
+}
 function rpc(method, params=[]) {
   return new Promise((resolve,reject)=>{
     const body = JSON.stringify({jsonrpc:'1.0',id:'gbxnodereg',method,params});

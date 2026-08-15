@@ -9,14 +9,20 @@
 const fs=require('fs'),path=require('path'),http=require('http'),{execFileSync}=require('child_process');
 const GBX_DATADIR=process.env.GBX_DATADIR||'/var/lib/goldbrix';
 const RPC_PORT=parseInt(process.env.GBX_RPC_PORT||'8332',10);
-const STATE=process.env.GBX_RELCHK_STATE||path.join(__dirname,'release-check.json');
+const STATE=process.env.GBX_RELCHK_STATE||path.join(process.env.GBX_STATE_DIR||__dirname,'release-check.json');
 const ROOT=(process.env.GBX_RELEASE_ROOT||'').toLowerCase();
 const TOOLSDIR=process.env.GBX_TOOLSDIR||path.resolve(__dirname,'..');
 const WINDOW=parseInt(process.env.GBX_RELCHK_WINDOW||'400000',10);
 const MAXWALK=parseInt(process.env.GBX_RELCHK_MAXWALK||'200',10);
 const log=(...a)=>console.log(new Date().toISOString(),...a);
-function rpcAuth(){const c=fs.readFileSync(path.join(GBX_DATADIR,'.cookie'),'utf8').trim();
-  return 'Basic '+Buffer.from(c).toString('base64');}
+function rpcAuth(){
+  try{ return 'Basic '+Buffer.from(fs.readFileSync(path.join(GBX_DATADIR,'.cookie'),'utf8').trim()).toString('base64'); }
+  catch(e){
+    const u=process.env.GBX_RPC_USER, p=process.env.GBX_RPC_PASS;
+    if(u&&p) return 'Basic '+Buffer.from(u+':'+p).toString('base64');
+    throw new Error('no .cookie at '+GBX_DATADIR+' and no GBX_RPC_USER/GBX_RPC_PASS');
+  }
+}
 function rpc(method,params=[]){return new Promise((resolve,reject)=>{
   const body=JSON.stringify({jsonrpc:'1.0',id:'gbxrelchk',method,params});
   const req=http.request({host:'127.0.0.1',port:RPC_PORT,method:'POST',
