@@ -48,9 +48,17 @@ async function verifyLineage(txid){ // walk vin[0] back to the published root
     if(vin.coinbase!==undefined)return cur.toLowerCase()===ROOT;
     cur=vin.txid;
   } return false;}
-function localVersion(){try{
-  return execFileSync('git',['-C',TOOLSDIR,'describe','--tags','--match','tools-*','--always'],{encoding:'utf8'}).trim();
+function localHead(){try{
+  return execFileSync('git',['-C',TOOLSDIR,'rev-parse','HEAD'],{encoding:'utf8'}).trim();
  }catch(e){return null;}}
+function localVersion(){try{
+  /* An exact tag is a version; anything else is a commit, and saying so plainly
+     beats printing a short hash where an operator expects a release name. */
+  const t=execFileSync('git',['-C',TOOLSDIR,'describe','--tags','--exact-match','--match','tools-*'],
+    {encoding:'utf8',stdio:['ignore','pipe','ignore']}).trim();
+  if(t) return t;
+ }catch(e){}
+ const h=localHead(); return h?('commit:'+h.slice(0,12)):null;}
 function load(){try{return JSON.parse(fs.readFileSync(STATE,'utf8'));}
   catch(e){return {scanned_height:0,anchors:{}};}}
 function save(s){const tmp=STATE+'.tmp';fs.writeFileSync(tmp,JSON.stringify(s,null,1));fs.renameSync(tmp,STATE);}
@@ -83,9 +91,14 @@ function save(s){const tmp=STATE+'.tmp';fs.writeFileSync(tmp,JSON.stringify(s,nu
   valid.sort((a,b)=>a[1].height-b[1].height);
   const latest=valid.length?{tag:valid[valid.length-1][0],...valid[valid.length-1][1]}:null;
   const lv=localVersion();
+  const head=localHead();
   st.report={checked_at:new Date().toISOString(),tip,local_version:lv,
     latest_anchored:latest,
-    status:!latest?'none_anchored':(lv&&lv.startsWith(latest.tag)?'up_to_date':'update_available')};
+    local_commit:head,
+    /* The chain records a commit, so the verdict compares commits. Comparing
+       tag prefixes reports a stale node as current (tools-v1 vs tools-v10) and
+       a current node as stale (HEAD past the tag). */
+    status:!latest?'none_anchored':(head&&head===latest.commit?'up_to_date':'update_available')};
   save(st);
   log('report:',JSON.stringify(st.report));
 })().catch(e=>{log('err',e.message);process.exit(1);});
