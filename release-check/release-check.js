@@ -62,8 +62,23 @@ function localVersion(){try{
   const t=execFileSync('git',['-C',TOOLSDIR,'describe','--tags','--exact-match','--match','tools-*'],
     {encoding:'utf8',stdio:['ignore','pipe','ignore']}).trim();
   if(t) return t;
- }catch(e){}
+ }catch(e){
+  /* No tag at HEAD is worth saying out loud. On a copied install it is the
+     first visible symptom that the metadata does not describe the code. */
+  log('NOTE: no tools-* tag at HEAD; reporting a bare commit');
+ }
  const h=localHead(); return h?('commit:'+h.slice(0,12)):null;}
+function treeChanges(){try{
+  /* Metadata is not the code. Where a running copy is installed by copying
+     files rather than by checking out, .git can freeze while the files move on
+     (or the reverse, which is worse: fresh metadata over stale code reads as
+     up_to_date and confirms something untrue). Compare the worktree with HEAD
+     and report what differs. This is reported alongside the anchor verdict, not
+     instead of it: an operator running local modifications is exactly what a
+     federation is for, and must not lose his version reading for it. */
+  const o=execFileSync('git',['-C',TOOLSDIR,'diff','--name-only','HEAD'],{encoding:'utf8'});
+  return o.split('\n').map(x=>x.trim()).filter(Boolean);
+ }catch(e){return null;}}
 function isAncestor(a,b){
   /* true = a is an ancestor of b; false = it is not; null = this repo has never
      seen the commit (git exits 128), which is not the same thing and must not
@@ -111,9 +126,16 @@ function save(s){const tmp=STATE+'.tmp';fs.writeFileSync(tmp,JSON.stringify(s,nu
   const latest=valid.length?{tag:valid[valid.length-1][0],...valid[valid.length-1][1]}:null;
   const lv=localVersion();
   const head=localHead();
+  const changed=treeChanges();
+  const clean=changed===null?null:changed.length===0;
+  if(clean===false)log('WARNING: worktree differs from HEAD in',changed.length,
+    'tracked file(s) - the reported version describes metadata, not the code that runs:',
+    changed.slice(0,10).join(', '));
   st.report={checked_at:new Date().toISOString(),tip,local_version:lv,
     latest_anchored:latest,
     local_commit:head,
+    tree_clean:clean,
+    tree_changed:changed===null?null:changed.slice(0,20),
     /* The chain records a commit, so the verdict compares commits. Comparing
        tag prefixes reports a stale node as current (tools-v1 vs tools-v10) and
        a current node as stale (HEAD past the tag). */

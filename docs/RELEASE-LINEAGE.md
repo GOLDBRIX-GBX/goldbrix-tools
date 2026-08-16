@@ -33,6 +33,16 @@ inert by design.
   descendant of the anchored commit: it carries the anchored release plus
   later work, and applying the tag would roll that work back. An anchor this
   repo has never fetched is reported as `update_available`, not as ahead.
+  The verdict describes git metadata, so the report also carries `tree_clean`
+  and `tree_changed`: the tracked files that differ between the worktree and
+  HEAD. A running copy installed by copying files rather than by checking out
+  can drift — code moves while `.git` stays frozen, or worse, metadata reaches
+  a newer tag while the files stay old, and the verdict then reads `up_to_date`
+  over stale code. Local modifications are legitimate and never suppress the
+  verdict; they are reported next to it so the operator can see both truths.
+  **The running copy needs its `.git` directory, not only its files.** A sync
+  that excludes `.git` leaves the verifier describing a version the node is not
+  running; `no tools-* tag at HEAD` in the log is the first symptom.
 - `release-check/apply-release.sh <tag>` — the operator's deliberate action.
   Verifies the tag's commit against the CHAIN (a compromised git remote fails
   the check), applies the tag, health-gates the node, and rolls back
