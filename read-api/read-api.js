@@ -765,7 +765,7 @@ const server = http.createServer(async (req, res) => {
       // On-chain release anchors (GBX:R:), lineage-verified by release-check.
       // Read-only, keyless, federated: any node serves its own verified view.
       try {
-        const rcPath = process.env.GBX_RELCHK_STATE || require('path').join(__dirname,'..','release-check','release-check.json');
+        const rcPath = process.env.GBX_RELCHK_STATE || require('path').join(process.env.GBX_STATE_DIR || require('path').join(__dirname,'..','release-check'),'release-check.json');
         const rc = JSON.parse(fs.readFileSync(rcPath,'utf8'));
         res.writeHead(200, {'Content-Type':'application/json'});
         return res.end(JSON.stringify({checked_at:(rc.report&&rc.report.checked_at)||null, anchors: rc.anchors||{}, app_anchors: rc.app_anchors||{}}));

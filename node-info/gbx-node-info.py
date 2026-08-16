@@ -10,7 +10,8 @@ RPC_PORT = int(sys.argv[1]) if len(sys.argv) > 1 else int(os.environ.get("GBX_RP
 COOKIE_FILE = os.environ.get("GBX_COOKIE", "/root/.bitcoin/.cookie")
 BINARY = os.environ.get("GBX_BINARY", "/usr/local/bin/goldbrixd")
 LISTEN_PORT = int(os.environ.get("GBX_NODEINFO_PORT", "8390"))
-RELCHK_STATE = os.environ.get("GBX_RELCHK_STATE", "/opt/goldbrix-tools/release-check/release-check.json")
+_RC_DIR = os.environ.get("GBX_STATE_DIR") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "release-check")
+RELCHK_STATE = os.environ.get("GBX_RELCHK_STATE") or os.path.join(_RC_DIR, "release-check.json")
 START = time.time()
 
 def binary_sha():
