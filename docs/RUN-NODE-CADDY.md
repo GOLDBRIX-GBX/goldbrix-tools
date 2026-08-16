@@ -36,6 +36,12 @@ your.node.example {
 		reverse_proxy 127.0.0.1:18099
 	}
 
+	# The health endpoint every node is expected to expose: binary SHA-256,
+	# chain tip and release status. Other nodes and the app read it.
+	handle /gbx-node-info {
+		reverse_proxy 127.0.0.1:8390
+	}
+
 	handle /api/* {
 		reverse_proxy 127.0.0.1:8088 {
 			header_down -Access-Control-Allow-Origin

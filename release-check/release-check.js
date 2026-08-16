@@ -59,6 +59,20 @@ function localVersion(){try{
   if(t) return t;
  }catch(e){}
  const h=localHead(); return h?('commit:'+h.slice(0,12)):null;}
+function isAncestor(a,b){
+  /* true = a is an ancestor of b; false = it is not; null = this repo has never
+     seen the commit (git exits 128), which is not the same thing and must not
+     be read as "not an ancestor". */
+  try{ execFileSync('git',['-C',TOOLSDIR,'merge-base','--is-ancestor',a,b],{stdio:'ignore'}); return true; }
+  catch(e){ return e.status===1 ? false : null; }}
+function releaseStatus(head,latest){
+  if(!latest) return 'none_anchored';
+  if(!head) return 'update_available';
+  if(head===latest.commit) return 'up_to_date';
+  /* A node whose HEAD descends from the anchor carries the anchored release
+     plus later work. Calling that stale invites the operator to roll back his
+     own commits. An anchor this repo has not fetched stays update_available. */
+  return isAncestor(latest.commit,head)===true ? 'ahead_of_anchor' : 'update_available';}
 function load(){try{return JSON.parse(fs.readFileSync(STATE,'utf8'));}
   catch(e){return {scanned_height:0,anchors:{}};}}
 function save(s){const tmp=STATE+'.tmp';fs.writeFileSync(tmp,JSON.stringify(s,null,1));fs.renameSync(tmp,STATE);}
@@ -98,7 +112,7 @@ function save(s){const tmp=STATE+'.tmp';fs.writeFileSync(tmp,JSON.stringify(s,nu
     /* The chain records a commit, so the verdict compares commits. Comparing
        tag prefixes reports a stale node as current (tools-v1 vs tools-v10) and
        a current node as stale (HEAD past the tag). */
-    status:!latest?'none_anchored':(head&&head===latest.commit?'up_to_date':'update_available')};
+    status:releaseStatus(head,latest)};
   save(st);
   log('report:',JSON.stringify(st.report));
 })().catch(e=>{log('err',e.message);process.exit(1);});

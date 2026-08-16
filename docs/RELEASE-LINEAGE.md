@@ -28,8 +28,11 @@ inert by design.
 
 - `release-check/release-check.js` + daily timer — keyless verifier. Scans the
   node's OWN chain, validates lineage, and reports `none_anchored` /
-  `up_to_date` / `update_available` in `/gbx-node-info`. It never applies
-  anything.
+  `up_to_date` / `ahead_of_anchor` / `update_available` in `/gbx-node-info`.
+  It never applies anything. `ahead_of_anchor` means this node's HEAD is a
+  descendant of the anchored commit: it carries the anchored release plus
+  later work, and applying the tag would roll that work back. An anchor this
+  repo has never fetched is reported as `update_available`, not as ahead.
 - `release-check/apply-release.sh <tag>` — the operator's deliberate action.
   Verifies the tag's commit against the CHAIN (a compromised git remote fails
   the check), applies the tag, health-gates the node, and rolls back
