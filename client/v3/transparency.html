@@ -152,8 +152,19 @@
       if(top!==man.top){S((T.scMismatch||'MISMATCH — manifest top hash differs.'),'#FF6B5C');return;}
       S((T.scAnchor||'Checking the on-chain anchor…'));
       var an=null;
-      try{an=await (await window.gbxRead('/release-anchors')).json();}
-      catch(e){S((T.scNoNodes||'Bundle intact — but no live node reachable to read the on-chain anchor. Try again online.'),'#FFD98A');return;}
+      /* An on-chain anchor is true if ANY node confirms it with a valid lineage.
+         A node that has not indexed it yet must not produce a false negative, so
+         every live node is asked in parallel and the answer that carries THIS
+         bundle wins. Silence from all of them is reported as such, never as
+         "unanchored". */
+      try{an=await window.GBXRead.best('/api/release-anchors',function(j){
+        var aa=(j&&j.app_anchors)||{};
+        for(var kk in aa){var ax=aa[kk];
+          if(ax&&ax.lineage_valid&&String(ax.sha).toLowerCase()===top)return 2;}
+        return Object.keys(aa).length?1:0;
+      });}
+      catch(e){an=null;}
+      if(!an){S((T.scNoNodes||'Bundle intact — but no live node reachable to read the on-chain anchor. Try again online.'),'#FFD98A');return;}
       var hit=null;
       if(an&&an.app_anchors)for(var k in an.app_anchors){var a2=an.app_anchors[k];
         if(a2&&a2.lineage_valid&&String(a2.sha).toLowerCase()===top)hit={tag:k,txid:a2.txid};}
