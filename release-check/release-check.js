@@ -39,6 +39,11 @@ function decode(asm){ // scriptPubKey.asm: "OP_RETURN <hex>"
     /* App/bundle anchors: GBX:R:<tag>:<64-hex sha256> (e.g. signed-APK sha,
        or the www bundle top-hash). Additive: stored apart from tools anchors. */
     const a=t.match(/^GBX:R:([A-Za-z0-9._-]{1,9}):([0-9a-f]{64})$/);
+    /* The tools-* namespace belongs to code anchors, whose value is a
+       40-hex commit. A tools-* tag carrying a 64-hex value is malformed by
+       construction (one exists historically, all zeros) and must not land
+       in the app anchor namespace, where the client looks up bundle hashes. */
+    if(a&&/^tools-/.test(a[1])) return null;
     return a?{kind:'app',tag:a[1],sha:a[2]}:null;}catch(e){return null;}}
 async function verifyLineage(txid){ // walk vin[0] back to the published root
   let cur=txid;
