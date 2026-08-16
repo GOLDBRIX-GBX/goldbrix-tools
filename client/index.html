@@ -86,13 +86,13 @@
   /* NEW LAUNCHES CAROUSEL */
   .new-launches { display: flex; gap: 10px; padding: 0 14px 16px; overflow-x: auto; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; }
   .new-launches::-webkit-scrollbar { display: none; }
-  .nl-card { flex: 0 0 130px; background: #111; border: 1px solid #2a2218; border-radius: 12px; padding: 10px; cursor: pointer; scroll-snap-align: start; transition: border-color 0.15s; }
+  .nl-card { flex: 0 0 88px; background: #111; border: 1px solid #2a2218; border-radius: 12px; padding: 8px; cursor: pointer; scroll-snap-align: start; transition: border-color 0.15s; }
   .nl-card:hover { border-color: #F5CC75; }
   .nl-img { width: 100%; aspect-ratio: 1; border-radius: 10px; background: rgba(245,204,117,0.15); overflow: hidden; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; color: #F5CC75; font-weight: 800; font-size: 22px; }
-  .nl-img img { width: 100%; height: 100%; object-fit: cover; }
-  .nl-ticker { font-size: 13px; font-weight: 800; color: #fff; }
-  .nl-name { font-size: 10px; color: #FFE099; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .nl-meta { font-size: 9px; color: #eee; margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+  .nl-img img { width: 100%; height: 100%; object-fit: cover; image-rendering: -webkit-optimize-contrast; }
+  .nl-ticker { font-size: 12px; font-weight: 800; color: #fff; }
+  .nl-name { font-size: 9px; color: #FFE099; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .nl-meta { font-size: 8px; color: #eee; margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
 
   /* SEARCH */
   .search-wrap { padding: 4px 14px 12px; }
