@@ -78,7 +78,7 @@
     </div>
     <div class="newver" id="t_newver">🚀 New version available!</div>
     <div style="color:var(--txt2);font-size:13px;font-family:'JetBrains Mono',monospace" id="m_changelog">—</div>
-    <a class="btn-dl" id="dlBtn" href="https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/tag/v31-gbx-launchpad">📦 <span id="t_download">DOWNLOAD APK</span></a>
+    <a class="btn-dl" id="dlBtn" href="https://github.com/GOLDBRIX-GBX/goldbrix-tools/releases/latest">📦 <span id="t_download">DOWNLOAD APK</span></a>
     <div class="grid">
       <div><div class="lbl" id="t_version">Version</div><div class="val" id="m_version2">—</div></div>
       <div><div class="lbl" id="t_build">Build</div><div class="val" id="m_build2">—</div></div>
@@ -88,7 +88,7 @@
   </div>
   <div class="card">
     <div class="sec-title">🔗 <span id="t_altlinks">Alternative Download Links</span></div>
-    <a class="dl-link" href="https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/tag/v31-gbx-launchpad">
+    <a class="dl-link" href="https://github.com/GOLDBRIX-GBX/goldbrix-tools/releases/latest">
       <div><div class="t" id="t_latest">Latest Version</div><div class="p">GitHub Release (canonical)</div></div><span class="arr">↓</span>
     </a>
     <a class="dl-link" id="versionedLink" href="#" download>
@@ -149,7 +149,7 @@ if(d.downloadUrl)document.getElementById('dlBtn').href=d.downloadUrl;
   // si linkurile alternative (toate .apk)
   document.querySelectorAll('a[href*="latest.apk"], a[href*=".apk"]').forEach(function(a){ a.addEventListener('click',openApk); });
 })();
-var vp=(d&&d.downloadUrl)||('https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/download/v31-gbx-launchpad/goldbrix-'+ver+'-'+build+'.apk');document.getElementById('versionedLink').href=vp;document.getElementById('m_versioned_path').textContent=vp.split('/').pop();
+var vp=(d&&d.downloadUrl)||('https://github.com/GOLDBRIX-GBX/goldbrix-tools/releases/latest');document.getElementById('versionedLink').href=vp;document.getElementById('m_versioned_path').textContent=vp.split('/').pop();
 document.getElementById('m_size').textContent=fmtSize(d.sizeBytes||0);
 }catch(e){}})();
 function copyHash(id){var txt=document.getElementById(id).textContent;if(!txt||txt==='—')return;navigator.clipboard&&navigator.clipboard.writeText(txt);var t=document.getElementById('toast');t.textContent=(T[curLang()]||T.en).copied;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},1500)}

@@ -8,7 +8,7 @@
   // The published build changes; a URL frozen at build time turns into a 404
   // the day the next release lands. version.json is served by every federation
   // node, so the link is read from it and the constant is only a last resort.
-  var APK_URL = 'https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/download/v31-gbx-launchpad/goldbrix-1.0.118-118.apk';
+  var APK_URL = 'https://github.com/GOLDBRIX-GBX/goldbrix-tools/releases/latest';
   var APK_SIZE = '';
   var deferredPrompt = null;
 
