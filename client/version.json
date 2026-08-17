@@ -1,10 +1,10 @@
 {
-  "build": 127,
-  "version": "1.0.127",
-  "downloadUrl": "https://github.com/GOLDBRIX-GBX/goldbrix-tools/releases/download/app-v1.0.127/goldbrix-1.0.127-127.apk",
+  "build": 129,
+  "version": "1.0.129",
+  "downloadUrl": "https://github.com/GOLDBRIX-GBX/goldbrix-tools/releases/download/app-v1.0.129/goldbrix-1.0.129-129.apk",
   "minBuild": 1,
-  "releasedAt": "2026-08-16T09:50:00Z",
-  "sha256": "c0cbbdf41eeda49c55f4daac3fb710a54a07c6d13db12690f2725c9c42dd63a9",
+  "releasedAt": "2026-08-17T09:47:00Z",
+  "sha256": "d6fdc4f55e03a0e53e5943df6bd9da7985064cd7cca65051180da435e72e0112",
   "sizeBytes": 11055993,
-  "changelog": "Build 127 v1.0.127"
+  "changelog": "Build 129 v1.0.129"
 }
