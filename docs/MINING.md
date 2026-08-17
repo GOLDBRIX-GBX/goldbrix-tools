@@ -31,12 +31,41 @@ The pool runs in **solo non-custodial** mode:
 
 Search your address in the explorer of any federation node, or open your wallet in the app.
 
-## 5. Trust nothing, verify everything
+## 5. Merging your rewards before you spend them
+
+Every block you find pays a **separate** output of 0.25 GBX. They never merge on
+their own. After a few thousand blocks a wallet holds its balance in thousands of
+tiny pieces, and a single transaction cannot carry enough of them to move a large
+amount. The wallet reports the largest amount one transfer can move right now,
+and that number shrinks as the pieces multiply.
+
+The fix is to merge them into fewer, larger outputs. This is a normal transaction
+from your wallet to your own address; nobody else can sign it and the coins never
+leave your control.
+
+If you run your own node with a wallet, [run-node/gbx-consolidate.sh](../run-node/gbx-consolidate.sh)
+does it in batches:
+
+```sh
+GBX_DEST=<an address of your own wallet> ./gbx-consolidate.sh
+```
+
+It refuses to run if GBX_DEST is not an address the signing wallet owns, stops
+when the number of outputs is already below the threshold, and caps how many
+transactions it broadcasts per run. Defaults: 500 inputs per transaction, 100
+confirmations minimum, threshold 200 outputs, 5 transactions per run, all
+overridable by environment variable.
+
+If your keys live only in the app, send the amount the wallet reports as the
+current maximum to your own address, and repeat until the balance sits in a few
+large pieces.
+
+## 6. Trust nothing, verify everything
 
 - Node binaries are **reproducible** (Guix builds). SHA-256 sums: the SHA256SUMS file on the canonical GitHub Release (goldbrix-core, v31-gbx-launchpad) — anchored on-chain.
 - Every node exposes `/gbx-node-info` with the SHA-256 of the binary it is actually running.
 - Run the [watchtower](../watchtower/watchtower.py) to record it all yourself.
 
-## 6. Maximum sovereignty (optional)
+## 7. Maximum sovereignty (optional)
 
 Run your own node (the run-node guide ships inside the app on every federation node) and point this pool software at it — then you mine against your own consensus, on your own hardware, with zero third parties.

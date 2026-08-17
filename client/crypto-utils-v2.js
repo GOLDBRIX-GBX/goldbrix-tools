@@ -283,6 +283,18 @@ async function fetchUtxos(address, target) {
   return out;
 }
 
+/* How much this wallet can actually move right now, given the outputs the
+   federation returned and the per-transaction input ceiling. Reported to the
+   user instead of a generic failure. */
+function _maxSendableGbx(sortedUtxos, feeRate, maxInputs) {
+  const n = Math.min(sortedUtxos.length, maxInputs);
+  let sat = 0;
+  for (let i = 0; i < n; i++) sat += Math.round(sortedUtxos[i].amount * 1e8);
+  const fee = (n * 68 + 2 * 31 + 11) * feeRate;
+  const net = sat - fee;
+  return net > 0 ? net / 1e8 : 0;
+}
+
 async function sendGBX(mnemonic, fromAddress, toAddress, amountGbx, feeRateSatsPerByte = 30, onProgress = null) {
   const { keypair, address: derivedAddr } = await deriveKeypairFromMnemonic(mnemonic);
   if (derivedAddr !== fromAddress) {
@@ -312,7 +324,13 @@ async function sendGBX(mnemonic, fromAddress, toAddress, amountGbx, feeRateSatsP
 
   while (remainingSats > 0) {
     if (idx >= sorted.length) {
+      /* The coins exist, but they arrived as a very large number of small
+         outputs (mining rewards). Say that, instead of letting the UI guess
+         a network or fee problem: the user needs to merge them, not retry. */
       const e = new Error('INSUFFICIENT');
+      e.code = 'FRAGMENTED';
+      e.pieces = sorted.length;
+      e.maxSendable = _maxSendableGbx(sorted, feeRateSatsPerByte, MAX_INPUTS);
       e.shortGbx = remainingSats / 1e8; e.txids = txids.slice();
       throw e;
     }
