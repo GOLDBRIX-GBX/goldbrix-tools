@@ -160,8 +160,14 @@ async function _fedReadUtxos(address, target){
        before any transaction is built. The ceiling below covers several chained
        transactions and stays small enough to load. Wallets with ordinary
        outputs never come near it. */
+    /* In the app the response crosses the native bridge, which handles
+       hundreds of kilobytes but not megabytes; in a browser the same fetch is
+       direct and larger responses are fine. Cap accordingly, or the request
+       dies in transport before the wallet can explain anything. */
+    const bridged = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+    const ceil = bridged ? 1200 : 6000;
     const est = (target && target>0) ? Math.ceil(target/0.25)+400 : 1000;
-    const lim = Math.min(6000, Math.max(1000, est));
+    const lim = Math.min(ceil, Math.max(1000, est));
     const d = await window.GBXRead.json('/api/utxos/'+address+'?limit='+lim, {timeout:120000});
     const uns = (d && d.unspents) || [];
     if (uns.length) return uns;
