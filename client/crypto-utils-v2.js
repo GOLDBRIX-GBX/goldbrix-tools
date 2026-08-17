@@ -154,8 +154,14 @@ async function _fedReadUtxos(address, target){
   if (typeof window==='undefined' || !window.GBXRead) return null;
   try { if (window.GBXReady) await window.GBXReady; } catch(_e){}
   try {
+    /* Ask only for what a signing run can actually consume. A mined wallet can
+       hold over a million outputs; requesting tens of thousands of them ships
+       megabytes the device then has to parse and sort, and a phone gives up
+       before any transaction is built. The ceiling below covers several chained
+       transactions and stays small enough to load. Wallets with ordinary
+       outputs never come near it. */
     const est = (target && target>0) ? Math.ceil(target/0.25)+400 : 1000;
-    const lim = Math.min(24000, Math.max(1000, est));
+    const lim = Math.min(6000, Math.max(1000, est));
     const d = await window.GBXRead.json('/api/utxos/'+address+'?limit='+lim, {timeout:120000});
     const uns = (d && d.unspents) || [];
     if (uns.length) return uns;
