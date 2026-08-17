@@ -350,10 +350,12 @@ else
   install -d /etc/systemd/system/caddy.service.d
   cat > /etc/systemd/system/caddy.service.d/self-heal.conf << 'DROPIN'
 # managed by install-node.sh - remove this file to keep your own policy
+[Unit]
+StartLimitIntervalSec=0
+
 [Service]
 Restart=always
 RestartSec=5
-StartLimitIntervalSec=0
 DROPIN
   systemctl daemon-reload >/dev/null 2>&1 || true
 
