@@ -104,6 +104,17 @@ def sol_scan_and_refund(st, cfg, deps):
 # only before the steps that open something, never before those that close it.
 SOL_LOCK_LAMPORTS=int(os.environ.get("GBX_SOL_LOCK_LAMPORTS","1976640"))
 SOL_MIN_LOCKS=int(os.environ.get("GBX_SOL_MIN_LOCKS","3"))
+SOL_FAIL_MAX=int(os.environ.get("GBX_SOL_FAIL_MAX","3"))
+
+def _sol_gate(prev, bal, need):
+    # One failed reading = transient RPC, stay open. SOL_FAIL_MAX consecutive
+    # failures = the tool itself is blind -> refuse NEW opens only; settlement
+    # of running swaps is never gated here.
+    fails = int((prev or {}).get("fail_count") or 0)
+    fails = fails + 1 if bal is None else 0
+    measured = bal is not None
+    can_open = (bal >= need) if measured else (fails < SOL_FAIL_MAX)
+    return fails, measured, can_open
 
 def _sol_native_balance(cfg):
     try:
@@ -120,11 +131,12 @@ def sol_run(st, fund, deps):
     if cfg is None: return
     _bal = _sol_native_balance(cfg)
     _need = SOL_LOCK_LAMPORTS * SOL_MIN_LOCKS
-    _can_open = (_bal is None) or (_bal >= _need)
     st.setdefault("chain_gas", {})
+    _fails, _measured, _can_open = _sol_gate(st["chain_gas"].get("solana"), _bal, _need)
     st["chain_gas"]["solana"] = {"balance": _bal, "lock_cost": SOL_LOCK_LAMPORTS,
                                  "locks_left": (None if _bal is None else _bal // SOL_LOCK_LAMPORTS),
-                                 "min_locks": SOL_MIN_LOCKS, "ok": bool(_can_open)}
+                                 "min_locks": SOL_MIN_LOCKS, "ok": bool(_can_open),
+                                 "measured": _measured, "fail_count": _fails}
     if not _can_open:
         print(f"  [SOL GAS] {_bal} lamports covers fewer than {SOL_MIN_LOCKS} new locks -> opening none, settling the ones already running")
     for _name, _fn, _needs_fund, _opens in (
