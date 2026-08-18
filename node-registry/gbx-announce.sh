@@ -20,6 +20,9 @@ cli(){ if [ -n "$DATADIR" ]; then "$CLI" -datadir="$DATADIR" "$@"; else "$CLI" "
 TIP=$(cli getblockcount 2>/dev/null) || { log "node not reachable — skip"; exit 0; }
 [ -n "$TIP" ] || { log "empty tip — skip"; exit 0; }
 WALLET=$(python3 -c "import json,sys;print(json.load(open('$CFG')).get('wallet',''))" 2>/dev/null)
+# The node forgets loaded wallets on restart; announcing must survive that
+# without anyone noticing. loadwallet is idempotent: already-loaded is fine.
+[ -n "$WALLET" ] && cli loadwallet "$WALLET" >/dev/null 2>&1 || true
 [ -f "$STATE" ] || echo '{}' > "$STATE"
 
 have_balance(){
