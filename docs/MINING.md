@@ -11,8 +11,9 @@ Create a wallet in the GoldBrix app on any federation node (or run your own node
 Any stratum-compatible SHA-256d miner works. Example with cpuminer:
 
 ```
-# any federation node can expose its own solo pool — seed pool: goldbrix.app:3333
-./cpuminer -a sha256d -o stratum+tcp://goldbrix.app:3333 -u bn1YOURADDRESS.worker1 -p x
+# every federation node can expose its own solo pool on port 3333.
+# Pick any live node from the federation (see the node registry) and use its hostname:
+./cpuminer -a sha256d -o stratum+tcp://NODE_HOST:3333 -u bn1YOURADDRESS.worker1 -p x
 ```
 
 Login format: `bn1address.workername` (worker name is anything you like).
