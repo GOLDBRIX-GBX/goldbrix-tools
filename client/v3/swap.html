@@ -52,6 +52,7 @@ window.GBX_LP_ENSURE = async function(C){
       var _ch=Object.keys(window.GBX_CHAINS||{}).find(function(k){return window.GBX_CHAINS[k]===C;});
       for(var _i=0;_i<_l.length;_i++){
         var _lp=_l[_i];
+        if(C._lpExcluded && _lp.base_url===C._lpExcluded) continue;
         if(_ch && _lp.chains && _lp.chains.indexOf(_ch)<0) continue;
         try{
           var _in=await (await fetch(_lp.base_url+'/lp-info',{cache:'no-store'})).json();
@@ -650,6 +651,7 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
       dcap:{en:'Daily sell limit reached for this wallet — try again tomorrow.',ro:'Limita zilnică de vânzare atinsă pentru acest portofel — încearcă mâine.',de:'Tägliches Verkaufslimit für diese Wallet erreicht — morgen erneut versuchen.',zh:'该钱包已达每日卖出上限 — 请明天再试。',ar:'تم بلوغ حد البيع اليومي لهذه المحفظة — حاول غداً.'},
       pause:{en:'Swaps are briefly paused for safety — they resume automatically.',ro:'Schimburile sunt în pauză scurtă pentru siguranță — revin automat.',de:'Swaps sind kurz pausiert zur Sicherheit — sie werden automatisch fortgesetzt.',zh:'为安全起见交换暂停 — 将自动恢复。',ar:'تم إيقاف التبادلات مؤقتاً للأمان — ستستأنف تلقائياً.'},
       noquote:{en:'Quote unavailable right now — you can trade on the Direct Market instead.',ro:'Cotație indisponibilă acum — poți tranzacționa pe Piața directă.',de:'Kurs derzeit nicht verfügbar — du kannst stattdessen auf dem Direktmarkt handeln.',zh:'当前无法报价 — 你可以改用直接市场交易。',ar:'السعر غير متاح الآن — يمكنك التداول في السوق المباشر بدلاً من ذلك.'},
+      lpswitch:{en:'This LP could not process the request. Switched to the next LP — its price may differ. Review the quote and tap again to proceed.',ro:'Acest LP nu a putut procesa cererea. S-a trecut la următorul LP — prețul lui poate diferi. Verifică noua cotație și apasă din nou.',de:'Dieser LP konnte die Anfrage nicht verarbeiten. Zum nächsten LP gewechselt — dessen Preis kann abweichen. Prüfe den Kurs und tippe erneut.',zh:'该 LP 无法处理请求。已切换到下一个 LP — 其价格可能不同。请查看新报价后再次点击。',ar:'تعذّر على هذا المزوّد معالجة الطلب. تم التبديل إلى المزوّد التالي — قد يختلف سعره. راجع السعر الجديد ثم اضغط مرة أخرى.'},
       lpchain:{en:'This LP cannot process the selected chain right now. Try another chain or check back later.',ro:'Acest LP nu poate procesa lanțul ales acum. Încearcă alt lanț sau revino mai târziu.',de:'Dieser LP kann die gewählte Chain derzeit nicht verarbeiten. Versuche eine andere Chain oder schau später wieder vorbei.',zh:'该 LP 目前无法处理所选链。请尝试其他链或稍后再来。',ar:'لا يستطيع مزوّد السيولة معالجة الشبكة المختارة الآن. جرّب شبكة أخرى أو عُد لاحقاً.'},
       moved:{en:'The price moved while you were confirming — nothing was charged. Check the new rate and try again.',ro:'Prețul s-a schimbat cât timp confirmai — nu s-a reținut nimic. Verifică noul curs și încearcă din nou.',de:'Der Preis hat sich während der Bestätigung geändert — es wurde nichts abgebucht. Prüfe den neuen Kurs und versuche es erneut.',zh:'确认期间价格发生变动 — 未扣取任何费用。请查看新汇率后重试。',ar:'تغيّر السعر أثناء التأكيد — لم يُخصم شيء. تحقق من السعر الجديد وحاول مجدداً.'}
     };
@@ -841,6 +843,16 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
     }catch(e){
       try{ window.__lastSwapErr=(e&&e.message||String(e))+' @ '+(e&&e._at||'?'); }catch(_x){}
       renderFlow((e&&e._at)||'prepared', true);
+      /* A refusal at PREPARE moved no funds. The refusing LP is excluded and the
+         router picks the next one, but nothing re-executes by itself: the next
+         LP quotes its own price, so the decision to proceed stays with the user. */
+      var _pm=String(e&&e.message||e).toLowerCase();
+      var _prepFail=(_pm.indexOf('sol-prepare:')===0)||(_pm.indexOf('cli_fail')>=0&&_pm.indexOf('submit')<0&&_pm.indexOf('claim')<0);
+      if(_prepFail && C && C.gateway){
+        C._lpExcluded=C.gateway; C.gateway=null; C.lpName=null;
+        try{ await GBX_LP_ENSURE(C); }catch(_r){}
+        if(C.gateway){ setMsg(t('lpswitch')); refreshQuote(); _reset(); return; }
+      }
       setMsg(humanError(e));
     }finally{
       _reset();
