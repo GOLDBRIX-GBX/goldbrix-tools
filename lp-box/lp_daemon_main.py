@@ -145,7 +145,7 @@ def refund_sell_guard(pk,val_sats):
         sg[pk]=e; json.dump(sg,open(sgf,'w'))
         print(f"  [GUARD] cap restituit pentru {str(pk)[:12]} ({int(val_sats or 0)/1e8} GBX)")
     except Exception as _e:
-        print(f"  [GUARD] restituire esuata: {_e}")
+        print(f"  [GUARD] restitution failed: {_e}")
 def intent_refund_key(intent):
     return intent.get("refund_pubkey") or intent.get("sol_user_pubkey")
 def ensure_setup(st):
@@ -493,7 +493,7 @@ def scan_and_lock_usdc(st,fund,ctx):
             try:
                 _all=load_intents()
                 if hl in _all: del _all[hl]; json.dump(_all,open(INTENTS_F,'w')); print(f"  [LP-15] intent zombie curatat {hl[:14]} (swap {_sw.get('status')})")
-            except Exception as _e: print(f"  [LP-15] curatare esuata {hl[:14]}: {_e}")
+            except Exception as _e: print(f"  [LP-15] cleanup failed {hl[:14]}: {_e}")
             continue
         if "gbx_txid" not in intent or "gbx_vout" not in intent: continue
         sid="sell:"+ctx["name"]+":"+hl
