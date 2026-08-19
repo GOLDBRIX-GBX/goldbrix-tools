@@ -63,7 +63,7 @@ large pieces.
 
 ## 6. Trust nothing, verify everything
 
-- Node binaries are **reproducible** (Guix builds). SHA-256 sums: the SHA256SUMS file on the canonical GitHub Release (goldbrix-core, v31-gbx-launchpad) — anchored on-chain.
+- Node binaries are **reproducible** (Guix builds). SHA-256 sums: the SHA256SUMS file on the canonical GitHub Release (goldbrix-core, v31-gbx-federation) — anchored on-chain.
 - Every node exposes `/gbx-node-info` with the SHA-256 of the binary it is actually running.
 - Run the [watchtower](../watchtower/watchtower.py) to record it all yourself.
 

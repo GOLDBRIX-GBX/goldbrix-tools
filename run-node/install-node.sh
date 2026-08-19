@@ -5,9 +5,9 @@
 # Usage: sudo bash install-node.sh
 set -euo pipefail
 
-REL="v31-gbx-launchpad"
-TAR="goldbrix-1747c8e2d817-x86_64-linux-gnu.tar.gz"
-TAR_SHA="bdbac8ac96e7ce62bc060ba908667cd276abc5ca53c85591d8c3253e4f14258e"
+REL="v31-gbx-federation"
+TAR="goldbrix-2447fa343748-x86_64-linux-gnu.tar.gz"
+TAR_SHA="0ee36588eadc49cfb3fad0b8f47ab6520524eb6861fa760d80ed2744a4df06ba"
 BASE="https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/download/${REL}"
 TOOLS_REPO="https://github.com/GOLDBRIX-GBX/goldbrix-tools.git"
 DATADIR="/var/lib/goldbrix"

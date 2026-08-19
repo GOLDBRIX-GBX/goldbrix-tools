@@ -33,12 +33,12 @@ or non-custodial: nothing in this repository can hold or move user funds.
 The wallet in `client/` is what people actually run. It needs no build step: any
 node that follows [docs/RUN-NODE-CADDY.md](docs/RUN-NODE-CADDY.md) serves it over
 HTTPS, and the Android build of the same code is published on the
-[GitHub Release](https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/tag/v31-gbx-launchpad). Verify its SHA-256 against `/version.json`,
+[GitHub Release](https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/tag/v31-gbx-federation). Verify its SHA-256 against `/version.json`,
 which every node serves from its own copy, and check the release anchor on-chain
 ([docs/RELEASE-ANCHOR.md](docs/RELEASE-ANCHOR.md)).
 
 Core node source: [goldbrix-core](https://github.com/GOLDBRIX-GBX/goldbrix-core)
-Verified release binaries: [GitHub Release](https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/tag/v31-gbx-launchpad)
+Verified release binaries: [GitHub Release](https://github.com/GOLDBRIX-GBX/goldbrix-core/releases/tag/v31-gbx-federation)
 
 ## Run the pool against your own node
 
