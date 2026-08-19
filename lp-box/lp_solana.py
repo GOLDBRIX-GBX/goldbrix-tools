@@ -79,7 +79,7 @@ def sol_scan_and_claim_usdc(st, cfg, deps):
             rtx = deps["spent_via_refund"](sw["gbx_txid"], sw["gbx_vout"], sw["lock_h"])
             if rtx is not None:
                 sw["status"] = "refunded_on_timelock"; sw["refund_tx"] = rtx
-                print(f"  [SOL REFUND-L1] {sid[:14]} user si-a luat GBX inapoi pe timelock"); continue
+                print(f"  [SOL REFUND-L1] {sid[:14]} user took their GBX back via timelock"); continue
             sw["_unres"] = sw.get("_unres",0)+1
             if sw["_unres"] < 3:
                 print(f"  [SOL UNRESOLVED] {sid[:14]} spender not found yet (retry {sw['_unres']}/3)"); continue

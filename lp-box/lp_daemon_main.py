@@ -33,7 +33,7 @@ def enabled_chains():
     return [n for n,c in load_chains().items() if c.get("enabled") and c.get("kind","evm")=="evm"]
 def gcli(*a,wallet=None):
     c=list(GCLI)+([f"-rpcwallet={wallet}"] if wallet else [])+[_enc(x) for x in a]
-    # REZILIENT: nodul poate fi temporar in "Loading" (-28) la restart/reindex -> asteapta + reincearca
+    # RESILIENT: the node may be temporarily in "Loading" (-28) after restart/reindex -> wait + retry
     for _attempt in range(40):   # B-fix: acopera restart nod ~90s real + margine = ~160s
         try: r=subprocess.run(c,capture_output=True,text=True,timeout=90)
         except subprocess.TimeoutExpired:
@@ -45,7 +45,7 @@ def gcli(*a,wallet=None):
             print(f"  [WAIT] gcli {a[0]}: nod ocupat ({err[:50]}), retry {_attempt+1}/40 in 4s")
             time.sleep(4); continue
         raise RuntimeError(f"gcli {a[0]}: {err}")
-    raise RuntimeError(f"gcli {a[0]}: nod indisponibil dupa 40 incercari (~160s)")
+    raise RuntimeError(f"gcli {a[0]}: node unavailable after 40 attempts (~160s)")
 def gclij(*a,wallet=None):
     o=gcli(*a,wallet=wallet); return json.loads(o) if o else None
 def gtry(*a,wallet=None):
@@ -277,7 +277,7 @@ def scan_and_claim_usdc(st,ctx):
                 print(f"  [PENDING] {sid[:14]} claim in mempool, astept confirmare"); continue
             rtx=spent_via_refund(sw["gbx_txid"],sw["gbx_vout"],sw["lock_h"])
             if rtx is not None:
-                sw["status"]="refunded_on_timelock"; sw["refund_tx"]=rtx; print(f"  [REFUND] {sid[:14]} output refundat pe timelock (legitim, user si-a luat GBX inapoi)"); continue
+                sw["status"]="refunded_on_timelock"; sw["refund_tx"]=rtx; print(f"  [REFUND] {sid[:14]} output refunded via timelock (legitimate, user took their GBX back)"); continue
             sw["_unres"]=sw.get("_unres",0)+1
             if sw["_unres"]<3: print(f"  [UNRESOLVED] {sid[:14]} spender not found yet (retry {sw['_unres']}/3)"); continue
             sw["status"]="ANOMALY_spent_no_preimage"; st["halt"]=True; print(f"  [HALT] {sid[:14]} output REALLY gone with neither preimage NOR refund (3 scans)"); continue
@@ -462,13 +462,13 @@ def run_loop(interval=5, iters=None):
             except Exception:
                 _h=-1
             print(f"  [hb] alive cycles={i} chain_h={_h}", flush=True)
-        # REZILIENT: orice eroare tranzitorie (RPC/nod/retea) -> log + continua, NU muri.
+        # RESILIENT: any transient error (RPC/node/network) -> log + continue, never die.
         # A production swap reactor does not die on a hiccup; it stays alive so sells always find the LP.
         try:
             st=run_once()
             if st.get("halt"): time.sleep(interval); continue
         except Exception as _e:
-            print(f"  [RESILIENT] iteratie esuata: {str(_e)[:120]} -> continui dupa {interval}s")
+            print(f"  [RESILIENT] iteration failed: {str(_e)[:120]} -> continuing after {interval}s")
             time.sleep(interval); continue
         i+=1
         if iters and i>=iters: break
@@ -546,7 +546,7 @@ def scan_and_claim_gbx(st,fund,ctx):
                     o=evmcli(ctx=ctx,cmd="refund",pk=LP_PK_EVM,htlc=ctx["htlc"],id=sw.get("usdc_lock_id"))
                     if o.get("status")=="0x1":
                         sw["status"]="refunded_by_lp"; sw["usdc_refund_tx"]=o.get("hash")
-                        print(f"  [LP-6 REFUND] {sid[:14]} T2 expirat, user nerevendicat -> USDC inapoi la LP tx={str(o.get('hash'))[:14]}")
+                        print(f"  [LP-6 REFUND] {sid[:14]} T2 expired, user never claimed -> USDC back to LP tx={str(o.get('hash'))[:14]}")
                     else:
                         print(f"  [LP-6] {sid[:14]} refund status={o.get('status')} — reincerc la ciclul urmator")
                 except Exception as _e:

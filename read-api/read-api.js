@@ -41,7 +41,7 @@ function _runCliOnce(argv) {
     });
   });
 }
-// REZILIENT (Claude): nodul poate fi temporar in "Loading" (-28) la restart/reindex.
+// RESILIENT: the node may be temporarily in "Loading" (-28) after restart/reindex.
 // Retry instead of throwing -> read-api no longer dies, reads stay available (stable sell/balance).
 async function runCli(args) {
   let lastErr=null;
@@ -151,7 +151,7 @@ async function getStatus() {
     // B.5 circuit breaker: node unavailable after retry -> last good value marked stale,
     // instead of a 500 error. The user sees data (slightly stale), not an error. Auto-recovers when the node returns.
     if (_lastStatus) {
-      console.warn('[getStatus] nod indisponibil -> stale fallback:', (e && e.message) || e);
+      console.warn('[getStatus] node unavailable -> stale fallback:', (e && e.message) || e);
       return Object.assign({}, _lastStatus.data, {
         stale: true,
         stale_age_sec: Math.floor((Date.now() - _lastStatus.ts) / 1000),
