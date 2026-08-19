@@ -240,12 +240,17 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
       const hNow=(await (await fetch(gatewayBase+'/height')).json()).height||0;
       if(!hNow) throw new Error('REFUND_NEEDS_SCRIPT');
       const hFund=hNow-Number(us.confirmations)+1;
-      const li=await (await fetch(gatewayBase+'/lp-info')).json();
-      const lpPub=unhex(String(li.lp_gbx_pubkey||'').replace(/^0x/,''));
-      if(lpPub.length!==33) throw new Error('REFUND_NEEDS_SCRIPT');
-      for(let t=hFund+100000-30; t<=hFund+100000+30 && !sc; t++){
-        const cand=buildHtlcScript(H, lpPub, pkU, t);
-        if(hex(p2wshSpk(cand)).toLowerCase()===wantSpk){ sc=cand; T1=t; }
+      const lpPubs=[];
+      try{ const li=await (await fetch(gatewayBase+'/lp-info')).json(); const p1=unhex(String(li.lp_gbx_pubkey||'').replace(/^0x/,'')); if(p1.length===33) lpPubs.push(p1); }catch(_e){}
+      // The lock may have been made by any federated LP, not the current gateway: try them all.
+      try{ const lps=await window.GBXLp.list(); for(const lp of (lps||[])){ try{ const li2=await (await fetch(String(lp.base_url).replace(/\/$/,'')+'/lp-info',{cache:'no-store'})).json(); const p2=unhex(String(li2.lp_gbx_pubkey||'').replace(/^0x/,'')); if(p2.length===33 && !lpPubs.some(x=>hex(x)===hex(p2))) lpPubs.push(p2); }catch(_e){} } }catch(_e){}
+      if(!lpPubs.length) throw new Error('REFUND_NEEDS_SCRIPT');
+      for(const lpPub of lpPubs){
+        for(let t=hFund+100000-30; t<=hFund+100000+30 && !sc; t++){
+          const cand=buildHtlcScript(H, lpPub, pkU, t);
+          if(hex(p2wshSpk(cand)).toLowerCase()===wantSpk){ sc=cand; T1=t; }
+        }
+        if(sc) break;
       }
       if(!sc) throw new Error('REFUND_NEEDS_SCRIPT');
       if(!gbxVal8) gbxVal8=us.value_sat;
