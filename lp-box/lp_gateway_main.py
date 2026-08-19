@@ -100,7 +100,7 @@ def _rate_check(ip):
     if d[0]!=day: d[0]=day; d[1]=0
     if d[1]>=RL_DAY_MAX: return False,"rate_limited_daily"
     d[1]+=1
-    # curatare ocazionala (nu lasa dict-ul sa creasca infinit)
+    # occasional cleanup (do not let the dict grow forever)
     if len(_REQ_LOG)>5000:
         for k in list(_REQ_LOG.keys()):
             if not _REQ_LOG[k] or _REQ_LOG[k][-1]<cutoff: _REQ_LOG.pop(k,None)
