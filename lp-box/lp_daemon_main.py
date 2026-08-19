@@ -109,7 +109,11 @@ def gmine(n,a):
 def load_state():
     if os.path.exists(STATE_F): return json.load(open(STATE_F))
     return {"swaps":{},"lp_gbx_sk":None,"halt":False}
-def save_state(st): json.dump(st,open(STATE_F,"w"),indent=1)
+def save_state(st):
+    # atomic: a crash or restart mid-write must never truncate the live state
+    _t=STATE_F+".tmp"
+    with open(_t,"w") as _f: json.dump(st,_f,indent=1); _f.flush(); os.fsync(_f.fileno())
+    os.replace(_t,STATE_F)
 def load_intents():
     return json.load(open(INTENTS_F)) if os.path.exists(INTENTS_F) else {}
 # T2 (this LP GBX lock) must expire well before T1 (the USDC lock it will claim against).
