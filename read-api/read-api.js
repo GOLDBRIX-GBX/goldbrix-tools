@@ -516,17 +516,6 @@ const server = http.createServer(async (req, res) => {
     }
     // coin-stats — market band: price, window % change, liquidity, 24h vol/txns/traders (guarded by GBX_TOKENIDX_DB)
     // htlc-by-refund-pubkey — anchored HTLC locks for a refund key (GBX:H index)
-    if (req.method === 'GET' && url.pathname.startsWith('/api/htlc-by-refundpk/')) {
-      const dbp = process.env.GBX_TOKENIDX_DB;
-      if (!dbp) { res.writeHead(404); return res.end('not enabled'); }
-      try {
-        const { openTokenIndex } = require('./gbx-token-read.js');
-        if (!global.__gbxTokenIdx) global.__gbxTokenIdx = openTokenIndex(dbp);
-        const out = global.__gbxTokenIdx.htlcByRefund(url.pathname.slice('/api/htlc-by-refundpk/'.length).toLowerCase());
-        res.writeHead(200, {'Content-Type':'application/json'});
-        return res.end(JSON.stringify(out));
-      } catch (e) { res.writeHead(500); return res.end('htlc-index error'); }
-    }
     if (req.method === 'GET' && url.pathname.startsWith('/api/htlc-by-hashlock/')) {
       const dbp = process.env.GBX_TOKENIDX_DB;
       if (!dbp) { res.writeHead(404); return res.end('not enabled'); }
