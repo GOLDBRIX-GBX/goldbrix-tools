@@ -304,7 +304,7 @@ input, textarea, .copyable, [data-copyable], .addr, .hash, .txid, code, .gbx-amo
     <div class="field">
       <span class="lbl" id="lblGet" data-i="youGet">You receive</span>
       <div class="recv">
-        <span class="v muted num" id="recv">0.00</span>
+        <span class="v muted num" id="recv">—</span>
         <span class="tk" id="getTk">GBX</span>
       </div>
     </div>
@@ -514,7 +514,7 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
   let quoteTimer=null;
   function refreshQuote(){
     const v = parseFloat(el.amt.value);
-    if(!(v>0)){ el.recv.textContent='0.00'; el.recv.classList.add('muted'); el.rate.textContent='—'; el.spread.textContent='—'; var _ir0=document.getElementById('impactRow'); if(_ir0) _ir0.hidden=true; return; }
+    if(!(v>0)){ el.recv.textContent='—'; el.recv.classList.add('muted'); el.rate.textContent='—'; el.spread.textContent='—'; var _ir0=document.getElementById('impactRow'); if(_ir0) _ir0.hidden=true; return; }
     clearTimeout(quoteTimer);
     quoteTimer = setTimeout(async ()=>{
       try{
@@ -911,7 +911,7 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
     // the refund pubkey comes from the seed, the chain index (GBX:H anchors)
     // and every registered LP are asked, and each still-unspent lock becomes
     // a normal pending entry - the proven recovery flow does the rest.
-    if(!ks.length && !window.__gbxHtlcScanned){
+    if(!window.__gbxHtlcScanned){
       window.__gbxHtlcScanned=true;
       try{
         const w=activeWallet();
@@ -922,13 +922,14 @@ import("/mod-b-solana.mjs").then(function(m){ window.GoldbrixModSol=m; }).catch(
           try{ const j=await window.GBXRead.json('/api/htlc-by-refund-pubkey/'+pk);
                for(const L of ((j&&j.locks)||[])) if(!L.spent) found[String(L.hashlock).toLowerCase()]={ gbx_txid:L.txid, gbx_vout:L.vout, gbx_val:Number(L.value_sat) }; }catch(_e){}
           try{ const lps=await window.GBXLp.list();
-               for(const lp of (lps||[])){
+               /* Providers are asked in parallel: one slow node must not hold up the wallet. */
+               await Promise.all((lps||[]).map(async (lp)=>{
                  try{ const r=await (await fetch(lp.base_url.replace(/\/$/,'')+'/htlc-by-refund-pubkey/'+pk,{cache:'no-store'})).json();
                       for(const L of ((r&&r.locks)||[])){
                         const hl=String(L.hashlock||'').toLowerCase(); if(!hl||!L.gbx_txid) continue;
                         found[hl]=Object.assign(found[hl]||{},{ gbx_txid:L.gbx_txid, gbx_vout:L.gbx_vout||0, gbx_val:Number(L.gbx_val)||((found[hl]||{}).gbx_val), script:L.gbx_script, chain:L.chain });
                       } }catch(_e){}
-               } }catch(_e){}
+               })); }catch(_e){}
           for(const hl of Object.keys(found)){
             const key='gbx_pending_'+hl.replace(/^0x/,'');
             if(localStorage.getItem(key)) continue;

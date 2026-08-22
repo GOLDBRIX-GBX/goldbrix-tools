@@ -768,8 +768,8 @@ const server = http.createServer(async (req, res) => {
         const rcPath = process.env.GBX_RELCHK_STATE || require('path').join(process.env.GBX_STATE_DIR || require('path').join(__dirname,'..','release-check'),'release-check.json');
         const rc = JSON.parse(fs.readFileSync(rcPath,'utf8'));
         res.writeHead(200, {'Content-Type':'application/json'});
-        return res.end(JSON.stringify({checked_at:(rc.report&&rc.report.checked_at)||null, anchors: rc.anchors||{}, app_anchors: rc.app_anchors||{}}));
-      } catch(e){ res.writeHead(200,{'Content-Type':'application/json'}); return res.end('{"checked_at":null,"anchors":{},"app_anchors":{}}'); }
+        return res.end(JSON.stringify({checked_at:(rc.report&&rc.report.checked_at)||null, anchors: rc.anchors||{}, app_anchors: rc.app_anchors||{}, arw_anchors: rc.arw_anchors||{}}));
+      } catch(e){ res.writeHead(200,{'Content-Type':'application/json'}); return res.end('{"checked_at":null,"anchors":{},"app_anchors":{},"arw_anchors":{}}'); }
     }
     if (req.method === 'GET' && url.pathname === '/api/lp-registry') {
       // GBX on-chain LP registry (GBX:LP: OP_RETURN). Read-only, keyless.

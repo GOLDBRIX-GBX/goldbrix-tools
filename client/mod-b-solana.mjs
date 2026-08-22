@@ -1,4 +1,4 @@
-// GOLDBRIX · mod-b-solana.mjs · client browser lock USDC gasless pe Solana (DESIGN 1 co-semnare)
+// GOLDBRIX · mod-b-solana.mjs · in-browser gasless USDC lock on Solana (DESIGN 1 co-signing)
 import { Keypair, Transaction } from "/vendor/solana.mjs";
 const _hex = b => [...b].map(x => x.toString(16).padStart(2, "0")).join("");
 function _randomSecret() { return globalThis.crypto.getRandomValues(new Uint8Array(32)); }
@@ -43,7 +43,7 @@ export async function lockUsdcSolana(ctx){
 }
 
 
-// ================= SELL GBX -> USDC pe Solana =================
+// ================= SELL GBX -> USDC on Solana =================
 /* Order matters for getProgramAccounts: some endpoints answer without the
    account key, and one refuses the call outright. The endpoint that returns a
    complete answer is asked first; the others stay as fallbacks. */
@@ -88,7 +88,7 @@ export async function sellGbxSolana(ctx){
   try{ localStorage.setItem("gbx_pending_"+Hhex,JSON.stringify({dir:"sell",chain:"solana",owner_pk:(lock.refund_pubkey||""),hashlock:Hhex,secret:_hex(secret),usdcAmount:String(usdcAmount),gbx_txid:lock.gbx_txid,gbx_vout:lock.gbx_vout,ts:Date.now()})); }catch(_e){}
   await post("/intent",{hashlock:Hhex,direction:"sell",chain:"solana",sol_user_pubkey:solKeypair.publicKey.toBase58(),
     usdc_amount:String(usdcAmount),gbx_txid:lock.gbx_txid,gbx_vout:lock.gbx_vout,gbx_script:lock.script,gbx_val:lock.gbx_val,t2_evm:3600,refund_pubkey:lock.refund_pubkey||""});
-  // asteapta lock-ul USDC al LP-ului si VERIFICA on-chain INAINTE de a dezvalui preimage-ul (funds-safe)
+  // wait for the LP's USDC lock and VERIFY on-chain BEFORE revealing the preimage (funds-safe)
   const _cl=await claimUsdcSolana({gatewayBase,program,mint,solKeypair,secretHex:_hex(secret),usdcAmount,onStatus,pollMs,maxPolls});
   return { hashlock:Hhex, sig:_cl.sig, secret:_hex(secret) };
 }
@@ -257,7 +257,7 @@ export async function claimUsdcSolana(ctx){
   if(sw.timelock < Math.floor(Date.now()/1000)+300) throw new Error("timelock too short -> not claiming");
   onStatus&&onStatus("usdc_verified",{amount:sw.amount.toString()});
   const preHex="0x"+_hex(secret); let sig=null;
-  // CALEA 1 (default): claim gasless via gateway (feePayer=LP), user semneaza
+  // PATH 1 (default): gasless claim via the gateway (feePayer=LP), the user signs
   try{
     const prep=await post("/sol-prepare-claim",{user_pubkey:userPk.toBase58(),swap_id:Hhex,preimage:preHex});
     if(prep.error||!prep.tx_b64) throw new Error("prepare-claim: "+JSON.stringify(prep));

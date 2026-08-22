@@ -33,7 +33,7 @@ export function solKeypairFromDerive(d){
   return Keypair.fromSeed(seed);
 }
 
-// QUOTE: cat USDC primesc pe X SOL (afiseaza userului INAINTE de confirm)
+// QUOTE: how much USDC for X SOL (shown to the user BEFORE confirm)
 export async function quoteSolToUsdc(solAmountLamports, slippageBps){
   const bps = slippageBps || 50;
   const url = JUP_BASE + "/quote?inputMint=" + SOL_MINT + "&outputMint=" + USDC_MINT +
@@ -61,7 +61,7 @@ export async function swapSolToUsdc(ctx){
   // 1. fresh quote
   const q = await quoteSolToUsdc(solAmountLamports, bps);
 
-  // 2. cere tranzactia LEGACY de la Jupiter (semnatar = userul)
+  // 2. request the LEGACY transaction from Jupiter (signer = the user)
   onStatus && onStatus("building");
   const swapResp = await fetch(JUP_BASE + "/swap", {
     method:"POST", headers:{"content-type":"application/json"},
@@ -90,7 +90,7 @@ export async function swapSolToUsdc(ctx){
   return { sig, outUsdc: q.outUsdc, minOutUsdc: q.minOutUsdc, inLamports: q.inLamports };
 }
 
-// ---- INVERS: USDC -> SOL (acelasi Jupiter, mint-uri inversate) ----
+// ---- REVERSE: USDC -> SOL (same Jupiter, mints swapped) ----
 export async function quoteUsdcToSol(usdcAmount6, slippageBps){
   const bps = slippageBps || 50;
   const url = JUP_BASE + "/quote?inputMint=" + USDC_MINT + "&outputMint=" + SOL_MINT +

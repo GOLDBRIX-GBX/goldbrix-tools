@@ -1,4 +1,4 @@
-// GoldBrix Mod B — adaptor browser in-app (BUY + SELL). DI: crypto/multichain/GoldbrixEVM din window.* (browser) sau shim (test).
+// GoldBrix Mod B — in-app browser adapter (BUY + SELL). DI: crypto/multichain/GoldbrixEVM from window.* (browser) or a shim (test).
 import { buyGbx, sellGbx, verifyGbxLock } from './mod-b-swap.mjs';
 import { signReceiveAuth } from "/sign3009.mjs";
 import { secp256k1, keccak_256 } from '/vendor/evm-secp.mjs';
@@ -57,7 +57,7 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
   // Broadcast fallback: the LP is only the first attempt; on failure the tx goes out
   // to EVERY public node from discovery (/api/broadcast = keyless sendrawtransaction).
   // The write survives even if the LP (or any single operator's servers) is dead.
-  // txid = dsha256 pe serializarea FARA witness (BIP144). Segwit: marker 0x00 flag 0x01
+  // txid = dsha256 over the serialization WITHOUT witness (BIP144). Segwit: marker 0x00 flag 0x01
   // after the version; the witness is skipped after the outputs. Structural parsing, zero guessing.
   const _txidOf=(rawtxHex)=>{
     const b=unhex(rawtxHex); let o=4; const parts=[b.slice(0,4)];
@@ -154,7 +154,7 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
         }catch(_e){}
         const r=await htlc.claim(ek.privateKey,htlcAddr,id,preimage); return r.hash; } };
     let _h=0; try{ _h=(await (await fetch(gatewayBase+'/height')).json()).height||0; }catch(_e){}
-    const _T1 = _h>0 ? _h+100000 : 9999999;
+    const _T1 = _h>0 ? _h+28800 : 9999999;
     return await sellGbx({ gbxAmount, usdcAmount:String(usdcAmount), lpGbxPub, userEvmAddr:ek.address, usdcAddr, timelockT1Gbx:_T1, t2EvmSeconds:3600, gbx, evm, submitIntent, onStatus, pollMs:1000, maxPolls:60, chain:_chain });
   }
   async function refundUsdc({ mnemonic, lockId }){
@@ -202,7 +202,7 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
     const info=await (await fetch(gatewayBase+'/lp-info')).json();
     const lpGbxPub=Uint8Array.from(info.lp_gbx_pubkey.match(/.{2}/g).map(h=>parseInt(h,16)));
     let _h=0; try{ _h=(await (await fetch(gatewayBase+'/height')).json()).height||0; }catch(_e){}
-    const T1=_h>0?_h+100000:9999999;
+    const T1=_h>0?_h+28800:9999999;
     const utxos=(await fetchUtxos(userGbxAddr, gbxAmount+0.001)).filter(u=>u.spendable!==false).map(u=>({...u, value8: Math.round(u.amount*1e8)}));
     if(!utxos.length) throw new Error('NO_UTXO');
     const script=buildHtlcScript(H, lpGbxPub, pkU, T1), htlcSpk=p2wshSpk(script);
@@ -215,7 +215,7 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
     return { gbx_txid:await gbxBroadcast(hex(tx)), gbx_vout:0, script:hex(script), gbx_val:fundValue, refund_pubkey:hex(pkU), t1:T1 };
   }
   async function refundGbxForSell({ mnemonic, gbxTxid, gbxVout, gbxVal8, scriptHex, t1 }){
-    // L1 refund on the timelock branch (after T1): the user takes their GBX back from the HTLC de sell abandonat/respins
+    // L1 refund on the timelock branch (after T1): the user takes their GBX back from the HTLC of an abandoned/rejected sell
     const gk=await crypto.deriveKeypairFromMnemonic(mnemonic);
     const skU=Uint8Array.from(gk.privateKey), pkU=Uint8Array.from(gk.publicKey);
     let sc = scriptHex ? unhex(String(scriptHex).replace(/^0x/,'')) : null;
@@ -227,8 +227,8 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
     }
     if(!sc || !T1){
       // DETERMINISTIC RECONSTRUCTION (old pendings without script/t1):
-      // H din arguments.hashlock, lpGbxPub din /lp-info, T1 iterat in [h_fund+100000±30]
-      // pana sha256(buildHtlcScript(H,lpGbxPub,pkU,T1)) == witness program-ul REAL al UTXO-ului. Zero ghicit.
+      // H from arguments.hashlock, lpGbxPub from /lp-info, T1 iterated over [h_fund+28800±30] and legacy [h_fund+100000±30]
+      // until sha256(buildHtlcScript(H,lpGbxPub,pkU,T1)) == the REAL witness program of the UTXO. Zero guessing.
       const hl=(arguments[0]&&arguments[0].hashlock)||'';
       if(!hl) throw new Error('REFUND_NEEDS_SCRIPT');
       const H=unhex(String(hl).replace(/^0x/,''));
@@ -246,7 +246,7 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
       try{ const lps=await window.GBXLp.list(); for(const lp of (lps||[])){ try{ const li2=await (await fetch(String(lp.base_url).replace(/\/$/,'')+'/lp-info',{cache:'no-store'})).json(); const p2=unhex(String(li2.lp_gbx_pubkey||'').replace(/^0x/,'')); if(p2.length===33 && !lpPubs.some(x=>hex(x)===hex(p2))) lpPubs.push(p2); }catch(_e){} } }catch(_e){}
       if(!lpPubs.length) throw new Error('REFUND_NEEDS_SCRIPT');
       for(const lpPub of lpPubs){
-        for(let t=hFund+100000-30; t<=hFund+100000+30 && !sc; t++){
+        for(const base of [28800,100000]) for(let t=hFund+base-30; t<=hFund+base+30 && !sc; t++){
           const cand=buildHtlcScript(H, lpPub, pkU, t);
           if(hex(p2wshSpk(cand)).toLowerCase()===wantSpk){ sc=cand; T1=t; }
         }
@@ -255,7 +255,7 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
       if(!sc) throw new Error('REFUND_NEEDS_SCRIPT');
       if(!gbxVal8) gbxVal8=us.value_sat;
     }
-    // gard: T1 trebuie sa fi trecut (nLockTime pe height)
+    // guard: T1 must have passed (nLockTime by height)
     let _h=0; try{ _h=(await (await fetch(gatewayBase+'/height')).json()).height||0; }catch(_e){}
     if(_h>0 && _h<T1) throw new Error('REFUND_NOT_YET:'+(T1-_h));
     const fee=10000, outV=Number(gbxVal8)-fee;
@@ -265,7 +265,7 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
     return { txid, gbx: outV/1e8 };
   }
   async function claimGbxForBuy({ mnemonic, hashlock, secret, minGbx8, onStatus, pollMs=1500, maxPolls=120 }){
-    // Claim GBX L1 dupa lock USDC (folosit de BUY Solana; mecanism identic buyGbx post-lock)
+    // Claim GBX on L1 after the USDC lock (used by BUY Solana; same mechanism as buyGbx post-lock)
     const gk=await crypto.deriveKeypairFromMnemonic(mnemonic);
     const skU=Uint8Array.from(gk.privateKey), pkU=Uint8Array.from(gk.publicKey);
     const Hhex=hashlock.toLowerCase(); const H=unhex(Hhex.replace(/^0x/,'')); const s=unhex(String(secret).replace(/^0x/,''));
@@ -275,9 +275,9 @@ export function makeInAppClient({ crypto, multichain, GoldbrixEVM, gatewayBase, 
         if(sw && sw.spk && sw.script){ swap={script:sw.script,spk:sw.spk,gbx_txid:sw.gbx_txid,gbx_vout:sw.gbx_vout,gbx_val:sw.gbx_val}; break; } }catch(_e){}
       await new Promise(r=>setTimeout(r,pollMs));
     }
-    if(!swap) throw new Error('timeout: LP nu a blocat GBX -> USDC auto-refund dupa T2 (banii sunt in siguranta)');
+    if(!swap) throw new Error('timeout: LP did not lock GBX -> USDC auto-refunds after T2 (funds are safe)');
     const v=verifyGbxLock({ H, pkU, scriptHex:swap.script, onchainSpkHex:swap.spk, gbxVal8:swap.gbx_val, minVal8:minGbx8||1 });
-    if(!v.ok) throw new Error('GBX HTLC invalid ('+v.reason+') -> NU revendic');
+    if(!v.ok) throw new Error('GBX HTLC invalid ('+v.reason+') -> not claiming');
     onStatus&&onStatus('gbx_verified',{});
     const txhex=hex(buildClaimTx({ prevTxid:swap.gbx_txid, vout:swap.gbx_vout, inValue8:swap.gbx_val, htlcScript:unhex(swap.script), outScriptPubKey:p2wpkhSpk2(pkU), outValue8:swap.gbx_val-10000, nLockTime:0, preimage:s }, (d)=>secp256k1.sign(d,skU).toDERRawBytes()));
     const txid=await gbxBroadcast(txhex);

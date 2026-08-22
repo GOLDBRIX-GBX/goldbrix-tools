@@ -38,6 +38,11 @@ function decode(asm){ // scriptPubKey.asm: "OP_RETURN <hex>"
     if(m)return {kind:'tools',tag:'tools-'+m[1],commit:m[2]};
     /* App/bundle anchors: GBX:R:<tag>:<64-hex sha256> (e.g. signed-APK sha,
        or the www bundle top-hash). Additive: stored apart from tools anchors. */
+    /* Permanent-source anchors: GBX:ARW:<tag>:<Arweave txid>. The archive id is
+       base64url, not hex, so it gets its own namespace and never mixes with
+       code or bundle hashes. */
+    const w=t.match(/^GBX:ARW:([A-Za-z0-9._-]{1,24}):([A-Za-z0-9_-]{43})$/);
+    if(w)return {kind:'arw',tag:w[1],arweave:w[2]};
     const a=t.match(/^GBX:R:([A-Za-z0-9._-]{1,9}):([0-9a-f]{64})$/);
     /* The tools-* namespace belongs to code anchors, whose value is a
        40-hex commit. A tools-* tag carrying a 64-hex value is malformed by
@@ -110,7 +115,10 @@ function save(s){const tmp=STATE+'.tmp';fs.writeFileSync(tmp,JSON.stringify(s,nu
       if(!v.scriptPubKey||v.scriptPubKey.type!=='nulldata')continue;
       const a=decode(v.scriptPubKey.asm); if(!a)continue;
       const ok=await verifyLineage(tx.txid);
-      if(a.kind==='app'){
+      if(a.kind==='arw'){
+        (st.arw_anchors=st.arw_anchors||{})[a.tag]={arweave:a.arweave,txid:tx.txid,height:h,lineage_valid:ok};
+        log(ok?'ARW ANCHOR VALID':'ARW ANCHOR IGNORED (lineage)',a.tag,a.arweave.slice(0,12),'@',h);
+      } else if(a.kind==='app'){
         (st.app_anchors=st.app_anchors||{})[a.tag]={sha:a.sha,txid:tx.txid,height:h,lineage_valid:ok};
         log(ok?'APP ANCHOR VALID':'APP ANCHOR IGNORED (lineage)',a.tag,a.sha.slice(0,12),'@',h);
       } else {
