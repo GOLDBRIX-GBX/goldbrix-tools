@@ -170,7 +170,7 @@
       <script src="/i18n.js?v=121" defer></script>
   <script src="/v3/gbx-read.js?v=124" defer></script>
 <script src="/v3/gbx-lp.js?v=121"></script>
-<script src="/v3/gbx-fed.js?v=121" defer></script>
+<script src="/v3/gbx-fed.js?v=134" defer></script>
   <script src="/promo-banner.js?v=121" defer></script>
 <style>#burnTicker,#liveTicker,.burn-ticker,.live-ticker{display:none !important;}</style>
 </head>
@@ -532,8 +532,13 @@
         var chHtml;
         if (ch == null) chHtml = '<div class="coin-stats" style="color:#fff;">-- 24h</div>';
         else if (ch > 0) chHtml = '<div class="coin-stats" style="color:#4EE08C;font-weight:800;">↑ +'+ch.toFixed(2)+'%</div>';
-        else chHtml = '<div class="coin-stats" style="color:#FF7A6B;font-weight:800;">↓ '+ch.toFixed(2)+'%</div>';
+        else if (ch < 0) chHtml = '<div class="coin-stats" style="color:#FF7A6B;font-weight:800;">↓ '+ch.toFixed(2)+'%</div>';
+        /* Flat is flat: no arrow, no colour - the price simply did not move. */
+        else chHtml = '<div class="coin-stats" style="color:#FFFDF7;font-weight:800;">0.00%</div>';
         var mcGbx = c.reserve_gbx||0; // honest: pool/curve liquidity, no synthetic cap
+        /* The sparkline is part of the row, drawn from a cached series: a list
+           refresh redraws it instead of wiping it off the screen. */
+        var _sp = (window.__gbxSpark && window.__gbxSpark[c.id]) || '';
         var meta = '<div class="coin-price">'+fmt(mcGbx,2)+' GBX</div>'+chHtml;
         return '<div class="coin-row" onclick="window.location.href=\'/v3/trade.html?coin='+c.id+'\'">' +
           '<div class="coin-img">'+img+'</div>' +
@@ -541,9 +546,18 @@
             '<div class="coin-title">$'+c.ticker+grad+newBadge+'</div>' +
             '<div class="coin-name">'+(c.name||'')+'</div>' +
           '</div>' +
+          '<div class="spark-inj" style="min-width:60px;height:20px;margin:0 8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'+_sp+'</div>' +
           '<div class="coin-meta">'+meta+'</div>' +
         '</div>';
       }).join('');
+      /* The drawing code lives in a later block: poll briefly for it instead of
+         assuming it is already there when the first rows are written. */
+      (function(){
+        var n=0, t=setInterval(function(){
+          if(window.__gbxAttachSpark){ clearInterval(t); try{ window.__gbxAttachSpark(); }catch(_e){} }
+          else if(++n>40) clearInterval(t);
+        }, 100);
+      })();
       try { localStorage.setItem('gbx_cache_coinlist_' + currentSort, box.innerHTML); box.dataset.loaded='1'; } catch(_) {}
     } catch(e) { if(!box.dataset.loaded) box.innerHTML = '<div class="empty">Error: '+e.message+'</div>'; }
   }
@@ -753,8 +767,8 @@
     async function attachSparklines() {
       const rows = document.querySelectorAll('.coin-row');
       const tasks = [];
+      window.__gbxSpark = window.__gbxSpark || {};
       rows.forEach(row => {
-        if (row.querySelector('.spark-inj')) return;
         const onclick = row.getAttribute('onclick') || '';
         const m = onclick.match(/coin=([^'"&]+)/);
         if (!m) return;
@@ -762,24 +776,29 @@
         if (coinId.length < 5) return;
         const metaEl = row.querySelector('.coin-meta');
         if (!metaEl) return;
-        const spark = document.createElement('div');
-        spark.className = 'spark-inj';
-        spark.style.cssText = 'min-width:60px;height:20px;margin:0 8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
-        spark.innerHTML = '<span style="color:#fff;font-size:10px;">…</span>';
-        metaEl.parentNode.insertBefore(spark, metaEl);
+        const spark = row.querySelector('.spark-inj');
+        if (!spark) return;
+        if (window.__gbxSpark[coinId]) { spark.innerHTML = window.__gbxSpark[coinId]; return; }
+        if (!spark.innerHTML) spark.innerHTML = '<span style="color:#fff;font-size:10px;">…</span>';
         tasks.push((async () => {
           try {
             const d = await (window.GBXFed && window.GBXFed.j ? window.GBXFed.j('/api/candles/' + coinId + '?interval=1h') : Promise.reject(new Error('fed-missing')));
             const candles = d.candles || (Array.isArray(d) ? d : []);
             const prices = candles.slice(-24).map(c => c.close).filter(v => v != null && !isNaN(v));
-            spark.innerHTML = renderSpark(prices);
+            const _svg = renderSpark(prices);
+            window.__gbxSpark[coinId] = _svg;
+            spark.innerHTML = _svg;
           } catch(e) { spark.innerHTML = '<span style="color:#fff;font-size:10px;">—</span>'; }
         })());
       });
       await Promise.allSettled(tasks);
     }
-    setTimeout(attachSparklines, 1500);
-    setInterval(attachSparklines, 60000);
+    /* The list arrives from the federation whenever it arrives, and a re-render
+       drops the injected nodes: try again for the first few seconds, then keep
+       a slow steady beat. */
+    window.__gbxAttachSpark = attachSparklines;
+    [300, 1000, 2500, 5000].forEach(function(ms){ setTimeout(attachSparklines, ms); });
+    setInterval(attachSparklines, 15000);
   })();
 </script>
 <script>

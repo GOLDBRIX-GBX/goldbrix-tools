@@ -152,7 +152,47 @@ function openTokenIndex(dbPath){
     },
     curvesAll(){
       const tip = parseInt(q.meta.get('scanned')?.v ?? '0', 10);
-      return { scanned: tip, curves: q.curves.all().map(r => curveView(r, tip)) };
+      /* 24h change, derived not declared: the curve price is a pure function of
+         the reserve (x*y=k), so the reserve one day back (28800 blocks at the
+         3s target) gives the reference price for every coin in one query. */
+      const back = Math.max(0, tip - 28800);
+      const ref = new Map();
+      try{
+        for(const row of db.prepare(`SELECT c.coin_id, c.reserve FROM curve_log c
+              JOIN (SELECT coin_id, MAX(height) h FROM curve_log WHERE height <= ? GROUP BY coin_id) m
+                ON m.coin_id=c.coin_id AND m.h=c.height
+              WHERE c.height <= ?`).all(back, back)){
+          ref.set(row.coin_id, BigInt(row.reserve));
+        }
+      }catch(_e){}
+      const priceOf = (R)=>{ const tok = V_TOKENS - (KCURVE/(V_GBX+R)); return tok>0n ? Number((V_GBX+R)*1000000n/(V_TOKENS-tok))/1000000 : 0; };
+      /* A graduated coin no longer has a curve: its price lives in the consensus
+         pool, so the reference comes from the pool reserves at the same height. */
+      const poolRef = new Map(), poolNow = new Map();
+      try{
+        for(const row of db.prepare(`SELECT p.coin_id, p.gbx_sat, p.tokens FROM pool_log p
+              JOIN (SELECT coin_id, MAX(height) h FROM pool_log WHERE height <= ? GROUP BY coin_id) m
+                ON m.coin_id=p.coin_id AND m.h=p.height`).all(back)){
+          if(BigInt(row.tokens)>0n) poolRef.set(row.coin_id, Number(BigInt(row.gbx_sat)*1000000n/BigInt(row.tokens))/1000000);
+        }
+        for(const row of db.prepare('SELECT coin_id, gbx_sat, tokens FROM pools').all()){
+          if(BigInt(row.tokens)>0n) poolNow.set(row.coin_id, Number(BigInt(row.gbx_sat)*1000000n/BigInt(row.tokens))/1000000);
+        }
+      }catch(_e){}
+      return { scanned: tip, curves: q.curves.all().map(r => {
+        const v = curveView(r, tip);
+        if(r.status==='graduated'){
+          const q0=poolRef.get(r.coin_id), q1=poolNow.get(r.coin_id);
+          v.change_24h = (q0>0 && q1>0) ? ((q1-q0)/q0)*100 : null;
+          return v;
+        }
+        const r0 = ref.get(r.coin_id);
+        if(r0!==undefined){
+          const p0 = priceOf(r0), p1 = priceOf(BigInt(r.reserve));
+          v.change_24h = p0 > 0 ? ((p1 - p0) / p0) * 100 : null;
+        } else { v.change_24h = null; }
+        return v;
+      }) };
     },
     curveDetail(coinId, logLimit = 2000){
       if (!/^[0-9a-f]{64}$/.test(coinId)) return null;

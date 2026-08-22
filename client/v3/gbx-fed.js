@@ -1,5 +1,5 @@
 // Federated data adapter: the old dashboard reads the chain through the
-// federation layer (gbx-read) — /api/curves + /api/pools + /api/stats24.
+// federation layer (gbx-read) — /api/curves + /api/pools.
 // Serves the legacy coin shape so every renderer keeps working unchanged.
 window.GBXFed=(function(){
   var C=null,T=0,S=null,TS=0,_logoMem={},_logoBusy={};
@@ -10,7 +10,18 @@ window.GBXFed=(function(){
   }
   async function coins(){
     if(C&&Date.now()-T<15000)return C;
-    var cd=await j('/api/curves'); var pools={};
+    /* Nodes upgrade at their own pace: prefer one that already derives the 24h
+       change, fall back to any node that answers at all. */
+    var cd;
+    try{
+      cd=await window.GBXRead.best('/api/curves',function(x){
+        var cs=(x&&x.curves)||[];
+        if(!cs.length) return 0;
+        return cs.some(function(c){return typeof c.change_24h==='number';}) ? 2 : 1;
+      });
+    }catch(_e){}
+    if(!cd||!cd.curves) cd=await j('/api/curves');
+    var pools={};
     try{ ((await j('/api/pools')).pools||[]).forEach(function(p){pools[p.coin_id]=p;}); }catch(e){}
     C=(cd.curves||[]).map(function(c){
       var p=pools[c.coin_id], g=(c.status==='graduated');
@@ -19,7 +30,9 @@ window.GBXFed=(function(){
         reserve_gbx: (g&&p) ? Number(p.gbx_sat)/1e8 : Number(c.reserve_sat||0)/1e8,
         market_cap_gbx:null, image_url: _logoMem[c.coin_id]||null, has_logo: !!c.has_logo,
         created_at: (cd.scanned&&c.height) ? (Date.now()-(cd.scanned-c.height)*3000) : null,
-        change_24h:null };
+        /* 24h change comes from the chain itself: the read layer derives it from
+           the curve reserve (or the pool, once graduated) one day back. */
+        change_24h: (typeof c.change_24h==='number') ? c.change_24h : null };
     });
     T=Date.now();
     /* the on-chain logo fills in silently: fetched once per coin, cached for the session */
