@@ -37,8 +37,8 @@ Later APK releases follow the same scheme (`v31d`+ = signed-APK SHA-256, `wNNN` 
 | `v31n` (APK 1.0.132, signed SHA-256) | 58fc0836ab7c763b94d6e2e0a188b8f397810beba8697a646d6a4450b471ac63 | c3862b33e5d38fd4cccf552c7893c37a1bbdc2df8e1079992bafb8d0387e9153 |
 | `w132` (web bundle top hash) | 28852b632ad2385081d71a7913399079d2d90aecc031f70900572f41acfd6c28 | 75b0214e11549ac7d9e9ec5ee776b812fb9da5d6db1ad7d7f3e4c39f53fed6be |
 | `bin-v31` (final node binary `goldbrixd`, SHA-256) | 7de543e775fb27ae3188411e5d8172e576078f2404eef36c451b86b749ad4e8e | 2548fa89d610c43ce0a8c4d63402f8c4705474a63f119eac55a1cbf760b03bd5 |
-| `GBX:ARW:tools-final` (Arweave TXID, tools source archive) | ndwHd9WqwK_Fvwc_FkqtQ9wb6A7JMWb5tqaeRrysbG4 | 487861316212786f93561f3014e7c048dd3754d9b0026fce47bc6a8b7cf7349e |
-| `GBX:ARW:core-final` (Arweave TXID, core source archive) | 1TpIEN9rzy-IJzCK_w6gCyC-nuFYR3uAKWydhhdj49g | 9baffa7296fe1d07da48ce6b30db8f9d861b8f5d1f00b6ec682f8114b6764523 |
+| `GBX:ARW:tools-final` (Arweave TXID, tools source archive) | nVkgMqVScD8iq5e5RyxxCzImsREJkKCR7Qs-VSj2kOc | 8c78370466a4fb5c836fa1817fd516b65533fdf185fad0428fa0a7f161d87c36 |
+| `GBX:ARW:core-final` (Arweave TXID, core source archive) | xsVFhwVAkHyZwc7zT2X4Ml_Qhx8c9EofAk3tbizAhmc | d8d800db9bd7834728b580ca1384c40c9d34144475ec21ebd44391978aef534b |
 
 ## Verify (any node, no permission needed)
 
