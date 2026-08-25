@@ -1,5 +1,9 @@
 # GoldBrix Tools
 
+> **Project finalized.** The founder has exited: treasury burned,
+> release keys destroyed, Solana program immutable — all verifiable
+> on-chain. See [docs/GATE-R.md](docs/GATE-R.md).
+
 Operator tooling for the GoldBrix (GBX) network. Everything here is keyless
 or non-custodial: nothing in this repository can hold or move user funds.
 
